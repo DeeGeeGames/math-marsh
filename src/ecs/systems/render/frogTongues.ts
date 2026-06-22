@@ -25,9 +25,9 @@ interface TongueStyle {
 
 const DEFAULT_RGB = '255, 20, 147';
 const CELL = GAME_CONFIG.GRID.CELL_SIZE;
-const AWAY_MOUTH_ANCHOR = { x: 0, y: -0.40 } as const;
-const TOWARD_MOUTH_ANCHOR = { x: 0, y: -0.31 } as const;
-const SIDE_MOUTH_ANCHOR = { x: 0.14, y: -0.34 } as const;
+const AWAY_MOUTH_ANCHOR = { x: 0, y: -0.22 } as const;
+const TOWARD_MOUTH_ANCHOR = { x: 0, y: -0.10 } as const;
+const SIDE_MOUTH_ANCHOR = { x: 0.14, y: -0.14 } as const;
 const WARNING_COLOR = '255, 238, 120';
 
 const TONGUE_PRESENTATION: Record<DirectionKey, TonguePresentation> = {
