@@ -20,6 +20,9 @@ import {
   type InputPromptItem,
   type InputPromptPlatform,
 } from './inputPrompts';
+import frogImage from '../assets/images/frog.svg';
+import flyImage from '../assets/images/fly.png';
+import lizardImage from '../assets/images/lizard.svg';
 
 type UIScreen = SettingsReturnScreen | 'settings';
 
@@ -217,27 +220,48 @@ const SCREENS: Record<UIScreen, ScreenSpec> = {
     id: 'main-menu',
     className: `${OVERLAY_BASE} app-background`,
     html: `
-      <div class="menu-shell px-6 md:px-10 py-6 sm:py-8 md:py-16 max-w-sm md:max-w-2xl landscape:max-w-4xl flex flex-col landscape:flex-row landscape:items-center text-center landscape:text-left gap-6 landscape:gap-10 lg:landscape:gap-16">
-        <div class="landscape:flex-1">
-          <h1 class="pond-title text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 text-gold drop-shadow-lg">
+      <div class="menu-shell w-[min(92vw,980px)] px-5 sm:px-7 md:px-9 py-5 sm:py-7 md:py-8 grid gap-5 sm:gap-7 md:gap-9 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)] items-center">
+        <div class="menu-copy text-center md:text-left">
+          <p class="menu-kicker mb-2 sm:mb-3">Arcade math maze</p>
+          <h1 class="pond-title menu-title text-gold drop-shadow-lg">
             Math Munchers
           </h1>
 
-          <p class="text-sm sm:text-base md:text-xl opacity-90 leading-relaxed">
-            Navigate the grid and collect correct answers while avoiding enemies!
+          <p class="menu-tagline mt-3 sm:mt-4 md:mt-5 mx-auto md:mx-0">
+            Snap up the right answers before the pond catches up.
           </p>
+
+          <div class="menu-actions mt-5 sm:mt-7">
+            <button id="start-game-btn" class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
+              Start Game
+            </button>
+            <div class="menu-secondary-actions">
+              <button id="settings-btn" class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+                Settings
+              </button>
+              <button id="high-scores-btn" class="btn-warning menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+                High Scores
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="flex flex-col gap-4 md:gap-6 items-center landscape:items-stretch landscape:flex-1">
-          <button id="start-game-btn" class="btn-success ${BTN_CHROME} ${BTN_SIZE.lgResponsive} w-full md:w-auto landscape:w-full min-w-48 md:min-w-56">
-            🎮 Start Game
-          </button>
-          <button id="settings-btn" class="btn-primary ${BTN_CHROME} ${BTN_SIZE.mdResponsive} w-full md:w-auto landscape:w-full min-w-48 md:min-w-56">
-            ⚙️ Settings
-          </button>
-          <button id="high-scores-btn" class="btn-warning ${BTN_CHROME} ${BTN_SIZE.mdResponsive} w-full md:w-auto landscape:w-full min-w-48 md:min-w-56">
-            🏆 High Scores
-          </button>
+        <div class="menu-board" aria-hidden="true">
+          <div class="menu-board-grid">
+            <span class="menu-board-tile menu-board-answer">8</span>
+            <span class="menu-board-tile"></span>
+            <span class="menu-board-tile menu-board-answer">12</span>
+            <span class="menu-board-tile"></span>
+            <span class="menu-board-tile"></span>
+            <span class="menu-board-tile menu-board-answer">16</span>
+            <span class="menu-board-tile"></span>
+            <span class="menu-board-tile"></span>
+            <span class="menu-board-tile menu-board-answer">24</span>
+          </div>
+          <img class="menu-board-sprite menu-board-frog" src="${frogImage}" alt="" />
+          <img class="menu-board-sprite menu-board-fly" src="${flyImage}" alt="" />
+          <img class="menu-board-sprite menu-board-lizard" src="${lizardImage}" alt="" />
+          <div class="menu-equation-chip">6 x 4 = ?</div>
         </div>
       </div>
 
