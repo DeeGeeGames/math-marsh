@@ -20,9 +20,10 @@ import {
   type InputPromptItem,
   type InputPromptPlatform,
 } from './inputPrompts';
-import frogImage from '../assets/images/frog.svg';
-import flyImage from '../assets/images/fly.png';
-import lizardImage from '../assets/images/lizard.svg';
+import flyMoveToward from '../assets/images/fly-move-toward.png';
+import frogHopToward from '../assets/images/frog-hop-toward.png';
+import lizardWalkToward from '../assets/lizard-walk-toward.png';
+import spiderWalkToward from '../assets/spider-walk-toward.png';
 
 type UIScreen = SettingsReturnScreen | 'settings';
 
@@ -189,6 +190,9 @@ function openSettings(): void {
 
 const inputPromptsSlot = (): string => '<div class="input-prompts-slot" data-input-prompts></div>';
 
+const menuSprite = (className: string, imageSrc: string): string =>
+  `<span class="menu-board-sprite ${className}" style="background-image: url('${imageSrc}')" aria-hidden="true"></span>`;
+
 const renderPromptSlot = (root: HTMLElement, prompts: InputPromptItem[] | undefined): void => {
   const slot = root.querySelector<HTMLElement>('[data-input-prompts]');
   if (!slot || !prompts) return;
@@ -258,9 +262,10 @@ const SCREENS: Record<UIScreen, ScreenSpec> = {
             <span class="menu-board-tile"></span>
             <span class="menu-board-tile menu-board-answer">24</span>
           </div>
-          <img class="menu-board-sprite menu-board-frog" src="${frogImage}" alt="" />
-          <img class="menu-board-sprite menu-board-fly" src="${flyImage}" alt="" />
-          <img class="menu-board-sprite menu-board-lizard" src="${lizardImage}" alt="" />
+          ${menuSprite('menu-board-frog', frogHopToward)}
+          ${menuSprite('menu-board-fly', flyMoveToward)}
+          ${menuSprite('menu-board-lizard', lizardWalkToward)}
+          ${menuSprite('menu-board-spider', spiderWalkToward)}
           <div class="menu-equation-chip">6 x 4 = ?</div>
         </div>
       </div>

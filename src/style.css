@@ -194,7 +194,10 @@
 .menu-board-sprite {
   position: absolute;
   z-index: 2;
-  object-fit: contain;
+  aspect-ratio: 1;
+  background-position: 100% center;
+  background-repeat: no-repeat;
+  background-size: 800% 100%;
   filter: drop-shadow(0 8px 8px rgba(5, 31, 36, 0.32));
   pointer-events: none;
 }
@@ -218,6 +221,13 @@
   bottom: 17%;
   width: 24%;
   transform: rotate(-16deg) scaleX(-1);
+}
+
+.menu-board-spider {
+  left: 15%;
+  bottom: 19%;
+  width: 21%;
+  transform: rotate(12deg);
 }
 
 .menu-equation-chip {
