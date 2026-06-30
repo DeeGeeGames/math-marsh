@@ -226,14 +226,9 @@ const SCREENS: Record<UIScreen, ScreenSpec> = {
     html: `
       <div class="menu-shell w-[min(92vw,980px)] px-5 sm:px-7 md:px-9 py-5 sm:py-7 md:py-8 grid gap-5 sm:gap-7 md:gap-9 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)] items-center">
         <div class="menu-copy text-center md:text-left">
-          <p class="menu-kicker mb-2 sm:mb-3">Arcade math maze</p>
-          <h1 class="pond-title menu-title text-gold drop-shadow-lg">
-            Math Munchers
+          <h1 class="menu-title text-gold drop-shadow-lg">
+            Math Marsh
           </h1>
-
-          <p class="menu-tagline mt-3 sm:mt-4 md:mt-5 mx-auto md:mx-0">
-            Snap up the right answers before the pond catches up.
-          </p>
 
           <div class="menu-actions mt-5 sm:mt-7">
             <button id="start-game-btn" class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">

@@ -97,29 +97,13 @@
   min-width: 0;
 }
 
-.menu-kicker {
-  color: rgba(255, 247, 198, 0.82);
-  font-size: clamp(0.72rem, 1.5vw, 0.95rem);
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .menu-title {
+  display: inline-block;
   max-width: 9ch;
   font-size: clamp(3.25rem, 10vw, 6.8rem);
   font-weight: 900;
   line-height: 0.9;
   text-wrap: balance;
-}
-
-.menu-tagline {
-  max-width: 28rem;
-  color: rgba(255, 247, 198, 0.92);
-  font-size: clamp(1rem, 2vw, 1.35rem);
-  font-weight: 700;
-  line-height: 1.35;
-  text-shadow: 0 2px 4px rgba(5, 31, 36, 0.34);
 }
 
 .menu-actions {
