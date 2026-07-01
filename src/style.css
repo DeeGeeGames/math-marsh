@@ -315,33 +315,48 @@
 .hud-bottom {
   justify-content: flex-start;
   background: transparent;
-  padding-left: max(env(safe-area-inset-left, 0px), 18px);
-  padding-right: max(env(safe-area-inset-right, 0px), 18px);
+  padding: 0 max(env(safe-area-inset-right, 0px), 28px) max(env(safe-area-inset-bottom, 0px), 24px) max(env(safe-area-inset-left, 0px), 28px);
+}
+
+#canvas-container {
+  margin-bottom: clamp(6rem, 10vh, 8rem);
 }
 
 .input-prompts-slot {
   display: flex;
-  justify-content: center;
-  margin-top: 14px;
-}
-
-#menu-fullscreen-btn + .input-prompts-slot {
-  position: absolute;
-  left: max(env(safe-area-inset-left, 0px), 14px);
-  right: max(env(safe-area-inset-right, 0px), 14px);
-  bottom: max(env(safe-area-inset-bottom, 0px), 14px);
-  margin-top: 0;
+  position: fixed;
+  left: max(env(safe-area-inset-left, 0px), 28px);
+  right: max(env(safe-area-inset-right, 0px), 28px);
+  bottom: max(env(safe-area-inset-bottom, 0px), 24px);
+  z-index: 20;
+  justify-content: flex-start;
   pointer-events: none;
 }
 
 #bottom-hud .input-prompts-slot {
-  margin-top: 0;
+  position: static;
   width: 100%;
+  z-index: auto;
+}
+
+#game-over-screen .input-prompts-slot,
+#pause-screen .input-prompts-slot {
+  position: static;
+  width: 100%;
+  z-index: auto;
+  justify-content: center;
+  margin-top: 24px;
 }
 
 #bottom-hud .input-prompts-slot,
 #bottom-hud .input-prompts-bar {
   justify-content: flex-start;
+}
+
+#game-over-screen .input-prompts-bar,
+#pause-screen .input-prompts-bar {
+  justify-content: center;
+  max-width: 100%;
 }
 
 #bottom-hud #hints-display,
@@ -350,35 +365,61 @@
 }
 
 .input-prompts-bar {
+  --input-prompt-gap: 10px;
+  --input-prompt-min-height: 48px;
+  --input-prompt-font-size: 1.05rem;
+  --input-prompt-glyph-size: 44px;
+  --input-prompt-keycap-min-width: 48px;
+  --input-prompt-keycap-height: 40px;
+  --input-prompt-keycap-padding: 0 12px;
+  --input-prompt-keycap-font-size: 0.95rem;
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 8px 14px;
-  max-width: min(92vw, 720px);
+  justify-content: flex-start;
+  gap: 10px 18px;
+  max-width: min(92vw, 860px);
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 247, 198, 0.34);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(18, 52, 59, 0.86), rgba(5, 31, 36, 0.76)),
+    var(--panel-gradient-strong);
+  box-shadow:
+    0 12px 24px rgba(5, 31, 36, 0.32),
+    inset 0 1px 0 rgba(255, 247, 198, 0.16);
   color: rgba(255, 247, 198, 0.92);
-  text-shadow: 0 1px 2px rgba(5, 31, 36, 0.45);
+  text-shadow: 0 2px 3px rgba(5, 31, 36, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 #bottom-hud #hints-display {
+  opacity: 1;
   text-align: left;
+}
+
+#bottom-hud .input-prompts-bar {
+  --input-prompt-gap: 12px;
+  --input-prompt-min-height: 54px;
+  --input-prompt-font-size: 1.15rem;
+  --input-prompt-glyph-size: 50px;
+  --input-prompt-keycap-min-width: 54px;
+  --input-prompt-keycap-height: 46px;
+  --input-prompt-keycap-padding: 0 14px;
+  --input-prompt-keycap-font-size: 1.05rem;
 }
 
 .input-prompt {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 28px;
-  font-size: 0.78rem;
+  gap: var(--input-prompt-gap);
+  min-height: var(--input-prompt-min-height);
+  font-size: var(--input-prompt-font-size);
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-}
-
-#bottom-hud .input-prompt {
-  gap: 8px;
-  min-height: 38px;
-  font-size: 1rem;
 }
 
 .input-prompt-glyphs {
@@ -389,39 +430,27 @@
 
 .input-prompt-glyph {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: var(--input-prompt-glyph-size);
+  height: var(--input-prompt-glyph-size);
   object-fit: contain;
-  filter: drop-shadow(0 1px 1px rgba(5, 31, 36, 0.38));
-}
-
-#bottom-hud .input-prompt-glyph {
-  width: 34px;
-  height: 34px;
+  filter: drop-shadow(0 2px 2px rgba(5, 31, 36, 0.5));
 }
 
 .input-prompt-keycap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  height: 24px;
-  padding: 0 7px;
-  border-radius: 5px;
+  min-width: var(--input-prompt-keycap-min-width);
+  height: var(--input-prompt-keycap-height);
+  padding: var(--input-prompt-keycap-padding);
+  border-radius: 8px;
   border: 1px solid rgba(18, 52, 59, 0.34);
   background: rgba(255, 247, 198, 0.92);
   color: var(--ink);
   box-shadow: 0 2px 0 rgba(5, 31, 36, 0.28);
   text-shadow: none;
-  font-size: 0.68rem;
+  font-size: var(--input-prompt-keycap-font-size);
   font-weight: 800;
-}
-
-#bottom-hud .input-prompt-keycap {
-  min-width: 38px;
-  height: 34px;
-  padding: 0 10px;
-  font-size: 0.9rem;
 }
 
 .input-prompt-label {
@@ -429,24 +458,38 @@
 }
 
 @media (max-width: 520px) {
+  .input-prompts-slot {
+    left: max(env(safe-area-inset-left, 0px), 14px);
+    right: max(env(safe-area-inset-right, 0px), 14px);
+    bottom: max(env(safe-area-inset-bottom, 0px), 14px);
+  }
+
+  .hud-bottom {
+    padding: 0 max(env(safe-area-inset-right, 0px), 14px) max(env(safe-area-inset-bottom, 0px), 14px) max(env(safe-area-inset-left, 0px), 14px);
+  }
+
   .input-prompts-bar {
-    gap: 6px 10px;
+    --input-prompt-min-height: 38px;
+    --input-prompt-font-size: 0.88rem;
+    --input-prompt-glyph-size: 34px;
+    --input-prompt-keycap-min-width: 38px;
+    --input-prompt-keycap-height: 32px;
+    --input-prompt-keycap-padding: 0 8px;
+    --input-prompt-keycap-font-size: 0.8rem;
+
+    gap: 8px 12px;
+    padding: 8px 10px;
   }
 
-  .input-prompt {
-    font-size: 0.7rem;
-  }
-
-  .input-prompt-glyph {
-    width: 22px;
-    height: 22px;
-  }
-
-  .input-prompt-keycap {
-    height: 22px;
-    min-width: 26px;
-    padding: 0 6px;
-    font-size: 0.62rem;
+  #bottom-hud .input-prompts-bar {
+    --input-prompt-gap: 8px;
+    --input-prompt-min-height: 42px;
+    --input-prompt-font-size: 0.92rem;
+    --input-prompt-glyph-size: 38px;
+    --input-prompt-keycap-min-width: 42px;
+    --input-prompt-keycap-height: 36px;
+    --input-prompt-keycap-padding: 0 10px;
+    --input-prompt-keycap-font-size: 0.86rem;
   }
 }
 

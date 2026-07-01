@@ -188,6 +188,8 @@ function openSettings(): void {
   void gameEngine.pushScreen('settings', { returnTo });
 }
 
+// TODO: Make prompt placement explicit here, e.g. viewport / hud / panel,
+// instead of relying on screen IDs and parent selectors in CSS.
 const inputPromptsSlot = (): string => '<div class="input-prompts-slot" data-input-prompts></div>';
 
 const menuSprite = (className: string, imageSrc: string): string =>
