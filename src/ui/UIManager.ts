@@ -526,22 +526,33 @@ const SCREENS: Record<UIScreen, ScreenSpec> = {
     id: 'game-over-screen',
     className: `${OVERLAY_BASE} app-background`,
     html: `
-      <div class="overlay-panel text-center max-w-sm md:max-w-md px-6 py-6 sm:py-8">
-        <h1 class="game-over-title text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 md:mb-8 drop-shadow-lg animate-pulse">
-          💀 GAME OVER
-        </h1>
+      <div class="game-over-layout w-[min(92vw,540px)] text-center">
+        <div class="game-over-shell px-5 sm:px-7 md:px-9 py-6 sm:py-8">
+          <div class="game-over-emblem" aria-hidden="true">
+            <span class="game-over-ripple"></span>
+            <span class="game-over-lily"></span>
+          </div>
 
-        <div id="final-score" class="final-score text-xl sm:text-2xl md:text-3xl mb-6 sm:mb-8 font-bold drop-shadow-md">
-          Final Score: 0
-        </div>
+          <h1 class="game-over-title drop-shadow-lg">
+            Game Over
+          </h1>
 
-        <div class="flex flex-col gap-4 md:gap-5 mt-8">
-          <button id="play-again-btn" class="btn-success ${BTN_CHROME} ${BTN_SIZE.lg} w-full">
-            🔄 Play Again
-          </button>
-          <button id="main-menu-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md} w-full">
-            🏠 Main Menu
-          </button>
+          <div id="final-score" class="final-score mt-4 sm:mt-5 text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-md" aria-live="polite">
+            Final Score: 0
+          </div>
+
+          <p class="game-over-message mt-4 sm:mt-5 text-base sm:text-lg">
+            The pond goes quiet. Try another run.
+          </p>
+
+          <div class="game-over-actions mt-6 sm:mt-8">
+            <button id="play-again-btn" class="btn-success ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
+              Play Again
+            </button>
+            <button id="main-menu-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+              Main Menu
+            </button>
+          </div>
         </div>
         ${inputPromptsSlot()}
       </div>
