@@ -1,3 +1,4 @@
+- The project targets mobile, desktop, and couch/TV play, with couch/TV as the primary target. Make UI, input, layout, readability, and other presentation decisions accordingly: default to gamepad-friendly flows, readable text at TV distance, clear focus states, and minimal reliance on precision pointer or keyboard input.
 - For work that touches ECS architecture, systems, components, resources, screens, assets, input, timers, tweens, coroutines, rendering, collision, or plugins, use the ECSpresso skill when it is available.
 - Prefer ECSpresso framework paths before custom application code:
 	- Use plugins and plugin defaults for feature grouping and screen-scoped systems.
