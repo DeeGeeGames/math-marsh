@@ -4,13 +4,12 @@ A modern educational math game inspired by the classic "Number Munchers", built 
 
 ## 🎮 Game Features
 
-- **Grid-based Movement**: Classic Number Munchers gameplay with WASD/Arrow key controls
-- **AI Enemies**: Four different enemy behaviors (chase, patrol, random, guard)
-- **Math Problem Generation**: Dynamic problems with configurable difficulty levels
-- **Progressive Difficulty**: Automatic difficulty scaling based on player performance
-- **Professional UI**: Modern, responsive interface with accessibility support
-- **Performance Monitoring**: Built-in FPS tracking and optimization
-- **High Score Persistence**: Local storage for high scores
+- **Grid-based Movement**: Classic Number Munchers-style movement with keyboard, gamepad, and optional touch controls
+- **AI Enemies**: Lizard, spider, and frog enemies with chase, patrol, random, and guard behaviors
+- **Equation Gameplay**: Addition, subtraction, multiplication, division, and mixed-operation modes
+- **Adaptive Problem Prompts**: Alternates between selecting results and selecting operands as levels advance
+- **Screen-based UI**: Menu, mode selection, settings, pause, level-complete, and game-over flows backed by ECSpresso screens
+- **Canvas Presentation**: Pond board rendering, sprite-sheet character animation, equation feedback, and damage/level-complete effects
 
 ## 🏗️ Architecture
 
@@ -20,22 +19,23 @@ A modern educational math game inspired by the classic "Number Munchers", built 
 - **System Priorities**: Optimized execution order for performance
 
 ### Core Systems
-- **Input System** (Priority 100): Handles player input
-- **Movement System** (Priority 90): Processes entity movement
-- **AI System** (Priority 85): Manages enemy behaviors
-- **Collision System** (Priority 70): Detects and handles collisions
-- **UI System** (Priority 50): Updates user interface
-- **Problem Management** (Priority 30): Spawns and manages math problems
-- **Render System** (Priority 10): Handles canvas rendering
+- **Movement System**: Processes queued player movement
+- **AI System**: Chooses enemy movement and web placement behavior
+- **Collision System**: Handles enemy, frog tongue, spider web, and equation selection interactions
+- **Problem Management System**: Populates and advances equation boards
+- **Sprite/Animation Systems**: Drive player, enemy, frog tongue, tween, and shake presentation
+- **UI/Input Prompt Systems**: Keep DOM HUD, menu focus, and controller glyph prompts in sync
+- **Render System**: Draws the board, entities, effects, and level-complete overlay on Canvas2D
 
 ### Key Components
 - **Position**: Entity coordinates
 - **Renderable**: Visual representation
-- **Player**: Player-specific data (score, lives, input state)
+- **Player**: Player-specific data (score, lives, death state)
 - **Enemy**: AI behavior configuration
 - **MathProblem**: Problem data and correctness
 - **Collider**: Collision detection bounds
 - **Health**: Life and invulnerability system
+- **Timers / Tweens / Coroutines**: ECSpresso scripting-plugin components for delayed effects and animations
 
 ## 🚀 Getting Started
 
@@ -46,7 +46,7 @@ A modern educational math game inspired by the classic "Number Munchers", built 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd math
+cd math-game
 
 # Install dependencies
 bun install
@@ -63,76 +63,64 @@ bun run preview
 
 ## 🎯 Gameplay
 
-1. **Navigate** the grid using WASD or Arrow keys
-2. **Collect** green squares (correct answers) to increase your score
-3. **Avoid** red enemies that patrol the grid
-4. **Survive** as long as possible while answering math problems
-5. **Progress** through difficulty levels as your score increases
+1. **Choose** a math mode and difficulty from the menu
+2. **Navigate** the lily-pad grid using keyboard, gamepad, or touch controls
+3. **Select** answer tiles with Space, Enter, or the primary gamepad button
+4. **Avoid** enemies, frog tongues, and spider webs while solving equations
+5. **Clear** enough prompts to advance to the next level
 
 ### Controls
-- **WASD** or **Arrow Keys**: Move player
-- **ESC**: Pause/Resume game
+- **WASD / Arrow Keys / D-pad / left stick**: Move
+- **Space / Enter / primary gamepad button**: Eat or select
+- **Escape / Start**: Pause or go back
 - **F1**: Open settings
+- **Touch controls**: Optional on-screen D-pad and Eat button, configurable in settings
 
 ## 🛠️ Development
 
 ### Project Structure
 ```
 src/
-├── ecs/                 # ECS implementation
-│   ├── components/      # Component definitions
-│   ├── systems/         # Game systems
-│   └── Engine.ts        # ECSpresso engine setup
-├── game/                # Game-specific logic
-│   ├── UIManager.ts     # User interface management
-│   ├── GameInitializer.ts # Game setup and initialization
-│   ├── GameStateManager.ts # State management
-│   ├── MathProblemGenerator.ts # Math problem creation
-│   ├── UIConstants.ts   # UI styling constants
-│   └── config.ts        # Game configuration
-├── utils/               # Utility functions
-│   ├── domUtils.ts      # DOM manipulation helpers
-│   └── performance.ts   # Performance monitoring
-├── assets/              # Game assets
-└── style.css           # Global styles
+├── assets/              # Runtime images, sprite sheets, and input glyph SVGs
+├── ecs/                 # ECSpresso engine setup, types, entities, queries, plugins, and systems
+│   └── systems/render/  # Canvas2D render helpers by visual concern
+├── math/                # Equation generation, selection, and tests
+├── types/               # Small shared type definitions
+├── ui/                  # DOM screen specs, HUD, input prompts, fullscreen, and touch controls
+├── config.ts            # Game balance, sizing, color, enemy, render, and animation constants
+├── main.ts              # Browser entry point
+└── style.css            # Global and screen-specific styles
 ```
 
 ### Configuration
-Game settings can be modified in `src/game/config.ts`:
+Game settings can be modified in `src/config.ts`:
 - Grid dimensions
 - Entity sizes and colors
 - Game mechanics (lives, scoring)
-- Performance settings
+- Enemy behavior tuning
+- Render margins and animation timing
 
 ### Adding New Features
-1. **Components**: Define in `src/ecs/Engine.ts` interface
+1. **Components and resources**: Define in `src/ecs/types.ts`, then register them through `src/ecs/Engine.ts`
 2. **Systems**: Create in `src/ecs/systems/` directory
-3. **Entities**: Use `EntityFactory` for consistent creation
-4. **UI**: Modify `UIManager.ts` or create new UI components
+3. **Entities**: Add factories in `src/ecs/entities.ts` and prefer ECSpresso command buffers from systems
+4. **Screens/UI**: Add screen markup and wiring in `src/ui/screenSpecs.ts`; keep routing in `src/ui/UIManager.ts`
+5. **Rendering**: Add focused helpers under `src/ecs/systems/render/` and compose draw order in `RenderSystem.ts`
 
 ## 🎨 Customization
 
 ### Visual Themes
 Modify colors and styling in:
-- `src/game/UIConstants.ts` - UI color scheme
-- `src/game/config.ts` - Entity colors
+- `src/config.ts` - Entity colors and render constants
 - `src/style.css` - CSS custom properties
+- `src/ecs/systems/render/` - Canvas board and effect drawing
 
 ### Game Balance
 Adjust difficulty in:
-- `src/game/config.ts` - Core game settings
-- `src/game/MathProblemGenerator.ts` - Problem difficulty
+- `src/config.ts` - Core game, enemy, and animation settings
+- `src/math/equations.ts` - Equation ranges and operation rules
+- `src/ecs/systemConfigs.ts` - System priorities, spawn timing, and problem counts
 - `src/ecs/systems/AISystem.ts` - Enemy behavior
-
-## 📊 Performance
-
-The game includes built-in performance monitoring:
-- **FPS Tracking**: Real-time frame rate monitoring
-- **System Timing**: Execution time for each system
-- **Entity Counting**: Memory usage tracking
-- **Performance Warnings**: Automatic detection of performance issues
-
-Access performance data via the browser console or the `PerformanceMonitor` class.
 
 ## 🧪 Testing
 
@@ -209,13 +197,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - ✅ Core gameplay mechanics
 - ✅ AI enemy system
 - ✅ Math problem generation
-- ✅ Professional UI/UX
-- ✅ Performance optimization
-- ✅ State management
+- ✅ ECSpresso screen flow
+- ✅ Keyboard, gamepad, and touch controls
+- ✅ Sprite-sheet character animation
+- ✅ Pond-board visual presentation
 
 ### Planned Features
 - 🎵 Audio system (sound effects, background music)
-- ✨ Visual effects and animations
+- 🏆 High score persistence
 - 🏆 Achievement system
 - 💾 Save game functionality
 - 🌐 Online leaderboards
