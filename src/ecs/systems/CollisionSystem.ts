@@ -23,9 +23,11 @@ import {
   evaluateEquationSelection,
 } from '../../math/equations';
 import type { BaseEquationModeState, EquationFeedbackKind, EquationModeState } from '../types';
+import { playSound } from '../../audio/audio';
 
 const triggerGameOver = (ecs: GameEngine, player: PlayerEntityWithHealth, reason: string): void => {
   console.log(reason);
+  playSound('gameOver');
   player.components.player.gameOverPending = true;
   startDeathAnimation(ecs, player.id, player.components.position.rotation ?? 0);
   player.components.timers.deathDelay = createTimer(ANIMATION_CONFIG.DEATH.DURATION / 1000, {
@@ -220,6 +222,7 @@ function handleEquationProblemSelection(
   };
 
   if (selectedProblemIds.length < equationMode.operandsRequired) {
+    playSound('answerSelect');
     ecs.setResource('equationMode', pendingMode);
     return;
   }
@@ -229,10 +232,12 @@ function handleEquationProblemSelection(
   const isCorrect = evaluateEquationSelection(pendingMode, selectedValues);
 
   if (!isCorrect) {
+    playSound('incorrect');
     handleIncorrectEquationSelection(ecs, player, pendingMode);
     return;
   }
 
+  playSound('correct');
   const pointsEarned = pendingMode.target * problem.components.mathProblem.difficulty;
   const consumptionStartedAt = performance.now();
   selectedProblems.forEach(selectedProblem => {
@@ -295,6 +300,7 @@ function handlePlayerEnemyCollision(ecs: GameEngine, player: PlayerEntityWithHea
   if (isInvulnerable(player)) return;
 
   console.log('Player hit by enemy!');
+  playSound('damage');
 
   const livesRemaining = applyPlayerDamage(ecs, player, {
     animation: ANIMATION_CONFIG.SHAKE.DAMAGE,
@@ -319,6 +325,7 @@ function handlePlayerSpiderWebCollision(
 ): void {
   const freezeTime = spiderWeb.components.spiderWeb.freezeTime;
   console.log(`🕸️ Player caught in spider web! Freezing for ${freezeTime}ms`);
+  playSound('web');
 
   player.components.timers.freeze = createTimer(freezeTime / 1000);
   ecs.commands.removeEntity(spiderWeb.id);
@@ -343,6 +350,7 @@ function handlePlayerTongueCollision(
   if (playerComp.lives <= 0) return;
 
   console.log(`🐸 Player hit by frog tongue! Taking damage.`);
+  playSound('damage');
 
   const livesRemaining = applyPlayerDamage(ecs, player, {
     animation: ANIMATION_CONFIG.SHAKE.DAMAGE,

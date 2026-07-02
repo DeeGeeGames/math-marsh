@@ -4,6 +4,7 @@ import { GAME_CONFIG, MOVEMENT_CONFIG } from '../../config';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { playerMovementQuery } from '../queries';
 import { clamp, gridToPixel } from '../gameUtils';
+import { playSound } from '../../audio/audio';
 
 type Direction = Extract<GameAction, 'up' | 'down' | 'left' | 'right'>;
 
@@ -98,7 +99,9 @@ export function addMovementSystemToEngine(): void {
           direction => inputState.actions.justActivated(direction),
         );
         if (pressedDirection) {
-          pf.breadcrumbs = updateBreadcrumbs(pf, pressedDirection);
+          const breadcrumbs = updateBreadcrumbs(pf, pressedDirection);
+          if (breadcrumbs !== pf.breadcrumbs) playSound('move');
+          pf.breadcrumbs = breadcrumbs;
         }
       }
 

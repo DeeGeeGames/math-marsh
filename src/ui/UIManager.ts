@@ -30,6 +30,13 @@ import {
   DEFAULT_FOCUS_SELECTOR,
   type UIScreen,
 } from './screenTypes';
+import {
+  getAudioSettings,
+  playSound,
+  setAudioScene,
+  setAudioSettings,
+  unlockAudio,
+} from '../audio/audio';
 
 export { gameplayLevelLabel };
 
@@ -65,6 +72,7 @@ const wireFullscreenButton = (button: HTMLButtonElement): void => {
 
 const startGame = (mode: GameMode, difficulty: MathDifficulty): void => {
   const engine = requireEngine();
+  playSound('uiSelect');
   engine.setResource('mathDifficulty', difficulty);
   engine.setResource('gameMode', mode);
   void engine.setScreen('playing', {
@@ -74,14 +82,17 @@ const startGame = (mode: GameMode, difficulty: MathDifficulty): void => {
 };
 
 function returnToPreviousScreen(): void {
+  playSound('uiBack');
   void requireEngine().popScreen();
 }
 
 function goToMenu(): void {
+  playSound('uiBack');
   void requireEngine().setScreen('menu', {});
 }
 
 function openModeSelect(): void {
+  playSound('uiSelect');
   void requireEngine().setScreen('modeSelect', {});
 }
 
@@ -89,10 +100,12 @@ function openSettings(): void {
   const engine = requireEngine();
   const returnTo = engine.getCurrentScreen();
   if (returnTo === null || returnTo === 'settings' || returnTo === 'levelComplete') return;
+  playSound('uiSelect');
   void engine.pushScreen('settings', { returnTo });
 }
 
 function pauseGame(): void {
+  playSound('uiSelect');
   void requireEngine().pushScreen('paused', {});
 }
 
@@ -111,6 +124,7 @@ const SCREENS = createScreenSpecs({
   pauseGame,
   wireFullscreenButton,
   wireTouchControlsSetting: (root) => wireTouchControlsSetting(root, requestCanvasResize),
+  wireAudioSettings: (root) => wireAudioSettings(root),
 });
 
 const gameContainer = createGameContainer();
@@ -122,6 +136,10 @@ applyTouchControlsVisibility();
 window.matchMedia('(hover: none) and (pointer: coarse)').addEventListener('change', () => {
   applyTouchControlsVisibility();
   requestCanvasResize();
+});
+
+(['pointerdown', 'keydown'] as const).forEach(eventName => {
+  document.addEventListener(eventName, unlockAudio, { once: true });
 });
 
 const screenElements = new Map<UIScreen, HTMLElement>();
@@ -168,6 +186,7 @@ export const showScreen = (screen: UIScreen): void => {
   const root = screenElements.get(screen) ?? createScreen(screen);
   root.style.display = 'flex';
   currentScreen = screen;
+  setAudioScene(screen === 'playing' ? 'game' : 'title');
   if (screen === 'modeSelect') resetModeSelect(root);
   // Gameplay screen is driven by inputState, not DOM focus — leaving focus
   // there would show a focus ring on the pause button during play.
@@ -230,3 +249,23 @@ const keyActions: Record<string, (event: KeyboardEvent) => void> = {
 document.addEventListener('keydown', (event) => {
   keyActions[event.code]?.(event);
 });
+
+function wireAudioSettings(root: ParentNode): void {
+  const effects = root.querySelector<HTMLInputElement>('#sound-effects');
+  const music = root.querySelector<HTMLInputElement>('#background-music');
+  if (!effects || !music) return;
+
+  const settings = getAudioSettings();
+  effects.checked = settings.soundEffects;
+  music.checked = settings.backgroundMusic;
+
+  const updateSettings = (): void => {
+    setAudioSettings({
+      soundEffects: effects.checked,
+      backgroundMusic: music.checked,
+    });
+  };
+
+  effects.addEventListener('change', updateSettings);
+  music.addEventListener('change', updateSettings);
+}

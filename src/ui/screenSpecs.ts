@@ -33,6 +33,7 @@ export type ScreenSpecActions = {
   openSettings: () => void;
   pauseGame: () => void;
   wireFullscreenButton: (button: HTMLButtonElement) => void;
+  wireAudioSettings: (root: ParentNode) => void;
   wireTouchControlsSetting: (root: ParentNode) => void;
 };
 
@@ -357,6 +358,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
     ],
     wire: (root): void => {
       $(root, '#back-to-menu-btn').addEventListener('click', actions.returnToPreviousScreen);
+      actions.wireAudioSettings(root);
       actions.wireTouchControlsSetting(root);
     },
     onCancel: actions.returnToPreviousScreen,

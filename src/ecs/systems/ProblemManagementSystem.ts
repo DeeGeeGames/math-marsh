@@ -19,6 +19,7 @@ import {
 } from '../queries';
 import { PROBLEM_CONFIG, SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { Resources } from '../types';
+import { playSound } from '../../audio/audio';
 
 interface ProblemPlacement {
   value: number;
@@ -201,6 +202,7 @@ function checkEquationLevelCompletion(
 
   const nextLevel = currentLevel + 1;
   console.log(`Equation level ${currentLevel} completed. Advancing to level ${nextLevel}`);
+  playSound('levelComplete');
   delete player.components.timers.problemSpawn;
   void ecs.pushScreen('levelComplete', {
     completedLevel: currentLevel,
