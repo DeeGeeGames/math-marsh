@@ -1,6 +1,6 @@
 import { gameEngine, type GameEngine } from '../Engine';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
-import { activePlayerGridCell, positionInGridCell, sameGridPosition } from '../gameUtils';
+import { activePlayerGridCell, pixelToGrid, positionInGridCell, sameGridPosition } from '../gameUtils';
 import { collectGridCellKeys, positionedEntityGridCellKey } from '../lilyPads';
 import {
   playerWithHealthQuery,
@@ -47,6 +47,35 @@ const startDamageReaction = (
 ): void => {
   startShake(ecs, player.id, animation.INTENSITY, animation.DURATION);
   player.components.timers.damageFeedback = createTimer(animation.DURATION / 1000);
+};
+
+type PlayerDamageOptions = {
+  animation: { readonly INTENSITY: number; readonly DURATION: number };
+  healthDamage?: number;
+  invulnerability?: boolean;
+};
+
+const applyPlayerDamage = (
+  ecs: GameEngine,
+  player: PlayerEntityWithHealth,
+  {
+    animation,
+    healthDamage = 0,
+    invulnerability = false,
+  }: PlayerDamageOptions,
+): number => {
+  player.components.player.lives -= 1;
+  if (healthDamage !== 0) {
+    player.components.health.current -= healthDamage;
+  }
+
+  startDamageReaction(ecs, player, animation);
+
+  if (invulnerability) {
+    startInvulnerability(player);
+  }
+
+  return player.components.player.lives;
 };
 
 const createEquationFeedback = (
@@ -244,10 +273,9 @@ function handleIncorrectEquationSelection(
   player: PlayerEntityWithHealth,
   equationMode: EquationModeState,
 ): void {
-  const playerComp = player.components.player;
-  playerComp.lives -= 1;
-
-  startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.WRONG_ANSWER);
+  const livesRemaining = applyPlayerDamage(ecs, player, {
+    animation: ANIMATION_CONFIG.SHAKE.WRONG_ANSWER,
+  });
 
   ecs.setResource('equationMode', {
     ...equationMode,
@@ -255,7 +283,7 @@ function handleIncorrectEquationSelection(
     feedback: createEquationFeedback('incorrect'),
   });
 
-  if (playerComp.lives <= 0) {
+  if (livesRemaining <= 0) {
     triggerGameOver(ecs, player, 'Game Over!');
   }
 }
@@ -266,21 +294,17 @@ function handleIncorrectEquationSelection(
 function handlePlayerEnemyCollision(ecs: GameEngine, player: PlayerEntityWithHealth): void {
   if (isInvulnerable(player)) return;
 
-  const playerComp = player.components.player;
-  const healthComp = player.components.health;
-
   console.log('Player hit by enemy!');
 
-  playerComp.lives -= 1;
-  healthComp.current -= 1;
+  const livesRemaining = applyPlayerDamage(ecs, player, {
+    animation: ANIMATION_CONFIG.SHAKE.DAMAGE,
+    healthDamage: 1,
+    invulnerability: true,
+  });
 
-  console.log(`Lives remaining: ${playerComp.lives}`);
+  console.log(`Lives remaining: ${livesRemaining}`);
 
-  startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.DAMAGE);
-
-  startInvulnerability(player);
-
-  if (playerComp.lives <= 0) {
+  if (livesRemaining <= 0) {
     triggerGameOver(ecs, player, 'Game Over!');
   }
 }
@@ -320,14 +344,14 @@ function handlePlayerTongueCollision(
 
   console.log(`🐸 Player hit by frog tongue! Taking damage.`);
 
-  playerComp.lives -= 1;
-  console.log(`💔 Player loses 1 life. Lives remaining: ${playerComp.lives}`);
+  const livesRemaining = applyPlayerDamage(ecs, player, {
+    animation: ANIMATION_CONFIG.SHAKE.DAMAGE,
+    invulnerability: true,
+  });
 
-  startInvulnerability(player);
+  console.log(`💔 Player loses 1 life. Lives remaining: ${livesRemaining}`);
 
-  startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.DAMAGE);
-
-  if (playerComp.lives <= 0) {
+  if (livesRemaining <= 0) {
     triggerGameOver(ecs, player, '💀 Game Over due to frog tongue attack!');
   }
 }
@@ -339,27 +363,20 @@ function checkPlayerTongueCollision(
   player: PlayerEntityWithHealth, 
   frog: FrogTongueEntity
 ): boolean {
-  const playerPos = player.components.position;
   const tongue = frog.components.frogTongue;
   
   if (tongue.phase === 'idle' || tongue.segments.length === 0) {
     return false;
   }
-  
-  try {
-    const playerGridX = Math.round(playerPos.x / GAME_CONFIG.GRID.CELL_SIZE);
-    const playerGridY = Math.round(playerPos.y / GAME_CONFIG.GRID.CELL_SIZE);
-    
-    for (const segment of tongue.segments) {
-      if (playerGridX === segment.x && playerGridY === segment.y) {
-        console.log(`🐸 Collision detected: Player at (${playerGridX}, ${playerGridY}) hit tongue segment`);
-        return true;
-      }
-    }
-    
-    return false;
-  } catch (error) {
-    console.error(`🐸 ERROR: Exception in tongue collision detection:`, error);
-    return false;
+
+  const playerGrid = pixelToGrid(player.components.position.x, player.components.position.y);
+  const hit = tongue.segments.some(segment =>
+    playerGrid.x === segment.x && playerGrid.y === segment.y
+  );
+
+  if (hit) {
+    console.log(`🐸 Collision detected: Player at (${playerGrid.x}, ${playerGrid.y}) hit tongue segment`);
   }
+
+  return hit;
 }
