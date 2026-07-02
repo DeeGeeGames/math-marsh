@@ -48,6 +48,35 @@ export const applyTouchControlsVisibility = (mode: TouchControlsMode = loadTouch
 	scheduleTouchControlsLayout();
 };
 
+const refreshTouchModeButtons = (root: ParentNode, mode: TouchControlsMode): void => {
+	const buttons = root.querySelectorAll<HTMLButtonElement>('.touch-mode-btn');
+	buttons.forEach((btn) => {
+		const isActive = btn.dataset.touchMode === mode;
+		btn.setAttribute('aria-pressed', String(isActive));
+		btn.classList.toggle('ring-2', isActive);
+		btn.classList.toggle('ring-yellow-300', isActive);
+	});
+};
+
+export const wireTouchControlsSetting = (
+	root: ParentNode,
+	onChange: () => void,
+): void => {
+	const initial = loadTouchControlsMode();
+	refreshTouchModeButtons(root, initial);
+	const buttons = root.querySelectorAll<HTMLButtonElement>('.touch-mode-btn');
+	buttons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const next = btn.dataset.touchMode;
+			if (!isMode(next)) return;
+			saveTouchControlsMode(next);
+			applyTouchControlsVisibility(next);
+			refreshTouchModeButtons(root, next);
+			onChange();
+		});
+	});
+};
+
 const px = (value: number): string => `${Math.max(0, Math.floor(value))}px`;
 
 const setStyleValue = (root: HTMLElement, name: string, value: number): void => {
@@ -175,5 +204,3 @@ export const bindTouchControls = (root: ParentNode): void => {
 	// straddle a frame so the input plugin's per-frame poll observes the edge.
 	bindButton(findButton(root, 'touch-eat'), 'eat', { repeat: false });
 };
-
-export { isMode };
