@@ -1,4 +1,4 @@
-import { gameEngine } from '../ecs/Engine';
+import type { GameEngine } from '../ecs/Engine';
 import type { GameMode, MathDifficulty, SettingsReturnScreen } from '../ecs/types';
 import {
   applyTouchControlsVisibility,
@@ -34,6 +34,16 @@ import {
 export { gameplayLevelLabel };
 
 let currentPromptPlatform: InputPromptPlatform = 'keyboard';
+let uiEngine: GameEngine | undefined;
+
+export function initializeUI(engine: GameEngine): void {
+  uiEngine = engine;
+}
+
+const requireEngine = (): GameEngine => {
+  if (!uiEngine) throw new Error('UIManager engine has not been initialized');
+  return uiEngine;
+};
 
 const syncFullscreenButton = (button: HTMLButtonElement): void => {
   const active = isFullscreenActive();
@@ -54,38 +64,41 @@ const wireFullscreenButton = (button: HTMLButtonElement): void => {
 };
 
 const startGame = (mode: GameMode, difficulty: MathDifficulty): void => {
-  gameEngine.setResource('mathDifficulty', difficulty);
-  gameEngine.setResource('gameMode', mode);
-  void gameEngine.setScreen('playing', {
+  const engine = requireEngine();
+  engine.setResource('mathDifficulty', difficulty);
+  engine.setResource('gameMode', mode);
+  void engine.setScreen('playing', {
     level: 1,
     isFreshGame: true,
   });
 };
 
 function returnToPreviousScreen(): void {
-  void gameEngine.popScreen();
+  void requireEngine().popScreen();
 }
 
 function goToMenu(): void {
-  void gameEngine.setScreen('menu', {});
+  void requireEngine().setScreen('menu', {});
 }
 
 function openModeSelect(): void {
-  void gameEngine.setScreen('modeSelect', {});
+  void requireEngine().setScreen('modeSelect', {});
 }
 
 function openSettings(): void {
-  const returnTo = gameEngine.getCurrentScreen();
+  const engine = requireEngine();
+  const returnTo = engine.getCurrentScreen();
   if (returnTo === null || returnTo === 'settings' || returnTo === 'levelComplete') return;
-  void gameEngine.pushScreen('settings', { returnTo });
+  void engine.pushScreen('settings', { returnTo });
 }
 
 function pauseGame(): void {
-  void gameEngine.pushScreen('paused', {});
+  void requireEngine().pushScreen('paused', {});
 }
 
 function replayGame(): void {
-  startGame(gameEngine.getResource('gameMode'), gameEngine.getResource('mathDifficulty'));
+  const engine = requireEngine();
+  startGame(engine.getResource('gameMode'), engine.getResource('mathDifficulty'));
 }
 
 const SCREENS = createScreenSpecs({

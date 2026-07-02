@@ -12,7 +12,7 @@ import { addUINavigationSystemToEngine } from './systems/UINavigationSystem';
 import { addInputPromptSystemToEngine } from './systems/InputPromptSystem';
 import { gameplayPlugin } from './gameplayPlugin';
 import { playerQuery } from './queries';
-import { showScreen, showSettingsScreen, setFinalScore } from '../ui/UIManager';
+import { initializeUI, showScreen, showSettingsScreen, setFinalScore } from '../ui/UIManager';
 import { createEquationModeState } from '../math/equations';
 import { addLevelCompleteSystemToEngine } from './systems/LevelCompleteSystem';
 
@@ -53,7 +53,7 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
     if (existingPlayer) gameEngine.removeEntity(existingPlayer.id);
 
     const playerPixelPos = gridToPixel(3, 2);
-    createPlayer(playerPixelPos.x, playerPixelPos.y);
+    createPlayer(gameEngine, playerPixelPos.x, playerPixelPos.y);
 
     gameEngine.setResource('enemySpawn', { index: 0 });
   }
@@ -119,6 +119,7 @@ const registerSystems = async (): Promise<void> => {
 };
 
 export const initializeGame = async (): Promise<void> => {
+  initializeUI(gameEngine);
   await registerSystems();
   setupScreenHooks();
   await gameEngine.setScreen('menu', {});

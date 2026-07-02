@@ -1,4 +1,4 @@
-import { gameEngine, type GameEngine } from './Engine';
+import type { GameEngine } from './Engine';
 import { GAME_CONFIG } from '../config';
 import type { AIBehavior, EnemyType } from '../types/shared';
 import type { AllComponents } from './types';
@@ -97,8 +97,8 @@ const mathProblemComponents = (
 
 // Player is unscoped so it survives the screen-exit cleanup that runs on
 // level transitions, preserving score and lives across levels.
-export const createPlayer = (x: number, y: number): { id: number } =>
-  gameEngine.spawn(playerComponents(x, y));
+export const createPlayer = (ecs: GameEngine, x: number, y: number): { id: number } =>
+  ecs.spawn(playerComponents(x, y));
 
 export const createEnemy = (
   commands: GameEngine['commands'],
