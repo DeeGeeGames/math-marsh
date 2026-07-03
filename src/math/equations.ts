@@ -57,12 +57,17 @@ const randomValue = (range: EquationValueRange): number =>
 const valuesInRange = (range: EquationValueRange): number[] =>
   Array.from({ length: range.max - range.min + 1 }, (_, index) => range.min + index);
 
+function difficultyGrowthStepsForLevel(level: number): number {
+  return Math.floor((level - 1) / 2);
+}
+
 const rangeMax = (
   difficulty: MathDifficulty,
   level: number,
   config: Record<MathDifficulty, { start: number; growth: number; cap?: number }>,
 ): number => {
-  const uncapped = config[difficulty].start + (level - 1) * config[difficulty].growth;
+  const difficultyGrowthSteps = difficultyGrowthStepsForLevel(level);
+  const uncapped = config[difficulty].start + difficultyGrowthSteps * config[difficulty].growth;
   const cap = config[difficulty].cap;
   return cap ? Math.min(cap, uncapped) : uncapped;
 };

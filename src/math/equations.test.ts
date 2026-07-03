@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { GameMode, MathDifficulty } from '../ecs/types';
+import type { EquationOperation, GameMode, MathDifficulty } from '../ecs/types';
 import {
   createEquationModeState,
   createRandomEquationCandidate,
@@ -41,6 +41,15 @@ const candidateTargetsFor = (
     const state = createEquationModeState(level, difficulty, mode);
     return createRandomEquationCandidate(state).target;
   });
+
+const expectPairedDifficultyGrowth = (
+  difficulty: MathDifficulty,
+  operation: EquationOperation,
+): void => {
+  expect(equationOperandRanges(1, difficulty, operation)).toEqual(equationOperandRanges(2, difficulty, operation));
+  expect(equationOperandRanges(3, difficulty, operation)).toEqual(equationOperandRanges(4, difficulty, operation));
+  expect(equationOperandRanges(2, difficulty, operation)).not.toEqual(equationOperandRanges(3, difficulty, operation));
+};
 
 describe('equation generation', () => {
   test('each operation can produce valid odd-level result prompts', () => {
@@ -123,14 +132,19 @@ describe('equation generation', () => {
     });
   });
 
+  test('operand ranges keep the same difficulty across each prompt pair', () => {
+    expectPairedDifficultyGrowth('medium', 'add');
+    expectPairedDifficultyGrowth('expert', 'multiply');
+  });
+
   test('expert ranges grow linearly without caps', () => {
     expect(equationOperandRanges(5, 'expert', 'add')).toEqual({
-      left: { min: 1, max: 60 },
-      right: { min: 1, max: 60 },
+      left: { min: 1, max: 40 },
+      right: { min: 1, max: 40 },
     });
     expect(equationOperandRanges(5, 'expert', 'multiply')).toEqual({
-      left: { min: 1, max: 28 },
-      right: { min: 1, max: 28 },
+      left: { min: 1, max: 20 },
+      right: { min: 1, max: 20 },
     });
   });
 
