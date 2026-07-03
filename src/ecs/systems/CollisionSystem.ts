@@ -238,13 +238,11 @@ function handleEquationProblemSelection(
   }
 
   playSound('correct');
-  const pointsEarned = pendingMode.target * problem.components.mathProblem.difficulty;
   const consumptionStartedAt = performance.now();
   selectedProblems.forEach(selectedProblem => {
     beginAnswerConsumption(ecs, selectedProblem, consumptionStartedAt);
   });
 
-  player.components.player.score += pointsEarned;
   const gameMode = ecs.getResource('gameMode');
   const mathDifficulty = ecs.getResource('mathDifficulty');
 

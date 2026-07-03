@@ -12,14 +12,14 @@ export function addUISystemToEngine(): void {
   gameEngine.addSystem('uiSystem')
     .setPriority(SYSTEM_PRIORITIES.UI)
     .addSingleton('player', playerQuery)
-    .withResources(['gameMode', 'mathDifficulty', 'currentLevel'])
-    .setProcess(({ queries, resources: { gameMode, mathDifficulty, currentLevel } }) => {
+    .withResources(['gameMode', 'mathDifficulty', 'currentLevel', 'gameplayTimeSeconds'])
+    .setProcess(({ queries, resources: { gameMode, mathDifficulty, currentLevel, gameplayTimeSeconds } }) => {
       const player = queries.player;
       if (!player) return;
 
       const playerComp = player.components.player;
       const level = gameplayLevelLabel(gameMode, mathDifficulty, currentLevel);
 
-      updateGameplayUI(playerComp.score, playerComp.lives, level);
+      updateGameplayUI(gameplayTimeSeconds, playerComp.lives, level);
     });
 }

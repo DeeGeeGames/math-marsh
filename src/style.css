@@ -608,24 +608,10 @@ button:focus-visible,
   background: rgba(15, 79, 98, 0.92);
 }
 
-.hud-chip.score {
+.hud-chip.time {
   background:
     radial-gradient(ellipse at 20% 20%, rgba(255, 247, 198, 0.2), transparent 36%),
     linear-gradient(135deg, rgba(75, 159, 59, 0.98), rgba(36, 107, 53, 0.98));
-}
-
-.hud-chip.score.score-gain {
-  animation: score-gain 520ms cubic-bezier(0.22, 1.4, 0.36, 1);
-}
-
-@keyframes score-gain {
-  0% { transform: scale(1); }
-  38% {
-    transform: scale(1.2) rotate(-2deg);
-    filter: brightness(1.28);
-    box-shadow: 0 0 22px rgba(155, 212, 94, 0.72);
-  }
-  100% { transform: scale(1); }
 }
 
 .hud-chip.lives {
@@ -782,7 +768,7 @@ button:focus-visible,
   text-wrap: balance;
 }
 
-.final-score {
+.final-time {
   display: inline-flex;
   max-width: 100%;
   min-height: 3.4rem;

@@ -30,7 +30,7 @@ A modern educational math game inspired by the classic "Number Munchers", built 
 ### Key Components
 - **Position**: Entity coordinates
 - **Renderable**: Visual representation
-- **Player**: Player-specific data (score, lives, death state)
+- **Player**: Player-specific data (lives and death state)
 - **Enemy**: AI behavior configuration
 - **MathProblem**: Problem data and correctness
 - **Collider**: Collision detection bounds
@@ -96,7 +96,7 @@ src/
 Game settings can be modified in `src/config.ts`:
 - Grid dimensions
 - Entity sizes and colors
-- Game mechanics (lives, scoring)
+- Game mechanics (lives and run timing)
 - Enemy behavior tuning
 - Render margins and animation timing
 
@@ -204,7 +204,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ### Planned Features
 - 🎵 Audio system (sound effects, background music)
-- 🏆 High score persistence
 - 🏆 Achievement system
 - 💾 Save game functionality
 - 🌐 Online leaderboards

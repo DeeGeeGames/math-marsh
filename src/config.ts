@@ -11,7 +11,6 @@ export const GAME_CONFIG = {
 
   GAMEPLAY: {
     PLAYER_LIVES: 3,
-    STARTING_SCORE: 0,
     STARTING_LEVEL: 2,
   },
 

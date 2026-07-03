@@ -10,38 +10,43 @@ const removeAnimationClassOnEnd = (
 };
 
 const gameplayHud: {
-  score?: HTMLElement;
+  time?: HTMLElement;
   lives?: HTMLElement;
   level?: HTMLElement;
-  lastScore: number;
+  lastTime: string;
   lastLives: number;
   lastLevel: string;
 } = {
-  lastScore: NaN,
+  lastTime: '',
   lastLives: NaN,
   lastLevel: '',
 };
 
+export const formatElapsedTime = (elapsedSeconds: number): string => {
+  const totalSeconds = Math.max(0, Math.floor(elapsedSeconds));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+};
+
 export const bindGameplayHud = (root: ParentNode): void => {
-  const scoreDisplay = $(root, '#score-display');
+  const timeDisplay = $(root, '#time-display');
   const livesDisplay = $(root, '#lives-display');
-  removeAnimationClassOnEnd(scoreDisplay, 'score-gain');
   removeAnimationClassOnEnd(livesDisplay, 'life-loss');
-  gameplayHud.score = scoreDisplay;
+  gameplayHud.time = timeDisplay;
   gameplayHud.lives = livesDisplay;
   gameplayHud.level = $(root, '#level-display');
 };
 
 export const updateGameplayHud = (
-  score: number,
+  elapsedSeconds: number,
   lives: number,
   level: string,
 ): void => {
-  if (gameplayHud.score && score !== gameplayHud.lastScore) {
-    const scoreIncreased = Number.isFinite(gameplayHud.lastScore) && score > gameplayHud.lastScore;
-    gameplayHud.score.textContent = `Score: ${score}`;
-    gameplayHud.score.classList.toggle('score-gain', scoreIncreased);
-    gameplayHud.lastScore = score;
+  const time = formatElapsedTime(elapsedSeconds);
+  if (gameplayHud.time && time !== gameplayHud.lastTime) {
+    gameplayHud.time.textContent = `Time: ${time}`;
+    gameplayHud.lastTime = time;
   }
   if (gameplayHud.lives && lives !== gameplayHud.lastLives) {
     const lifeLost = Number.isFinite(gameplayHud.lastLives) && lives < gameplayHud.lastLives;

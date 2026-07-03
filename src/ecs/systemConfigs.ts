@@ -51,6 +51,7 @@ export const SYSTEM_PRIORITIES = {
   ANIMATION: 75,                // Animation interpolation (after movement, before collision)
   COLLISION: 70,                // Collision detection
   EQUATION_FEEDBACK: 60,        // Delayed equation transitions after answer feedback
+  GAMEPLAY_TIME: 55,            // Run timer after gameplay state updates, before HUD
   UI: 50,                       // UI updates
   ENEMY_SPAWN: 40,              // Enemy spawning
   PROBLEM_MANAGEMENT: 30,       // Problem lifecycle

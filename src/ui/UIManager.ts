@@ -16,7 +16,7 @@ import {
   type InputPromptItem,
   type InputPromptPlatform,
 } from './inputPrompts';
-import { updateGameplayHud } from './gameplayHud';
+import { formatElapsedTime, updateGameplayHud } from './gameplayHud';
 import {
   gameplayLevelLabel,
   settingsBackLabels,
@@ -233,9 +233,9 @@ export const triggerCancel = (): void => {
 
 export const updateGameplayUI = updateGameplayHud;
 
-export const setFinalScore = (score: number): void => {
-  const el = document.getElementById('final-score');
-  if (el) el.textContent = `Final Score: ${score}`;
+export const setFinalTime = (elapsedSeconds: number): void => {
+  const el = document.getElementById('final-time');
+  if (el) el.textContent = `Final Time: ${formatElapsedTime(elapsedSeconds)}`;
 };
 
 // UI-only shortcuts. Gameplay input (movement, eat, pause) lives in the ECS input plugin.

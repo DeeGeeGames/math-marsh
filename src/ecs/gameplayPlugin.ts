@@ -2,6 +2,7 @@ import { definePlugin, type ScreenDefinition, type ScreensConfig } from 'ecspres
 import { addAISystemToEngine } from './systems/AISystem';
 import { addEnemySpawnSystemToEngine } from './systems/EnemySpawnSystem';
 import { addProblemManagementSystemToEngine } from './systems/ProblemManagementSystem';
+import { addGameplayTimeSystemToEngine } from './systems/GameplayTimeSystem';
 import { addUISystemToEngine } from './systems/UISystem';
 import { registerFrogTongueInit } from './systems/FrogTongueSystem';
 import { addMovementSystemToEngine } from './systems/MovementSystem';
@@ -32,6 +33,7 @@ export const gameplayPlugin = definePlugin('gameplay')
     addAISystemToEngine();
     addEnemySpawnSystemToEngine();
     addProblemManagementSystemToEngine();
+    addGameplayTimeSystemToEngine();
     addUISystemToEngine();
     registerFrogTongueInit();
   });

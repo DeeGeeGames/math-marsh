@@ -12,7 +12,7 @@ import { addUINavigationSystemToEngine } from './systems/UINavigationSystem';
 import { addInputPromptSystemToEngine } from './systems/InputPromptSystem';
 import { gameplayPlugin } from './gameplayPlugin';
 import { playerQuery } from './queries';
-import { initializeUI, showScreen, showSettingsScreen, setFinalScore } from '../ui/UIManager';
+import { initializeUI, showScreen, showSettingsScreen, setFinalTime } from '../ui/UIManager';
 import { createEquationModeState } from '../math/equations';
 import { addLevelCompleteSystemToEngine } from './systems/LevelCompleteSystem';
 
@@ -48,7 +48,7 @@ const resetEnemySpawnSequence = (): void => {
  *
  * On fresh game: tear down any leftover player (e.g. from a prior gameOver)
  * and create a new one — the player is unscoped so it survives screen exits.
- * On level transition: leave the existing player so score and lives persist.
+ * On level transition: leave the existing player so lives and run time persist.
  */
 const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void => {
   gameEngine.setResource('currentLevel', level);
@@ -60,6 +60,8 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
   );
 
   if (isFreshGame) {
+    gameEngine.setResource('gameplayTimeSeconds', 0);
+
     const existingPlayer = gameEngine.tryGetSingleton(playerQuery.with);
     if (existingPlayer) gameEngine.removeEntity(existingPlayer.id);
 
@@ -107,8 +109,7 @@ const setupScreenHooks = (): void => {
 
   function showGameOverScreen(): void {
     pauseGameplayClocks();
-    const player = gameEngine.tryGetSingleton(playerQuery.with);
-    setFinalScore(player?.components.player.score ?? 0);
+    setFinalTime(gameEngine.getResource('gameplayTimeSeconds'));
     showScreen('gameOver');
   }
 

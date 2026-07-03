@@ -87,9 +87,6 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
               <button id="settings-btn" class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
                 Settings
               </button>
-              <button id="high-scores-btn" class="btn-warning menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
-                High Scores
-              </button>
             </div>
           </div>
         </div>
@@ -126,7 +123,6 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
     wire: (root): void => {
       $(root, '#start-game-btn').addEventListener('click', actions.openModeSelect);
       $(root, '#settings-btn').addEventListener('click', actions.openSettings);
-      $(root, '#high-scores-btn').addEventListener('click', () => alert('High Scores feature coming soon!'));
       actions.wireFullscreenButton($<HTMLButtonElement>(root, '#menu-fullscreen-btn'));
     },
   },
@@ -249,7 +245,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
     html: `
       <div id="top-hud" class="absolute top-0 inset-x-0 p-3 md:p-4 lg:p-5 flex flex-nowrap justify-between items-start text-white font-bold pointer-events-none gap-2 md:gap-4">
         <div class="flex flex-wrap gap-2 md:gap-4 lg:gap-6 items-center pointer-events-auto">
-          <div id="score-display" class="hud-chip score text-sm md:text-base lg:text-lg px-3 md:px-4 py-2 rounded-lg whitespace-nowrap">Score: 0</div>
+          <div id="time-display" class="hud-chip time text-sm md:text-base lg:text-lg px-3 md:px-4 py-2 rounded-lg whitespace-nowrap">Time: 0:00</div>
           <div id="lives-display" aria-live="polite" class="hud-chip lives text-sm md:text-base lg:text-lg px-3 md:px-4 py-2 rounded-lg whitespace-nowrap">Lives: 3</div>
         </div>
 
@@ -379,8 +375,8 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
             Game Over
           </h1>
 
-          <div id="final-score" class="final-score mt-4 sm:mt-5 text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-md" aria-live="polite">
-            Final Score: 0
+          <div id="final-time" class="final-time mt-4 sm:mt-5 text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-md" aria-live="polite">
+            Final Time: 0:00
           </div>
 
           <p class="game-over-message mt-4 sm:mt-5 text-base sm:text-lg">
