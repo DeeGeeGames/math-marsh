@@ -5,7 +5,7 @@
 
 export type TouchControlsMode = 'auto' | 'on' | 'off';
 
-const STORAGE_KEY = 'mathmunchers.touchControls';
+const STORAGE_KEY = 'math-marsh.touchControls';
 const TOUCH_QUERY = '(hover: none) and (pointer: coarse)';
 const INITIAL_REPEAT_DELAY_MS = 250;
 const REPEAT_INTERVAL_MS = 150;

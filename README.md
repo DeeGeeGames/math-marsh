@@ -1,4 +1,4 @@
-# Math Munchers Game
+# Math Marsh
 
 A modern educational math game inspired by the classic "Number Munchers", built with TypeScript, Bun, and the ECSpresso ECS library.
 
