@@ -20,7 +20,6 @@ export const AI_CONFIG = {
   PATROL_SPEED_MULTIPLIER: 1.2,   // Patrol moves slower
   RANDOM_SPEED_MULTIPLIER: 1.0,   // Random normal speed
   GUARD_SPEED_MULTIPLIER: 1.5,    // Guard moves slowest
-  DIFFICULTY_SCALE_SCORE: 100,    // Score points per difficulty increase
   
   // Enemy type-specific speed multipliers
   ENEMY_SPEED_MULTIPLIERS: {

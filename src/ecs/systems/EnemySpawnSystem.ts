@@ -14,13 +14,11 @@ import {
   enemyQuery,
   mathProblemQuery,
   playerQuery,
-  spiderWebQuery,
-  type PlayerEntity
+  spiderWebQuery
 } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { EnemyType } from '../../types/shared';
-
-const SPAWN_ORDER: readonly EnemyType[] = ['lizard', 'spider', 'frog'] as const;
+import { enemySpawnIntervalForLevel, enemySpawnOrderForLevel } from '../enemyDifficulty';
 
 export function addEnemySpawnSystemToEngine(): void {
   gameEngine.addSystem('enemySpawnSystem')
@@ -29,13 +27,15 @@ export function addEnemySpawnSystemToEngine(): void {
     .addQuery('mathProblems', mathProblemQuery)
     .addQuery('spiderWebs', spiderWebQuery)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
-    .setProcess(({ queries, ecs }) => {
+    .withResources(['currentLevel'])
+    .setProcess(({ queries, ecs, resources: { currentLevel } }) => {
       const player = queries.player;
       if (!player) return;
 
+      const spawnOrder = enemySpawnOrderForLevel(currentLevel);
       const { index } = ecs.getResource('enemySpawn');
       const currentEnemyCount = queries.enemies.length;
-      const cycleComplete = index >= SPAWN_ORDER.length;
+      const cycleComplete = index >= spawnOrder.length;
 
       if (cycleComplete && currentEnemyCount === 0) {
         ecs.setResource('enemySpawn', { index: 0 });
@@ -43,10 +43,11 @@ export function addEnemySpawnSystemToEngine(): void {
         return;
       }
 
-      if (cycleComplete || currentEnemyCount >= GAME_CONFIG.ENEMY_SPAWN.MAX_ENEMIES) return;
+      const enemyLimit = Math.min(GAME_CONFIG.ENEMY_SPAWN.MAX_ENEMIES, spawnOrder.length);
+      if (cycleComplete || currentEnemyCount >= enemyLimit) return;
       if (player.components.timers.enemySpawn?.active) return;
 
-      const nextEnemyType = SPAWN_ORDER[index];
+      const nextEnemyType = spawnOrder[index];
       if (!nextEnemyType) return;
 
       const occupiedCells = collectGridCellKeys([
@@ -61,26 +62,14 @@ export function addEnemySpawnSystemToEngine(): void {
         return;
       }
 
-      console.log(`Spawned ${nextEnemyType} (#${index + 1}/${SPAWN_ORDER.length})`);
+      console.log(`Spawned ${nextEnemyType} (#${index + 1}/${spawnOrder.length})`);
 
       const nextIndex = index + 1;
       ecs.setResource('enemySpawn', { index: nextIndex });
-      if (nextIndex >= SPAWN_ORDER.length) console.log('🔄 Spawn cycle complete - all 3 enemy types spawned');
+      if (nextIndex >= spawnOrder.length) console.log(`🔄 Spawn cycle complete - ${spawnOrder.length} enemy types spawned`);
 
-      player.components.timers.enemySpawn = createTimer(calculateSpawnInterval(player) / 1000);
+      player.components.timers.enemySpawn = createTimer(enemySpawnIntervalForLevel(currentLevel) / 1000);
     });
-}
-
-const DIFFICULTY_SCALE_SCORE = 100;
-const SPAWN_REDUCTION_PER_LEVEL = 500;
-
-function calculateSpawnInterval(player: PlayerEntity | undefined): number {
-  if (!player) return GAME_CONFIG.TIMING.BASE_SPAWN_INTERVAL;
-
-  const score = player.components.player.score;
-  const difficultyLevel = Math.floor(score / DIFFICULTY_SCALE_SCORE);
-  const adjusted = GAME_CONFIG.TIMING.BASE_SPAWN_INTERVAL - difficultyLevel * SPAWN_REDUCTION_PER_LEVEL;
-  return Math.max(adjusted, GAME_CONFIG.TIMING.MIN_SPAWN_INTERVAL);
 }
 
 function spawnEnemyOnLilyPad(

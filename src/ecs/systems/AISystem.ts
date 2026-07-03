@@ -23,6 +23,7 @@ import { createSpiderWeb } from './SpiderWebSystem';
 import { isFrogAttacking } from './FrogTongueSystem';
 import { startFrogGridMovement } from './FrogSpriteSystem';
 import { startEnemyGridMovement } from './EnemySpriteSystem';
+import { enemyMoveBaseIntervalForLevel } from '../enemyDifficulty';
 
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
 
@@ -98,7 +99,8 @@ export function addAISystemToEngine(): void {
     .addQuery('enemies', { ...enemyQuery, optional: ['frogTongue'], mutates: ['enemy', 'timers'] } as const)
     .addQuery('mathProblems', mathProblemQuery)
     .addSingleton('player', playerQuery)
-    .setProcess(({ queries, ecs }) => {
+    .withResources(['currentLevel'])
+    .setProcess(({ queries, ecs, resources: { currentLevel } }) => {
       const { enemies, player } = queries;
       if (!player) return;
 
@@ -111,7 +113,7 @@ export function addAISystemToEngine(): void {
         if (enemy.components.timers.enemySpawnTelegraph?.active) continue;
         if (isEntityAnimating(ecs, enemy.id)) continue;
         if (isFrogAttacking(enemy.components.frogTongue)) continue;
-        processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells);
+        processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, currentLevel);
       }
     });
 }
@@ -122,6 +124,7 @@ function processEnemyAI(
   player: PlayerEntity,
   blocked: Set<number>,
   activeLilyPadCells: ReadonlySet<string>,
+  currentLevel: number,
 ): void {
   const enemyPos = enemy.components.position;
   const enemyData = enemy.components.enemy;
@@ -158,18 +161,13 @@ function processEnemyAI(
     }
   }
 
-  const moveInterval = calculateMoveInterval(enemyData.behaviorType, player, enemyData.enemyType);
+  const moveInterval = calculateMoveInterval(enemyData.behaviorType, currentLevel, enemyData.enemyType);
   const variation = (Math.random() - 0.5) * moveInterval * 0.2;
   timers.enemyMove = createTimer((moveInterval + variation) / 1000);
 }
 
-function calculateMoveInterval(behaviorType: AIBehavior, player: PlayerEntity, enemyType: EnemyType): number {
-  const score = player.components.player.score;
-  const difficultyLevel = Math.floor(score / AI_CONFIG.DIFFICULTY_SCALE_SCORE);
-  const reductionFactor = Math.min(difficultyLevel * 0.1, 0.7);
-
-  const intervalRange = AI_CONFIG.BASE_MOVE_INTERVAL - AI_CONFIG.MIN_MOVE_INTERVAL;
-  const adjustedInterval = AI_CONFIG.BASE_MOVE_INTERVAL - (intervalRange * reductionFactor);
+function calculateMoveInterval(behaviorType: AIBehavior, currentLevel: number, enemyType: EnemyType): number {
+  const adjustedInterval = enemyMoveBaseIntervalForLevel(currentLevel);
   const multiplier = BEHAVIOR_MULTIPLIERS[behaviorType] * ENEMY_TYPE_MULTIPLIERS[enemyType];
 
   return Math.round(adjustedInterval * multiplier);

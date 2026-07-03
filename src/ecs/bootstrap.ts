@@ -32,6 +32,17 @@ const setupCanvas = (): void => {
   initializeRenderSystem(canvas);
 };
 
+const resetEnemySpawnSequence = (): void => {
+  gameEngine.setResource('enemySpawn', { index: 0 });
+
+  const player = gameEngine.tryGetSingleton(playerQuery.with);
+  if (!player) return;
+
+  gameEngine.mutateComponent(player.id, 'timers', timers => {
+    delete timers.enemySpawn;
+  });
+};
+
 /**
  * Set up game state for a 'playing' screen entry.
  *
@@ -54,9 +65,9 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
 
     const playerPixelPos = gridToPixel(3, 2);
     createPlayer(gameEngine, playerPixelPos.x, playerPixelPos.y);
-
-    gameEngine.setResource('enemySpawn', { index: 0 });
   }
+
+  resetEnemySpawnSequence();
 };
 
 /**
