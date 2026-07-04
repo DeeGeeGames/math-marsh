@@ -7,6 +7,7 @@ export type DesktopFullscreenController = {
 
 export type DesktopPlatform = {
 	fullscreen?: DesktopFullscreenController;
+	quit?: () => Promise<void>;
 };
 
 declare global {

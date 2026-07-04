@@ -1,11 +1,23 @@
 {
   "name": "math",
+  "description": "Educational math game for practicing arithmetic equations.",
+  "author": {
+    "name": "DeeGee Games",
+    "email": "contact@deegeegames.com"
+  },
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
+  "desktopName": "math-marsh",
   "scripts": {
     "dev": "bun --port 3000 --console index.html",
     "build": "bun run typecheck && bun run scripts/build.ts",
+    "desktop:dev": "bun run scripts/desktop-dev.ts",
+    "desktop:build": "BASE_PATH=./ bun run build",
+    "desktop:check": "bun run typecheck && BASE_PATH=./ bun run scripts/build.ts",
+    "desktop:package:linux": "bun run desktop:build && electron-builder --linux",
+    "desktop:package:win": "bun run desktop:build && electron-builder --win",
     "check": "bun run lint && bun run test && bun run build",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
@@ -18,6 +30,8 @@
     "@types/bun": "^1.3.14",
     "@types/howler": "^2.2.13",
     "bun-plugin-tailwind": "^0.1.2",
+    "electron": "43.0.0",
+    "electron-builder": "26.15.3",
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
     "playwright": "^1.61.1",
@@ -29,5 +43,50 @@
     "ecspresso": "^0.20.0",
     "howler": "^2.2.4",
     "typescript-eslint": "^8.62.1"
+  },
+  "build": {
+    "appId": "com.deegeegames.mathmarsh",
+    "productName": "Math Marsh",
+    "executableName": "math-marsh",
+    "artifactName": "math-marsh-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "desktop-dist"
+    },
+    "files": [
+      "dist/**",
+      "electron/**",
+      "!electron/launch.sh",
+      "src/assets/images/math-marsh-icon.png",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": "electron/launch.sh",
+        "to": "launch.sh"
+      }
+    ],
+    "electronLanguages": [
+      "en-US"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "dir"
+      ],
+      "icon": "src/assets/images/math-marsh-icon.png",
+      "category": "Game",
+      "executableArgs": [
+        "--no-sandbox"
+      ],
+      "syncDesktopName": true
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip",
+        "dir"
+      ],
+      "icon": "src/assets/images/math-marsh-icon.png"
+    }
   }
 }
