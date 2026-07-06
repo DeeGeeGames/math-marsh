@@ -4,7 +4,7 @@ import tailwind from 'bun-plugin-tailwind';
 
 const projectRoot = resolve(import.meta.dir, '..');
 const distRoot = resolve(projectRoot, 'dist');
-const basePath = Bun.env.BASE_PATH ?? '/math-game/';
+const basePath = Bun.env.BASE_PATH ?? '/math-marsh/';
 
 function withBasePath(path: string): string {
   return `${basePath.replace(/\/?$/, '/')}${path.replace(/^\//, '')}`;

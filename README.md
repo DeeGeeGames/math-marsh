@@ -45,8 +45,8 @@ A modern educational math game inspired by the classic "Number Munchers", built 
 ### Installation
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd math-game
+git clone https://github.com/deegeegames/math-marsh.git
+cd math-marsh
 
 # Install dependencies
 bun install
@@ -148,17 +148,17 @@ This repository includes GitHub Actions for automatic deployment to GitHub Pages
    - Go to Settings → Pages
    - Set Source to "GitHub Actions"
 
-2. **Update Repository Base Path** if different from "/math-game/":
+2. **Update Repository Base Path** if different from "/math-marsh/":
    ```bash
    BASE_PATH=/your-repo-name/ bun run build
    ```
 
-3. **Push to main branch** to trigger automatic deployment:
+3. **Push to master branch** to trigger automatic deployment:
    ```bash
-   git push origin main
+   git push origin master
    ```
 
-4. **Access your game** at: `https://your-username.github.io/your-repo-name/`
+4. **Access your game** at: `https://deegeegames.github.io/math-marsh/`
 
 ### Manual Deployment
 

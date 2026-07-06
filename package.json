@@ -1,10 +1,18 @@
 {
-  "name": "math",
+  "name": "math-marsh",
   "description": "Educational math game for practicing arithmetic equations.",
   "author": {
     "name": "DeeGee Games",
     "email": "contact@deegeegames.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deegeegames/math-marsh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/deegeegames/math-marsh/issues"
+  },
+  "homepage": "https://deegeegames.github.io/math-marsh/",
   "private": true,
   "version": "0.0.0",
   "type": "module",

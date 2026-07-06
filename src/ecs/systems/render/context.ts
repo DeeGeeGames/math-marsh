@@ -72,7 +72,7 @@ const resizeCanvas = (): void => {
 		ctx.imageSmoothingEnabled = false;
 	}
 
-	window.dispatchEvent(new Event('math-game:canvas-resize'));
+	window.dispatchEvent(new Event('math-marsh:canvas-resize'));
 };
 
 // ResizeObserver fires after the browser has committed the new layout, so the

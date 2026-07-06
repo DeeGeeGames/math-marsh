@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 const projectRoot = resolve(import.meta.dir, '..');
 const distRoot = resolve(projectRoot, 'dist');
 const port = Number(Bun.env.PORT ?? '3000');
-const basePath = Bun.env.BASE_PATH ?? '/math-game/';
+const basePath = Bun.env.BASE_PATH ?? '/math-marsh/';
 
 function notFound(): Response {
   return new Response('Not found', { status: 404 });

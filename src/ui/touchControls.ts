@@ -126,7 +126,7 @@ export const scheduleTouchControlsLayout = (): void => {
 
 window.addEventListener('resize', scheduleTouchControlsLayout);
 window.addEventListener('orientationchange', scheduleTouchControlsLayout);
-window.addEventListener('math-game:canvas-resize', scheduleTouchControlsLayout);
+window.addEventListener('math-marsh:canvas-resize', scheduleTouchControlsLayout);
 
 const ACTION_KEYS = {
 	up: 'ArrowUp',

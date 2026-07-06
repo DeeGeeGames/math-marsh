@@ -48,7 +48,7 @@ type AudioState = {
   lastMoveSoundAt: number;
 };
 
-const AUDIO_SETTINGS_KEY = 'math-game-audio-settings';
+const AUDIO_SETTINGS_KEY = 'math-marsh-audio-settings';
 const NOTE_C4 = 261.63;
 const MOVE_SOUND_SPACING_MS = 90;
 
