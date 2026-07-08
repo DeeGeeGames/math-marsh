@@ -1,0 +1,67 @@
+name: Deploy to Steam
+
+on:
+  workflow_call:
+    inputs:
+      build_description:
+        description: Build description shown in Steamworks.
+        type: string
+        required: true
+      release_branch:
+        description: Steam branch to deploy to, such as default or prerelease.
+        type: string
+        required: true
+    secrets:
+      STEAM_CONFIG_VDF:
+        description: Steam config.vdf contents for steamcmd authentication.
+        required: true
+      STEAM_USERNAME:
+        description: Steam username. Used when the repository variable is not set.
+        required: false
+      STEAM_APP_ID:
+        description: Steam app id. Used when the repository variable is not set.
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      STEAM_USERNAME: ${{ vars.STEAM_USERNAME || secrets.STEAM_USERNAME }}
+      STEAM_APP_ID: ${{ vars.STEAM_APP_ID || secrets.STEAM_APP_ID }}
+      STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+    steps:
+      - name: Checkout Steam metadata
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: steam
+
+      - name: Download Windows build
+        uses: actions/download-artifact@v8
+        with:
+          name: steam-windows
+          path: builds/windows
+
+      - name: Download Linux build
+        uses: actions/download-artifact@v8
+        with:
+          name: steam-linux
+          path: builds/linux
+
+      - name: Validate Steam deployment credentials
+        run: |
+          test -n "$STEAM_USERNAME"
+          test -n "$STEAM_APP_ID"
+          test -n "$STEAM_CONFIG_VDF"
+
+      - name: Deploy to Steam
+        uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ env.STEAM_USERNAME }}
+          configVdf: ${{ env.STEAM_CONFIG_VDF }}
+          appId: ${{ env.STEAM_APP_ID }}
+          buildDescription: ${{ inputs.build_description }}
+          rootPath: builds
+          depot1Path: windows
+          depot2Path: linux
+          depot2InstallScriptPath: steam/install_script_linux.vdf
+          releaseBranch: ${{ inputs.release_branch }}

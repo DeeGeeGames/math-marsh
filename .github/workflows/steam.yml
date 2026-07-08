@@ -1,0 +1,32 @@
+name: Steam Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_description:
+        description: Build description shown in Steamworks.
+        required: true
+        default: manual-build
+      release_branch:
+        description: Steam branch to deploy to.
+        required: true
+        default: prerelease
+
+permissions:
+  contents: read
+
+concurrency:
+  group: steam-${{ inputs.release_branch }}
+  cancel-in-progress: false
+
+jobs:
+  build_desktop:
+    uses: ./.github/workflows/build-desktop.yml
+
+  deploy_steam:
+    needs: build_desktop
+    uses: ./.github/workflows/deploy-steam.yml
+    with:
+      build_description: ${{ inputs.build_description }}
+      release_branch: ${{ inputs.release_branch }}
+    secrets: inherit
