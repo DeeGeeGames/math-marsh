@@ -25,3 +25,7 @@ export function getDesktopFullscreenController(): DesktopFullscreenController | 
 	if (!controller?.isSupported()) return undefined;
 	return controller;
 }
+
+export function getDesktopQuitHandler(): DesktopPlatform['quit'] {
+	return getDesktopPlatform()?.quit;
+}

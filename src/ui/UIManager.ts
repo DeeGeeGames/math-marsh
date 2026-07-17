@@ -37,6 +37,7 @@ import {
   setAudioSettings,
   unlockAudio,
 } from '../audio/audio';
+import { getDesktopQuitHandler } from '../platform/desktop';
 
 export { gameplayLevelLabel };
 
@@ -114,6 +115,14 @@ function replayGame(): void {
   startGame(engine.getResource('gameMode'), engine.getResource('mathDifficulty'));
 }
 
+const desktopQuit = getDesktopQuitHandler();
+const quitApplication = desktopQuit
+  ? function quitApplication(): void {
+      playSound('uiSelect');
+      void desktopQuit();
+    }
+  : undefined;
+
 const SCREENS = createScreenSpecs({
   startGame,
   replayGame,
@@ -121,6 +130,7 @@ const SCREENS = createScreenSpecs({
   goToMenu,
   openModeSelect,
   openSettings,
+  quitApplication,
   pauseGame,
   wireFullscreenButton,
   wireTouchControlsSetting: (root) => wireTouchControlsSetting(root, requestCanvasResize),

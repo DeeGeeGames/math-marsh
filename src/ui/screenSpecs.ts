@@ -31,6 +31,7 @@ export type ScreenSpecActions = {
   goToMenu: () => void;
   openModeSelect: () => void;
   openSettings: () => void;
+  quitApplication?: () => void;
   pauseGame: () => void;
   wireFullscreenButton: (button: HTMLButtonElement) => void;
   wireAudioSettings: (root: ParentNode) => void;
@@ -87,6 +88,11 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
               <button id="settings-btn" class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
                 Settings
               </button>
+              ${actions.quitApplication ? `
+                <button id="quit-btn" class="btn-danger menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+                  Quit
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -124,6 +130,8 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       $(root, '#start-game-btn').addEventListener('click', actions.openModeSelect);
       $(root, '#settings-btn').addEventListener('click', actions.openSettings);
       actions.wireFullscreenButton($<HTMLButtonElement>(root, '#menu-fullscreen-btn'));
+      if (!actions.quitApplication) return;
+      $(root, '#quit-btn').addEventListener('click', actions.quitApplication);
     },
   },
 
