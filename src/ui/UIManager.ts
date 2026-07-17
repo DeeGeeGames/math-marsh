@@ -38,6 +38,7 @@ import {
   unlockAudio,
 } from '../audio/audio';
 import { getDesktopQuitHandler } from '../platform/desktop';
+import { render } from 'lit-html';
 
 export { gameplayLevelLabel };
 
@@ -171,7 +172,8 @@ const createScreen = (screen: UIScreen): HTMLElement => {
   const root = document.createElement('div');
   root.id = spec.id;
   root.className = spec.className;
-  root.innerHTML = spec.html;
+  if (typeof spec.html === 'string') root.innerHTML = spec.html;
+  else render(spec.html, root);
   renderPromptSlot(root, spec.prompts);
   spec.wire?.(root);
   gameContainer.appendChild(root);

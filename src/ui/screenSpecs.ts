@@ -1,4 +1,6 @@
 import type { GameMode, MathDifficulty } from '../ecs/types';
+import { html, nothing, type TemplateResult } from 'lit-html';
+import { ref } from 'lit-html/directives/ref.js';
 import flyMoveToward from '../assets/images/fly-move-toward.png';
 import frogHopToward from '../assets/images/frog-hop-toward.png';
 import lizardWalkToward from '../assets/lizard-walk-toward.png';
@@ -42,8 +44,13 @@ export type ScreenSpecActions = {
 // instead of relying on screen IDs and parent selectors in CSS.
 const inputPromptsSlot = (): string => '<div class="input-prompts-slot" data-input-prompts></div>';
 
-const menuSprite = (className: string, imageSrc: string): string =>
-  `<span class="menu-board-sprite ${className}" style="background-image: url('${imageSrc}')" aria-hidden="true"></span>`;
+const menuSprite = (className: string, imageSrc: string): TemplateResult => html`
+  <span
+    class="menu-board-sprite ${className}"
+    style="background-image: url('${imageSrc}')"
+    aria-hidden="true"
+  ></span>
+`;
 
 export const resetModeSelect = (root: HTMLElement): void => {
   root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
@@ -73,7 +80,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
   menu: {
     id: 'main-menu',
     className: `${OVERLAY_BASE} app-background`,
-    html: `
+    html: html`
       <div class="menu-shell w-[min(92vw,980px)] px-5 sm:px-7 md:px-9 py-5 sm:py-7 md:py-8 grid gap-5 sm:gap-7 md:gap-9 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)] items-center">
         <div class="menu-copy text-center md:text-left">
           <h1 class="menu-title text-gold drop-shadow-lg">
@@ -81,18 +88,18 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
           </h1>
 
           <div class="menu-actions mt-5 sm:mt-7">
-            <button id="start-game-btn" class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
+            <button @click=${actions.openModeSelect} class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
               Start Game
             </button>
             <div class="menu-secondary-actions">
-              <button id="settings-btn" class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+              <button @click=${actions.openSettings} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
                 Settings
               </button>
-              ${actions.quitApplication ? `
-                <button id="quit-btn" class="btn-danger menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+              ${actions.quitApplication ? html`
+                <button @click=${actions.quitApplication} class="btn-danger menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
                   Quit
                 </button>
-              ` : ''}
+              ` : nothing}
             </div>
           </div>
         </div>
@@ -117,22 +124,23 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
         </div>
       </div>
 
-      <button id="menu-fullscreen-btn" type="button" class="utility-btn absolute top-3 right-3 md:top-4 md:right-4 text-white border-none w-10 h-10 md:w-12 md:h-12 rounded-md cursor-pointer text-lg md:text-xl transition-colors duration-200 flex items-center justify-center z-10">
+      <button
+        ${ref(function connectFullscreenButton(element): void {
+          if (!element) return;
+          if (!(element instanceof HTMLButtonElement)) throw new Error('Fullscreen control must be a button');
+          actions.wireFullscreenButton(element);
+        })}
+        type="button"
+        class="utility-btn absolute top-3 right-3 md:top-4 md:right-4 text-white border-none w-10 h-10 md:w-12 md:h-12 rounded-md cursor-pointer text-lg md:text-xl transition-colors duration-200 flex items-center justify-center z-10"
+      >
         ⛶
       </button>
-      ${inputPromptsSlot()}
+      <div class="input-prompts-slot" data-input-prompts></div>
     `,
     prompts: [
       { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
     ],
-    wire: (root): void => {
-      $(root, '#start-game-btn').addEventListener('click', actions.openModeSelect);
-      $(root, '#settings-btn').addEventListener('click', actions.openSettings);
-      actions.wireFullscreenButton($<HTMLButtonElement>(root, '#menu-fullscreen-btn'));
-      if (!actions.quitApplication) return;
-      $(root, '#quit-btn').addEventListener('click', actions.quitApplication);
-    },
   },
 
   modeSelect: {
