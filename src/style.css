@@ -324,50 +324,44 @@
 
 .input-prompts-slot {
   display: flex;
+  pointer-events: none;
+}
+
+.input-prompts-slot--viewport {
   position: fixed;
   left: max(env(safe-area-inset-left, 0px), 28px);
   right: max(env(safe-area-inset-right, 0px), 28px);
   bottom: max(env(safe-area-inset-bottom, 0px), 24px);
   z-index: 20;
   justify-content: flex-start;
-  pointer-events: none;
 }
 
-#bottom-hud .input-prompts-slot {
+.input-prompts-slot--hud {
   position: static;
   width: 100%;
   z-index: auto;
+  justify-content: flex-start;
 }
 
-#game-over-screen .input-prompts-slot,
-#pause-screen .input-prompts-slot {
+.input-prompts-slot--panel {
   position: static;
   width: 100%;
   z-index: auto;
   justify-content: center;
+  margin-top: 20px;
 }
 
-#game-over-screen .input-prompts-slot {
-  margin-top: 18px;
-}
-
-#pause-screen .input-prompts-slot {
-  margin-top: 24px;
-}
-
-#bottom-hud .input-prompts-slot,
-#bottom-hud .input-prompts-bar {
+.input-prompts-slot--hud .input-prompts-bar {
   justify-content: flex-start;
 }
 
-#game-over-screen .input-prompts-bar,
-#pause-screen .input-prompts-bar {
+.input-prompts-slot--panel .input-prompts-bar {
   justify-content: center;
   max-width: 100%;
 }
 
-#bottom-hud #hints-display,
-#bottom-hud .input-prompts-bar {
+.hud-bottom #hints-display,
+.input-prompts-slot--hud .input-prompts-bar {
   max-width: min(92vw, 900px);
 }
 
@@ -402,12 +396,12 @@
   -webkit-backdrop-filter: blur(4px);
 }
 
-#bottom-hud #hints-display {
+.hud-bottom #hints-display {
   opacity: 1;
   text-align: left;
 }
 
-#bottom-hud .input-prompts-bar {
+.input-prompts-slot--hud .input-prompts-bar {
   --input-prompt-gap: 12px;
   --input-prompt-min-height: 54px;
   --input-prompt-font-size: 1.15rem;
@@ -465,7 +459,7 @@
 }
 
 @media (max-width: 520px) {
-  .input-prompts-slot {
+  .input-prompts-slot--viewport {
     left: max(env(safe-area-inset-left, 0px), 14px);
     right: max(env(safe-area-inset-right, 0px), 14px);
     bottom: max(env(safe-area-inset-bottom, 0px), 14px);
@@ -488,7 +482,7 @@
     padding: 8px 10px;
   }
 
-  #bottom-hud .input-prompts-bar {
+  .input-prompts-slot--hud .input-prompts-bar {
     --input-prompt-gap: 8px;
     --input-prompt-min-height: 42px;
     --input-prompt-font-size: 0.92rem;
@@ -897,6 +891,141 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
   --touch-dpad-button-size: 56px;
   --touch-action-size: 180px;
   --touch-eat-size: 110px;
+}
+
+.gameplay-onboarding {
+  position: absolute;
+  z-index: 35;
+  top: clamp(5.5rem, 12vh, 8rem);
+  right: 20px;
+  width: min(28vw, 340px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 2px solid rgba(255, 247, 198, 0.42);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(18, 52, 59, 0.96), rgba(5, 31, 36, 0.92));
+  box-shadow: 0 14px 28px rgba(5, 31, 36, 0.42);
+  color: var(--cream);
+  pointer-events: auto;
+}
+
+.gameplay-onboarding.hidden {
+  display: none;
+}
+
+.gameplay-onboarding-kicker {
+  margin-bottom: 2px;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gameplay-onboarding h2 {
+  font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+  font-weight: 800;
+}
+
+.gameplay-onboarding p:last-child {
+  margin-top: 3px;
+  font-size: clamp(0.95rem, 1.7vw, 1.15rem);
+  line-height: 1.35;
+}
+
+.gameplay-onboarding button {
+  flex: 0 0 auto;
+}
+
+.gameplay-onboarding-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gameplay-onboarding-actions {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.gameplay-onboarding-actions .tutorial-skip-btn {
+  grid-column: 1 / -1;
+  justify-self: center;
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--cream);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.gameplay-onboarding-actions button:disabled {
+  opacity: 0.38;
+  cursor: default;
+  transform: none;
+}
+
+#gameplay-onboarding:not(.hidden) ~ .touch-controls {
+  display: none !important;
+}
+
+#gameplay-ui.tutorial-mode #canvas-container {
+  padding-right: min(31vw, 380px);
+}
+
+@media (max-width: 900px) {
+  .gameplay-onboarding {
+    top: auto;
+    right: 10px;
+    bottom: 76px;
+    width: calc(100vw - 20px);
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+  }
+
+  #gameplay-ui.tutorial-mode #canvas-container {
+    margin-bottom: 13rem;
+    padding-right: 0.5rem;
+  }
+
+  .gameplay-onboarding button {
+    align-self: center;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+  }
+
+  .gameplay-onboarding-actions {
+    align-self: center;
+  }
+}
+
+@media (max-height: 500px) {
+  .gameplay-onboarding {
+    top: 3.25rem;
+    right: 8px;
+    bottom: auto;
+    width: min(34vw, 340px);
+    flex-direction: column;
+    padding: 8px 12px;
+  }
+
+  #gameplay-ui.tutorial-mode #canvas-container {
+    margin-bottom: 8px;
+    padding-right: min(37vw, 360px);
+  }
+
+  .gameplay-onboarding-kicker {
+    display: none;
+  }
 }
 
 #touch-dpad {

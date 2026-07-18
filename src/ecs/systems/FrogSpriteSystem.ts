@@ -343,6 +343,7 @@ export const closeFrogMouth = (
 export function addFrogSpriteAnimationSystemToEngine(): void {
   gameEngine.addSystem('frogSpriteAnimationSystem')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
+    .inScreens(['playing', 'tutorial'])
     .setProcessEach(
       { with: ['renderable', 'spriteAnimation'], mutates: ['renderable', 'spriteAnimation'] } as const,
       ({ entity, dt, ecs }) => {

@@ -15,7 +15,11 @@ import type {
   LevelCompleteScreenConfig,
   LevelCompleteScreenState,
   SettingsScreenConfig,
+  TutorialScreenConfig,
 } from './types';
+import {
+  loadOnboardingCompletion,
+} from '../onboarding/gameplayOnboarding';
 
 // Gamepad button indices follow the Standard Gamepad mapping
 // (https://www.w3.org/TR/gamepad/#dfn-standard-gamepad). Button 9 = Start,
@@ -27,9 +31,11 @@ const inputPlugin = createInputPlugin<GameAction>({
     left:  { keys: ['ArrowLeft',  'a', 'A'], gamepadButtons: gamepadButtonsOn(0, 14), gamepadAxes: [gamepadAxisOn(0, 0, -1)] },
     right: { keys: ['ArrowRight', 'd', 'D'], gamepadButtons: gamepadButtonsOn(0, 15), gamepadAxes: [gamepadAxisOn(0, 0,  1)] },
     eat:   { keys: [' ', 'Enter'],           gamepadButtons: gamepadButtonsOn(0, 0) },
+    back:  { keys: ['Escape'],               gamepadButtons: gamepadButtonsOn(0, 1) },
+    skip:  { keys: ['Tab'],                  gamepadButtons: gamepadButtonsOn(0, 9) },
     pause: { keys: ['Escape'],               gamepadButtons: gamepadButtonsOn(0, 9) },
   },
-  preventDefaultKeys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter'],
+  preventDefaultKeys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'Tab'],
 });
 
 const timerPlugin = createTimerPlugin<TimerSlot>({ priority: SYSTEM_PRIORITIES.TIMERS });
@@ -56,6 +62,9 @@ export const gameEngine = ECSpresso.create()
   .withResource('enemySpawn', { index: 0 })
   .withResource('equationMode', createEquationModeState(1, 'easy', 'addition'))
   .withResource('inputPrompt', { platform: 'keyboard', gamepadAxesActive: [] })
+  .withResource('gameplayOnboardingCompletion', loadOnboardingCompletion('basics'))
+  .withResource('operandOnboardingCompletion', loadOnboardingCompletion('operands'))
+  .withResource('gameplayOnboardingSession', { active: false })
   .withRequired('player', 'timers', () => ({}))
   .withRequired('player', 'health', (p) => ({ current: p.lives, max: p.lives }))
   .withRequired('enemy', 'timers', () => ({}))
@@ -64,6 +73,8 @@ export const gameEngine = ECSpresso.create()
     .add('menu', { initialState: () => ({}) })
     .add('modeSelect', { initialState: () => ({}) })
     .add('howToPlay', { initialState: () => ({}) })
+    .add('tutorialOffer', { initialState: () => ({}) })
+    .add('tutorial', { initialState: (config: TutorialScreenConfig) => ({ ...config }) })
     .add('playing', { initialState: (config: PlayingScreenConfig) => ({ ...config }) })
     .add('levelComplete', {
       initialState: (config: LevelCompleteScreenConfig): LevelCompleteScreenState => ({

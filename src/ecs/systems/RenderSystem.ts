@@ -42,7 +42,7 @@ const reducedMotionPreference = typeof window === 'undefined'
 export const addRenderSystemToEngine = (): void => {
   gameEngine.addSystem('renderSystem')
     .setPriority(SYSTEM_PRIORITIES.RENDER)
-    .inScreens(['playing', 'levelComplete'])
+    .inScreens(['playing', 'tutorial', 'levelComplete'])
     .requiresAssets(IMAGE_ASSET_KEYS)
     .addQuery('renderableEntities', { ...renderableEntityQuery, optional: ['shake'] } as const)
     .addSingleton('player', { ...playerQuery, optional: ['shake'] } as const)

@@ -2,13 +2,16 @@ import type { SettingsReturnScreen } from '../ecs/types';
 import type { TemplateResult } from 'lit-html';
 import type { InputPromptItem } from './inputPrompts';
 
-export type UIScreen = SettingsReturnScreen | 'settings';
+export type UIScreen = Exclude<SettingsReturnScreen, 'tutorial'> | 'settings' | 'tutorialOffer';
+
+export type InputPromptPlacement = 'viewport' | 'panel' | 'hud';
 
 export type ScreenSpec = {
   id: string;
   className: string;
   html: string | TemplateResult;
   prompts?: InputPromptItem[];
+  promptPlacement: InputPromptPlacement;
   wire?: (root: HTMLElement) => void;
   focusSelector?: string;
   onCancel?: () => void;

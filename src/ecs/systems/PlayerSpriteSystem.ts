@@ -48,6 +48,7 @@ export function defaultPlayerSprite(): AllComponents['playerSprite'] {
 export function addPlayerSpriteSystemToEngine(): void {
   gameEngine.addSystem('playerSpriteSystem')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
+    .inScreens(['playing', 'tutorial'])
     .setProcessEach(
       {
         with: ['pathFollower', 'player', 'playerSprite', 'position', 'renderable'],

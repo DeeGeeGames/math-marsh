@@ -1,5 +1,10 @@
 import type { GameEngine } from '../ecs/Engine';
-import type { GameMode, MathDifficulty, SettingsReturnScreen } from '../ecs/types';
+import type {
+  GameMode,
+  MathDifficulty,
+  SettingsReturnScreen,
+  TutorialScreenConfig,
+} from '../ecs/types';
 import {
   applyTouchControlsVisibility,
   wireTouchControlsSetting,
@@ -13,7 +18,6 @@ import {
 import { requestCanvasResize } from '../ecs/systems/render/context';
 import {
   renderInputPromptBar,
-  type InputPromptItem,
   type InputPromptPlatform,
 } from './inputPrompts';
 import { formatElapsedTime, updateGameplayHud } from './gameplayHud';
@@ -28,6 +32,7 @@ import {
 } from './screenSpecs';
 import {
   DEFAULT_FOCUS_SELECTOR,
+  type ScreenSpec,
   type UIScreen,
 } from './screenTypes';
 import {
@@ -44,6 +49,16 @@ import {
   type FocusDirection,
   type SpatialRect,
 } from './spatialNavigation';
+import {
+  completedOnboardingCompletion,
+  saveOnboardingCompletion,
+  skippedOnboardingCompletion,
+  tutorialStepIndex,
+  tutorialSteps,
+  type GameplayOnboardingCompletion,
+  type GameplayOnboardingKind,
+  type GameplayOnboardingSession,
+} from '../onboarding/gameplayOnboarding';
 
 export { gameplayLevelLabel };
 
@@ -77,16 +92,163 @@ const wireFullscreenButton = (button: HTMLButtonElement): void => {
   onFullscreenChange(() => syncFullscreenButton(button));
 };
 
+function startNormalGame(): void {
+  void requireEngine().setScreen('playing', {
+    level: 1,
+    isFreshGame: true,
+  });
+}
+
 const startGame = (mode: GameMode, difficulty: MathDifficulty): void => {
   const engine = requireEngine();
   playSound('uiSelect');
   engine.setResource('mathDifficulty', difficulty);
   engine.setResource('gameMode', mode);
-  void engine.setScreen('playing', {
-    level: 1,
-    isFreshGame: true,
-  });
+  if (engine.getResource('gameplayOnboardingCompletion') === 'pending') {
+    void engine.setScreen('tutorialOffer', {});
+    return;
+  }
+  startNormalGame();
 };
+
+function startTutorial(): void {
+  const engine = requireEngine();
+  const isFirstRun = engine.getCurrentScreen() === 'tutorialOffer';
+  playSound('uiSelect');
+  const config: TutorialScreenConfig = {
+    kind: 'basics',
+    isReplay: engine.getResource('gameplayOnboardingCompletion') !== 'pending',
+    returnTo: isFirstRun
+      ? { kind: 'newGame' }
+      : { kind: 'nextTutorial' },
+  };
+  if (isFirstRun) {
+    void engine.setScreen('tutorial', config);
+    return;
+  }
+  void engine.pushScreen('tutorial', config);
+}
+
+const ONBOARDING_COMPLETION_RESOURCES = {
+  basics: 'gameplayOnboardingCompletion',
+  operands: 'operandOnboardingCompletion',
+} as const;
+
+const onboardingCompletion = (
+  engine: GameEngine,
+  kind: GameplayOnboardingKind,
+): GameplayOnboardingCompletion => engine.getResource(ONBOARDING_COMPLETION_RESOURCES[kind]);
+
+async function continueToOperandTutorial(engine: GameEngine): Promise<void> {
+  await engine.popScreen();
+  await engine.pushScreen('tutorial', {
+    kind: 'operands',
+    isReplay: true,
+    returnTo: { kind: 'previousScreen' },
+  });
+}
+
+function continueAfterTutorial(
+  session: Extract<GameplayOnboardingSession, { active: true }>,
+): void {
+  const engine = requireEngine();
+  if (session.returnTo.kind === 'nextTutorial') {
+    void continueToOperandTutorial(engine);
+    return;
+  }
+  if (session.returnTo.kind === 'previousScreen') {
+    void engine.popScreen();
+    return;
+  }
+  if (session.returnTo.kind === 'newGame') {
+    startNormalGame();
+    return;
+  }
+
+  const player = engine.tryGetSingleton(['player', 'position', 'health', 'pathFollower'] as const);
+  const snapshot = session.playerSnapshot;
+  if (!player || !snapshot) throw new Error('Operand tutorial cannot restore the active player');
+  Object.assign(player.components.position, snapshot.position);
+  player.components.player.lives = snapshot.lives;
+  player.components.player.gameOverPending = snapshot.gameOverPending;
+  Object.assign(player.components.health, snapshot.health);
+  Object.assign(player.components.pathFollower, snapshot.pathFollower, {
+    breadcrumbs: snapshot.pathFollower.breadcrumbs.map(point => ({ ...point })),
+  });
+  (['tween', 'spriteAnimation', 'shake'] as const).forEach(component => {
+    if (engine.hasComponent(player.id, component)) engine.commands.removeComponent(player.id, component);
+  });
+  void engine.setScreen('playing', {
+    level: session.returnTo.level,
+    isFreshGame: false,
+  });
+}
+
+export function skipGameplayOnboarding(): void {
+  const engine = requireEngine();
+  const session = engine.getResource('gameplayOnboardingSession');
+  const kind = session.active ? session.kind : 'basics';
+  const current = onboardingCompletion(engine, kind);
+  const next = skippedOnboardingCompletion(current);
+  playSound('uiSelect');
+  engine.setResource(ONBOARDING_COMPLETION_RESOURCES[kind], next);
+  if (next === 'skipped' && current !== 'skipped') saveOnboardingCompletion(kind, 'skipped');
+  if (!session.active) {
+    startNormalGame();
+    return;
+  }
+  if (session.returnTo.kind === 'nextTutorial') {
+    void engine.popScreen();
+    return;
+  }
+  continueAfterTutorial(session);
+}
+
+function completeTutorial(): void {
+  const engine = requireEngine();
+  const session = engine.getResource('gameplayOnboardingSession');
+  if (!session.active) return;
+  const current = onboardingCompletion(engine, session.kind);
+  const next = completedOnboardingCompletion(current);
+  playSound('uiSelect');
+  engine.setResource(ONBOARDING_COMPLETION_RESOURCES[session.kind], next);
+  if (next === 'completed' && current !== 'completed') {
+    saveOnboardingCompletion(session.kind, 'completed');
+  }
+  continueAfterTutorial(session);
+}
+
+function setGameplayOnboardingStep(stepIndex: number): void {
+  const engine = requireEngine();
+  const session = engine.getResource('gameplayOnboardingSession');
+  if (!session.active) return;
+  engine.setResource('gameplayOnboardingSession', {
+    ...session,
+    stepIndex: tutorialStepIndex(session.kind, stepIndex),
+  });
+}
+
+export function nextGameplayOnboardingStep(): void {
+  const session = requireEngine().getResource('gameplayOnboardingSession');
+  if (!session.active) return;
+  if (session.stepIndex >= tutorialSteps(session.kind).length - 1) {
+    completeTutorial();
+    return;
+  }
+  playSound('uiSelect');
+  setGameplayOnboardingStep(session.stepIndex + 1);
+}
+
+export function previousGameplayOnboardingStep(): void {
+  const session = requireEngine().getResource('gameplayOnboardingSession');
+  if (!session.active) return;
+  if (session.stepIndex === 0) {
+    skipGameplayOnboarding();
+    return;
+  }
+  playSound('uiBack');
+  setGameplayOnboardingStep(session.stepIndex - 1);
+}
 
 function returnToPreviousScreen(): void {
   playSound('uiBack');
@@ -111,7 +273,12 @@ function openHowToPlay(): void {
 function openSettings(): void {
   const engine = requireEngine();
   const returnTo = engine.getCurrentScreen();
-  if (returnTo === null || returnTo === 'settings' || returnTo === 'levelComplete') return;
+  if (
+    returnTo === null
+    || returnTo === 'settings'
+    || returnTo === 'levelComplete'
+    || returnTo === 'tutorialOffer'
+  ) return;
   playSound('uiSelect');
   void engine.pushScreen('settings', { returnTo });
 }
@@ -136,6 +303,10 @@ const quitApplication = desktopQuit
 
 const SCREENS = createScreenSpecs({
   startGame,
+  startTutorial,
+  skipTutorial: skipGameplayOnboarding,
+  nextTutorialStep: nextGameplayOnboardingStep,
+  previousTutorialStep: previousGameplayOnboardingStep,
   replayGame,
   returnToPreviousScreen,
   goToMenu,
@@ -166,16 +337,43 @@ window.matchMedia('(hover: none) and (pointer: coarse)').addEventListener('chang
 
 const screenElements = new Map<UIScreen, HTMLElement>();
 let currentScreen: UIScreen = 'menu';
+let tutorialPromptsActive = false;
 
-const renderPromptSlot = (root: HTMLElement, prompts: InputPromptItem[] | undefined): void => {
+const TUTORIAL_PROMPT_SPEC = {
+  prompts: [
+    { action: 'select', label: 'Next' },
+    { action: 'back', label: 'Back' },
+    { action: 'skip', label: 'Skip' },
+  ],
+  promptPlacement: 'hud',
+} as const satisfies Pick<ScreenSpec, 'prompts' | 'promptPlacement'>;
+
+const TUTORIAL_FINISH_LABELS = {
+  level: 'Start Level 2',
+  nextTutorial: 'Next Tutorial',
+  previousScreen: 'Finish Tutorial',
+  newGame: 'Start Playing',
+} as const;
+
+function promptSpecForScreen(screen: UIScreen): Pick<ScreenSpec, 'prompts' | 'promptPlacement'> {
+  if (screen === 'playing' && tutorialPromptsActive) return TUTORIAL_PROMPT_SPEC;
+  return SCREENS[screen];
+}
+
+const renderPromptSlot = (
+  root: HTMLElement,
+  spec: Pick<ScreenSpec, 'prompts' | 'promptPlacement'>,
+): void => {
   const slot = root.querySelector<HTMLElement>('[data-input-prompts]');
-  if (!slot || !prompts) return;
-  slot.replaceChildren(renderInputPromptBar(currentPromptPlatform, prompts));
+  if (!slot || !spec.prompts) return;
+  slot.classList.add(`input-prompts-slot--${spec.promptPlacement}`);
+  slot.dataset.inputPromptPlacement = spec.promptPlacement;
+  slot.replaceChildren(renderInputPromptBar(currentPromptPlatform, spec.prompts));
 };
 
 export const updateInputPromptPlatform = (platform: InputPromptPlatform): void => {
   currentPromptPlatform = platform;
-  screenElements.forEach((root, screen) => renderPromptSlot(root, SCREENS[screen].prompts));
+  screenElements.forEach((root, screen) => renderPromptSlot(root, promptSpecForScreen(screen)));
 };
 
 const createScreen = (screen: UIScreen): HTMLElement => {
@@ -185,7 +383,7 @@ const createScreen = (screen: UIScreen): HTMLElement => {
   root.className = spec.className;
   if (typeof spec.html === 'string') root.innerHTML = spec.html;
   else render(spec.html, root);
-  renderPromptSlot(root, spec.prompts);
+  renderPromptSlot(root, promptSpecForScreen(screen));
   spec.wire?.(root);
   gameContainer.appendChild(root);
   screenElements.set(screen, root);
@@ -224,6 +422,13 @@ export const showScreen = (screen: UIScreen): void => {
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   requestCanvasResize();
 };
+
+export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
+  tutorialPromptsActive = mode === 'tutorial';
+  showScreen('playing');
+  const root = screenElements.get('playing');
+  if (root) renderPromptSlot(root, promptSpecForScreen('playing'));
+}
 
 export function showSettingsScreen(returnTo: SettingsReturnScreen): void {
   showScreen('settings');
@@ -268,6 +473,35 @@ export const triggerCancel = (): void => {
 };
 
 export const updateGameplayUI = updateGameplayHud;
+
+export function updateGameplayOnboardingUI(session: GameplayOnboardingSession): void {
+  const panel = document.getElementById('gameplay-onboarding');
+  if (!panel) return;
+  panel.classList.toggle('hidden', !session.active);
+  panel.closest('#gameplay-ui')?.classList.toggle('tutorial-mode', session.active);
+  const pauseButton = document.getElementById('pause-btn');
+  if (pauseButton) pauseButton.hidden = session.active;
+  if (!session.active) return;
+
+  const steps = tutorialSteps(session.kind);
+  const step = steps[session.stepIndex];
+  if (!step) throw new Error(`Unknown tutorial step: ${session.stepIndex}`);
+  const kicker = document.getElementById('gameplay-onboarding-kicker');
+  const title = document.getElementById('gameplay-onboarding-title');
+  const description = document.getElementById('gameplay-onboarding-copy');
+  const backButton = document.getElementById('tutorial-back-btn');
+  const nextButton = document.getElementById('tutorial-next-btn');
+  if (!kicker || !title || !description || !backButton || !nextButton) {
+    throw new Error('Gameplay onboarding UI is incomplete');
+  }
+  kicker.textContent = `Step ${session.stepIndex + 1} of ${steps.length}`;
+  title.textContent = step.title;
+  description.textContent = step.copy;
+  backButton.toggleAttribute('disabled', session.stepIndex === 0);
+  nextButton.textContent = session.stepIndex === steps.length - 1
+    ? TUTORIAL_FINISH_LABELS[session.returnTo.kind]
+    : 'Next';
+}
 
 export const setFinalTime = (elapsedSeconds: number): void => {
   const el = document.getElementById('final-time');

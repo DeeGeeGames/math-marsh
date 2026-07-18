@@ -12,12 +12,23 @@ import { addUINavigationSystemToEngine } from './systems/UINavigationSystem';
 import { addInputPromptSystemToEngine } from './systems/InputPromptSystem';
 import { gameplayPlugin } from './gameplayPlugin';
 import { playerQuery } from './queries';
-import { initializeUI, showScreen, showSettingsScreen, setFinalTime } from '../ui/UIManager';
+import {
+  initializeUI,
+  setFinalTime,
+  showGameplayScreen,
+  showScreen,
+  showSettingsScreen,
+  updateGameplayOnboardingUI,
+} from '../ui/UIManager';
 import { createEquationModeState } from '../math/equations';
 import { addLevelCompleteSystemToEngine } from './systems/LevelCompleteSystem';
+import {
+  gameplayOnboardingPlugin,
+  setupScriptedTutorialScene,
+} from './systems/GameplayOnboardingSystem';
 
 const GAMEPLAY_CLOCK_GROUPS = ['timers', 'tweens', 'coroutines'] as const;
-const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'paused'] as const;
+const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'tutorialOffer', 'paused'] as const;
 
 function pauseGameplayClocks(): void {
   GAMEPLAY_CLOCK_GROUPS.forEach(group => gameEngine.disableSystemGroup(group));
@@ -91,14 +102,29 @@ const setupScreenHooks = (): void => {
 
   gameEngine.onScreenEnter('playing', ({ config }) => {
     resumeGameplayClocks();
-    showScreen('playing');
+    showGameplayScreen('normal');
     setupCanvas();
+    gameEngine.setResource('gameplayOnboardingSession', { active: false });
+    updateGameplayOnboardingUI({ active: false });
     enterPlayingScreen(config);
   });
 
   gameEngine.onScreenResume('playing', () => {
     resumeGameplayClocks();
-    showScreen('playing');
+    showGameplayScreen('normal');
+  });
+
+  gameEngine.onScreenEnter('tutorial', ({ config }) => {
+    resumeGameplayClocks();
+    showGameplayScreen('tutorial');
+    setupCanvas();
+    setupScriptedTutorialScene(gameEngine, config);
+  });
+
+  gameEngine.onScreenResume('tutorial', () => {
+    resumeGameplayClocks();
+    showGameplayScreen('tutorial');
+    updateGameplayOnboardingUI(gameEngine.getResource('gameplayOnboardingSession'));
   });
 
   gameEngine.onScreenEnter('levelComplete', pauseGameplayClocks);
@@ -120,6 +146,7 @@ const setupScreenHooks = (): void => {
 
 const registerSystems = async (): Promise<void> => {
   gameEngine.installPlugin(gameplayPlugin);
+  gameEngine.installPlugin(gameplayOnboardingPlugin);
 
   addEquationFeedbackSystemToEngine();
   addPauseSystemToEngine();

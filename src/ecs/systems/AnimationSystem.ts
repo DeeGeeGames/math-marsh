@@ -92,6 +92,7 @@ export const startShake = (
 export function addShakeSystemToEngine(): void {
   gameEngine.addSystem('shakeSystem')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
+    .inScreens(['playing', 'tutorial'])
     .setProcessEach({ with: ['shake'], mutates: ['shake'] } as const, ({ entity, dt, ecs }) => {
       const shake = entity.components.shake;
       shake.elapsed += dt;

@@ -9,7 +9,7 @@ import { defaultEnemyRenderable, defaultEnemySprite } from './systems/EnemySprit
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { ENEMY_SPAWN_TELEGRAPH_DURATION_MS } from './systemConfigs';
 
-const playerComponents = (x: number, y: number): Partial<AllComponents> => {
+export const playerComponents = (x: number, y: number): Partial<AllComponents> => {
   const grid = pixelToGrid(x, y);
   return {
     position: { x, y, rotation: 0 },
@@ -34,7 +34,7 @@ const playerComponents = (x: number, y: number): Partial<AllComponents> => {
   };
 };
 
-const enemyComponents = (
+export const enemyComponents = (
   x: number,
   y: number,
   enemyType: EnemyType,
@@ -67,7 +67,7 @@ const enemyComponents = (
   };
 };
 
-const mathProblemComponents = (
+export const mathProblemComponents = (
   x: number,
   y: number,
   value: number,

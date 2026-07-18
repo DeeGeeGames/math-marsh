@@ -19,6 +19,7 @@ export const settingsBackLabels: Record<SettingsReturnScreen, string> = {
   modeSelect: '← Back to Mode Selection',
   howToPlay: '← Back to How to Play',
   playing: '← Back to Game',
+  tutorial: '← Back to Tutorial',
   paused: '← Back to Game',
   gameOver: '← Back to Game Over',
 } as const;

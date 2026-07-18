@@ -41,7 +41,7 @@ export type InputPromptPlatform =
   | 'steamdeck'
   | 'generic';
 
-export type InputPromptAction = 'navigate' | 'move' | 'select' | 'eat' | 'back' | 'pause';
+export type InputPromptAction = 'navigate' | 'move' | 'select' | 'eat' | 'back' | 'skip' | 'pause';
 
 export interface InputPromptState {
   platform: InputPromptPlatform;
@@ -97,6 +97,7 @@ const controllerActionPrompts = (glyphs: ControllerPromptGlyphs): Record<InputPr
     select: [glyphs.select],
     eat: [glyphs.select],
     back: [glyphs.back],
+    skip: [glyphs.pause],
     pause: [glyphs.pause],
   };
 };
@@ -150,6 +151,7 @@ const buttonGlyphs = {
     select: [{ src: keyboardEnter, alt: 'Enter key' }],
     eat: [{ text: 'Space', alt: 'Space key' }, { src: keyboardEnter, alt: 'Enter key' }],
     back: [{ src: keyboardEscape, alt: 'Escape key' }],
+    skip: [{ text: 'Tab', alt: 'Tab key' }],
     pause: [{ src: keyboardEscape, alt: 'Escape key' }],
   },
   generic: controllerPrompts.xbox,

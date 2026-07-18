@@ -17,9 +17,7 @@ type RequiresPlayingScreen = ScreensConfig<{
 }>;
 
 /**
- * Plugin bundling systems that only run while the 'playing' screen is active.
- * The `inScreens` default is applied to every system registered inside install,
- * so individual systems no longer need to repeat the gate.
+ * Plugin bundling systems that run during normal gameplay.
  */
 export const gameplayPlugin = definePlugin('gameplay')
   .requires<RequiresPlayingScreen>()

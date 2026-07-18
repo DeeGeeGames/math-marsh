@@ -2,8 +2,14 @@ import type { Timer, TimerComponentTypes } from 'ecspresso/plugins/scripting/tim
 import type { TweenComponentTypes } from 'ecspresso/plugins/scripting/tween';
 import type { CoroutineComponentTypes } from 'ecspresso/plugins/scripting/coroutine';
 import type { AIBehavior, EnemyType } from '../types/shared';
+import type {
+  GameplayOnboardingCompletion,
+  GameplayOnboardingKind,
+  GameplayOnboardingReturn,
+  GameplayOnboardingSession,
+} from '../onboarding/gameplayOnboarding';
 
-export type GameAction = 'up' | 'down' | 'left' | 'right' | 'eat' | 'pause';
+export type GameAction = 'up' | 'down' | 'left' | 'right' | 'eat' | 'back' | 'skip' | 'pause';
 
 export type TimerSlot =
   | 'webExpiry'
@@ -136,6 +142,11 @@ export type AllComponents = Components
 // Must be a `type` (not `interface`) so it satisfies ecspresso's
 // `Record<string, unknown>` screen-config constraint.
 export type PlayingScreenConfig = { level: number; isFreshGame: boolean };
+export type TutorialScreenConfig = {
+  kind: GameplayOnboardingKind;
+  isReplay: boolean;
+  returnTo: GameplayOnboardingReturn;
+};
 export type LevelCompleteScreenConfig = {
   completedLevel: number;
   nextLevel: number;
@@ -145,7 +156,7 @@ export type LevelCompleteScreenState = LevelCompleteScreenConfig & {
   transitionStarted: boolean;
 };
 
-export type SettingsReturnScreen = 'menu' | 'modeSelect' | 'howToPlay' | 'playing' | 'paused' | 'gameOver';
+export type SettingsReturnScreen = 'menu' | 'modeSelect' | 'howToPlay' | 'playing' | 'tutorial' | 'paused' | 'gameOver';
 export type SettingsScreenConfig = { returnTo: SettingsReturnScreen };
 
 export type GameMode = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'anything';
@@ -197,4 +208,7 @@ export interface Resources {
   enemySpawn: { index: number };
   equationMode: EquationModeState;
   inputPrompt: import('../ui/inputPrompts').InputPromptState;
+  gameplayOnboardingCompletion: GameplayOnboardingCompletion;
+  operandOnboardingCompletion: GameplayOnboardingCompletion;
+  gameplayOnboardingSession: GameplayOnboardingSession;
 }

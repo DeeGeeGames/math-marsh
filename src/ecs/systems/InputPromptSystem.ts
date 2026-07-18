@@ -4,8 +4,8 @@ import type { InputPromptPlatform } from '../../ui/inputPrompts';
 import { detectInputPromptPlatform } from '../../ui/inputPrompts';
 import { updateInputPromptPlatform } from '../../ui/UIManager';
 
-const KEYBOARD_ACTION_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Enter', 'Escape'] as const;
-const GAMEPAD_BUTTONS = [0, 9, 12, 13, 14, 15] as const;
+const KEYBOARD_ACTION_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Enter', 'Escape', 'Tab'] as const;
+const GAMEPAD_BUTTONS = [0, 1, 9, 12, 13, 14, 15] as const;
 const GAMEPAD_AXES = [0, 1] as const;
 const ACTIVE_AXIS_THRESHOLD = 0.5;
 

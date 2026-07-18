@@ -48,6 +48,7 @@ export const SYSTEM_PRIORITIES = {
   TIMERS: 95,                   // Timer updates after input, before gameplay intent
   AI: 85,                       // AI behavior
   MOVEMENT: 80,                 // Movement processing
+  ONBOARDING: 79,               // Observes demonstrated actions after input intent
   ANIMATION: 75,                // Animation interpolation (after movement, before collision)
   COLLISION: 70,                // Collision detection
   EQUATION_FEEDBACK: 60,        // Delayed equation transitions after answer feedback

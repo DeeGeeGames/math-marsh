@@ -28,6 +28,10 @@ const BTN_SIZE = {
 
 export type ScreenSpecActions = {
   startGame: (mode: GameMode, difficulty: MathDifficulty) => void;
+  startTutorial: () => void;
+  skipTutorial: () => void;
+  nextTutorialStep: () => void;
+  previousTutorialStep: () => void;
   replayGame: () => void;
   returnToPreviousScreen: () => void;
   goToMenu: () => void;
@@ -41,8 +45,6 @@ export type ScreenSpecActions = {
   wireTouchControlsSetting: (root: ParentNode) => void;
 };
 
-// TODO: Make prompt placement explicit here, e.g. viewport / hud / panel,
-// instead of relying on screen IDs and parent selectors in CSS.
 const inputPromptsSlot = (): string => '<div class="input-prompts-slot" data-input-prompts></div>';
 
 const menuSprite = (className: string, imageSrc: string): TemplateResult => html`
@@ -56,19 +58,19 @@ const menuSprite = (className: string, imageSrc: string): TemplateResult => html
 const HOW_TO_PLAY_STEPS = [
   {
     title: 'Read the equation',
-    description: 'The goal above the board shows which result or operands are missing.',
+    description: 'Look at the equation above the pond. Empty spots show the numbers you need.',
   },
   {
     title: 'Move to a number',
-    description: 'Guide the frog across the lily pads until it is on the number you need.',
+    description: 'Move the fly from pad to pad. Stop on a number you need.',
   },
   {
-    title: 'Eat to select',
-    description: 'Use the Eat action on that tile. Some equations require more than one number.',
+    title: 'Eat the number',
+    description: 'Press Eat to pick the number. You may need to pick two numbers.',
   },
   {
-    title: 'Protect your lives',
-    description: 'Wrong answers and enemies cost lives. Clear equations to advance through the marsh.',
+    title: 'Stay safe',
+    description: 'A wrong answer or an animal can take one life. Solve more equations to keep going.',
   },
 ] as const;
 
@@ -179,6 +181,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
     ],
+    promptPlacement: 'viewport',
   },
 
   modeSelect: {
@@ -273,6 +276,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],
+    promptPlacement: 'viewport',
     wire: (root): void => {
       root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -302,23 +306,59 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
           How to Play
         </h1>
         <p class="text-sm sm:text-base md:text-xl mb-4 sm:mb-5 md:mb-7 opacity-90 leading-relaxed">
-          Solve the equation by eating the right number tiles while staying clear of pond creatures.
+          Eat the right numbers to solve the equation. Stay away from pond animals.
         </p>
 
         <ol class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5 text-left">
           ${HOW_TO_PLAY_STEPS.map(howToPlayStep)}
         </ol>
 
-        <button @click=${actions.goToMenu} class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.lg} mt-4 md:mt-7 landscape:mt-3 w-full sm:w-auto">
-          ← Back to Menu
-        </button>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center mt-4 md:mt-7 landscape:mt-3">
+          <button @click=${actions.startTutorial} class="btn-success ${BTN_CHROME} ${BTN_SIZE.lg} w-full sm:w-auto">
+            Play Tutorial
+          </button>
+          <button @click=${actions.goToMenu} class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.lg} w-full sm:w-auto">
+            ← Back to Menu
+          </button>
+        </div>
         <div class="input-prompts-slot" data-input-prompts></div>
       </div>
     `,
     prompts: [
       { action: 'back', label: 'Back' },
     ],
+    promptPlacement: 'viewport',
     onCancel: actions.goToMenu,
+  },
+
+  tutorialOffer: {
+    id: 'tutorial-offer-screen',
+    className: `${OVERLAY_BASE} app-background`,
+    html: html`
+      <div class="overlay-panel text-center w-[min(92vw,620px)] px-6 sm:px-8 py-7 sm:py-9">
+        <p class="text-sm md:text-base uppercase tracking-widest text-gold font-bold mb-2">First game</p>
+        <h1 class="pond-title text-3xl sm:text-4xl md:text-5xl font-bold text-gold drop-shadow-lg">
+          Learn on the pond
+        </h1>
+        <p class="text-base sm:text-lg md:text-xl mt-5 opacity-90 leading-relaxed">
+          Try a short game that shows you how to play. You can skip it now and play it again later.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mt-7">
+          <button @click=${actions.startTutorial} class="btn-success ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
+            Start Tutorial
+          </button>
+          <button @click=${actions.skipTutorial} class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+            Skip and Play
+          </button>
+        </div>
+        <div class="input-prompts-slot" data-input-prompts></div>
+      </div>
+    `,
+    prompts: [
+      { action: 'navigate', label: 'Choose' },
+      { action: 'select', label: 'Select' },
+    ],
+    promptPlacement: 'panel',
   },
 
   playing: {
@@ -352,6 +392,25 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
         </div>
       </div>
 
+      <section id="gameplay-onboarding" class="gameplay-onboarding hidden" aria-live="polite">
+        <div class="gameplay-onboarding-copy">
+          <p id="gameplay-onboarding-kicker" class="gameplay-onboarding-kicker">Step 1 of 5</p>
+          <h2 id="gameplay-onboarding-title">Move across the pond</h2>
+          <p id="gameplay-onboarding-copy">The fly moves from one lily pad to the next.</p>
+        </div>
+        <div class="gameplay-onboarding-actions">
+          <button id="tutorial-back-btn" type="button" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">
+            Back
+          </button>
+          <button id="tutorial-next-btn" type="button" class="btn-success ${BTN_CHROME} ${BTN_SIZE.md}">
+            Next
+          </button>
+          <button id="skip-tutorial-btn" type="button" class="tutorial-skip-btn">
+            Skip
+          </button>
+        </div>
+      </section>
+
       <div id="touch-dpad" class="touch-controls" aria-label="Movement controls">
         <button id="touch-up"    type="button" aria-label="Move up"><span class="dpad-glyph">▲</span></button>
         <button id="touch-left"  type="button" aria-label="Move left"><span class="dpad-glyph">▲</span></button>
@@ -367,11 +426,15 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       { action: 'eat', label: 'Eat' },
       { action: 'pause', label: 'Pause' },
     ],
+    promptPlacement: 'hud',
     wire: (root): void => {
       $(root, '#pause-btn').addEventListener('click', actions.pauseGame);
       actions.wireFullscreenButton($<HTMLButtonElement>(root, '#hud-fullscreen-btn'));
       bindGameplayHud(root);
       bindTouchControls(root);
+      $(root, '#tutorial-back-btn').addEventListener('click', actions.previousTutorialStep);
+      $(root, '#tutorial-next-btn').addEventListener('click', actions.nextTutorialStep);
+      $(root, '#skip-tutorial-btn').addEventListener('click', actions.skipTutorial);
     },
   },
 
@@ -419,6 +482,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],
+    promptPlacement: 'viewport',
     wire: (root): void => {
       $(root, '#back-to-menu-btn').addEventListener('click', actions.returnToPreviousScreen);
       actions.wireAudioSettings(root);
@@ -466,6 +530,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
     ],
+    promptPlacement: 'panel',
     wire: (root): void => {
       $(root, '#play-again-btn').addEventListener('click', actions.replayGame);
       $(root, '#main-menu-btn').addEventListener('click', actions.goToMenu);
@@ -499,6 +564,7 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],
+    promptPlacement: 'panel',
     wire: (root): void => {
       $(root, '#resume-btn').addEventListener('click', actions.returnToPreviousScreen);
       $(root, '#pause-settings-btn').addEventListener('click', actions.openSettings);
