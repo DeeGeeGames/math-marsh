@@ -39,6 +39,11 @@ import {
 } from '../audio/audio';
 import { getDesktopQuitHandler } from '../platform/desktop';
 import { render } from 'lit-html';
+import {
+  findSpatialTargetIndex,
+  type FocusDirection,
+  type SpatialRect,
+} from './spatialNavigation';
 
 export { gameplayLevelLabel };
 
@@ -185,12 +190,19 @@ const getFocusables = (screen: UIScreen): HTMLElement[] => {
   const root = screenElements.get(screen);
   if (!root) return [];
   const selector = SCREENS[screen].focusSelector ?? DEFAULT_FOCUS_SELECTOR;
-  return Array.from(root.querySelectorAll<HTMLElement>(selector));
+  return Array.from(root.querySelectorAll<HTMLElement>(selector))
+    .filter(element => element.getClientRects().length > 0 && element.getAttribute('aria-hidden') !== 'true');
+};
+
+const focusElement = (element: HTMLElement | undefined): void => {
+  if (!element) return;
+  element.focus();
+  element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 };
 
 const focusFirstOn = (screen: UIScreen): void => {
   const [first] = getFocusables(screen);
-  first?.focus();
+  focusElement(first);
 };
 
 export const showScreen = (screen: UIScreen): void => {
@@ -220,16 +232,22 @@ const focusedIndex = (focusables: HTMLElement[]): number => {
   return focusables.indexOf(active);
 };
 
-export const navigateFocus = (direction: 'prev' | 'next'): void => {
+const spatialRect = (element: HTMLElement): SpatialRect => {
+  const { left, right, top, bottom } = element.getBoundingClientRect();
+  return { left, right, top, bottom };
+};
+
+export const navigateFocus = (direction: FocusDirection): void => {
   const focusables = getFocusables(currentScreen);
   if (focusables.length === 0) return;
   const current = focusedIndex(focusables);
   if (current < 0) {
-    focusables[direction === 'next' ? 0 : focusables.length - 1]?.focus();
+    focusElement(focusables[0]);
     return;
   }
-  const offset = direction === 'next' ? 1 : -1;
-  focusables[(current + offset + focusables.length) % focusables.length]?.focus();
+  const target = findSpatialTargetIndex(focusables.map(spatialRect), current, direction);
+  if (target === null) return;
+  focusElement(focusables[target]);
 };
 
 export const activateFocus = (): void => {

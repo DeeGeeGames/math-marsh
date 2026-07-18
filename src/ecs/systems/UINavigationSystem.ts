@@ -10,8 +10,10 @@ export function addUINavigationSystemToEngine(): void {
     .withResources(['inputState'])
     .setProcess(({ resources: { inputState } }) => {
       const a = inputState.actions;
-      if (a.justActivated('up') || a.justActivated('left')) navigateFocus('prev');
-      if (a.justActivated('down') || a.justActivated('right')) navigateFocus('next');
+      if (a.justActivated('up')) navigateFocus('up');
+      if (a.justActivated('down')) navigateFocus('down');
+      if (a.justActivated('left')) navigateFocus('left');
+      if (a.justActivated('right')) navigateFocus('right');
       if (a.justActivated('eat')) activateFocus();
       if (a.justActivated('pause')) triggerCancel();
     });

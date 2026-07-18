@@ -14,4 +14,10 @@ export type ScreenSpec = {
   onCancel?: () => void;
 };
 
-export const DEFAULT_FOCUS_SELECTOR = 'button:not(:disabled), [data-focusable]:not(.disabled)';
+export const DEFAULT_FOCUS_SELECTOR = [
+	'button:not(:disabled)',
+	'input:not(:disabled)',
+	'select:not(:disabled)',
+	'textarea:not(:disabled)',
+	'[data-focusable]:not(.disabled)',
+].join(', ');

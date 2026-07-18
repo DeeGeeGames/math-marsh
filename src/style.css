@@ -568,6 +568,8 @@
  * focusable (e.g. mode cards). Uses focus-visible so mouse clicks don't
  * leave a lingering outline on the last-clicked button. */
 button:focus-visible,
+[type="checkbox"]:focus-visible,
+[type="radio"]:focus-visible,
 [data-focusable]:focus-visible {
   outline: 3px solid var(--reed);
   outline-offset: 4px;
@@ -576,6 +578,15 @@ button:focus-visible,
 
 .mode-card[data-focusable]:focus-visible {
   transform: translateY(-2px);
+}
+
+.mode-card[aria-pressed="true"],
+.touch-mode-btn[aria-pressed="true"] {
+  border-color: var(--reed);
+  box-shadow:
+    0 0 0 3px rgba(244, 210, 122, 0.38),
+    var(--pond-shadow);
+  filter: brightness(1.12);
 }
 
 .difficulty-panel {
