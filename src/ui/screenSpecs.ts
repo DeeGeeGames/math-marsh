@@ -191,13 +191,13 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
           </button>
 
           <button type="button" data-mode="division" data-focusable class="mode-card text-white border-none p-3 md:p-6 landscape:p-3 rounded-xl shadow-lg cursor-pointer text-left">
-            <span class="mode-symbol" aria-hidden="true">/</span>
+            <span class="mode-symbol" aria-hidden="true">÷</span>
             <h3 class="text-lg md:text-2xl landscape:text-base font-bold mb-1 md:mb-3 landscape:mb-1">Division</h3>
             <p class="text-xs md:text-base landscape:text-xs opacity-90 mb-1 md:mb-3 landscape:mb-1">
               Solve whole-number division equations.
             </p>
             <div class="text-xs opacity-70 landscape:hidden">
-              Example: 12 / 3 = _
+              Example: 12 ÷ 3 = _
             </div>
           </button>
 

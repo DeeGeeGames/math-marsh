@@ -263,7 +263,7 @@ const operations: Record<EquationOperation, EquationOperationDefinition> = {
     resultCandidates: multiplyResultCandidates,
   },
   divide: {
-    symbol: '/',
+    symbol: '÷',
     operandCount: 2,
     evaluate: ([left, right]) => left / right,
     resultRange: ranges => ({ min: 1, max: ranges.left.max }),
