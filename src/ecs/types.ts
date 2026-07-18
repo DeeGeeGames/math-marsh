@@ -145,7 +145,7 @@ export type LevelCompleteScreenState = LevelCompleteScreenConfig & {
   transitionStarted: boolean;
 };
 
-export type SettingsReturnScreen = 'menu' | 'modeSelect' | 'playing' | 'paused' | 'gameOver';
+export type SettingsReturnScreen = 'menu' | 'modeSelect' | 'howToPlay' | 'playing' | 'paused' | 'gameOver';
 export type SettingsScreenConfig = { returnTo: SettingsReturnScreen };
 
 export type GameMode = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'anything';

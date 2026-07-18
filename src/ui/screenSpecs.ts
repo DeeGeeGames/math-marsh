@@ -32,6 +32,7 @@ export type ScreenSpecActions = {
   returnToPreviousScreen: () => void;
   goToMenu: () => void;
   openModeSelect: () => void;
+  openHowToPlay: () => void;
   openSettings: () => void;
   quitApplication?: () => void;
   pauseGame: () => void;
@@ -51,6 +52,40 @@ const menuSprite = (className: string, imageSrc: string): TemplateResult => html
     aria-hidden="true"
   ></span>
 `;
+
+const HOW_TO_PLAY_STEPS = [
+  {
+    title: 'Read the equation',
+    description: 'The goal above the board shows which result or operands are missing.',
+  },
+  {
+    title: 'Move to a number',
+    description: 'Guide the frog across the lily pads until it is on the number you need.',
+  },
+  {
+    title: 'Eat to select',
+    description: 'Use the Eat action on that tile. Some equations require more than one number.',
+  },
+  {
+    title: 'Protect your lives',
+    description: 'Wrong answers and enemies cost lives. Clear equations to advance through the marsh.',
+  },
+] as const;
+
+function howToPlayStep(
+  step: (typeof HOW_TO_PLAY_STEPS)[number],
+  index: number,
+): TemplateResult {
+  return html`
+    <li class="how-to-play-step p-3 sm:p-4 md:p-5 rounded-xl">
+      <span class="how-to-play-step-number" aria-hidden="true">${index + 1}</span>
+      <div>
+        <h2 class="text-base md:text-xl font-semibold mb-1">${step.title}</h2>
+        <p class="text-sm md:text-base opacity-90">${step.description}</p>
+      </div>
+    </li>
+  `;
+}
 
 export const resetModeSelect = (root: HTMLElement): void => {
   root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
@@ -92,6 +127,9 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
               Start Game
             </button>
             <div class="menu-secondary-actions">
+              <button @click=${actions.openHowToPlay} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+                How to Play
+              </button>
               <button @click=${actions.openSettings} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
                 Settings
               </button>
@@ -255,6 +293,34 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
     onCancel: actions.goToMenu,
   },
 
+  howToPlay: {
+    id: 'how-to-play-screen',
+    className: `${OVERLAY_BASE} app-background`,
+    html: html`
+      <div class="text-center max-w-sm md:max-w-4xl w-full px-4 md:px-8 py-4 sm:py-6 md:py-8 landscape:py-3">
+        <h1 class="pond-title text-2xl sm:text-3xl md:text-5xl landscape:text-2xl landscape:md:text-3xl font-bold mb-2 sm:mb-3 md:mb-4 text-gold drop-shadow-lg">
+          How to Play
+        </h1>
+        <p class="text-sm sm:text-base md:text-xl mb-4 sm:mb-5 md:mb-7 opacity-90 leading-relaxed">
+          Solve the equation by eating the right number tiles while staying clear of pond creatures.
+        </p>
+
+        <ol class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5 text-left">
+          ${HOW_TO_PLAY_STEPS.map(howToPlayStep)}
+        </ol>
+
+        <button @click=${actions.goToMenu} class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.lg} mt-4 md:mt-7 landscape:mt-3 w-full sm:w-auto">
+          ← Back to Menu
+        </button>
+        <div class="input-prompts-slot" data-input-prompts></div>
+      </div>
+    `,
+    prompts: [
+      { action: 'back', label: 'Back' },
+    ],
+    onCancel: actions.goToMenu,
+  },
+
   playing: {
     id: 'gameplay-ui',
     className: 'absolute inset-0 flex flex-col pointer-events-none z-10',
@@ -318,11 +384,6 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
 
         <div class="grid grid-cols-1 landscape:grid-cols-2 gap-3 md:gap-6 landscape:gap-3 text-left items-stretch">
           <div class="settings-panel p-3 md:p-6 landscape:p-3 rounded-xl">
-            <h3 class="text-base md:text-xl landscape:text-base font-semibold mb-2 md:mb-4 landscape:mb-2">🎯 Math Challenge</h3>
-            <p class="text-xs md:text-base landscape:text-xs opacity-90">Mode and difficulty are selected when starting a game.</p>
-          </div>
-
-          <div class="settings-panel p-3 md:p-6 landscape:p-3 rounded-xl">
             <h3 class="text-base md:text-xl landscape:text-base font-semibold mb-2 md:mb-4 landscape:mb-2">🔊 Audio</h3>
             <div class="space-y-2 md:space-y-3">
               <label class="flex items-center gap-3 cursor-pointer">
@@ -333,16 +394,6 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
                 <input type="checkbox" id="background-music" checked class="theme-checkbox w-5 h-5 rounded">
                 <span class="text-sm md:text-base">Background Music</span>
               </label>
-            </div>
-          </div>
-
-          <div class="settings-panel p-3 md:p-6 landscape:p-3 rounded-xl">
-            <h3 class="text-base md:text-xl landscape:text-base font-semibold mb-2 md:mb-4 landscape:mb-2">🎮 Controls</h3>
-            <div class="text-xs md:text-base landscape:text-xs space-y-0.5 md:space-y-1 opacity-90">
-              <p>🔤 Move: WASD / Arrows / D-pad</p>
-              <p>🍽️ Eat / Select: Space / Enter / A</p>
-              <p>⏸️ Pause / Back: Esc / Start</p>
-              <p>⚙️ F1: Settings</p>
             </div>
           </div>
 

@@ -103,6 +103,11 @@ function openModeSelect(): void {
   void requireEngine().setScreen('modeSelect', {});
 }
 
+function openHowToPlay(): void {
+  playSound('uiSelect');
+  void requireEngine().setScreen('howToPlay', {});
+}
+
 function openSettings(): void {
   const engine = requireEngine();
   const returnTo = engine.getCurrentScreen();
@@ -135,6 +140,7 @@ const SCREENS = createScreenSpecs({
   returnToPreviousScreen,
   goToMenu,
   openModeSelect,
+  openHowToPlay,
   openSettings,
   quitApplication,
   pauseGame,

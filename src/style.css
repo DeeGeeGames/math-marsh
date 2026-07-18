@@ -598,8 +598,7 @@ button:focus-visible,
 .utility-btn,
 .hud-chip,
 .difficulty-choice,
-.touch-mode-btn,
-.settings-panel {
+.touch-mode-btn {
   color: var(--cream);
   border: 1px solid var(--soft-cream-border);
   box-shadow: var(--pond-shadow);
@@ -664,11 +663,32 @@ button:focus-visible,
   background: var(--danger-gradient);
 }
 
-.settings-panel {
+.settings-panel,
+.how-to-play-step {
+  color: var(--cream);
   background: var(--panel-gradient);
   border: 2px solid var(--soft-cream-border);
+  box-shadow: var(--pond-shadow);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+}
+
+.how-to-play-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.how-to-play-step-number {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--reed);
+  color: var(--ink);
+  font-weight: 900;
 }
 
 .overlay-panel {

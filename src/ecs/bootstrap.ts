@@ -17,6 +17,7 @@ import { createEquationModeState } from '../math/equations';
 import { addLevelCompleteSystemToEngine } from './systems/LevelCompleteSystem';
 
 const GAMEPLAY_CLOCK_GROUPS = ['timers', 'tweens', 'coroutines'] as const;
+const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'paused'] as const;
 
 function pauseGameplayClocks(): void {
   GAMEPLAY_CLOCK_GROUPS.forEach(group => gameEngine.disableSystemGroup(group));
@@ -76,7 +77,7 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
  * Wire screen lifecycle hooks. ECS screen state drives DOM, not vice versa.
  */
 const setupScreenHooks = (): void => {
-  const registerInactiveScreen = (screen: 'menu' | 'modeSelect' | 'paused'): void => {
+  const registerInactiveScreen = (screen: (typeof INACTIVE_SCREENS)[number]): void => {
     function showInactiveScreen(): void {
       pauseGameplayClocks();
       showScreen(screen);
@@ -86,7 +87,7 @@ const setupScreenHooks = (): void => {
     gameEngine.onScreenResume(screen, showInactiveScreen);
   };
 
-  (['menu', 'modeSelect', 'paused'] as const).forEach(registerInactiveScreen);
+  INACTIVE_SCREENS.forEach(registerInactiveScreen);
 
   gameEngine.onScreenEnter('playing', ({ config }) => {
     resumeGameplayClocks();

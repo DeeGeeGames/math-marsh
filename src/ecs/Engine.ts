@@ -63,6 +63,7 @@ export const gameEngine = ECSpresso.create()
   .withScreens(screens => screens
     .add('menu', { initialState: () => ({}) })
     .add('modeSelect', { initialState: () => ({}) })
+    .add('howToPlay', { initialState: () => ({}) })
     .add('playing', { initialState: (config: PlayingScreenConfig) => ({ ...config }) })
     .add('levelComplete', {
       initialState: (config: LevelCompleteScreenConfig): LevelCompleteScreenState => ({
