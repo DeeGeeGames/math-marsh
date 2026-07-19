@@ -540,10 +540,10 @@ export const createScreenSpecs = (actions: ScreenSpecActions): Record<UIScreen, 
 
   paused: {
     id: 'pause-screen',
-    className: `${OVERLAY_BASE} app-background`,
+    className: `${OVERLAY_BASE} contextual-gameplay-overlay`,
     html: `
-      <div class="overlay-panel text-center max-w-sm md:max-w-md px-6 py-6 sm:py-8">
-        <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 md:mb-12 drop-shadow-lg">⏸️ PAUSED</h2>
+      <div class="pause-panel overlay-panel text-center w-[min(92vw,28rem)] px-6 py-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <h2 id="pause-title" class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 md:mb-12 drop-shadow-lg">⏸️ PAUSED</h2>
 
         <div class="flex flex-col gap-4 md:gap-5">
           <button id="resume-btn" class="btn-success ${BTN_CHROME} ${BTN_SIZE.lg} w-full">

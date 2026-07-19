@@ -409,19 +409,31 @@ const focusFirstOn = (screen: UIScreen): void => {
   focusElement(first);
 };
 
-export const showScreen = (screen: UIScreen): void => {
-  screenElements.get(currentScreen)?.style.setProperty('display', 'none');
+function presentScreen(screen: UIScreen, retainGameplay: boolean): HTMLElement {
   const root = screenElements.get(screen) ?? createScreen(screen);
-  root.style.display = 'flex';
+  screenElements.forEach((element, candidate) => {
+    const visible = candidate === screen || (retainGameplay && candidate === 'playing');
+    element.style.display = visible ? 'flex' : 'none';
+  });
+  const gameplayRoot = screenElements.get('playing');
+  if (gameplayRoot) gameplayRoot.inert = retainGameplay;
   currentScreen = screen;
   setAudioScene(screen === 'playing' ? 'game' : 'title');
   if (screen === 'modeSelect') resetModeSelect(root);
   // Gameplay screen is driven by inputState, not DOM focus — leaving focus
   // there would show a focus ring on the pause button during play.
-  if (screen !== 'playing') return focusFirstOn(screen);
+  if (screen !== 'playing') {
+    focusFirstOn(screen);
+    return root;
+  }
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   requestCanvasResize();
-};
+  return root;
+}
+
+export function showScreen(screen: UIScreen): void {
+  presentScreen(screen, false);
+}
 
 export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
   tutorialPromptsActive = mode === 'tutorial';
@@ -430,8 +442,15 @@ export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
   if (root) renderPromptSlot(root, promptSpecForScreen('playing'));
 }
 
+export function showPauseScreen(): void {
+  presentScreen('paused', true);
+}
+
 export function showSettingsScreen(returnTo: SettingsReturnScreen): void {
-  showScreen('settings');
+  const retainsGameplay = returnTo === 'paused';
+  const root = presentScreen('settings', retainsGameplay);
+  root.classList.toggle('app-background', !retainsGameplay);
+  root.classList.toggle('contextual-gameplay-overlay', retainsGameplay);
   const backButton = document.getElementById('back-to-menu-btn');
   if (!backButton) throw new Error('Settings back button not found');
   backButton.textContent = settingsBackLabels[returnTo];

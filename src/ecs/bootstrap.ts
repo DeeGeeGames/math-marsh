@@ -16,6 +16,7 @@ import {
   initializeUI,
   setFinalTime,
   showGameplayScreen,
+  showPauseScreen,
   showScreen,
   showSettingsScreen,
   updateGameplayOnboardingUI,
@@ -28,7 +29,7 @@ import {
 } from './systems/GameplayOnboardingSystem';
 
 const GAMEPLAY_CLOCK_GROUPS = ['timers', 'tweens', 'coroutines'] as const;
-const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'tutorialOffer', 'paused'] as const;
+const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
 
 function pauseGameplayClocks(): void {
   GAMEPLAY_CLOCK_GROUPS.forEach(group => gameEngine.disableSystemGroup(group));
@@ -99,6 +100,14 @@ const setupScreenHooks = (): void => {
   };
 
   INACTIVE_SCREENS.forEach(registerInactiveScreen);
+
+  function showPausedScreen(): void {
+    pauseGameplayClocks();
+    showPauseScreen();
+  }
+
+  gameEngine.onScreenEnter('paused', showPausedScreen);
+  gameEngine.onScreenResume('paused', showPausedScreen);
 
   gameEngine.onScreenEnter('playing', ({ config }) => {
     resumeGameplayClocks();

@@ -694,6 +694,27 @@ button:focus-visible,
   -webkit-backdrop-filter: blur(7px);
 }
 
+.contextual-gameplay-overlay {
+  background: rgba(5, 31, 36, 0.58);
+  backdrop-filter: blur(4px) brightness(0.72);
+  -webkit-backdrop-filter: blur(4px) brightness(0.72);
+}
+
+@media (max-height: 500px) {
+  .pause-panel {
+    padding-block: 0.75rem;
+  }
+
+  .pause-panel h2 {
+    margin-bottom: 0.75rem;
+    font-size: 1.75rem;
+  }
+
+  .pause-panel > div {
+    gap: 0.5rem;
+  }
+}
+
 .game-over-layout {
   position: relative;
   z-index: 1;
