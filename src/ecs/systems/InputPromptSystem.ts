@@ -98,8 +98,8 @@ export function addInputPromptSystemToEngine(): void {
       const gamepadPlatform = activeGamepadPlatform(inputState.gamepads, inputPrompt);
       rememberGamepadAxes(inputState.gamepads, inputPrompt);
 
-      if (keyboardActivity) return updatePlatform(inputPrompt, 'keyboard');
       if (gamepadPlatform) return updatePlatform(inputPrompt, gamepadPlatform);
+      if (keyboardActivity) return updatePlatform(inputPrompt, 'keyboard');
       if (inputPrompt.platform === 'keyboard') {
         const connectedPlatform = firstConnectedGamepadPlatform(inputState.gamepads);
         if (connectedPlatform) updatePlatform(inputPrompt, connectedPlatform);
