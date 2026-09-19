@@ -3,8 +3,6 @@ import type { GameSystemRegistrar } from '../Engine';
 import type { AllComponents } from '../types';
 import { flyMoveAway, flyMoveSide, flyMoveToward } from '../assets';
 import { gridToPixel } from '../gameUtils';
-import { activeLilyPadCellKeys, isActiveLilyPadCell, positionGridCell } from '../lilyPads';
-import { mathProblemQuery } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 
 type Facing = AllComponents['playerSprite']['facing'];
@@ -47,27 +45,20 @@ export function defaultPlayerSprite(): AllComponents['playerSprite'] {
   };
 }
 
-export function shouldPlayerFlap(
-  speed: number,
-  position: Readonly<{ x: number; y: number }>,
-  activeLilyPadCells: ReadonlySet<string>,
-): boolean {
-  return speed > 0 || !isActiveLilyPadCell(positionGridCell(position), activeLilyPadCells);
+export function nextPlayerSpriteElapsed(elapsed: number, dt: number): number {
+  return (elapsed + dt) % ANIMATION_DURATION_S;
 }
 
 export function addPlayerSpriteSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('playerSpriteSystem')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
     .inScreens(['playing', 'tutorial'])
-    .addQuery('players', {
-      with: ['pathFollower', 'player', 'playerSprite', 'position', 'renderable'],
-      mutates: ['playerSprite', 'renderable'],
-    } as const)
-    .addQuery('mathProblems', mathProblemQuery)
-    .setProcess(({ queries, dt }) => {
-      const activeLilyPadCells = activeLilyPadCellKeys(queries.mathProblems);
-
-      queries.players.forEach(entity => {
+    .setProcessEach(
+      {
+        with: ['pathFollower', 'player', 'playerSprite', 'position', 'renderable'],
+        mutates: ['playerSprite', 'renderable'],
+      } as const,
+      ({ entity, dt }) => {
         const { pathFollower, player, playerSprite, position, renderable } = entity.components;
         if (player.gameOverPending) return;
 
@@ -79,9 +70,7 @@ export function addPlayerSpriteSystemToEngine(systems: GameSystemRegistrar): voi
         const facing = facingFromDelta(target.x - position.x, target.y - position.y);
         if (facing) playerSprite.facing = facing;
 
-        playerSprite.elapsed = shouldPlayerFlap(pathFollower.speed, position, activeLilyPadCells)
-          ? (playerSprite.elapsed + dt) % ANIMATION_DURATION_S
-          : 0;
+        playerSprite.elapsed = nextPlayerSpriteElapsed(playerSprite.elapsed, dt);
 
         const presentation = SPRITE_BY_FACING[playerSprite.facing];
         renderable.imageSrc = presentation.imageSrc;
@@ -90,6 +79,6 @@ export function addPlayerSpriteSystemToEngine(systems: GameSystemRegistrar): voi
           frameIndex: Math.floor(playerSprite.elapsed / FRAME_DURATION_S),
           flipX: presentation.flipX,
         };
-      });
-    });
+      },
+    );
 }

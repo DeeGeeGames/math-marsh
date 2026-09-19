@@ -1,20 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { gridToPixel } from '../gameUtils';
-import { gridCellKey } from '../lilyPads';
-import { shouldPlayerFlap } from './PlayerSpriteSystem';
-
-const ACTIVE_LILY_PAD = new Set([gridCellKey({ x: 2, y: 3 })]);
+import { nextPlayerSpriteElapsed } from './PlayerSpriteSystem';
 
 describe('player sprite animation', () => {
-  test('rests while stopped on an active lily pad', () => {
-    expect(shouldPlayerFlap(0, gridToPixel(2, 3), ACTIVE_LILY_PAD)).toBe(false);
+  test('continues flying from the first frame', () => {
+    expect(nextPlayerSpriteElapsed(0, 1 / 24)).toBe(1 / 24);
   });
 
-  test('continually flaps while stopped over water', () => {
-    expect(shouldPlayerFlap(0, gridToPixel(1, 3), ACTIVE_LILY_PAD)).toBe(true);
-  });
-
-  test('flaps while moving from a lily pad', () => {
-    expect(shouldPlayerFlap(100, gridToPixel(2, 3), ACTIVE_LILY_PAD)).toBe(true);
+  test('loops after the eighth frame', () => {
+    expect(nextPlayerSpriteElapsed(7 / 24, 1 / 24)).toBeCloseTo(0);
   });
 });
