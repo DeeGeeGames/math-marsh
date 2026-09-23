@@ -69,7 +69,8 @@ const resizeCanvas = (): void => {
 
 	if (ctx) {
 		ctx.setTransform(1, 0, 0, 1, 0, 0);
-		ctx.imageSmoothingEnabled = false;
+		ctx.imageSmoothingEnabled = true;
+		ctx.imageSmoothingQuality = 'low';
 	}
 
 	window.dispatchEvent(new Event('math-marsh:canvas-resize'));
