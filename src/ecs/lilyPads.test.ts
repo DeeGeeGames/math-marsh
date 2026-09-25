@@ -7,6 +7,7 @@ import {
   closestActiveLilyPadGridCell,
   gridCellKey,
   isActiveLilyPadCell,
+  isPointOnLilyPad,
 } from './lilyPads';
 
 type PositionedTestEntity = { components: { position: { x: number; y: number } } };
@@ -73,5 +74,11 @@ describe('lily pad grid helpers', () => {
     expect(closestActiveLilyPadGridCell({ x: 106, y: 53 }, pads)).toEqual({ x: 0, y: 0 });
     expect(closestActiveLilyPadGridCell({ x: 180, y: 53 }, pads)).toEqual({ x: 2, y: 0 });
     expect(closestActiveLilyPadGridCell({ x: 212, y: 53 }, [])).toBeUndefined();
+  });
+
+  test('a gap click near the fly does not count as an Eat tap', () => {
+    const currentPad = { x: 0, y: 0 };
+    expect(isPointOnLilyPad({ x: 53, y: 53 }, currentPad)).toBe(true);
+    expect(isPointOnLilyPad({ x: 106, y: 53 }, currentPad)).toBe(false);
   });
 });

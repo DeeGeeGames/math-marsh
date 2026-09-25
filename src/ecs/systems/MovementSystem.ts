@@ -6,7 +6,7 @@ import { mathProblemQuery, playerMovementQuery } from '../queries';
 import { clamp, gridToPixel, sameGridCell } from '../gameUtils';
 import { playSound } from '../../audio/audio';
 import { shortestCardinalRoute } from '../tapRoute';
-import { closestActiveLilyPadGridCell } from '../lilyPads';
+import { closestActiveLilyPadGridCell, isPointOnLilyPad } from '../lilyPads';
 
 type Direction = Extract<GameAction, 'up' | 'down' | 'left' | 'right'>;
 
@@ -109,7 +109,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
           const settled = pf.breadcrumbs.length === 0
             && Math.abs(position.x - gridToPixel(start.x, start.y).x) < 1e-3
             && Math.abs(position.y - gridToPixel(start.x, start.y).y) < 1e-3;
-          if (settled && sameGridCell(start, targetPad)) {
+          if (settled && sameGridCell(start, targetPad) && isPointOnLilyPad(tapRequest, targetPad)) {
             ecs.setResource('tapEat', targetPad);
           } else {
             // A tap may cross the full board; the two-cell limit only applies

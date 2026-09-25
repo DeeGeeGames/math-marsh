@@ -53,6 +53,9 @@ export const closestActiveLilyPadGridCell = (
       : closest;
   }, undefined);
 
+export const isPointOnLilyPad = (point: BoardPoint, cell: GridCell): boolean =>
+  distanceSquaredToCellCenter(point, cell) <= (GAME_CONFIG.GRID.CELL_SIZE * 0.42) ** 2;
+
 export const activeLilyPadCellKeys = (
   mathProblems: readonly MathProblemCellEntity[],
 ): Set<string> =>
