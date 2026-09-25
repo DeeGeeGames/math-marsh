@@ -6,7 +6,7 @@ import { mathProblemQuery, playerMovementQuery } from '../queries';
 import { clamp, gridToPixel, sameGridCell } from '../gameUtils';
 import { playSound } from '../../audio/audio';
 import { shortestCardinalRoute } from '../tapRoute';
-import { positionGridCell } from '../lilyPads';
+import { closestActiveLilyPadGridCell } from '../lilyPads';
 
 type Direction = Extract<GameAction, 'up' | 'down' | 'left' | 'right'>;
 
@@ -101,23 +101,20 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
 
       if (tapRequest) {
         ecs.setResource('tapRequest', null);
-        const activePad = queries.mathProblems.some(problem =>
-          !problem.components.mathProblem.consumed
-          && sameGridCell(tapRequest, positionGridCell(problem.components.position)),
-        );
-        if (!frozen && activePad) {
-          ecs.setResource('tapFeedback', { ...tapRequest, startedAt: performance.now() });
+        const targetPad = closestActiveLilyPadGridCell(tapRequest, queries.mathProblems);
+        if (!frozen && targetPad) {
+          ecs.setResource('tapFeedback', { ...targetPad, startedAt: performance.now() });
           const head = pf.breadcrumbs[0];
           const start = head ?? { x: pf.anchorGridX, y: pf.anchorGridY };
           const settled = pf.breadcrumbs.length === 0
             && Math.abs(position.x - gridToPixel(start.x, start.y).x) < 1e-3
             && Math.abs(position.y - gridToPixel(start.x, start.y).y) < 1e-3;
-          if (settled && sameGridCell(start, tapRequest)) {
-            ecs.setResource('tapEat', tapRequest);
+          if (settled && sameGridCell(start, targetPad)) {
+            ecs.setResource('tapEat', targetPad);
           } else {
             // A tap may cross the full board; the two-cell limit only applies
             // to manual directional input.
-            const route = shortestCardinalRoute(start, tapRequest);
+            const route = shortestCardinalRoute(start, targetPad);
             pf.breadcrumbs = head ? [head, ...route] : route;
             if (route.length > 0) playSound('move');
           }

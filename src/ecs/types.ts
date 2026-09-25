@@ -2,6 +2,7 @@ import type { Timer, TimerComponentTypes } from 'ecspresso/plugins/scripting/tim
 import type { TweenComponentTypes } from 'ecspresso/plugins/scripting/tween';
 import type { CoroutineComponentTypes } from 'ecspresso/plugins/scripting/coroutine';
 import type { AIBehavior, EnemyType } from '../types/shared';
+import type { BoardPoint } from './lilyPads';
 import type {
   GameplayOnboardingCompletion,
   GameplayOnboardingKind,
@@ -210,7 +211,7 @@ export interface Resources {
   gameplayOnboardingCompletion: GameplayOnboardingCompletion;
   operandOnboardingCompletion: GameplayOnboardingCompletion;
   gameplayOnboardingSession: GameplayOnboardingSession;
-  tapRequest: { x: number; y: number } | null;
+  tapRequest: BoardPoint | null;
   tapEat: { x: number; y: number } | null;
   tapFeedback: { x: number; y: number; startedAt: number } | null;
 }

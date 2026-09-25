@@ -1,5 +1,5 @@
 import type { GameMode, MathDifficulty } from '../../ecs/types';
-import type { GridCell } from '../../ecs/lilyPads';
+import type { BoardPoint } from '../../ecs/lilyPads';
 
 export type ScreenSpecActions = {
   startGame: (mode: GameMode, difficulty: MathDifficulty) => void;
@@ -18,7 +18,7 @@ export type ScreenSpecActions = {
   wireFullscreenButton: (button: HTMLButtonElement) => void;
   wireAudioSettings: (root: ParentNode) => void;
   wireTouchControlsSetting: (root: ParentNode) => void;
-  tapBoardCell: (cell: GridCell) => void;
+  tapBoardPoint: (point: BoardPoint) => void;
 };
 
 export const OVERLAY_BASE =
