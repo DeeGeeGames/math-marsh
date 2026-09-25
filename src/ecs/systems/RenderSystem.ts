@@ -19,6 +19,7 @@ import {
   drawPlayerHighlight,
   drawMathProblemLilyPads,
   drawMathProblemNumbers,
+  drawTapTargetFeedback,
 } from './render/mathProblems';
 import { drawEnhancedSpiderWebs } from './render/spiderWebs';
 import { drawEnhancedFrogTongues, drawFrogAttackTelegraphs } from './render/frogTongues';
@@ -52,9 +53,9 @@ export const addRenderSystemToEngine = (
     .addQuery('enemies', enemyQuery)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
-    .withResources(['equationMode'])
+    .withResources(['equationMode', 'tapFeedback'])
     .setOnDetach(cleanupRenderSystem)
-    .setProcess(({ queries, ecs, resources: { equationMode } }) => {
+    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback } }) => {
       const ctx = getCtx();
       if (!ctx) return;
 
@@ -130,6 +131,7 @@ export const addRenderSystemToEngine = (
         enemyOccupiedCells,
         ambientTime,
       );
+      drawTapTargetFeedback(ctx, tapFeedback, queries.player, currentTime, reducedMotion);
       drawFrogAttackTelegraphs(
         ctx,
         queries.frogTongues,

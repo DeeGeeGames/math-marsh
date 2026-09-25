@@ -106,6 +106,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
           && sameGridCell(tapRequest, positionGridCell(problem.components.position)),
         );
         if (!frozen && activePad) {
+          ecs.setResource('tapFeedback', { ...tapRequest, startedAt: performance.now() });
           const head = pf.breadcrumbs[0];
           const start = head ?? { x: pf.anchorGridX, y: pf.anchorGridY };
           const settled = pf.breadcrumbs.length === 0

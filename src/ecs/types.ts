@@ -212,4 +212,5 @@ export interface Resources {
   gameplayOnboardingSession: GameplayOnboardingSession;
   tapRequest: { x: number; y: number } | null;
   tapEat: { x: number; y: number } | null;
+  tapFeedback: { x: number; y: number; startedAt: number } | null;
 }

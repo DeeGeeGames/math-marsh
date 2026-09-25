@@ -59,6 +59,7 @@ const resetEnemySpawnSequence = (): void => {
 const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void => {
   gameEngine.setResource('tapRequest', null);
   gameEngine.setResource('tapEat', null);
+  gameEngine.setResource('tapFeedback', null);
   gameEngine.setResource('currentLevel', level);
   const gameMode = gameEngine.getResource('gameMode');
   const mathDifficulty = gameEngine.getResource('mathDifficulty');

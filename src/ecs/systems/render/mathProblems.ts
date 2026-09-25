@@ -3,6 +3,7 @@ import { ANSWER_CONSUMPTION_DURATION_MS } from '../../systemConfigs';
 import { activePlayerGridCell, cellCenter, positionInGridCell } from '../../gameUtils';
 import { gridCellKey, positionedEntityGridCellKey } from '../../lilyPads';
 import type { MathProblemEntity, PlayerEntity } from '../../queries';
+import type { Resources } from '../../types';
 import type { RenderMargins } from './context';
 import type { EquationValueTarget } from './objective';
 
@@ -287,6 +288,54 @@ export const drawPlayerHighlight = (
   ctx.stroke();
   ctx.restore();
 };
+
+export function drawTapTargetFeedback(
+  ctx: CanvasRenderingContext2D,
+  feedback: Resources['tapFeedback'],
+  player: PlayerEntity | undefined,
+  currentTime: number,
+  reducedMotion: boolean,
+): void {
+  if (!feedback) return;
+  const elapsed = Math.max(0, currentTime - feedback.startedAt);
+  const routeEnd = player?.components.pathFollower.breadcrumbs.at(-1);
+  const enRoute = routeEnd?.x === feedback.x && routeEnd.y === feedback.y;
+  const duration = 900;
+  if (!enRoute && elapsed >= duration) return;
+
+  const centerX = (feedback.x + 0.5) * cell;
+  const centerY = (feedback.y + 0.5) * cell;
+  const fade = enRoute ? 1 : 1 - elapsed / duration;
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, fade);
+  ctx.strokeStyle = '#fff7c6';
+  ctx.lineWidth = 6;
+  ctx.shadowColor = '#e6ba47';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.ellipse(centerX, centerY, lilyPadRadius + 20, lilyPadRadius * 0.76 + 18, -0.18, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if (!reducedMotion && elapsed < duration) {
+    const progress = elapsed / duration;
+    ctx.globalAlpha = (1 - progress) * 0.7;
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.ellipse(
+      centerX,
+      centerY,
+      lilyPadRadius + 20 + progress * 20,
+      lilyPadRadius * 0.76 + 18 + progress * 15,
+      -0.18,
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 
 export const drawEquationSelectionHighlights = (
   ctx: CanvasRenderingContext2D,
