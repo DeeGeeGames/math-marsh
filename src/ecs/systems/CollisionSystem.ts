@@ -1,6 +1,6 @@
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
-import { activePlayerGridCell, pixelToGrid, positionInGridCell, sameGridPosition } from '../gameUtils';
+import { activePlayerGridCell, pixelToGrid, positionInGridCell, sameGridCell, sameGridPosition } from '../gameUtils';
 import { collectGridCellKeys, positionedEntityGridCellKey } from '../lilyPads';
 import {
   playerWithHealthQuery,
@@ -116,8 +116,10 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
     .addQuery('enemies', enemyWithColliderQuery)
     .addQuery('spiderWebs', spiderWebWithRenderableQuery)
     .addQuery('frogTongues', frogTongueQuery)
-    .withResources(['inputState', 'equationMode', 'gameMode', 'mathDifficulty'])
+    .withResources(['inputState', 'equationMode', 'gameMode', 'mathDifficulty', 'tapEat'])
     .setProcess(({ queries, ecs, resources }) => {
+      const tapEat = resources.tapEat;
+      if (tapEat) ecs.setResource('tapEat', null);
       const player = queries.player;
       if (!player) return;
 
@@ -154,7 +156,8 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
       for (const problem of selectableMathProblems) {
         // Math problems follow the intended active tile, not the rendered midpoint.
         if (positionInGridCell(problem.components.position, activeProblemCell)) {
-          if (resources.inputState.actions.justActivated('eat')) {
+          if (resources.inputState.actions.justActivated('eat')
+            || (tapEat && sameGridCell(tapEat, activeProblemCell))) {
             handleEquationProblemSelection(
               ecs,
               player,

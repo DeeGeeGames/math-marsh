@@ -57,6 +57,8 @@ const resetEnemySpawnSequence = (): void => {
  * On level transition: leave the existing player so lives and run time persist.
  */
 const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void => {
+  gameEngine.setResource('tapRequest', null);
+  gameEngine.setResource('tapEat', null);
   gameEngine.setResource('currentLevel', level);
   const gameMode = gameEngine.getResource('gameMode');
   const mathDifficulty = gameEngine.getResource('mathDifficulty');

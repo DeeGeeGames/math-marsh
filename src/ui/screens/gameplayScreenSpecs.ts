@@ -2,6 +2,7 @@ import { $ } from '../dom';
 import { bindGameplayHud } from '../gameplayHud';
 import type { ScreenSpec } from '../screenTypes';
 import { bindTouchControls } from '../touchControls';
+import { bindBoardPointer } from '../boardPointer';
 import {
   BTN_CHROME,
   BTN_SIZE,
@@ -84,6 +85,7 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
       actions.wireFullscreenButton($<HTMLButtonElement>(root, '#hud-fullscreen-btn'));
       bindGameplayHud(root);
       bindTouchControls(root);
+      bindBoardPointer($<HTMLCanvasElement>(root, '#game-canvas'), actions.tapBoardCell);
       $(root, '#tutorial-back-btn').addEventListener('click', actions.previousTutorialStep);
       $(root, '#tutorial-next-btn').addEventListener('click', actions.nextTutorialStep);
       $(root, '#skip-tutorial-btn').addEventListener('click', actions.skipTutorial);

@@ -180,6 +180,11 @@ const SCREENS = createScreenSpecs({
   wireFullscreenButton,
   wireTouchControlsSetting: (root) => wireTouchControlsSetting(root, requestCanvasResize),
   wireAudioSettings,
+  tapBoardCell: (cell) => {
+    const engine = requireEngine();
+    if (engine.getCurrentScreen() !== 'playing') return;
+    engine.setResource('tapRequest', cell);
+  },
 });
 
 const screenRuntime = createScreenRuntime(SCREENS);

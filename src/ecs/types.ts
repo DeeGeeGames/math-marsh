@@ -210,4 +210,6 @@ export interface Resources {
   gameplayOnboardingCompletion: GameplayOnboardingCompletion;
   operandOnboardingCompletion: GameplayOnboardingCompletion;
   gameplayOnboardingSession: GameplayOnboardingSession;
+  tapRequest: { x: number; y: number } | null;
+  tapEat: { x: number; y: number } | null;
 }

@@ -239,6 +239,8 @@
 
 /* Canvas border with subtle transparency */
 #game-canvas {
+  pointer-events: auto;
+  touch-action: none;
   background: var(--cream-panel);
   border: 7px solid var(--cream-panel);
   box-shadow:

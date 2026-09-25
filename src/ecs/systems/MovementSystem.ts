@@ -2,9 +2,11 @@ import type { GameSystemRegistrar } from '../Engine';
 import type { Components, GameAction } from '../types';
 import { GAME_CONFIG, MOVEMENT_CONFIG } from '../../config';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
-import { playerMovementQuery } from '../queries';
-import { clamp, gridToPixel } from '../gameUtils';
+import { mathProblemQuery, playerMovementQuery } from '../queries';
+import { clamp, gridToPixel, sameGridCell } from '../gameUtils';
 import { playSound } from '../../audio/audio';
+import { shortestCardinalRoute } from '../tapRoute';
+import { positionGridCell } from '../lilyPads';
 
 type Direction = Extract<GameAction, 'up' | 'down' | 'left' | 'right'>;
 
@@ -82,8 +84,13 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('movementSystem')
     .setPriority(SYSTEM_PRIORITIES.MOVEMENT)
     .inPhase('preUpdate')
-    .withResources(['inputState'])
-    .setProcessEach(playerMovementQuery, ({ entity, dt, resources: { inputState } }) => {
+    .addSingleton('player', playerMovementQuery)
+    .addQuery('mathProblems', mathProblemQuery)
+    .runWhenEmpty()
+    .withResources(['inputState', 'tapRequest'])
+    .setProcess(({ queries, dt, ecs, resources: { inputState, tapRequest } }) => {
+      const entity = queries.player;
+      if (!entity) return;
       const position = entity.components.position;
       const player = entity.components.player;
       const pf = entity.components.pathFollower;
@@ -92,6 +99,30 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
 
       const frozen = entity.components.timers.freeze?.active === true;
 
+      if (tapRequest) {
+        ecs.setResource('tapRequest', null);
+        const activePad = queries.mathProblems.some(problem =>
+          !problem.components.mathProblem.consumed
+          && sameGridCell(tapRequest, positionGridCell(problem.components.position)),
+        );
+        if (!frozen && activePad) {
+          const head = pf.breadcrumbs[0];
+          const start = head ?? { x: pf.anchorGridX, y: pf.anchorGridY };
+          const settled = pf.breadcrumbs.length === 0
+            && Math.abs(position.x - gridToPixel(start.x, start.y).x) < 1e-3
+            && Math.abs(position.y - gridToPixel(start.x, start.y).y) < 1e-3;
+          if (settled && sameGridCell(start, tapRequest)) {
+            ecs.setResource('tapEat', tapRequest);
+          } else {
+            // A tap may cross the full board; the two-cell limit only applies
+            // to manual directional input.
+            const route = shortestCardinalRoute(start, tapRequest);
+            pf.breadcrumbs = head ? [head, ...route] : route;
+            if (route.length > 0) playSound('move');
+          }
+        }
+      }
+
       // Phase A — input updates the breadcrumb queue. Skipped while frozen so
       // the player can't queue moves through a stun.
       if (!frozen) {
@@ -99,6 +130,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
           direction => inputState.actions.justActivated(direction),
         );
         if (pressedDirection) {
+          if (pf.breadcrumbs.length > 1) pf.breadcrumbs = pf.breadcrumbs.slice(0, 1);
           const breadcrumbs = updateBreadcrumbs(pf, pressedDirection);
           if (breadcrumbs !== pf.breadcrumbs) playSound('move');
           pf.breadcrumbs = breadcrumbs;

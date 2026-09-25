@@ -27,11 +27,11 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Move to a number',
-    description: 'Move the fly from pad to pad. Stop on a number you need.',
+    description: 'Tap or click a lily pad to fly there, or use the arrows or D-pad to move one pad at a time.',
   },
   {
     title: 'Eat the number',
-    description: 'Press Eat to pick the number. You may need to pick two numbers.',
+    description: 'Once the fly arrives, tap or click it again, or press Eat. You may need two numbers.',
   },
   {
     title: 'Stay safe',
