@@ -54,17 +54,6 @@ const connectedGamepadId = (gamepad: {
 }): string[] =>
   gamepad.connected && gamepad.id !== null ? [gamepad.id] : [];
 
-const firstConnectedGamepadPlatform = (
-  gamepads: ReadonlyArray<{
-    connected: boolean;
-    id: string | null;
-  }>,
-): InputPromptPlatform | undefined =>
-  gamepads
-    .flatMap(connectedGamepadId)
-    .map(detectInputPromptPlatform)
-    .at(0);
-
 const activeGamepadPlatform = (
   gamepads: ReadonlyArray<{
     connected: boolean;
@@ -100,9 +89,5 @@ export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void
 
       if (gamepadPlatform) return updatePlatform(inputPrompt, gamepadPlatform);
       if (keyboardActivity) return updatePlatform(inputPrompt, 'keyboard');
-      if (inputPrompt.platform === 'keyboard') {
-        const connectedPlatform = firstConnectedGamepadPlatform(inputState.gamepads);
-        if (connectedPlatform) updatePlatform(inputPrompt, connectedPlatform);
-      }
     });
 }
