@@ -53,7 +53,7 @@ const resizeCanvas = (): void => {
 
 	const gameSize = canvasPixelSize();
 
-	// #canvas-container is a flex-1 region behind the floating top HUD and above
+	// #canvas-container is a flex-1 region below the in-flow top HUD and above
 	// the bottom hints / on-screen touch controls. Sizing against its rect
 	// makes the canvas grow into space the surrounding chrome leaves behind.
 	const container = canvas.parentElement;

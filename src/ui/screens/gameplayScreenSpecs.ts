@@ -15,22 +15,24 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
     id: 'gameplay-ui',
     className: 'absolute inset-0 flex flex-col pointer-events-none z-10',
     html: `
-      <div id="top-hud" class="absolute top-0 inset-x-0 p-3 md:p-4 lg:p-5 flex flex-nowrap justify-between items-start text-white font-bold pointer-events-none gap-2 md:gap-4">
-        <div class="flex flex-wrap gap-2 md:gap-4 lg:gap-6 items-center pointer-events-auto">
-          <div id="time-display" class="hud-chip time text-sm md:text-base lg:text-lg px-3 md:px-4 py-2 rounded-lg whitespace-nowrap">Time: 0:00</div>
-          <div id="lives-display" aria-live="polite" class="hud-chip lives text-sm md:text-base lg:text-lg px-3 md:px-4 py-2 rounded-lg whitespace-nowrap">Lives: 3</div>
+      <header id="top-hud" class="gameplay-header">
+        <div class="gameplay-status" role="group" aria-label="Game status">
+          <div id="time-display" class="hud-chip time">Time: 0:00</div>
+          <div id="lives-display" aria-live="polite" class="hud-chip lives">Lives: 3</div>
         </div>
 
-        <div class="flex gap-2 md:gap-3 items-center pointer-events-auto shrink-0">
-          <button id="hud-fullscreen-btn" type="button" class="utility-btn text-white border-none px-3 md:px-4 py-2 rounded-md cursor-pointer text-sm md:text-base transition-colors duration-200 min-h-10 min-w-10 flex items-center justify-center">
-            ⛶
+        <div id="level-display" class="hud-chip level">Addition - Easy - Level 1</div>
+
+        <div class="gameplay-actions" role="group" aria-label="Game controls">
+          <button id="hud-fullscreen-btn" type="button" class="utility-btn gameplay-action gameplay-fullscreen" aria-label="Enter fullscreen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" /></svg>
           </button>
-          <button id="pause-btn" class="utility-btn text-white border-none px-3 md:px-4 py-2 rounded-md cursor-pointer text-sm md:text-base transition-colors duration-200 min-h-10 min-w-10 flex items-center justify-center">
-            ⏸️
+          <button id="pause-btn" type="button" class="utility-btn gameplay-action" aria-label="Pause game">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5v14M16 5v14" /></svg>
+            <span>Pause</span>
           </button>
-          <div id="level-display" class="hud-chip level text-xs md:text-sm lg:text-base px-2 md:px-3 py-1 md:py-2 rounded-lg whitespace-nowrap">Addition - Easy - Level 1</div>
         </div>
-      </div>
+      </header>
 
       <div id="canvas-container" class="flex-1 min-h-0 min-w-0 flex items-center justify-center mb-16 md:mb-20 px-2 md:px-4">
         <canvas id="game-canvas" class="rounded-lg max-w-full max-h-full"></canvas>

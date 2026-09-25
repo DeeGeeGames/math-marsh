@@ -763,6 +763,105 @@ button:focus-visible,
   background: rgba(15, 79, 98, 0.92);
 }
 
+/* Keep status, level context, and actions in predictable, separate groups.
+ * In-flow chrome reserves space before the responsive canvas region. */
+.gameplay-header {
+  --hud-control-size: clamp(44px, 3.5vw, 64px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: max(env(safe-area-inset-top, 0px), clamp(12px, 2vw, 32px))
+    max(env(safe-area-inset-right, 0px), clamp(12px, 2vw, 40px)) 12px
+    max(env(safe-area-inset-left, 0px), clamp(12px, 2vw, 40px));
+  color: var(--cream);
+  font-size: clamp(14px, 1.25vw, 24px);
+  font-weight: bold;
+}
+
+.gameplay-status,
+.gameplay-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gameplay-status {
+  min-width: 0;
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.gameplay-actions {
+  justify-self: end;
+  pointer-events: auto;
+}
+
+.gameplay-header .hud-chip {
+  display: flex;
+  align-items: center;
+  min-height: var(--hud-control-size);
+  padding: 6px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.gameplay-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: var(--hud-control-size);
+  min-height: var(--hud-control-size);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.gameplay-action svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gameplay-action:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .gameplay-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .gameplay-header #level-display {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+    min-height: 0;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 380px) {
+  .gameplay-header { font-size: 13px; }
+  .gameplay-header .hud-chip,
+  .gameplay-action { padding-inline: 8px; }
+}
+
+@media (max-height: 500px) {
+  .gameplay-header { font-size: 14px; }
+}
+
 .hud-chip.time {
   background:
     radial-gradient(ellipse at 20% 20%, rgba(255, 247, 198, 0.2), transparent 36%),
@@ -1304,6 +1403,16 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
  * reserved margin so the canvas can grow into the freed vertical space. */
 body[data-touch-controls="on"] #canvas-container { margin-bottom: 8px; }
 
+/* Reserve the portrait control row before centering the board. The touch
+ * layout uses a half-viewport cluster minus 28px of edge spacing; reserving
+ * that whole half-width keeps its buttons from shrinking with browser chrome.
+ * Tutorials have their own reserved panel and hide the touch controls. */
+@media (orientation: portrait) {
+  body[data-touch-controls="on"] #gameplay-ui:not(.tutorial-mode) #canvas-container {
+    margin-bottom: calc(50vw + max(0px, env(safe-area-inset-bottom, 0px) - 14px));
+  }
+}
+
 /* Suppress the 300ms tap delay and double-tap zoom on the pause button so it
  * feels as responsive as the D-pad / Eat button on touch devices. */
 #pause-btn { touch-action: manipulation; }
@@ -1311,7 +1420,11 @@ body[data-touch-controls="on"] #canvas-container { margin-bottom: 8px; }
 /* Short viewports (landscape phones): reduce chrome and reclaim vertical space
  * for the canvas. */
 @media (max-height: 500px) {
-  #top-hud { padding: 6px 10px; }
+  #top-hud {
+    padding: max(env(safe-area-inset-top, 0px), 6px)
+      max(env(safe-area-inset-right, 0px), 10px) 6px
+      max(env(safe-area-inset-left, 0px), 10px);
+  }
   #canvas-container { margin-bottom: 8px; }
 }
 
