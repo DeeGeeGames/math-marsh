@@ -165,86 +165,52 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
     id: 'mode-select-screen',
     className: `${OVERLAY_BASE} app-background`,
     html: `
-      <div class="text-center max-w-sm md:max-w-3xl landscape:max-w-6xl px-4 md:px-8 py-4 sm:py-6 md:py-12 landscape:py-3 w-full">
-        <h1 class="pond-title text-2xl sm:text-3xl md:text-5xl lg:text-6xl landscape:text-2xl landscape:md:text-3xl font-bold mb-3 sm:mb-4 md:mb-6 landscape:mb-2 text-gold drop-shadow-lg">
-          Select Math Mode
-        </h1>
+      <div class="mode-select-shell">
+        <header class="mode-select-heading">
+          <h1 class="pond-title text-gold drop-shadow-lg">Select Math Mode</h1>
+          <p>Choose an operation, then a difficulty to start.</p>
+        </header>
 
-        <p class="text-sm sm:text-base md:text-xl mb-4 sm:mb-6 md:mb-12 opacity-90 leading-relaxed px-2 landscape:hidden">
-          Choose an operation, then choose a difficulty.
-        </p>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 landscape:grid-cols-5 gap-3 md:gap-6 items-stretch">
-          <button type="button" data-mode="addition" data-focusable class="mode-card text-white border-none p-3 md:p-6 landscape:p-3 rounded-xl shadow-lg cursor-pointer text-left">
+        <div class="mode-options" role="group" aria-label="Math operation">
+          <button type="button" data-mode="addition" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">+</span>
-            <h3 class="text-lg md:text-2xl landscape:text-base font-bold mb-1 md:mb-3 landscape:mb-1">Addition</h3>
-            <p class="text-xs md:text-base landscape:text-xs opacity-90 mb-1 md:mb-3 landscape:mb-1">
-              Solve addition equations with result and operand prompts.
-            </p>
-            <div class="text-xs opacity-70 landscape:hidden">
-              Example: 2 + 3 = _
-            </div>
+            <span class="mode-name">Addition</span>
+            <span class="mode-example">2 + 3 = ?</span>
           </button>
-
-          <button type="button" data-mode="subtraction" data-focusable class="mode-card text-white border-none p-3 md:p-6 landscape:p-3 rounded-xl shadow-lg cursor-pointer text-left">
-            <span class="mode-symbol" aria-hidden="true">-</span>
-            <h3 class="text-lg md:text-2xl landscape:text-base font-bold mb-1 md:mb-3 landscape:mb-1">Subtraction</h3>
-            <p class="text-xs md:text-base landscape:text-xs opacity-90 mb-1 md:mb-3 landscape:mb-1">
-              Select subtraction operands in order on operand levels.
-            </p>
-            <div class="text-xs opacity-70 landscape:hidden">
-              Example: _ - _ = 4
-            </div>
+          <button type="button" data-mode="subtraction" data-focusable aria-pressed="false" class="mode-card">
+            <span class="mode-symbol" aria-hidden="true">−</span>
+            <span class="mode-name">Subtraction</span>
+            <span class="mode-example">7 − 3 = ?</span>
           </button>
-
-          <button type="button" data-mode="multiplication" data-focusable class="mode-card border-none p-3 md:p-6 landscape:p-3 rounded-xl shadow-lg cursor-pointer text-left">
-            <span class="mode-symbol" aria-hidden="true">x</span>
-            <h3 class="text-lg md:text-2xl landscape:text-base font-bold mb-1 md:mb-3 landscape:mb-1">Multiplication</h3>
-            <p class="text-xs md:text-base landscape:text-xs opacity-90 mb-1 md:mb-3 landscape:mb-1">
-              Build products or find the result tile.
-            </p>
-            <div class="text-xs opacity-70 landscape:hidden">
-              Example: 3 x 4 = _
-            </div>
+          <button type="button" data-mode="multiplication" data-focusable aria-pressed="false" class="mode-card">
+            <span class="mode-symbol" aria-hidden="true">×</span>
+            <span class="mode-name">Multiplication</span>
+            <span class="mode-example">3 × 4 = ?</span>
           </button>
-
-          <button type="button" data-mode="division" data-focusable class="mode-card text-white border-none p-3 md:p-6 landscape:p-3 rounded-xl shadow-lg cursor-pointer text-left">
+          <button type="button" data-mode="division" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">÷</span>
-            <h3 class="text-lg md:text-2xl landscape:text-base font-bold mb-1 md:mb-3 landscape:mb-1">Division</h3>
-            <p class="text-xs md:text-base landscape:text-xs opacity-90 mb-1 md:mb-3 landscape:mb-1">
-              Solve whole-number division equations.
-            </p>
-            <div class="text-xs opacity-70 landscape:hidden">
-              Example: 12 ÷ 3 = _
-            </div>
+            <span class="mode-name">Division</span>
+            <span class="mode-example">12 ÷ 3 = ?</span>
           </button>
-
-          <button type="button" data-mode="anything" data-focusable class="mode-card text-white border-none p-3 md:p-6 landscape:p-3 rounded-xl shadow-lg cursor-pointer text-left">
+          <button type="button" data-mode="anything" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">?</span>
-            <h3 class="text-lg md:text-2xl landscape:text-base font-bold mb-1 md:mb-3 landscape:mb-1">Anything</h3>
-            <p class="text-xs md:text-base landscape:text-xs opacity-90 mb-1 md:mb-3 landscape:mb-1">
-              Mix addition, subtraction, multiplication, and division prompts.
-            </p>
-            <div class="text-xs opacity-70 landscape:hidden">
-              Operation changes from prompt to prompt.
-            </div>
+            <span class="mode-name">Anything</span>
+            <span class="mode-example">Mix all four operations</span>
+          </button>
+          <button id="back-to-main-btn" class="btn-secondary mode-menu-back">
+            ← Back to Menu
           </button>
         </div>
 
-        <div id="difficulty-select" class="difficulty-panel hidden mt-4 md:mt-8 landscape:mt-3 p-3 md:p-5 rounded-xl backdrop-blur-sm">
-          <h2 class="text-base md:text-xl font-semibold mb-3">
-            <span id="selected-mode-label">Addition</span> Difficulty
-          </h2>
-          <div class="flex flex-col sm:flex-row gap-2 md:gap-3 justify-center">
-            <button id="easy-difficulty" type="button" class="difficulty-choice easy text-white border-none px-5 py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-difficulty="easy">Easy</button>
-            <button type="button" class="difficulty-choice medium border-none px-5 py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-difficulty="medium">Medium</button>
-            <button type="button" class="difficulty-choice expert text-white border-none px-5 py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-difficulty="expert">Expert</button>
+        <div id="difficulty-select" class="difficulty-panel hidden mode-difficulty">
+          <h2><span id="selected-mode-label">Addition</span> · Choose difficulty</h2>
+          <div class="mode-difficulty-options">
+            <button id="easy-difficulty" type="button" class="difficulty-choice easy" data-difficulty="easy">Easy</button>
+            <button type="button" class="difficulty-choice medium" data-difficulty="medium">Medium</button>
+            <button type="button" class="difficulty-choice expert" data-difficulty="expert">Expert</button>
           </div>
         </div>
 
-        <button id="back-to-main-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.mdResponsive} mt-4 md:mt-8 landscape:mt-3">
-          ← Back to Menu
-        </button>
         ${inputPromptsSlot()}
       </div>
     `,
@@ -253,7 +219,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],
-    promptPlacement: 'viewport',
+    promptPlacement: 'panel',
     wire: (root): void => {
       root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
         card.addEventListener('click', () => {
