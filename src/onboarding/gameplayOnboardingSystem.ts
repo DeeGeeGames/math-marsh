@@ -1,7 +1,7 @@
 import type { GameSystemRegistrar } from '../ecs/Engine';
 import {
   mathProblemWithRenderableQuery,
-  playerWithHealthQuery,
+  playerCollisionQuery,
 } from '../ecs/queries';
 import { SYSTEM_PRIORITIES } from '../ecs/systemConfigs';
 import {
@@ -20,8 +20,8 @@ export function registerGameplayOnboardingSystem(
   systems.addSystem('gameplayOnboardingSystem')
     .setPriority(SYSTEM_PRIORITIES.ONBOARDING)
     .addSingleton('player', {
-      ...playerWithHealthQuery,
-      mutates: ['position', 'player', 'pathFollower', 'health'],
+      ...playerCollisionQuery,
+      mutates: ['position', 'player', 'pathFollower'],
     } as const)
     .addQuery('mathProblems', {
       ...mathProblemWithRenderableQuery,

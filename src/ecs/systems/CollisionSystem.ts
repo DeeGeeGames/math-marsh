@@ -3,12 +3,12 @@ import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { activePlayerGridCell, pixelToGrid, positionInGridCell, sameGridCell, sameGridPosition } from '../gameUtils';
 import { collectGridCellKeys, positionedEntityGridCellKey } from '../lilyPads';
 import {
-  playerWithHealthQuery,
+  playerCollisionQuery,
   mathProblemWithRenderableQuery,
   enemyWithColliderQuery,
   spiderWebWithRenderableQuery,
   frogTongueQuery,
-  type PlayerEntityWithHealth,
+  type PlayerCollisionEntity,
   type MathProblemEntityWithRenderable,
   type SpiderWebEntityWithRenderable,
   type FrogTongueEntity
@@ -29,13 +29,15 @@ import type {
   Resources,
 } from '../types';
 import { playSound } from '../../audio/audio';
+import { timeAfterDamage, timeAfterWrongAnswer, timeForCorrectAnswer } from '../runTime';
 
 type EquationSelectionResources = Readonly<Pick<
   Resources,
   'equationMode' | 'gameMode' | 'mathDifficulty'
 >>;
 
-const triggerGameOver = (ecs: GameEngine, player: PlayerEntityWithHealth, reason: string): void => {
+export const triggerGameOver = (ecs: GameEngine, player: PlayerCollisionEntity, reason: string): void => {
+  if (player.components.player.gameOverPending) return;
   console.log(reason);
   playSound('gameOver');
   player.components.player.gameOverPending = true;
@@ -45,16 +47,16 @@ const triggerGameOver = (ecs: GameEngine, player: PlayerEntityWithHealth, reason
   });
 };
 
-const isInvulnerable = (player: PlayerEntityWithHealth): boolean =>
+const isInvulnerable = (player: PlayerCollisionEntity): boolean =>
   player.components.timers.invulnerability?.active === true;
 
-const startInvulnerability = (player: PlayerEntityWithHealth): void => {
+const startInvulnerability = (player: PlayerCollisionEntity): void => {
   player.components.timers.invulnerability = createTimer(GAME_CONFIG.TIMING.INVULNERABILITY / 1000);
 };
 
 const startDamageReaction = (
   ecs: GameEngine,
-  player: PlayerEntityWithHealth,
+  player: PlayerCollisionEntity,
   animation: { readonly INTENSITY: number; readonly DURATION: number },
 ): void => {
   startShake(ecs, player.id, animation.INTENSITY, animation.DURATION);
@@ -63,23 +65,19 @@ const startDamageReaction = (
 
 type PlayerDamageOptions = {
   animation: { readonly INTENSITY: number; readonly DURATION: number };
-  healthDamage?: number;
   invulnerability?: boolean;
 };
 
 const applyPlayerDamage = (
   ecs: GameEngine,
-  player: PlayerEntityWithHealth,
+  player: PlayerCollisionEntity,
   {
     animation,
-    healthDamage = 0,
     invulnerability = false,
   }: PlayerDamageOptions,
 ): number => {
-  player.components.player.lives -= 1;
-  if (healthDamage !== 0) {
-    player.components.health.current -= healthDamage;
-  }
+  const remaining = timeAfterDamage(ecs.getResource('remainingTimeSeconds'));
+  ecs.setResource('remainingTimeSeconds', remaining);
 
   startDamageReaction(ecs, player, animation);
 
@@ -87,7 +85,7 @@ const applyPlayerDamage = (
     startInvulnerability(player);
   }
 
-  return player.components.player.lives;
+  return remaining;
 };
 
 const createEquationFeedback = (
@@ -111,17 +109,18 @@ const createEquationFeedback = (
 export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('collisionSystem')
     .setPriority(SYSTEM_PRIORITIES.COLLISION)
-    .addSingleton('player', { ...playerWithHealthQuery, mutates: ['player', 'health', 'timers'] } as const)
+    .addSingleton('player', { ...playerCollisionQuery, mutates: ['player', 'timers'] } as const)
     .addQuery('mathProblems', { ...mathProblemWithRenderableQuery, mutates: ['mathProblem', 'renderable'] } as const)
     .addQuery('enemies', enemyWithColliderQuery)
     .addQuery('spiderWebs', spiderWebWithRenderableQuery)
     .addQuery('frogTongues', frogTongueQuery)
-    .withResources(['inputState', 'equationMode', 'gameMode', 'mathDifficulty', 'tapEat'])
+    .withResources(['inputState', 'equationMode', 'gameMode', 'mathDifficulty', 'tapEat', 'remainingTimeSeconds', 'equationsSolved'])
     .setProcess(({ queries, ecs, resources }) => {
       const tapEat = resources.tapEat;
       if (tapEat) ecs.setResource('tapEat', null);
       const player = queries.player;
       if (!player) return;
+      if (player.components.player.gameOverPending) return;
 
       const invulnerable = isInvulnerable(player);
       const frozen = player.components.timers.freeze?.active === true;
@@ -135,6 +134,7 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
           }
         }
       }
+      if (player.components.player.gameOverPending) return;
 
       if (!frozen) {
         for (const spiderWeb of queries.spiderWebs) {
@@ -168,6 +168,7 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
           }
         }
       }
+      if (player.components.player.gameOverPending) return;
 
       if (!invulnerable) {
         for (const enemy of queries.enemies) {
@@ -219,7 +220,7 @@ const activeEquationOperands = (
 
 function handleEquationProblemSelection(
   ecs: GameEngine,
-  player: PlayerEntityWithHealth,
+  player: PlayerCollisionEntity,
   problem: MathProblemEntityWithRenderable,
   mathProblems: MathProblemEntityWithRenderable[],
   resources: EquationSelectionResources,
@@ -258,6 +259,8 @@ function handleEquationProblemSelection(
   }
 
   playSound('correct');
+  ecs.setResource('remainingTimeSeconds', timeForCorrectAnswer(ecs.getResource('remainingTimeSeconds')));
+  ecs.setResource('equationsSolved', ecs.getResource('equationsSolved') + 1);
   const consumptionStartedAt = performance.now();
   selectedProblems.forEach(selectedProblem => {
     beginAnswerConsumption(ecs, selectedProblem, consumptionStartedAt);
@@ -290,12 +293,12 @@ function handleEquationProblemSelection(
 
 function handleIncorrectEquationSelection(
   ecs: GameEngine,
-  player: PlayerEntityWithHealth,
+  player: PlayerCollisionEntity,
   equationMode: EquationModeState,
 ): void {
-  const livesRemaining = applyPlayerDamage(ecs, player, {
-    animation: ANIMATION_CONFIG.SHAKE.WRONG_ANSWER,
-  });
+  const remaining = timeAfterWrongAnswer(ecs.getResource('remainingTimeSeconds'));
+  ecs.setResource('remainingTimeSeconds', remaining);
+  startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.WRONG_ANSWER);
 
   ecs.setResource('equationMode', {
     ...equationMode,
@@ -303,7 +306,7 @@ function handleIncorrectEquationSelection(
     feedback: createEquationFeedback('incorrect'),
   });
 
-  if (livesRemaining <= 0) {
+  if (remaining <= 0) {
     triggerGameOver(ecs, player, 'Game Over!');
   }
 }
@@ -311,21 +314,18 @@ function handleIncorrectEquationSelection(
 /**
  * Handle collision between player and enemy
  */
-function handlePlayerEnemyCollision(ecs: GameEngine, player: PlayerEntityWithHealth): void {
+function handlePlayerEnemyCollision(ecs: GameEngine, player: PlayerCollisionEntity): void {
   if (isInvulnerable(player)) return;
 
   console.log('Player hit by enemy!');
   playSound('damage');
 
-  const livesRemaining = applyPlayerDamage(ecs, player, {
+  const remaining = applyPlayerDamage(ecs, player, {
     animation: ANIMATION_CONFIG.SHAKE.DAMAGE,
-    healthDamage: 1,
     invulnerability: true,
   });
 
-  console.log(`Lives remaining: ${livesRemaining}`);
-
-  if (livesRemaining <= 0) {
+  if (remaining <= 0) {
     triggerGameOver(ecs, player, 'Game Over!');
   }
 }
@@ -335,7 +335,7 @@ function handlePlayerEnemyCollision(ecs: GameEngine, player: PlayerEntityWithHea
  */
 function handlePlayerSpiderWebCollision(
   ecs: GameEngine,
-  player: PlayerEntityWithHealth,
+  player: PlayerCollisionEntity,
   spiderWeb: SpiderWebEntityWithRenderable
 ): void {
   const freezeTime = spiderWeb.components.spiderWeb.freezeTime;
@@ -351,10 +351,9 @@ function handlePlayerSpiderWebCollision(
  */
 function handlePlayerTongueCollision(
   ecs: GameEngine,
-  player: PlayerEntityWithHealth,
+  player: PlayerCollisionEntity,
   frog: FrogTongueEntity
 ): void {
-  const playerComp = player.components.player;
   const tongueComp = frog.components.frogTongue;
 
   if (tongueComp.phase === 'idle' || tongueComp.segments.length === 0) return;
@@ -362,19 +361,17 @@ function handlePlayerTongueCollision(
     console.log(`🐸 Player hit by frog tongue but is invulnerable`);
     return;
   }
-  if (playerComp.lives <= 0) return;
+  if (player.components.player.gameOverPending) return;
 
   console.log(`🐸 Player hit by frog tongue! Taking damage.`);
   playSound('damage');
 
-  const livesRemaining = applyPlayerDamage(ecs, player, {
+  const remaining = applyPlayerDamage(ecs, player, {
     animation: ANIMATION_CONFIG.SHAKE.DAMAGE,
     invulnerability: true,
   });
 
-  console.log(`💔 Player loses 1 life. Lives remaining: ${livesRemaining}`);
-
-  if (livesRemaining <= 0) {
+  if (remaining <= 0) {
     triggerGameOver(ecs, player, '💀 Game Over due to frog tongue attack!');
   }
 }
@@ -383,7 +380,7 @@ function handlePlayerTongueCollision(
  * Check if player is colliding with frog tongue
  */
 function checkPlayerTongueCollision(
-  player: PlayerEntityWithHealth, 
+  player: PlayerCollisionEntity,
   frog: FrogTongueEntity
 ): boolean {
   const tongue = frog.components.frogTongue;

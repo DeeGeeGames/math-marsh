@@ -30,7 +30,7 @@ A modern educational math game inspired by the classic "Number Munchers", built 
 ### Key Components
 - **Position**: Entity coordinates
 - **Renderable**: Visual representation
-- **Player**: Player-specific data (lives and death state)
+- **Player**: Player-specific death state; the endurance clock is a run resource
 - **Enemy**: AI behavior configuration
 - **MathProblem**: Problem data and correctness
 - **Collider**: Collision detection bounds
@@ -96,7 +96,7 @@ src/
 Game settings can be modified in `src/config.ts`:
 - Grid dimensions
 - Entity sizes and colors
-- Game mechanics (lives and run timing)
+- Game mechanics (endurance time rewards and penalties)
 - Enemy behavior tuning
 - Render margins and animation timing
 

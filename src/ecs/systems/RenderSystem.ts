@@ -24,7 +24,7 @@ import {
 import { drawEnhancedSpiderWebs } from './render/spiderWebs';
 import { drawEnhancedFrogTongues, drawFrogAttackTelegraphs } from './render/frogTongues';
 import { drawFrozenPlayerEffect } from './render/frozenPlayer';
-import { drawBoardObjective } from './render/objective';
+import { drawBoardObjective, drawBoardTime } from './render/objective';
 import { getCachedImage } from './render/images';
 import { IMAGE_ASSET_KEYS } from '../assets';
 import { drawLevelCompleteCelebration } from './render/levelComplete';
@@ -53,9 +53,9 @@ export const addRenderSystemToEngine = (
     .addQuery('enemies', enemyQuery)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
-    .withResources(['equationMode', 'tapFeedback'])
+    .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds'])
     .setOnDetach(cleanupRenderSystem)
-    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback } }) => {
+    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback, remainingTimeSeconds } }) => {
       const ctx = getCtx();
       if (!ctx) return;
 
@@ -72,6 +72,7 @@ export const addRenderSystemToEngine = (
         margins.top,
         currentTime,
       );
+      drawBoardTime(ctx, remainingTimeSeconds, margins.top);
       ctx.save();
       ctx.translate(margins.left, margins.top);
 

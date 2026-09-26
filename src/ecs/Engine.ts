@@ -6,6 +6,7 @@ import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
 import { configureImageAssets } from './assets';
 import { createEquationModeState } from '../math/equations';
+import { GAME_CONFIG } from '../config';
 import type {
   Components,
   Resources,
@@ -58,7 +59,8 @@ export const gameEngine = ECSpresso.create()
   .withResource('gameMode', ['add'] as const)
   .withResource('mathDifficulty', 'easy')
   .withResource('currentLevel', 1)
-  .withResource('gameplayTimeSeconds', 0)
+  .withResource('remainingTimeSeconds', GAME_CONFIG.GAMEPLAY.STARTING_TIME_SECONDS)
+  .withResource('equationsSolved', 0)
   .withResource('enemySpawn', { index: 0 })
   .withResource('equationMode', createEquationModeState(1, 'easy', ['add']))
   .withResource('inputPrompt', { platform: 'keyboard', gamepadAxesActive: [] })
@@ -69,7 +71,6 @@ export const gameEngine = ECSpresso.create()
   .withResource('tapEat', null as Resources['tapEat'])
   .withResource('tapFeedback', null as Resources['tapFeedback'])
   .withRequired('player', 'timers', () => ({}))
-  .withRequired('player', 'health', (p) => ({ current: p.lives, max: p.lives }))
   .withRequired('enemy', 'timers', () => ({}))
   .withRequired('enemy', 'health', () => ({ current: 1, max: 1 }))
   .withScreens(screens => screens
@@ -106,6 +107,9 @@ export function startGameLoop(): void {
 
   gameRunning = true;
   lastFrameTime = performance.now();
+  document.addEventListener('visibilitychange', () => {
+    lastFrameTime = performance.now();
+  });
   requestAnimationFrame(gameLoop);
   console.log('Game loop started');
 }
@@ -113,7 +117,7 @@ export function startGameLoop(): void {
 function gameLoop(currentTime: number): void {
   if (!gameRunning) return;
 
-  const deltaTime = (currentTime - lastFrameTime) / 1000;
+  const deltaTime = document.hidden ? 0 : (currentTime - lastFrameTime) / 1000;
   lastFrameTime = currentTime;
 
   gameEngine.update(deltaTime);

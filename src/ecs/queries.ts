@@ -16,8 +16,8 @@ export const playerMovementQuery = {
   mutates: ['position', 'pathFollower'],
 } as const;
 
-export const playerWithHealthQuery = {
-  with: ['position', 'player', 'pathFollower', 'collider', 'health', 'timers'],
+export const playerCollisionQuery = {
+  with: ['position', 'player', 'pathFollower', 'collider', 'timers'],
 } as const;
 
 export const mathProblemQuery = {
@@ -64,7 +64,7 @@ export const frogTongueQuery = {
  */
 
 export type PlayerEntity = QueryResultEntity<AllComponents, typeof playerQuery>;
-export type PlayerEntityWithHealth = QueryResultEntity<AllComponents, typeof playerWithHealthQuery>;
+export type PlayerCollisionEntity = QueryResultEntity<AllComponents, typeof playerCollisionQuery>;
 export type MathProblemEntity = QueryResultEntity<AllComponents, typeof mathProblemQuery>;
 export type MathProblemEntityWithRenderable = QueryResultEntity<AllComponents, typeof mathProblemWithRenderableQuery>;
 export type EnemyEntity = QueryResultEntity<AllComponents, typeof enemyQuery>;

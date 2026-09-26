@@ -15,7 +15,7 @@ import { registerFrogTongueInit } from './systems/FrogTongueSystem';
 import { playerQuery } from './queries';
 import {
   initializeUI,
-  setFinalTime,
+  setRunResult,
   showGameplayScreen,
   showPauseScreen,
   showScreen,
@@ -29,6 +29,7 @@ import {
 import { setupScriptedTutorialScene } from '../onboarding/gameplayOnboardingScene';
 import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
 import { addUISystemToEngine } from './systems/UISystem';
+import { STARTING_TIME_SECONDS } from './runTime';
 
 const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
 
@@ -54,7 +55,7 @@ const resetEnemySpawnSequence = (): void => {
  *
  * On fresh game: tear down any leftover player (e.g. from a prior gameOver)
  * and create a new one — the player is unscoped so it survives screen exits.
- * On level transition: leave the existing player so lives and run time persist.
+ * On level transition: leave the existing player so the run persists.
  */
 const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void => {
   gameEngine.setResource('tapRequest', null);
@@ -69,7 +70,8 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
   );
 
   if (isFreshGame) {
-    gameEngine.setResource('gameplayTimeSeconds', 0);
+    gameEngine.setResource('remainingTimeSeconds', STARTING_TIME_SECONDS);
+    gameEngine.setResource('equationsSolved', 0);
 
     const existingPlayer = gameEngine.tryGetSingleton(playerQuery.with);
     if (existingPlayer) gameEngine.removeEntity(existingPlayer.id);
@@ -131,8 +133,8 @@ const setupScreenHooks = (): void => {
   });
 
   function showGameOverScreen(): void {
-    setFinalTime(gameEngine.getResource('gameplayTimeSeconds'));
     showScreen('gameOver');
+    setRunResult(gameEngine.getResource('currentLevel'), gameEngine.getResource('equationsSolved'));
   }
 
   gameEngine.onScreenEnter('gameOver', showGameOverScreen);

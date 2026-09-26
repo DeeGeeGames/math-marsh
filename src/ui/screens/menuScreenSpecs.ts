@@ -35,7 +35,7 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Stay safe',
-    description: 'A wrong answer or an animal can take one life. Solve more equations to keep going.',
+    description: 'Correct answers add time. Wrong answers and animal hits cost time. Keep solving to stay in the pond.',
   },
 ] as const;
 

@@ -21,6 +21,7 @@ import { startShake } from '../ecs/systems/AnimationSystem';
 import { startEnemyGridMovement } from '../ecs/systems/EnemySpriteSystem';
 import { createEquationModeState } from '../math/equations';
 import type { EquationModeState, TutorialScreenConfig } from '../ecs/types';
+import { STARTING_TIME_SECONDS, timeAfterWrongAnswer } from '../ecs/runTime';
 
 const TARGET_VALUE = 8;
 const PLAYER_START = { x: 1, y: 2 } as const;
@@ -135,16 +136,13 @@ export function setupScriptedTutorialScene(
   { kind, isReplay, returnTo }: TutorialScreenConfig,
 ): void {
   const existingPlayer = ecs.tryGetSingleton(playerQuery.with);
-  const existingHealth = existingPlayer?.components.health;
   const continuesRun = returnTo.kind === 'level';
   const playerSnapshot: GameplayOnboardingPlayerSnapshot | undefined = existingPlayer
-    && existingHealth
     && continuesRun
     ? {
         position: { ...existingPlayer.components.position },
-        lives: existingPlayer.components.player.lives,
+        remainingTimeSeconds: ecs.getResource('remainingTimeSeconds'),
         gameOverPending: existingPlayer.components.player.gameOverPending,
-        health: { current: existingHealth.current, max: existingHealth.max },
         pathFollower: {
           ...existingPlayer.components.pathFollower,
           breadcrumbs: existingPlayer.components.pathFollower.breadcrumbs.map(point => ({ ...point })),
@@ -152,13 +150,14 @@ export function setupScriptedTutorialScene(
       }
     : undefined;
   if (!continuesRun && existingPlayer) ecs.removeEntity(existingPlayer.id);
-  if (continuesRun && (!existingPlayer || !existingHealth)) {
-    throw new Error('Operand tutorial requires the active player and health from Level 1');
+  if (continuesRun && !existingPlayer) {
+    throw new Error('Operand tutorial requires the active player from Level 1');
   }
 
   if (!continuesRun) {
     ecs.setResource('currentLevel', kind === 'operands' ? 2 : 1);
-    ecs.setResource('gameplayTimeSeconds', 0);
+    ecs.setResource('remainingTimeSeconds', STARTING_TIME_SECONDS);
+    ecs.setResource('equationsSolved', 0);
   }
   ecs.setResource('equationMode', scriptedEquationMode(kind));
   const session = createGameplayOnboardingSession(kind, isReplay, returnTo, playerSnapshot);
@@ -176,8 +175,7 @@ function placePlayer(
   player: {
     components: {
       position: { x: number; y: number };
-      player: { lives: number; gameOverPending?: boolean };
-      health: { current: number; max: number };
+      player: { gameOverPending?: boolean };
       pathFollower: {
         anchorGridX: number;
         anchorGridY: number;
@@ -187,14 +185,11 @@ function placePlayer(
     };
   },
   grid: TutorialGridPoint,
-  lives: number = GAME_CONFIG.GAMEPLAY.PLAYER_LIVES,
 ): void {
   const pixel = gridToPixel(grid.x, grid.y);
   player.components.position.x = pixel.x;
   player.components.position.y = pixel.y;
-  player.components.player.lives = lives;
   player.components.player.gameOverPending = false;
-  player.components.health.current = lives;
   player.components.pathFollower.anchorGridX = grid.x;
   player.components.pathFollower.anchorGridY = grid.y;
   player.components.pathFollower.breadcrumbs = [];
@@ -213,9 +208,9 @@ function resetTutorialScene(
   }>,
   enemy: TutorialEnemy | undefined,
   kind: GameplayOnboardingKind,
-  lives: number,
 ): void {
-  placePlayer(player, PLAYER_START, lives);
+  placePlayer(player, PLAYER_START);
+  ecs.setResource('remainingTimeSeconds', STARTING_TIME_SECONDS);
   ecs.setResource('equationMode', scriptedEquationMode(kind));
   mathProblems.forEach(problem => {
     problem.components.mathProblem.consumed = false;
@@ -376,8 +371,8 @@ export function applyTutorialStep(
     mathProblems,
     enemy,
     session.kind,
-    session.playerSnapshot?.lives ?? GAME_CONFIG.GAMEPLAY.PLAYER_LIVES,
   );
+  ecs.setResource('remainingTimeSeconds', session.playerSnapshot?.remainingTimeSeconds ?? STARTING_TIME_SECONDS);
   if (session.kind === 'operands') {
     applyOperandTutorialStep(ecs, session, player, mathProblems);
     return;
@@ -405,7 +400,8 @@ export function applyTutorialStep(
     });
   }
   if (step.id === 'feedback') {
-    placePlayer(player, PLAYER_TARGET, GAME_CONFIG.GAMEPLAY.PLAYER_LIVES - 1);
+    placePlayer(player, PLAYER_TARGET);
+    ecs.setResource('remainingTimeSeconds', timeAfterWrongAnswer(ecs.getResource('remainingTimeSeconds')));
     ecs.setResource('equationMode', {
       ...scriptedEquationMode('basics'),
       feedback: { kind: 'incorrect', startedAt: performance.now() },

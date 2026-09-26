@@ -16,7 +16,6 @@ export const playerComponents = (x: number, y: number): Partial<AllComponents> =
     renderable: defaultPlayerRenderable(),
     playerSprite: defaultPlayerSprite(),
     player: {
-      lives: GAME_CONFIG.GAMEPLAY.PLAYER_LIVES,
       gameOverPending: false,
       deathScale: 1.0
     },
@@ -93,7 +92,7 @@ export const mathProblemComponents = (
 });
 
 // Player is unscoped so it survives the screen-exit cleanup that runs on
-// level transitions, preserving lives across levels.
+// level transitions, preserving the run across levels.
 export const createPlayer = (ecs: GameEngine, x: number, y: number): { id: number } =>
   ecs.spawn(playerComponents(x, y));
 

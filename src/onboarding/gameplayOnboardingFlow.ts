@@ -73,14 +73,13 @@ function restoreActivePlayer(
   engine: GameEngine,
   session: Extract<GameplayOnboardingSession, { active: true }>,
 ): void {
-  const player = engine.tryGetSingleton(['player', 'position', 'health', 'pathFollower'] as const);
+  const player = engine.tryGetSingleton(['player', 'position', 'pathFollower'] as const);
   const snapshot = session.playerSnapshot;
   if (!player || !snapshot) throw new Error('Operand tutorial cannot restore the active player');
 
   Object.assign(player.components.position, snapshot.position);
-  player.components.player.lives = snapshot.lives;
   player.components.player.gameOverPending = snapshot.gameOverPending;
-  Object.assign(player.components.health, snapshot.health);
+  engine.setResource('remainingTimeSeconds', snapshot.remainingTimeSeconds);
   Object.assign(player.components.pathFollower, snapshot.pathFollower, {
     breadcrumbs: snapshot.pathFollower.breadcrumbs.map(point => ({ ...point })),
   });

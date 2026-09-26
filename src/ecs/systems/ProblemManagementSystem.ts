@@ -47,7 +47,7 @@ export function addProblemManagementSystemToEngine(
         problem => !problem.components.mathProblem.consumed
       );
 
-      if (player) {
+      if (player && !player.components.player.gameOverPending) {
         const shouldSpawnProblems = activeProblems.length === 0
           && !player.components.timers.problemSpawn?.active;
         const populatedEquationMode = shouldSpawnProblems

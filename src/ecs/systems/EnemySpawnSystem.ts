@@ -30,7 +30,7 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
     .withResources(['currentLevel', 'enemySpawn'])
     .setProcess(({ queries, ecs, resources: { currentLevel, enemySpawn } }) => {
       const player = queries.player;
-      if (!player) return;
+      if (!player || player.components.player.gameOverPending) return;
 
       const spawnOrder = enemySpawnOrderForLevel(currentLevel);
       const { index } = enemySpawn;

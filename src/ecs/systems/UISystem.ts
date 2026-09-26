@@ -17,7 +17,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
       'gameMode',
       'mathDifficulty',
       'currentLevel',
-      'gameplayTimeSeconds',
+      'remainingTimeSeconds',
       'gameplayOnboardingSession',
     ])
     .setProcess(({ queries, resources }) => {
@@ -28,12 +28,12 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         gameMode,
         mathDifficulty,
         currentLevel,
-        gameplayTimeSeconds,
+        remainingTimeSeconds,
         gameplayOnboardingSession,
       } = resources;
       const level = tutorialHudLabel(gameplayOnboardingSession)
         ?? gameplayLevelLabel(gameMode, mathDifficulty, currentLevel);
 
-      updateGameplayUI(gameplayTimeSeconds, player.components.player.lives, level);
+      updateGameplayUI(remainingTimeSeconds, level);
     });
 }

@@ -20,12 +20,12 @@ export const SCRIPTED_TUTORIAL_STEPS = [
   {
     id: 'feedback',
     title: 'See what happens',
-    copy: 'Right answers clear lily pads. A wrong answer takes one life. You can try again.',
+    copy: 'Right answers add time. A wrong answer costs time, but you can try again.',
   },
   {
     id: 'enemyDanger',
     title: 'Stay away from animals',
-    copy: 'Pond animals can take one life. Watch where they move and stay out of their way.',
+    copy: 'Pond animals cost time when they hit you. Watch where they move.',
   },
 ] as const;
 
@@ -65,9 +65,8 @@ export type GameplayOnboardingReturn =
 
 export type GameplayOnboardingPlayerSnapshot = {
   position: { x: number; y: number; rotation?: number };
-  lives: number;
+  remainingTimeSeconds: number;
   gameOverPending?: boolean;
-  health: { current: number; max: number };
   pathFollower: {
     anchorGridX: number;
     anchorGridY: number;

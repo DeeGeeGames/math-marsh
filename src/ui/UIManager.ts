@@ -15,7 +15,7 @@ import {
   toggleFullscreen,
 } from './fullscreen';
 import { requestCanvasResize } from '../ecs/systems/render/context';
-import { formatElapsedTime, updateGameplayHud } from './gameplayHud';
+import { updateGameplayHud } from './gameplayHud';
 import {
   gameplayLevelLabel,
   settingsBackLabels,
@@ -46,6 +46,7 @@ import {
   updateGameplayOnboardingUI,
 } from '../onboarding/gameplayOnboardingUI';
 import { createScreenRuntime } from './screenRuntime';
+import { playerQuery } from '../ecs/queries';
 
 export { gameplayLevelLabel };
 
@@ -146,8 +147,11 @@ function openSettings(): void {
 }
 
 function pauseGame(): void {
+  const engine = requireEngine();
+  const player = engine.tryGetSingleton(playerQuery.with);
+  if (!player || player.components.player.gameOverPending) return;
   playSound('uiSelect');
-  void requireEngine().pushScreen('paused', {});
+  void engine.pushScreen('paused', {});
 }
 
 function replayGame(): void {
@@ -248,9 +252,9 @@ export const triggerCancel = screenRuntime.triggerCancel;
 
 export const updateGameplayUI = updateGameplayHud;
 
-export const setFinalTime = (elapsedSeconds: number): void => {
-  const el = document.getElementById('final-time');
-  if (el) el.textContent = `Final Time: ${formatElapsedTime(elapsedSeconds)}`;
+export const setRunResult = (level: number, equationsSolved: number): void => {
+  const el = document.getElementById('run-result');
+  if (el) el.textContent = `Level ${level} · ${equationsSolved} equation${equationsSolved === 1 ? '' : 's'} solved`;
 };
 
 // UI-only shortcuts. Gameplay input (movement, eat, pause) lives in the ECS input plugin.

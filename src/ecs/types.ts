@@ -79,7 +79,6 @@ export interface Components {
     elapsed: number;
   };
   player: {
-    lives: number;
     gameOverPending?: boolean;
     deathScale: number;
   };
@@ -204,7 +203,8 @@ export interface Resources {
   gameMode: GameMode;
   mathDifficulty: MathDifficulty;
   currentLevel: number;
-  gameplayTimeSeconds: number;
+  remainingTimeSeconds: number;
+  equationsSolved: number;
   enemySpawn: { index: number };
   equationMode: EquationModeState;
   inputPrompt: import('../ui/inputPrompts').InputPromptState;

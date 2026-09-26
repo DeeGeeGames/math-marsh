@@ -18,8 +18,7 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
     html: `
       <header id="top-hud" class="gameplay-header">
         <div class="gameplay-status" role="group" aria-label="Game status">
-          <div id="time-display" class="hud-chip time">Time: 0:00</div>
-          <div id="lives-display" aria-live="polite" class="hud-chip lives">Lives: 3</div>
+          <span id="time-display" role="timer" class="sr-only">Time left: 1:30</span>
         </div>
 
         <div id="level-display" class="hud-chip level">Addition - Easy - Level 1</div>
@@ -109,8 +108,8 @@ export function createGameOverScreenSpec(actions: ScreenSpecActions): ScreenSpec
             Game Over
           </h1>
 
-          <div id="final-time" class="final-time mt-4 sm:mt-5 text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-md" aria-live="polite">
-            Final Time: 0:00
+          <div id="run-result" class="run-result mt-4 sm:mt-5 text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-md" aria-live="polite">
+            Level 1 · 0 equations solved
           </div>
 
           <p class="game-over-message mt-4 sm:mt-5 text-base sm:text-lg">

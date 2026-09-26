@@ -893,32 +893,6 @@ button:focus-visible,
   .gameplay-header { font-size: 14px; }
 }
 
-.hud-chip.time {
-  background:
-    radial-gradient(ellipse at 20% 20%, rgba(255, 247, 198, 0.2), transparent 36%),
-    linear-gradient(135deg, rgba(75, 159, 59, 0.98), rgba(36, 107, 53, 0.98));
-}
-
-.hud-chip.lives {
-  background: var(--danger-gradient);
-}
-
-.hud-chip.lives.life-loss {
-  animation: life-loss 480ms cubic-bezier(0.2, 1.45, 0.34, 1);
-}
-
-@keyframes life-loss {
-  0% { transform: scale(1); }
-  24% {
-    transform: translateX(-5px) scale(1.16) rotate(-2deg);
-    filter: brightness(1.55) saturate(1.25);
-    box-shadow: 0 0 24px rgba(255, 91, 75, 0.82);
-  }
-  42% { transform: translateX(4px) scale(1.1) rotate(1deg); }
-  62% { transform: translateX(-2px) scale(1.05); }
-  100% { transform: translateX(0) scale(1); }
-}
-
 .hud-chip.level {
   background:
     linear-gradient(135deg, rgba(255, 247, 198, 0.98), rgba(244, 210, 122, 0.96));
@@ -1095,7 +1069,7 @@ button:focus-visible,
   text-wrap: balance;
 }
 
-.final-time {
+.run-result {
   display: inline-flex;
   max-width: 100%;
   min-height: 3.4rem;

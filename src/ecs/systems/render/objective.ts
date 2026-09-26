@@ -6,9 +6,13 @@ import {
 } from '../../systemConfigs';
 import type { MathProblemEntity } from '../../queries';
 import type { EquationFeedbackKind, EquationFeedback, EquationModeState } from '../../types';
+import { formatRemainingTime } from '../../runTime';
 
 const textColor = '#fff7c6';
 const shadowColor = 'rgba(9, 41, 44, 0.9)';
+const HEADER_SPLIT_RATIO = 0.72;
+const HEADER_SIDE_PADDING = 24;
+const HEADER_GAP = 16;
 
 export type EquationValueTarget = {
   x: number;
@@ -64,6 +68,18 @@ function objectiveFontSize(margin: number): number {
   return Math.max(20, Math.min(30, margin * 0.42));
 }
 
+function objectiveGeometry(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+): { leftX: number; fitScale: number } {
+  const rightEdge = ctx.canvas.width * HEADER_SPLIT_RATIO - HEADER_GAP;
+  const availableWidth = rightEdge - HEADER_SIDE_PADDING;
+  return {
+    leftX: HEADER_SIDE_PADDING,
+    fitScale: Math.min(1, availableWidth / Math.max(1, ctx.measureText(text).width * 1.13)),
+  };
+}
+
 function selectedEquationLayout(
   ctx: CanvasRenderingContext2D,
   equationMode: EquationModeState,
@@ -80,7 +96,7 @@ function selectedEquationLayout(
 
   ctx.save();
   ctx.font = `bold ${objectiveFontSize(margin)}px Arial`;
-  const textLeft = ctx.canvas.width / 2 - ctx.measureText(text).width / 2;
+  const { leftX, fitScale } = objectiveGeometry(ctx, text);
   const initialCursor = equationMode.promptKind === 'selectResult' ? resultSearchStart : 0;
   const located = selectedProblems.reduce<{
     cursor: number;
@@ -91,9 +107,10 @@ function selectedEquationLayout(
     if (valueStart < 0) return state;
 
     const valueEnd = valueStart + valueText.length;
-    const x = textLeft
-      + ctx.measureText(text.slice(0, valueStart)).width
-      + ctx.measureText(valueText).width / 2;
+    const x = leftX + (
+      ctx.measureText(text.slice(0, valueStart)).width
+      + ctx.measureText(valueText).width / 2
+    ) * fitScale;
     return {
       cursor: valueEnd,
       values: [
@@ -142,7 +159,7 @@ function drawEquationAwaitingValues(
   ctx: CanvasRenderingContext2D,
   layout: SelectedEquationLayout,
 ): void {
-  const textLeft = -ctx.measureText(layout.text).width / 2;
+  const textLeft = 0;
   const segments = layout.values.reduce<{
     cursor: number;
     items: Array<{ text: string; x: number }>;
@@ -156,7 +173,10 @@ function drawEquationAwaitingValues(
       },
       {
         text: '_',
-        x: value.target.x - ctx.canvas.width / 2 - ctx.measureText('_').width / 2,
+        x: textLeft
+          + ctx.measureText(layout.text.slice(0, value.start)).width
+          + ctx.measureText(layout.text.slice(value.start, value.end)).width / 2
+          - ctx.measureText('_').width / 2,
       },
     ],
   }), { cursor: 0, items: [] });
@@ -199,17 +219,17 @@ export const drawBoardObjective = (
   const pulse = Math.sin(holdProgress * Math.PI);
   const xOffset = feedbackStyle ? Math.sin(progress * Math.PI * 12) * feedbackStyle.shakeStrength * fade : 0;
   const scale = feedbackStyle ? 1 + pulse * 0.13 : 1;
-  const x = ctx.canvas.width / 2 + xOffset;
   const y = margin * 0.48;
 
   ctx.save();
   ctx.font = `bold ${fontSize}px Arial`;
-  ctx.textAlign = 'center';
+  const { leftX, fitScale } = objectiveGeometry(ctx, normalizedText);
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
   ctx.lineWidth = 5;
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
+  ctx.translate(leftX + xOffset, y);
+  ctx.scale(scale * fitScale, scale * fitScale);
 
   if (feedbackStyle) {
     ctx.shadowColor = feedbackStyle.glowColor;
@@ -225,4 +245,27 @@ export const drawBoardObjective = (
   }
   ctx.restore();
   return answerTargets;
+};
+
+export const drawBoardTime = (
+  ctx: CanvasRenderingContext2D,
+  remainingSeconds: number,
+  margin: number,
+): void => {
+  const text = `Time ${formatRemainingTime(remainingSeconds)}`;
+  const availableWidth = ctx.canvas.width * (1 - HEADER_SPLIT_RATIO) - HEADER_SIDE_PADDING - HEADER_GAP;
+
+  ctx.save();
+  ctx.font = `bold ${objectiveFontSize(margin)}px Arial`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 5;
+  const fitScale = Math.min(1, availableWidth / Math.max(1, ctx.measureText(text).width));
+  ctx.translate(ctx.canvas.width - HEADER_SIDE_PADDING, margin * 0.48);
+  ctx.scale(fitScale, fitScale);
+  ctx.strokeStyle = shadowColor;
+  ctx.fillStyle = remainingSeconds <= 15 ? feedbackStyles.incorrect.color : textColor;
+  drawOutlinedText(ctx, text, 0);
+  ctx.restore();
 };
