@@ -4,7 +4,7 @@ import { activePlayerGridCell, cellCenter, positionInGridCell } from '../../game
 import { gridCellKey, positionedEntityGridCellKey } from '../../lilyPads';
 import type { MathProblemEntity, PlayerEntity } from '../../queries';
 import type { Resources } from '../../types';
-import type { RenderMargins } from './context';
+import type { RenderMargins } from '../../boardGeometry';
 import type { EquationValueTarget } from './objective';
 
 const cell = GAME_CONFIG.GRID.CELL_SIZE;

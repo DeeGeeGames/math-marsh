@@ -1,5 +1,5 @@
 import { GAME_CONFIG } from '../config';
-import { renderMargins } from '../ecs/systems/render/context';
+import { renderMargins } from '../ecs/boardGeometry';
 import type { BoardPoint } from '../ecs/lilyPads';
 
 const MAX_TAP_TRAVEL_PX = 14;

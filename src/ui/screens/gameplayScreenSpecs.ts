@@ -1,7 +1,7 @@
 import { $ } from '../dom';
 import { bindGameplayHud } from '../gameplayHud';
 import type { ScreenSpec } from '../screenTypes';
-import { bindTouchControls } from '../touchControls';
+import { bindTouchControls } from '../touchInput';
 import { bindBoardPointer } from '../boardPointer';
 import {
   BTN_CHROME,

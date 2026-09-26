@@ -1,3 +1,4 @@
+import { renderMargins } from '../boardGeometry';
 import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
 import { GAME_CONFIG } from '../../config';
@@ -11,7 +12,7 @@ import {
 } from '../queries';
 import { collectGridCellKeys } from '../lilyPads';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
-import { cleanupRenderSystem, getCtx, renderMargins } from './render/context';
+import { cleanupRenderSystem, getCtx } from './render/context';
 import { drawGrid } from './render/grid';
 import { drawEntity } from './render/entities';
 import {

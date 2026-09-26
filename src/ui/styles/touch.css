@@ -1,0 +1,132 @@
+/* ===== ON-SCREEN TOUCH CONTROLS ===== */
+
+/* Hidden by default; applyTouchControlsVisibility() flips
+ * body[data-touch-controls] based on (hover: none, pointer: coarse) or the
+ * user's Settings override. */
+.touch-controls { display: none; }
+body[data-touch-controls="on"] .touch-controls { display: grid; }
+body[data-touch-controls="on"] #touch-action { display: flex; align-items: center; justify-content: center; }
+body[data-touch-controls="on"] .input-prompts-slot { display: none; }
+
+#gameplay-ui {
+  --touch-edge-gap: 14px;
+  --touch-control-gap: 6px;
+  --touch-dpad-cluster-size: 180px;
+  --touch-dpad-button-size: 56px;
+  --touch-action-size: 180px;
+  --touch-eat-size: 110px;
+}
+
+#touch-dpad {
+  position: fixed;
+  z-index: 30;
+  width: var(--touch-dpad-cluster-size);
+  height: var(--touch-dpad-cluster-size);
+  grid-template-columns: repeat(3, var(--touch-dpad-button-size));
+  grid-template-rows: repeat(3, var(--touch-dpad-button-size));
+  gap: var(--touch-control-gap);
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#touch-dpad button,
+#touch-action button {
+  appearance: none;
+  border: 2px solid var(--reed-border);
+  background:
+    radial-gradient(ellipse at 24% 18%, rgba(255, 247, 198, 0.18), transparent 36%),
+    rgba(15, 79, 98, 0.8);
+  color: var(--cream);
+  font-size: calc(var(--touch-dpad-button-size) * 0.4);
+  font-weight: bold;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 6px 14px rgba(5, 31, 36, 0.38);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+#touch-dpad button { width: var(--touch-dpad-button-size); height: var(--touch-dpad-button-size); }
+#touch-dpad button:active,
+#touch-action button:active { filter: brightness(1.14); }
+#touch-up    { grid-area: 1 / 2; }
+#touch-left  { grid-area: 2 / 1; }
+#touch-right { grid-area: 2 / 3; }
+#touch-down  { grid-area: 3 / 2; }
+
+/* All four glyphs are the same up-triangle character rotated, so they render
+ * at identical size and weight regardless of font fallback. */
+.dpad-glyph {
+  display: inline-block;
+  line-height: 1;
+  transform-origin: center;
+}
+#touch-right .dpad-glyph { transform: rotate(90deg); }
+#touch-down  .dpad-glyph { transform: rotate(180deg); }
+#touch-left  .dpad-glyph { transform: rotate(-90deg); }
+
+#touch-action {
+  position: fixed;
+  z-index: 30;
+  width: var(--touch-action-size);
+  height: var(--touch-action-size);
+  pointer-events: auto;
+  touch-action: none;
+}
+#touch-eat {
+  width: var(--touch-eat-size);
+  height: var(--touch-eat-size);
+  border-radius: 54% 46% 58% 42%;
+  background: var(--success-gradient);
+  font-size: calc(var(--touch-eat-size) * 0.18);
+  letter-spacing: 0.05em;
+}
+#touch-eat:active { filter: brightness(1.15); }
+
+/* Portrait: D-pad bottom-left, Eat bottom-right. Hide the keyboard-hint
+ * bottom HUD when touch controls are taking the space. */
+@media (orientation: portrait) {
+  #touch-dpad {
+    left: max(env(safe-area-inset-left, 0px), var(--touch-edge-gap));
+    bottom: max(env(safe-area-inset-bottom, 0px), var(--touch-edge-gap));
+  }
+  #touch-action {
+    right: max(env(safe-area-inset-right, 0px), var(--touch-edge-gap));
+    bottom: max(env(safe-area-inset-bottom, 0px), var(--touch-edge-gap));
+  }
+  body[data-touch-controls="on"] #bottom-hud { display: none; }
+}
+
+/* Landscape: flank the canvas. */
+@media (orientation: landscape) {
+  #touch-dpad {
+    left: max(env(safe-area-inset-left, 0px), var(--touch-edge-gap));
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  #touch-action {
+    right: max(env(safe-area-inset-right, 0px), var(--touch-edge-gap));
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  /* Bottom hint strip is unnecessary chrome on short screens. */
+  body[data-touch-controls="on"] #bottom-hud { display: none; }
+}
+
+/* When touch controls are on, the bottom hint strip is hidden — reclaim its
+ * reserved margin so the canvas can grow into the freed vertical space. */
+body[data-touch-controls="on"] #canvas-container { margin-bottom: 8px; }
+
+/* Reserve the portrait control row before centering the board. The touch
+ * layout uses a half-viewport cluster minus two edge gaps; reserving
+ * that whole half-width keeps its buttons from shrinking with browser chrome.
+ * Tutorials have their own reserved panel and hide the touch controls. */
+@media (orientation: portrait) {
+  body[data-touch-controls="on"] #gameplay-ui:not(.tutorial-mode) #canvas-container {
+    margin-bottom: calc(50vw + max(0px, env(safe-area-inset-bottom, 0px) - var(--touch-edge-gap)));
+  }
+}

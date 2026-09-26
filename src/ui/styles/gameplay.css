@@ -1,0 +1,135 @@
+/* Canvas border with subtle transparency */
+#game-canvas {
+  pointer-events: auto;
+  touch-action: none;
+  background: var(--cream-panel);
+  border: 7px solid var(--cream-panel);
+  box-shadow:
+    0 0 0 4px rgba(36, 107, 53, 0.86),
+    0 0 0 8px rgba(109, 122, 52, 0.32),
+    0 16px 32px rgba(5, 31, 36, 0.32);
+}
+
+#canvas-container {
+  margin-bottom: clamp(6rem, 10vh, 8rem);
+}
+
+/* Keep status, level context, and actions in predictable, separate groups.
+ * In-flow chrome reserves space before the responsive canvas region. */
+.gameplay-header {
+  --hud-control-size: clamp(44px, 3.5vw, 64px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: max(env(safe-area-inset-top, 0px), clamp(12px, 2vw, 32px))
+    max(env(safe-area-inset-right, 0px), clamp(12px, 2vw, 40px)) 12px
+    max(env(safe-area-inset-left, 0px), clamp(12px, 2vw, 40px));
+  color: var(--cream);
+  font-size: clamp(14px, 1.25vw, 24px);
+  font-weight: bold;
+}
+
+.gameplay-status,
+.gameplay-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gameplay-status {
+  min-width: 0;
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.gameplay-actions {
+  justify-self: end;
+  pointer-events: auto;
+}
+
+.gameplay-header .hud-chip {
+  display: flex;
+  align-items: center;
+  min-height: var(--hud-control-size);
+  padding: 6px 12px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.gameplay-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: var(--hud-control-size);
+  min-height: var(--hud-control-size);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.gameplay-action svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gameplay-action:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .gameplay-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .gameplay-header #level-display {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+    min-height: 0;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 380px) {
+  .gameplay-header { font-size: 13px; }
+  .gameplay-header .hud-chip,
+  .gameplay-action { padding-inline: 8px; }
+}
+
+@media (max-height: 500px) {
+  .gameplay-header { font-size: 14px; }
+}
+
+.hud-chip.level {
+  background:
+    linear-gradient(135deg, rgba(255, 247, 198, 0.98), rgba(244, 210, 122, 0.96));
+  color: var(--ink);
+}
+
+/* Suppress the 300ms tap delay and double-tap zoom on the pause button so it
+ * feels as responsive as the D-pad / Eat button on touch devices. */
+#pause-btn { touch-action: manipulation; }
+
+/* Short viewports (landscape phones): reduce chrome and reclaim vertical space
+ * for the canvas. */
+@media (max-height: 500px) {
+  #top-hud {
+    padding: max(env(safe-area-inset-top, 0px), 6px)
+      max(env(safe-area-inset-right, 0px), 10px) 6px
+      max(env(safe-area-inset-left, 0px), 10px);
+  }
+  #canvas-container { margin-bottom: 8px; }
+}

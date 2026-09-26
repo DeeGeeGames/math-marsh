@@ -1,0 +1,103 @@
+/* Button gradients for primary actions */
+.btn-success {
+  background:
+    radial-gradient(ellipse at 18% 18%, rgba(255, 247, 198, 0.25), transparent 32%),
+    var(--success-gradient);
+  border-radius: 22px 28px 22px 28px;
+}
+
+.btn-primary,
+.btn-warning,
+.btn-danger,
+.btn-secondary {
+  border-radius: 18px 24px 18px 24px;
+}
+
+.btn-primary {
+  background:
+    var(--button-glint),
+    var(--primary-button-gradient);
+}
+
+.btn-warning {
+  background:
+    radial-gradient(ellipse at 18% 22%, rgba(255, 247, 198, 0.3), transparent 34%),
+    var(--warning-gradient);
+}
+
+.btn-danger {
+  background: var(--danger-gradient);
+}
+
+.btn-secondary {
+  background:
+    radial-gradient(ellipse at 18% 22%, rgba(255, 247, 198, 0.18), transparent 34%),
+    var(--secondary-gradient);
+}
+
+/* Keyboard / gamepad focus indicator. Visible on any button or opt-in
+ * focusable (e.g. mode cards). Uses focus-visible so mouse clicks don't
+ * leave a lingering outline on the last-clicked button. */
+button:focus-visible,
+[type="checkbox"]:focus-visible,
+[type="radio"]:focus-visible,
+[data-focusable]:focus-visible {
+  outline: 3px solid var(--reed);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(244, 210, 122, 0.28);
+}
+
+.touch-mode-btn[aria-pressed="true"] {
+  border-color: var(--reed);
+  box-shadow:
+    0 0 0 3px rgba(244, 210, 122, 0.38),
+    var(--pond-shadow);
+  filter: brightness(1.12);
+}
+
+.utility-btn,
+.hud-chip,
+.difficulty-choice,
+.touch-mode-btn {
+  color: var(--cream);
+  border: 1px solid var(--soft-cream-border);
+  box-shadow: var(--pond-shadow);
+}
+
+.utility-btn {
+  background:
+    radial-gradient(ellipse at 24% 20%, rgba(255, 247, 198, 0.16), transparent 36%),
+    rgba(28, 83, 97, 0.92);
+}
+
+.utility-btn:hover {
+  background: rgba(18, 62, 72, 0.96);
+}
+
+.hud-chip {
+  background: rgba(15, 79, 98, 0.92);
+}
+
+.theme-checkbox {
+  accent-color: var(--pond-mid);
+}
+
+.touch-mode-btn {
+  background: var(--primary-button-gradient);
+}
+
+.touch-mode-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* Touch-friendly button enhancements for mobile */
+@media (max-width: 768px) {
+  .btn-mobile {
+    min-height: 44px; /* iOS touch target minimum */
+    padding: 12px 20px;
+  }
+
+  .mode-card {
+    min-height: 60px; /* Larger touch targets on mobile */
+  }
+}

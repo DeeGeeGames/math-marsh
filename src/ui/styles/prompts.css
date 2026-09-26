@@ -1,0 +1,178 @@
+/* Bottom HUD prompt row */
+.hud-bottom {
+  justify-content: flex-start;
+  background: transparent;
+  padding: 0 max(env(safe-area-inset-right, 0px), 28px) max(env(safe-area-inset-bottom, 0px), 24px) max(env(safe-area-inset-left, 0px), 28px);
+}
+
+.input-prompts-slot {
+  display: flex;
+  pointer-events: none;
+}
+
+.input-prompts-slot--viewport {
+  position: fixed;
+  left: max(env(safe-area-inset-left, 0px), 28px);
+  right: max(env(safe-area-inset-right, 0px), 28px);
+  bottom: max(env(safe-area-inset-bottom, 0px), 24px);
+  z-index: 20;
+  justify-content: flex-start;
+}
+
+.input-prompts-slot--hud {
+  position: static;
+  width: 100%;
+  z-index: auto;
+  justify-content: flex-start;
+}
+
+.input-prompts-slot--panel {
+  position: static;
+  width: 100%;
+  z-index: auto;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.input-prompts-slot--hud .input-prompts-bar {
+  justify-content: flex-start;
+}
+
+.input-prompts-slot--panel .input-prompts-bar {
+  justify-content: center;
+  max-width: 100%;
+}
+
+.hud-bottom #hints-display,
+.input-prompts-slot--hud .input-prompts-bar {
+  max-width: min(92vw, 900px);
+}
+
+.input-prompts-bar {
+  --input-prompt-gap: 10px;
+  --input-prompt-min-height: 48px;
+  --input-prompt-font-size: 1.05rem;
+  --input-prompt-glyph-size: 44px;
+  --input-prompt-keycap-min-width: 48px;
+  --input-prompt-keycap-height: 40px;
+  --input-prompt-keycap-padding: 0 12px;
+  --input-prompt-keycap-font-size: 0.95rem;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px 18px;
+  max-width: min(92vw, 860px);
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 247, 198, 0.34);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(18, 52, 59, 0.86), rgba(5, 31, 36, 0.76)),
+    var(--panel-gradient-strong);
+  box-shadow:
+    0 12px 24px rgba(5, 31, 36, 0.32),
+    inset 0 1px 0 rgba(255, 247, 198, 0.16);
+  color: rgba(255, 247, 198, 0.92);
+  text-shadow: 0 2px 3px rgba(5, 31, 36, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.hud-bottom #hints-display {
+  opacity: 1;
+  text-align: left;
+}
+
+.input-prompts-slot--hud .input-prompts-bar {
+  --input-prompt-gap: 12px;
+  --input-prompt-min-height: 54px;
+  --input-prompt-font-size: 1.15rem;
+  --input-prompt-glyph-size: 50px;
+  --input-prompt-keycap-min-width: 54px;
+  --input-prompt-keycap-height: 46px;
+  --input-prompt-keycap-padding: 0 14px;
+  --input-prompt-keycap-font-size: 1.05rem;
+}
+
+.input-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--input-prompt-gap);
+  min-height: var(--input-prompt-min-height);
+  font-size: var(--input-prompt-font-size);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.input-prompt-glyphs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.input-prompt-glyph {
+  display: block;
+  width: var(--input-prompt-glyph-size);
+  height: var(--input-prompt-glyph-size);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(5, 31, 36, 0.5));
+}
+
+.input-prompt-keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--input-prompt-keycap-min-width);
+  height: var(--input-prompt-keycap-height);
+  padding: var(--input-prompt-keycap-padding);
+  border-radius: 8px;
+  border: 1px solid rgba(18, 52, 59, 0.34);
+  background: rgba(255, 247, 198, 0.92);
+  color: var(--ink);
+  box-shadow: 0 2px 0 rgba(5, 31, 36, 0.28);
+  text-shadow: none;
+  font-size: var(--input-prompt-keycap-font-size);
+  font-weight: 800;
+}
+
+.input-prompt-label {
+  display: inline-block;
+}
+
+@media (max-width: 520px) {
+  .input-prompts-slot--viewport {
+    left: max(env(safe-area-inset-left, 0px), 14px);
+    right: max(env(safe-area-inset-right, 0px), 14px);
+    bottom: max(env(safe-area-inset-bottom, 0px), 14px);
+  }
+
+  .hud-bottom {
+    padding: 0 max(env(safe-area-inset-right, 0px), 14px) max(env(safe-area-inset-bottom, 0px), 14px) max(env(safe-area-inset-left, 0px), 14px);
+  }
+
+  .input-prompts-bar {
+    --input-prompt-min-height: 38px;
+    --input-prompt-font-size: 0.88rem;
+    --input-prompt-glyph-size: 34px;
+    --input-prompt-keycap-min-width: 38px;
+    --input-prompt-keycap-height: 32px;
+    --input-prompt-keycap-padding: 0 8px;
+    --input-prompt-keycap-font-size: 0.8rem;
+
+    gap: 8px 12px;
+    padding: 8px 10px;
+  }
+
+  .input-prompts-slot--hud .input-prompts-bar {
+    --input-prompt-gap: 8px;
+    --input-prompt-min-height: 42px;
+    --input-prompt-font-size: 0.92rem;
+    --input-prompt-glyph-size: 38px;
+    --input-prompt-keycap-min-width: 42px;
+    --input-prompt-keycap-height: 36px;
+    --input-prompt-keycap-padding: 0 10px;
+    --input-prompt-keycap-font-size: 0.86rem;
+  }
+}

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { GAME_CONFIG } from '../config';
-import { renderMargins } from '../ecs/systems/render/context';
+import { renderMargins } from '../ecs/boardGeometry';
 import { boardPointAtCanvasPixel } from './boardPointer';
 
 describe('board pointer area', () => {
