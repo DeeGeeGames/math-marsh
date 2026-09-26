@@ -1,85 +1,11 @@
 import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
-import type { Components, GameAction } from '../types';
-import { GAME_CONFIG, MOVEMENT_CONFIG } from '../../config';
+import { MOVEMENT_CONFIG } from '../../config';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { mathProblemQuery, playerMovementQuery } from '../queries';
-import { clamp, gridToPixel, sameGridCell } from '../gameUtils';
+import { clamp, gridToPixel } from '../gameUtils';
 import { playSound } from '../../audio/audio';
-import { shortestCardinalRoute } from '../tapRoute';
-import { closestActiveLilyPadGridCell, isPointOnLilyPad } from '../lilyPads';
-
-type Direction = Extract<GameAction, 'up' | 'down' | 'left' | 'right'>;
-
-const DIRECTIONS = ['up', 'down', 'left', 'right'] as const satisfies readonly Direction[];
-
-const DIRECTION_DELTAS = {
-  up:    { dx:  0, dy: -1 },
-  right: { dx:  1, dy:  0 },
-  down:  { dx:  0, dy:  1 },
-  left:  { dx: -1, dy:  0 },
-} as const satisfies Record<Direction, { dx: number; dy: number }>;
-
-function activeDirection(
-  predicate: (direction: Direction) => boolean,
-): Direction | undefined {
-  const directions = DIRECTIONS.filter(predicate);
-  return directions.length === 1 ? directions[0] : undefined;
-}
-
-function adjacentGridPoint(
-  gridPoint: Readonly<{ x: number; y: number }>,
-  direction: Direction,
-): { x: number; y: number } {
-  const delta = DIRECTION_DELTAS[direction];
-  return {
-    x: clamp(gridPoint.x + delta.dx, 0, GAME_CONFIG.GRID.WIDTH - 1),
-    y: clamp(gridPoint.y + delta.dy, 0, GAME_CONFIG.GRID.HEIGHT - 1),
-  };
-}
-
-function canContinueFrom(
-  gridPoint: Readonly<{ x: number; y: number }>,
-  direction: Direction | undefined,
-): boolean {
-  if (!direction) return false;
-  const nextGrid = adjacentGridPoint(gridPoint, direction);
-  return nextGrid.x !== gridPoint.x || nextGrid.y !== gridPoint.y;
-}
-
-function updateBreadcrumbs(
-  pathFollower: Readonly<Components['pathFollower']>,
-  direction: Direction,
-): Components['pathFollower']['breadcrumbs'] {
-  const cursor = pathFollower.breadcrumbs.at(-1) ?? {
-    x: pathFollower.anchorGridX,
-    y: pathFollower.anchorGridY,
-  };
-  const nextGrid = adjacentGridPoint(cursor, direction);
-
-  if (nextGrid.x === cursor.x && nextGrid.y === cursor.y) {
-    return pathFollower.breadcrumbs;
-  }
-
-  // Rewrite-on-reversal: if the candidate is already in the path
-  // (anchor + breadcrumbs), truncate to that point. Backtracking and
-  // 180-degree reversals fall out naturally.
-  const matchingBreadcrumb = pathFollower.breadcrumbs.findIndex(
-    breadcrumb => breadcrumb.x === nextGrid.x && breadcrumb.y === nextGrid.y,
-  );
-  const matchesAnchor = nextGrid.x === pathFollower.anchorGridX
-    && nextGrid.y === pathFollower.anchorGridY;
-
-  if (matchesAnchor) return [];
-  if (matchingBreadcrumb >= 0) {
-    return pathFollower.breadcrumbs.slice(0, matchingBreadcrumb + 1);
-  }
-  if (pathFollower.breadcrumbs.length >= MOVEMENT_CONFIG.MAX_QUEUE_LENGTH) {
-    return pathFollower.breadcrumbs;
-  }
-
-  return [...pathFollower.breadcrumbs, nextGrid];
-}
+import { activeDirection, canContinueFrom, resolveMovementIntent, updateBreadcrumbs } from '../movementIntent';
 
 export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('movementSystem')
@@ -100,41 +26,24 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
 
       const frozen = entity.components.timers.freeze?.active === true;
 
-      if (tapRequest) {
-        ecs.setResource('tapRequest', null);
-        const targetPad = closestActiveLilyPadGridCell(tapRequest, queries.mathProblems);
-        if (!frozen && targetPad) {
-          ecs.setResource('tapFeedback', { ...targetPad, startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) });
-          const head = pf.breadcrumbs[0];
-          const start = head ?? { x: pf.anchorGridX, y: pf.anchorGridY };
-          const settled = pf.breadcrumbs.length === 0
-            && Math.abs(position.x - gridToPixel(start.x, start.y).x) < 1e-3
-            && Math.abs(position.y - gridToPixel(start.x, start.y).y) < 1e-3;
-          if (settled && sameGridCell(start, targetPad) && isPointOnLilyPad(tapRequest, targetPad)) {
-            ecs.setResource('tapEat', targetPad);
-          } else {
-            // A tap may cross the full board; the two-cell limit only applies
-            // to manual directional input.
-            const route = shortestCardinalRoute(start, targetPad);
-            pf.breadcrumbs = head ? [head, ...route] : route;
-            if (route.length > 0) playSound('move');
-          }
-        }
+      if (tapRequest) ecs.setResource('tapRequest', null);
+      const intent = resolveMovementIntent({
+        pathFollower: pf,
+        position,
+        mathProblems: queries.mathProblems,
+        tapRequest,
+        frozen,
+        pressedDirection: activeDirection(direction => inputState.actions.justActivated(direction)),
+      });
+      pf.breadcrumbs = intent.breadcrumbs;
+      if (intent.tapEat) ecs.setResource('tapEat', intent.tapEat);
+      if (intent.tapTarget) {
+        ecs.setResource('tapFeedback', {
+          ...intent.tapTarget,
+          startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')),
+        });
       }
-
-      // Phase A — input updates the breadcrumb queue. Skipped while frozen so
-      // the player can't queue moves through a stun.
-      if (!frozen) {
-        const pressedDirection = activeDirection(
-          direction => inputState.actions.justActivated(direction),
-        );
-        if (pressedDirection) {
-          if (pf.breadcrumbs.length > 1) pf.breadcrumbs = pf.breadcrumbs.slice(0, 1);
-          const breadcrumbs = updateBreadcrumbs(pf, pressedDirection);
-          if (breadcrumbs !== pf.breadcrumbs) playSound('move');
-          pf.breadcrumbs = breadcrumbs;
-        }
-      }
+      if (intent.playMoveSound) playSound('move');
 
       // Phase B — motion.
       if (frozen) {
