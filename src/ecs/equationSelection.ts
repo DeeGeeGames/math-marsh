@@ -17,6 +17,7 @@ import type {
 } from './types';
 import { playSound } from '../audio/audio';
 import { GAME_CONFIG } from '../config';
+import { queueTimeAdjustment } from './timeAdjustments';
 
 type EquationSelectionResources = Readonly<Pick<
   Resources,
@@ -73,24 +74,6 @@ const activeEquationOperands = (
       value: candidate.components.mathProblem.value,
     }));
 
-function beginTimeAdjustment(
-  ecs: GameEngine,
-  problem: MathProblemEntityWithRenderable,
-  startedAt: number,
-  seconds: number,
-): void {
-  ecs.commands.spawn({
-    timeAdjustment: {
-      startedAt,
-      seconds,
-      source: {
-        x: problem.components.position.x,
-        y: problem.components.position.y,
-      },
-    },
-  });
-}
-
 export function handleEquationProblemSelection(
   ecs: GameEngine,
   player: PlayerCollisionEntity,
@@ -134,11 +117,11 @@ export function handleEquationProblemSelection(
   playSound('correct');
   ecs.setResource('equationsSolved', ecs.getResource('equationsSolved') + 1);
   const consumptionStartedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
-  beginTimeAdjustment(
+  queueTimeAdjustment(
     ecs,
-    problem,
-    consumptionStartedAt,
+    problem.components.position,
     GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS,
+    consumptionStartedAt,
   );
   selectedProblems.forEach(selectedProblem => {
     beginAnswerConsumption(ecs, selectedProblem, consumptionStartedAt);
@@ -176,11 +159,11 @@ function handleIncorrectEquationSelection(
   equationMode: EquationModeState,
 ): void {
   const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
-  beginTimeAdjustment(
+  queueTimeAdjustment(
     ecs,
-    problem,
-    startedAt,
+    problem.components.position,
     -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS,
+    startedAt,
   );
   startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.WRONG_ANSWER);
 

@@ -17,6 +17,3 @@ export const timeForCorrectAnswer = (remainingSeconds: number): number =>
 
 export const timeAfterWrongAnswer = (remainingSeconds: number): number =>
   timeAfterChange(remainingSeconds, -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS);
-
-export const timeAfterDamage = (remainingSeconds: number): number =>
-  timeAfterChange(remainingSeconds, -GAME_CONFIG.GAMEPLAY.DAMAGE_PENALTY_SECONDS);
