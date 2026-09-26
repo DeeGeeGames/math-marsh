@@ -9,7 +9,7 @@ import {
   operationForMode,
 } from './equations';
 
-const modes = ['addition', 'subtraction', 'multiplication', 'division'] as const satisfies readonly GameMode[];
+const modes = [['add'], ['subtract'], ['multiply'], ['divide']] as const satisfies readonly GameMode[];
 
 const validResultSelection = (mode: GameMode): boolean => {
   const state = createEquationModeState(1, 'medium', mode);
@@ -61,9 +61,9 @@ describe('equation generation', () => {
   });
 
   test('subtraction and division operand prompts are ordered', () => {
-    const subtraction = createEquationModeState(2, 'medium', 'subtraction');
+    const subtraction = createEquationModeState(2, 'medium', ['subtract']);
     const subtractionCandidate = createRandomEquationCandidate(subtraction);
-    const division = createEquationModeState(2, 'medium', 'division');
+    const division = createEquationModeState(2, 'medium', ['divide']);
     const divisionCandidate = createRandomEquationCandidate(division);
 
     expect(evaluateEquationSelection(
@@ -87,7 +87,7 @@ describe('equation generation', () => {
 
   test('easy subtraction operand prompts do not target negative results', () => {
     const originalRandom = Math.random;
-    const state = createEquationModeState(2, 'easy', 'subtraction');
+    const state = createEquationModeState(2, 'easy', ['subtract']);
     const operands = [
       { id: 1, value: 1 },
       { id: 2, value: 2 },
@@ -109,7 +109,7 @@ describe('equation generation', () => {
   });
 
   test('division produces only integer-result equations', () => {
-    const targets = candidateTargetsFor('division', 'expert', 8, 200);
+    const targets = candidateTargetsFor(['divide'], 'expert', 8, 200);
     expect(targets.every(Number.isInteger)).toBe(true);
   });
 
@@ -148,9 +148,9 @@ describe('equation generation', () => {
     });
   });
 
-  test('anything can generate all four operations over repeated candidates', () => {
+  test('selected operations are chosen randomly without including unselected operations', () => {
     const originalRandom = Math.random;
-    const sequence = [0, 0.25, 0.5, 0.75] as const;
+    const sequence = [0, 0.49, 0.5, 0.99] as const;
     const state = { index: 0 };
 
     Math.random = function random(): number {
@@ -161,9 +161,9 @@ describe('equation generation', () => {
 
     try {
       const operations = new Set(
-        Array.from({ length: 4 }, () => operationForMode('anything')),
+        Array.from({ length: 4 }, () => operationForMode(['add', 'divide'])),
       );
-      expect(operations).toEqual(new Set(['add', 'subtract', 'multiply', 'divide']));
+      expect(operations).toEqual(new Set(['add', 'divide']));
     } finally {
       Math.random = originalRandom;
     }

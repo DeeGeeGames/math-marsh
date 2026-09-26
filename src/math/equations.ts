@@ -34,15 +34,6 @@ interface EquationOperationDefinition {
   ) => EquationCandidate[];
 }
 
-const operationByMode: Record<Exclude<GameMode, 'anything'>, EquationOperation> = {
-  addition: 'add',
-  subtraction: 'subtract',
-  multiplication: 'multiply',
-  division: 'divide',
-} as const;
-
-const operationsList: readonly EquationOperation[] = ['add', 'subtract', 'multiply', 'divide'] as const;
-
 const randomIndex = (length: number): number => Math.floor(Math.random() * length);
 
 const randomFrom = <T>(items: readonly T[]): T => {
@@ -274,7 +265,7 @@ const operations: Record<EquationOperation, EquationOperationDefinition> = {
 } as const;
 
 export const operationForMode = (gameMode: GameMode): EquationOperation =>
-  gameMode === 'anything' ? randomFrom(operationsList) : operationByMode[gameMode];
+  randomFrom(gameMode);
 
 export const equationPromptKindForLevel = (level: number): EquationPromptKind =>
   level % 2 === 1 ? 'selectResult' : 'selectOperands';

@@ -7,9 +7,9 @@ import spiderWalkToward from '../../assets/spider-walk-toward.png';
 import type { GameMode } from '../../ecs/types';
 import { $ } from '../dom';
 import {
-  isGameMode,
+  isEquationOperation,
   isMathDifficulty,
-  modeLabels,
+  selectedOperationsLabel,
 } from '../labels';
 import type { ScreenSpec } from '../screenTypes';
 import {
@@ -66,26 +66,29 @@ function howToPlayStep(
 
 export function resetModeSelect(root: HTMLElement): void {
   root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
-    card.classList.remove('ring-2', 'ring-yellow-300');
     card.setAttribute('aria-pressed', 'false');
   });
   const difficultySelect = root.querySelector<HTMLElement>('#difficulty-select');
   difficultySelect?.classList.add('hidden');
-  if (difficultySelect) delete difficultySelect.dataset.selectedMode;
 }
 
-function selectMode(root: HTMLElement, mode: GameMode): void {
-  root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
-    const selected = card.dataset.mode === mode;
-    card.classList.toggle('ring-2', selected);
-    card.classList.toggle('ring-yellow-300', selected);
-    card.setAttribute('aria-pressed', String(selected));
-  });
+function selectedOperations(root: HTMLElement): GameMode | undefined {
+  const [first, ...rest] = Array.from(root.querySelectorAll<HTMLElement>('.mode-card[aria-pressed="true"]'))
+    .map(card => card.dataset.operation)
+    .filter(isEquationOperation);
+  return first ? [first, ...rest] : undefined;
+}
+
+function syncOperationSelection(root: HTMLElement): void {
+  const mode = selectedOperations(root);
   const difficultySelect = $<HTMLElement>(root, '#difficulty-select');
-  $<HTMLElement>(root, '#selected-mode-label').textContent = modeLabels[mode];
-  difficultySelect.dataset.selectedMode = mode;
-  difficultySelect.classList.remove('hidden');
-  $<HTMLButtonElement>(root, '#easy-difficulty').focus();
+  difficultySelect.classList.toggle('hidden', !mode);
+  if (!mode) return;
+  $<HTMLElement>(root, '#selected-mode-label').textContent = selectedOperationsLabel(mode);
+}
+
+function setOperationSelected(card: HTMLElement, selected: boolean): void {
+  card.setAttribute('aria-pressed', String(selected));
 }
 
 export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
@@ -168,34 +171,29 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
       <div class="mode-select-shell">
         <header class="mode-select-heading">
           <h1 class="pond-title text-gold drop-shadow-lg">Select Math Mode</h1>
-          <p>Choose an operation, then a difficulty to start.</p>
+          <p>Choose one or more operations, then a difficulty to start.</p>
         </header>
 
-        <div class="mode-options" role="group" aria-label="Math operation">
-          <button type="button" data-mode="addition" data-focusable aria-pressed="false" class="mode-card">
+        <div class="mode-options" role="group" aria-label="Math operations">
+          <button type="button" data-operation="add" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">+</span>
             <span class="mode-name">Addition</span>
             <span class="mode-example">2 + 3 = ?</span>
           </button>
-          <button type="button" data-mode="subtraction" data-focusable aria-pressed="false" class="mode-card">
+          <button type="button" data-operation="subtract" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">−</span>
             <span class="mode-name">Subtraction</span>
             <span class="mode-example">7 − 3 = ?</span>
           </button>
-          <button type="button" data-mode="multiplication" data-focusable aria-pressed="false" class="mode-card">
+          <button type="button" data-operation="multiply" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">×</span>
             <span class="mode-name">Multiplication</span>
             <span class="mode-example">3 × 4 = ?</span>
           </button>
-          <button type="button" data-mode="division" data-focusable aria-pressed="false" class="mode-card">
+          <button type="button" data-operation="divide" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">÷</span>
             <span class="mode-name">Division</span>
             <span class="mode-example">12 ÷ 3 = ?</span>
-          </button>
-          <button type="button" data-mode="anything" data-focusable aria-pressed="false" class="mode-card">
-            <span class="mode-symbol" aria-hidden="true">?</span>
-            <span class="mode-name">Anything</span>
-            <span class="mode-example">Mix all four operations</span>
           </button>
           <button id="back-to-main-btn" class="btn-secondary mode-menu-back">
             ← Back to Menu
@@ -223,14 +221,15 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
     wire: (root): void => {
       root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
         card.addEventListener('click', () => {
-          if (!isGameMode(card.dataset.mode)) return;
-          selectMode(root, card.dataset.mode);
+          if (!isEquationOperation(card.dataset.operation)) return;
+          setOperationSelected(card, card.getAttribute('aria-pressed') !== 'true');
+          syncOperationSelection(root);
         });
       });
       root.querySelectorAll<HTMLButtonElement>('.difficulty-choice').forEach(button => {
         button.addEventListener('click', () => {
-          const mode = $<HTMLElement>(root, '#difficulty-select').dataset.selectedMode;
-          if (!isGameMode(mode)) return;
+          const mode = selectedOperations(root);
+          if (!mode) return;
           if (!isMathDifficulty(button.dataset.difficulty)) return;
           actions.startGame(mode, button.dataset.difficulty);
         });

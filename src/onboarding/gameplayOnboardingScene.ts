@@ -65,7 +65,7 @@ const TUTORIAL_GRID_OVERRIDES = {
 function scriptedEquationMode(kind: GameplayOnboardingKind): EquationModeState {
   const config = TUTORIAL_EQUATION_CONFIG[kind];
   return {
-    ...createEquationModeState(config.level, 'easy', 'addition'),
+    ...createEquationModeState(config.level, 'easy', ['add']),
     operation: 'add',
     promptKind: config.promptKind,
     operandsRequired: config.operandsRequired,
@@ -157,8 +157,6 @@ export function setupScriptedTutorialScene(
   }
 
   if (!continuesRun) {
-    ecs.setResource('gameMode', 'addition');
-    ecs.setResource('mathDifficulty', 'easy');
     ecs.setResource('currentLevel', kind === 'operands' ? 2 : 1);
     ecs.setResource('gameplayTimeSeconds', 0);
   }

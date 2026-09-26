@@ -1,12 +1,21 @@
-import type { GameMode, MathDifficulty, SettingsReturnScreen } from '../ecs/types';
+import type { EquationOperation, GameMode, MathDifficulty, SettingsReturnScreen } from '../ecs/types';
 
-export const modeLabels: Record<GameMode, string> = {
-  addition: 'Addition',
-  subtraction: 'Subtraction',
-  multiplication: 'Multiplication',
-  division: 'Division',
-  anything: 'Anything',
+export const operationLabels: Record<EquationOperation, string> = {
+  add: 'Addition',
+  subtract: 'Subtraction',
+  multiply: 'Multiplication',
+  divide: 'Division',
 } as const;
+
+const operationSymbols: Record<EquationOperation, string> = {
+  add: '+',
+  subtract: '−',
+  multiply: '×',
+  divide: '÷',
+} as const;
+
+export const selectedOperationsLabel = (mode: GameMode): string =>
+  mode.length === 1 ? operationLabels[mode[0]] : `Mixed (${mode.map(operation => operationSymbols[operation]).join(' ')})`;
 
 export const difficultyLabels: Record<MathDifficulty, string> = {
   easy: 'Easy',
@@ -29,10 +38,10 @@ export const gameplayLevelLabel = (
   difficulty: MathDifficulty,
   level: number,
 ): string =>
-  `${modeLabels[mode]} - ${difficultyLabels[difficulty]} - Level ${level}`;
+  `${selectedOperationsLabel(mode)} - ${difficultyLabels[difficulty]} - Level ${level}`;
 
-export const isGameMode = (value: string | undefined): value is GameMode =>
-  value !== undefined && value in modeLabels;
+export const isEquationOperation = (value: string | undefined): value is EquationOperation =>
+  value !== undefined && value in operationLabels;
 
 export const isMathDifficulty = (value: string | undefined): value is MathDifficulty =>
   value !== undefined && value in difficultyLabels;

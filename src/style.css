@@ -560,6 +560,9 @@
 }
 
 .mode-menu-back {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(100%, 460px);
   border-radius: 18px 24px 18px 24px;
   border: 2px solid var(--reed-border);
   padding: 14px 12px;
@@ -670,29 +673,54 @@
   line-height: 1;
 }
 
-.mode-card[data-mode="subtraction"] {
+.mode-card[data-operation="subtract"] {
   background:
     var(--leaf-glint),
     linear-gradient(135deg, rgba(95, 195, 195, 0.95), rgba(31, 131, 149, 0.96));
 }
 
-.mode-card[data-mode="multiplication"] {
+.mode-card[data-operation="multiply"] {
   background:
     var(--leaf-glint),
     linear-gradient(135deg, rgba(244, 210, 122, 0.98), rgba(203, 132, 39, 0.96));
   color: #17393f;
 }
 
-.mode-card[data-mode="division"] {
+.mode-card[data-operation="divide"] {
   background:
     var(--leaf-glint),
     linear-gradient(135deg, rgba(76, 132, 112, 0.98), rgba(28, 83, 97, 0.96));
 }
 
-.mode-card[data-mode="anything"] {
-  background:
-    var(--leaf-glint),
-    linear-gradient(135deg, rgba(117, 166, 77, 0.98), rgba(24, 112, 112, 0.96));
+.mode-card[aria-pressed="false"] {
+  filter: saturate(0.55) brightness(0.72);
+}
+
+.mode-card[aria-pressed="true"] {
+  border-color: var(--reed);
+  box-shadow: inset 0 0 0 2px var(--reed), 0 0 0 3px rgba(244, 210, 122, 0.45), var(--pond-shadow);
+  filter: brightness(1.1);
+}
+
+.mode-card[aria-pressed="true"] .mode-symbol {
+  opacity: 0;
+}
+
+.mode-card[aria-pressed="true"]::after {
+  content: "✓";
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--reed);
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .mode-card:hover {
@@ -725,9 +753,10 @@ button:focus-visible,
 
 .mode-card[data-focusable]:focus-visible {
   transform: translateY(-2px);
+  outline: 4px solid var(--cream);
+  outline-offset: 7px;
 }
 
-.mode-card[aria-pressed="true"],
 .touch-mode-btn[aria-pressed="true"] {
   border-color: var(--reed);
   box-shadow:

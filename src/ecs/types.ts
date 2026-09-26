@@ -159,9 +159,9 @@ export type LevelCompleteScreenState = LevelCompleteScreenConfig & {
 export type SettingsReturnScreen = 'menu' | 'modeSelect' | 'howToPlay' | 'playing' | 'tutorial' | 'paused' | 'gameOver';
 export type SettingsScreenConfig = { returnTo: SettingsReturnScreen };
 
-export type GameMode = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'anything';
 export type MathDifficulty = 'easy' | 'medium' | 'expert';
 export type EquationOperation = 'add' | 'subtract' | 'multiply' | 'divide';
+export type GameMode = readonly [EquationOperation, ...EquationOperation[]];
 export type EquationPromptKind = 'selectOperands' | 'selectResult';
 
 export interface EquationValueRange {
