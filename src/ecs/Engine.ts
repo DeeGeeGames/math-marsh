@@ -3,6 +3,7 @@ import { createInputPlugin, gamepadAxisOn, gamepadButtonsOn } from 'ecspresso/pl
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
+import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
 import { configureImageAssets } from './assets';
 import { createEquationModeState } from '../math/equations';
@@ -51,6 +52,7 @@ const coroutinePlugin = createCoroutinePlugin({
 export const gameEngine = ECSpresso.create()
   .withPlugin(inputPlugin)
   .withPlugin(timerPlugin)
+  .withPlugin(gameplayClockPlugin)
   .withPlugin(tweenPlugin)
   .withPlugin(coroutinePlugin)
   .withComponentTypes<Components>()

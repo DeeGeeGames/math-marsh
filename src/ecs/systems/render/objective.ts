@@ -194,7 +194,7 @@ export const drawBoardObjective = (
   equationMode: EquationModeState,
   mathProblems: readonly MathProblemEntity[],
   margin: number,
-  currentTime = performance.now(),
+  currentTime: number,
 ): ReadonlyMap<number, EquationValueTarget> => {
   const feedbackState = activeFeedback(equationMode.feedback, currentTime);
   const awaitingAnimatedValues = feedbackState?.feedback.kind === 'correct'

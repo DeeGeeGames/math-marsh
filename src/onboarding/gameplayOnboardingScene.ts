@@ -1,3 +1,4 @@
+import { gameplayTimeMs } from '../ecs/gameplayClock';
 import { createTweenSequence } from 'ecspresso/plugins/scripting/tween';
 import { GAME_CONFIG } from '../config';
 import {
@@ -274,7 +275,7 @@ function showCorrectAnswer(
   ecs: GameEngine,
   targetProblem: { id: number; components: { mathProblem: { consumed: boolean }; renderable: { size: number } } },
 ): void {
-  const startedAt = performance.now();
+  const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   targetProblem.components.mathProblem.consumed = true;
   targetProblem.components.renderable.size = 0;
   ecs.commands.addComponent(targetProblem.id, 'answerConsumption', { startedAt });
@@ -295,7 +296,7 @@ function showFirstOperand(
 ): void {
   firstProblem.components.mathProblem.consumed = true;
   firstProblem.components.renderable.size = 0;
-  ecs.commands.addComponent(firstProblem.id, 'answerConsumption', { startedAt: performance.now() });
+  ecs.commands.addComponent(firstProblem.id, 'answerConsumption', { startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) });
   ecs.setResource('equationMode', {
     ...scriptedEquationMode('operands'),
     selectedProblemIds: [firstProblem.id],
@@ -307,7 +308,7 @@ function showCompletedOperands(
   firstProblem: Parameters<typeof showFirstOperand>[1],
   secondProblem: Parameters<typeof showFirstOperand>[1],
 ): void {
-  const startedAt = performance.now();
+  const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   secondProblem.components.mathProblem.consumed = true;
   secondProblem.components.renderable.size = 0;
   ecs.commands.addComponent(secondProblem.id, 'answerConsumption', { startedAt });
@@ -404,7 +405,7 @@ export function applyTutorialStep(
     ecs.setResource('remainingTimeSeconds', timeAfterWrongAnswer(ecs.getResource('remainingTimeSeconds')));
     ecs.setResource('equationMode', {
       ...scriptedEquationMode('basics'),
-      feedback: { kind: 'incorrect', startedAt: performance.now() },
+      feedback: { kind: 'incorrect', startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) },
     });
     startShake(ecs, player.id, 4, 420);
   }

@@ -1,3 +1,4 @@
+import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
 import type { Components, GameAction } from '../types';
 import { GAME_CONFIG, MOVEMENT_CONFIG } from '../../config';
@@ -103,7 +104,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
         ecs.setResource('tapRequest', null);
         const targetPad = closestActiveLilyPadGridCell(tapRequest, queries.mathProblems);
         if (!frozen && targetPad) {
-          ecs.setResource('tapFeedback', { ...targetPad, startedAt: performance.now() });
+          ecs.setResource('tapFeedback', { ...targetPad, startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) });
           const head = pf.breadcrumbs[0];
           const start = head ?? { x: pf.anchorGridX, y: pf.anchorGridY };
           const settled = pf.breadcrumbs.length === 0

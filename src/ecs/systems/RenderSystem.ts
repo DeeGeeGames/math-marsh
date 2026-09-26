@@ -1,3 +1,4 @@
+import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
 import { GAME_CONFIG } from '../../config';
 import {
@@ -53,13 +54,13 @@ export const addRenderSystemToEngine = (
     .addQuery('enemies', enemyQuery)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
-    .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds'])
+    .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds', 'gameplayClock'])
     .setOnDetach(cleanupRenderSystem)
-    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback, remainingTimeSeconds } }) => {
+    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback, remainingTimeSeconds, gameplayClock } }) => {
       const ctx = getCtx();
       if (!ctx) return;
 
-      const currentTime = performance.now();
+      const currentTime = gameplayTimeMs(gameplayClock);
       const margins = renderMargins();
       const enemyOccupiedCells = collectGridCellKeys(queries.enemies);
       const reducedMotion = reducedMotionPreference?.matches === true;
@@ -166,7 +167,7 @@ export const addRenderSystemToEngine = (
         drawLevelCompleteCelebration(
           ctx,
           levelComplete,
-          currentTime,
+          performance.now(),
           reducedMotion,
         );
       }

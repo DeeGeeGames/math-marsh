@@ -13,6 +13,7 @@ import type {
 export type GameAction = 'up' | 'down' | 'left' | 'right' | 'eat' | 'back' | 'skip' | 'pause';
 
 export type TimerSlot =
+  | 'gameplayClock'
   | 'webExpiry'
   | 'webBuild'
   | 'enemySpawnTelegraph'

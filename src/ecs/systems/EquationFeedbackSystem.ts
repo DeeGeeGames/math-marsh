@@ -1,3 +1,4 @@
+import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
 import { EQUATION_FEEDBACK_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { BaseEquationModeState, EquationFeedback } from '../types';
@@ -22,7 +23,7 @@ export function addEquationFeedbackSystemToEngine(systems: GameSystemRegistrar):
       const feedback = equationMode.feedback;
       if (!feedback) return;
 
-      const nextMode = nextEquationModeForFeedback(feedback, performance.now());
+      const nextMode = nextEquationModeForFeedback(feedback, gameplayTimeMs(ecs.getResource('gameplayClock')));
       if (!nextMode) return;
 
       ecs.setResource('equationMode', nextMode);

@@ -1,3 +1,4 @@
+import { gameplayTimeMs } from './gameplayClock';
 import type { GameEngine } from './Engine';
 import type { PlayerCollisionEntity, MathProblemEntityWithRenderable } from './queries';
 import { ANIMATION_CONFIG } from '../config';
@@ -24,6 +25,7 @@ type EquationSelectionResources = Readonly<Pick<
 >>;
 
 const createEquationFeedback = (
+  startedAt: number,
   kind: EquationFeedbackKind,
   options: {
     displayText?: string;
@@ -31,7 +33,7 @@ const createEquationFeedback = (
   } = {},
 ): EquationModeState['feedback'] => ({
   kind,
-  startedAt: performance.now(),
+  startedAt,
   ...options,
 });
 
@@ -115,7 +117,7 @@ export function handleEquationProblemSelection(
   playSound('correct');
   ecs.setResource('remainingTimeSeconds', timeForCorrectAnswer(ecs.getResource('remainingTimeSeconds')));
   ecs.setResource('equationsSolved', ecs.getResource('equationsSolved') + 1);
-  const consumptionStartedAt = performance.now();
+  const consumptionStartedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   selectedProblems.forEach(selectedProblem => {
     beginAnswerConsumption(ecs, selectedProblem, consumptionStartedAt);
   });
@@ -134,7 +136,7 @@ export function handleEquationProblemSelection(
   const nextEquationMode = nextCandidate
     ? { ...nextMode, target: nextCandidate.target, promptValues: nextCandidate.operandValues }
     : nextMode;
-  const feedback = createEquationFeedback('correct', {
+  const feedback = createEquationFeedback(consumptionStartedAt, 'correct', {
     displayText: equationSelectionText(pendingMode, selectedValues),
     nextMode: nextEquationMode,
   });
@@ -157,7 +159,7 @@ function handleIncorrectEquationSelection(
   ecs.setResource('equationMode', {
     ...equationMode,
     selectedProblemIds: [],
-    feedback: createEquationFeedback('incorrect'),
+    feedback: createEquationFeedback(gameplayTimeMs(ecs.getResource('gameplayClock')), 'incorrect'),
   });
 
   if (remaining <= 0) {
