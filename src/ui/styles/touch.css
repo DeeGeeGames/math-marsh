@@ -87,16 +87,15 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
 }
 #touch-eat:active { filter: brightness(1.15); }
 
-/* Portrait: D-pad bottom-left, Eat bottom-right. Hide the keyboard-hint
- * bottom HUD when touch controls are taking the space. */
+/* Portrait: center both controls in the space beneath the board. */
 @media (orientation: portrait) {
   #touch-dpad {
     left: max(env(safe-area-inset-left, 0px), var(--touch-edge-gap));
-    bottom: max(env(safe-area-inset-bottom, 0px), var(--touch-edge-gap));
+    top: var(--touch-portrait-top);
   }
   #touch-action {
     right: max(env(safe-area-inset-right, 0px), var(--touch-edge-gap));
-    bottom: max(env(safe-area-inset-bottom, 0px), var(--touch-edge-gap));
+    top: var(--touch-portrait-top);
   }
   body[data-touch-controls="on"] #bottom-hud { display: none; }
 }

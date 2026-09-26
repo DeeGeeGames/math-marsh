@@ -36,11 +36,16 @@ export const updateTouchControlsLayout = (): void => {
 	const actionAvailable = isPortrait
 		? dpadAvailable
 		: availableSize(window.innerWidth - rect.right - edgeGap * 2, window.innerHeight - edgeGap * 2);
+	const dpadSize = isPortrait ? dpadAvailable : Math.min(dpadAvailable, 220);
+	const actionSize = isPortrait ? actionAvailable : Math.min(actionAvailable, 220);
 
-	setStyleValue(root, '--touch-dpad-cluster-size', dpadAvailable);
-	setStyleValue(root, '--touch-dpad-button-size', Math.max(0, (dpadAvailable - controlGap * 2) / 3));
-	setStyleValue(root, '--touch-action-size', actionAvailable);
-	setStyleValue(root, '--touch-eat-size', actionAvailable);
+	setStyleValue(root, '--touch-dpad-cluster-size', dpadSize);
+	setStyleValue(root, '--touch-dpad-button-size', Math.max(0, (dpadSize - controlGap * 2) / 3));
+	setStyleValue(root, '--touch-action-size', actionSize);
+	setStyleValue(root, '--touch-eat-size', actionSize);
+	if (isPortrait) {
+		setStyleValue(root, '--touch-portrait-top', rect.bottom + (window.innerHeight - rect.bottom - dpadSize) / 2);
+	}
 };
 
 let layoutFrame: number | null = null;
@@ -56,4 +61,3 @@ export const scheduleTouchControlsLayout = (): void => {
 window.addEventListener('resize', scheduleTouchControlsLayout);
 window.addEventListener('orientationchange', scheduleTouchControlsLayout);
 window.addEventListener('math-marsh:canvas-resize', scheduleTouchControlsLayout);
-
