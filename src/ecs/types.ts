@@ -105,6 +105,11 @@ export interface Components {
   answerConsumption: {
     startedAt: number;
   };
+  timeAdjustment: {
+    startedAt: number;
+    seconds: number;
+    source: { x: number; y: number };
+  };
   collider: {
     width: number;
     height: number;

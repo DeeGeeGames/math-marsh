@@ -2,7 +2,6 @@ import { gameplayTimeMs } from './gameplayClock';
 import type { GameEngine } from './Engine';
 import type { PlayerCollisionEntity, MathProblemEntityWithRenderable } from './queries';
 import { ANIMATION_CONFIG } from '../config';
-import { triggerGameOver } from './runLifecycle';
 import { startDamageReaction } from './playerFeedback';
 import {
   chooseEquationCandidate,
@@ -17,7 +16,7 @@ import type {
   Resources,
 } from './types';
 import { playSound } from '../audio/audio';
-import { timeAfterWrongAnswer, timeForCorrectAnswer } from './runTime';
+import { GAME_CONFIG } from '../config';
 
 type EquationSelectionResources = Readonly<Pick<
   Resources,
@@ -74,6 +73,24 @@ const activeEquationOperands = (
       value: candidate.components.mathProblem.value,
     }));
 
+function beginTimeAdjustment(
+  ecs: GameEngine,
+  problem: MathProblemEntityWithRenderable,
+  startedAt: number,
+  seconds: number,
+): void {
+  ecs.commands.spawn({
+    timeAdjustment: {
+      startedAt,
+      seconds,
+      source: {
+        x: problem.components.position.x,
+        y: problem.components.position.y,
+      },
+    },
+  });
+}
+
 export function handleEquationProblemSelection(
   ecs: GameEngine,
   player: PlayerCollisionEntity,
@@ -110,14 +127,19 @@ export function handleEquationProblemSelection(
 
   if (!isCorrect) {
     playSound('incorrect');
-    handleIncorrectEquationSelection(ecs, player, pendingMode);
+    handleIncorrectEquationSelection(ecs, player, problem, pendingMode);
     return;
   }
 
   playSound('correct');
-  ecs.setResource('remainingTimeSeconds', timeForCorrectAnswer(ecs.getResource('remainingTimeSeconds')));
   ecs.setResource('equationsSolved', ecs.getResource('equationsSolved') + 1);
   const consumptionStartedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
+  beginTimeAdjustment(
+    ecs,
+    problem,
+    consumptionStartedAt,
+    GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS,
+  );
   selectedProblems.forEach(selectedProblem => {
     beginAnswerConsumption(ecs, selectedProblem, consumptionStartedAt);
   });
@@ -150,20 +172,21 @@ export function handleEquationProblemSelection(
 function handleIncorrectEquationSelection(
   ecs: GameEngine,
   player: PlayerCollisionEntity,
+  problem: MathProblemEntityWithRenderable,
   equationMode: EquationModeState,
 ): void {
-  const remaining = timeAfterWrongAnswer(ecs.getResource('remainingTimeSeconds'));
-  ecs.setResource('remainingTimeSeconds', remaining);
+  const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
+  beginTimeAdjustment(
+    ecs,
+    problem,
+    startedAt,
+    -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS,
+  );
   startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.WRONG_ANSWER);
 
   ecs.setResource('equationMode', {
     ...equationMode,
     selectedProblemIds: [],
-    feedback: createEquationFeedback(gameplayTimeMs(ecs.getResource('gameplayClock')), 'incorrect'),
+    feedback: createEquationFeedback(startedAt, 'incorrect'),
   });
-
-  if (remaining <= 0) {
-    triggerGameOver(ecs, player, 'Game Over!');
-  }
 }
-

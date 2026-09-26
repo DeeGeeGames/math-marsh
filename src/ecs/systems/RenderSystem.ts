@@ -9,6 +9,7 @@ import {
   frogTongueQuery,
   spiderWebQuery,
   enemyQuery,
+  timeAdjustmentQuery,
 } from '../queries';
 import { collectGridCellKeys } from '../lilyPads';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
@@ -22,6 +23,7 @@ import {
   drawMathProblemLilyPads,
   drawMathProblemNumbers,
   drawTapTargetFeedback,
+  drawTimeAdjustmentFlights,
 } from './render/mathProblems';
 import { drawEnhancedSpiderWebs } from './render/spiderWebs';
 import { drawEnhancedFrogTongues, drawFrogAttackTelegraphs } from './render/frogTongues';
@@ -52,6 +54,7 @@ export const addRenderSystemToEngine = (
     .addQuery('renderableEntities', { ...renderableEntityQuery, optional: ['shake'] } as const)
     .addSingleton('player', { ...playerQuery, optional: ['shake'] } as const)
     .addQuery('mathProblems', mathProblemQuery)
+    .addQuery('timeAdjustments', timeAdjustmentQuery)
     .addQuery('enemies', enemyQuery)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
@@ -74,7 +77,7 @@ export const addRenderSystemToEngine = (
         margins.top,
         currentTime,
       );
-      drawBoardTime(ctx, remainingTimeSeconds, margins.top);
+      const timeTarget = drawBoardTime(ctx, remainingTimeSeconds, margins.top);
       ctx.save();
       ctx.translate(margins.left, margins.top);
 
@@ -162,6 +165,15 @@ export const addRenderSystemToEngine = (
         drawDamageFeedback(ctx, queries.player, reducedMotion);
       }
       ctx.restore();
+
+      drawTimeAdjustmentFlights(
+        ctx,
+        queries.timeAdjustments,
+        timeTarget,
+        margins,
+        currentTime,
+        reducedMotion,
+      );
 
       const levelComplete = ecs.tryGetScreenState('levelComplete');
       if (levelComplete) {

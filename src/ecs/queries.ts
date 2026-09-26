@@ -25,6 +25,10 @@ export const mathProblemQuery = {
   optional: ['answerConsumption'],
 } as const;
 
+export const timeAdjustmentQuery = {
+  with: ['timeAdjustment'],
+} as const;
+
 export const mathProblemWithRenderableQuery = {
   with: ['position', 'mathProblem', 'collider', 'renderable'],
   optional: ['answerConsumption'],

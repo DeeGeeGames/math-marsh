@@ -251,21 +251,27 @@ export const drawBoardTime = (
   ctx: CanvasRenderingContext2D,
   remainingSeconds: number,
   margin: number,
-): void => {
+): EquationValueTarget => {
   const text = `Time ${formatRemainingTime(remainingSeconds)}`;
   const availableWidth = ctx.canvas.width * (1 - HEADER_SPLIT_RATIO) - HEADER_SIDE_PADDING - HEADER_GAP;
 
   ctx.save();
   ctx.font = `bold ${objectiveFontSize(margin)}px Arial`;
+  const timeWidth = ctx.measureText(formatRemainingTime(remainingSeconds)).width;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
   ctx.lineJoin = 'round';
   ctx.lineWidth = 5;
   const fitScale = Math.min(1, availableWidth / Math.max(1, ctx.measureText(text).width));
+  const target = {
+    x: ctx.canvas.width - HEADER_SIDE_PADDING - timeWidth * fitScale * 0.5,
+    y: margin * 0.48,
+  };
   ctx.translate(ctx.canvas.width - HEADER_SIDE_PADDING, margin * 0.48);
   ctx.scale(fitScale, fitScale);
   ctx.strokeStyle = shadowColor;
   ctx.fillStyle = remainingSeconds <= 15 ? feedbackStyles.incorrect.color : textColor;
   drawOutlinedText(ctx, text, 0);
   ctx.restore();
+  return target;
 };

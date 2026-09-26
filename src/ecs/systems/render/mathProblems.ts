@@ -6,6 +6,7 @@ import type { MathProblemEntity, PlayerEntity } from '../../queries';
 import type { Resources } from '../../types';
 import type { RenderMargins } from '../../boardGeometry';
 import type { EquationValueTarget } from './objective';
+import type { Components } from '../../types';
 
 const cell = GAME_CONFIG.GRID.CELL_SIZE;
 const lilyPadRadius = cell * 0.38;
@@ -114,6 +115,43 @@ function easeOutCubic(value: number): number {
 
 function consumptionProgress(startedAt: number, currentTime: number): number {
   return clamp((currentTime - startedAt) / ANSWER_CONSUMPTION_DURATION_MS);
+}
+
+export function drawTimeAdjustmentFlights(
+  ctx: CanvasRenderingContext2D,
+  adjustments: readonly { components: { timeAdjustment: Components['timeAdjustment'] } }[],
+  target: EquationValueTarget,
+  margins: RenderMargins,
+  currentTime: number,
+  reducedMotion: boolean,
+): void {
+  adjustments.forEach(({ components: { timeAdjustment } }) => {
+    const progress = consumptionProgress(timeAdjustment.startedAt, currentTime);
+    if (progress >= 1) return;
+
+    const numberProgress = clamp((progress - 0.06) / 0.94);
+    const travel = reducedMotion ? 1 : easeOutCubic(numberProgress);
+    const source = cellCenter(timeAdjustment.source);
+    const x = source.x + margins.left + (target.x - source.x - margins.left) * travel;
+    const y = source.y + margins.top + (target.y - source.y - margins.top) * travel
+      - (reducedMotion ? 0 : Math.sin(numberProgress * Math.PI) * cell * 0.34);
+    const scale = reducedMotion ? 1 : 1 + Math.sin(numberProgress * Math.PI) * 0.52;
+    const text = `${timeAdjustment.seconds > 0 ? '+' : ''}${timeAdjustment.seconds}`;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = 'rgba(9, 41, 44, 0.95)';
+    ctx.strokeText(text, 0, 0);
+    ctx.fillStyle = timeAdjustment.seconds > 0 ? '#b7ff88' : '#ff9c8f';
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  });
 }
 
 function drawConsumptionRipple(
