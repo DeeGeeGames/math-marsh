@@ -2,7 +2,7 @@ import type { GameSystemRegistrar } from '../Engine';
 import { playerCollisionQuery } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { timeAfterChange } from '../runTime';
-import { triggerGameOver } from './CollisionSystem';
+import { triggerGameOver } from '../runLifecycle';
 
 export function addGameplayTimeSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('gameplayTimeSystem')
