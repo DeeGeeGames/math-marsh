@@ -156,7 +156,6 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       <div class="input-prompts-slot" data-input-prompts></div>
     `,
     prompts: [
-      { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
     ],
     promptPlacement: 'viewport',
@@ -213,7 +212,6 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
       </div>
     `,
     prompts: [
-      { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],
@@ -301,7 +299,6 @@ export function createTutorialOfferScreenSpec(actions: ScreenSpecActions): Scree
       </div>
     `,
     prompts: [
-      { action: 'navigate', label: 'Choose' },
       { action: 'select', label: 'Select' },
     ],
     promptPlacement: 'panel',

@@ -74,7 +74,6 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
       </div>
     `,
     prompts: [
-      { action: 'move', label: 'Move' },
       { action: 'eat', label: 'Eat' },
       { action: 'pause', label: 'Pause' },
     ],
@@ -129,7 +128,6 @@ export function createGameOverScreenSpec(actions: ScreenSpecActions): ScreenSpec
       </div>
     `,
     prompts: [
-      { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
     ],
     promptPlacement: 'panel',
@@ -164,7 +162,6 @@ export function createPauseScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       </div>
     `,
     prompts: [
-      { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],

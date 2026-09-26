@@ -49,7 +49,6 @@ export function createSettingsScreenSpec(actions: ScreenSpecActions): ScreenSpec
       </div>
     `,
     prompts: [
-      { action: 'navigate', label: 'Navigate' },
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],

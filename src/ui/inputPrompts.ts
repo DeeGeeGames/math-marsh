@@ -1,37 +1,17 @@
-import keyboardArrowDown from '../assets/button-prompts/keyboard/arrow_down.svg';
-import keyboardArrowLeft from '../assets/button-prompts/keyboard/arrow_left.svg';
-import keyboardArrowRight from '../assets/button-prompts/keyboard/arrow_right.svg';
-import keyboardArrowUp from '../assets/button-prompts/keyboard/arrow_up.svg';
 import keyboardEnter from '../assets/button-prompts/keyboard/enter.svg';
 import keyboardEscape from '../assets/button-prompts/keyboard/escape.svg';
 import playstationButtonCircle from '../assets/button-prompts/playstation/button_circle.svg';
 import playstationButtonCross from '../assets/button-prompts/playstation/button_cross.svg';
 import playstationButtonOptions from '../assets/button-prompts/playstation/button_options.svg';
-import playstationDpadDown from '../assets/button-prompts/playstation/dpad_down.svg';
-import playstationDpadLeft from '../assets/button-prompts/playstation/dpad_left.svg';
-import playstationDpadRight from '../assets/button-prompts/playstation/dpad_right.svg';
-import playstationDpadUp from '../assets/button-prompts/playstation/dpad_up.svg';
 import steamdeckButtonA from '../assets/button-prompts/steamdeck/button_a.svg';
 import steamdeckButtonB from '../assets/button-prompts/steamdeck/button_b.svg';
 import steamdeckButtonOptions from '../assets/button-prompts/steamdeck/button_options.svg';
-import steamdeckDpadDown from '../assets/button-prompts/steamdeck/dpad_down.svg';
-import steamdeckDpadLeft from '../assets/button-prompts/steamdeck/dpad_left.svg';
-import steamdeckDpadRight from '../assets/button-prompts/steamdeck/dpad_right.svg';
-import steamdeckDpadUp from '../assets/button-prompts/steamdeck/dpad_up.svg';
 import switchButtonA from '../assets/button-prompts/switch/button_a.svg';
 import switchButtonB from '../assets/button-prompts/switch/button_b.svg';
 import switchButtonPlus from '../assets/button-prompts/switch/button_plus.svg';
-import switchDpadDown from '../assets/button-prompts/switch/dpad_down.svg';
-import switchDpadLeft from '../assets/button-prompts/switch/dpad_left.svg';
-import switchDpadRight from '../assets/button-prompts/switch/dpad_right.svg';
-import switchDpadUp from '../assets/button-prompts/switch/dpad_up.svg';
 import xboxButtonA from '../assets/button-prompts/xbox/button_a.svg';
 import xboxButtonB from '../assets/button-prompts/xbox/button_b.svg';
 import xboxButtonStart from '../assets/button-prompts/xbox/button_start.svg';
-import xboxDpadDown from '../assets/button-prompts/xbox/dpad_down.svg';
-import xboxDpadLeft from '../assets/button-prompts/xbox/dpad_left.svg';
-import xboxDpadRight from '../assets/button-prompts/xbox/dpad_right.svg';
-import xboxDpadUp from '../assets/button-prompts/xbox/dpad_up.svg';
 
 export type InputPromptPlatform =
   | 'keyboard'
@@ -41,7 +21,7 @@ export type InputPromptPlatform =
   | 'steamdeck'
   | 'generic';
 
-export type InputPromptAction = 'navigate' | 'move' | 'select' | 'eat' | 'back' | 'skip' | 'pause';
+export type InputPromptAction = 'select' | 'eat' | 'back' | 'skip' | 'pause';
 
 export interface InputPromptState {
   platform: InputPromptPlatform;
@@ -66,34 +46,13 @@ type TextGlyph = {
 type PromptGlyphSpec = PromptGlyph | TextGlyph;
 
 type ControllerPromptGlyphs = {
-  up: string;
-  down: string;
-  left: string;
-  right: string;
   select: PromptGlyph;
   back: PromptGlyph;
   pause: PromptGlyph;
 };
 
-const dpadPrompts = (glyphs: Pick<ControllerPromptGlyphs, 'up' | 'down' | 'left' | 'right'>): PromptGlyph[] => [
-  { src: glyphs.up, alt: 'D-pad' },
-  { src: glyphs.down, alt: 'D-pad' },
-  { src: glyphs.left, alt: 'D-pad' },
-  { src: glyphs.right, alt: 'D-pad' },
-];
-
-const arrowKeyPrompts = (): PromptGlyph[] => [
-  { src: keyboardArrowUp, alt: 'Arrow keys' },
-  { src: keyboardArrowDown, alt: 'Arrow keys' },
-  { src: keyboardArrowLeft, alt: 'Arrow keys' },
-  { src: keyboardArrowRight, alt: 'Arrow keys' },
-];
-
 const controllerActionPrompts = (glyphs: ControllerPromptGlyphs): Record<InputPromptAction, PromptGlyph[]> => {
-  const movement = dpadPrompts(glyphs);
   return {
-    navigate: movement,
-    move: movement,
     select: [glyphs.select],
     eat: [glyphs.select],
     back: [glyphs.back],
@@ -104,37 +63,21 @@ const controllerActionPrompts = (glyphs: ControllerPromptGlyphs): Record<InputPr
 
 const controllerPrompts = {
   xbox: controllerActionPrompts({
-    up: xboxDpadUp,
-    down: xboxDpadDown,
-    left: xboxDpadLeft,
-    right: xboxDpadRight,
     select: { src: xboxButtonA, alt: 'A button' },
     back: { src: xboxButtonB, alt: 'B button' },
     pause: { src: xboxButtonStart, alt: 'Start button' },
   }),
   playstation: controllerActionPrompts({
-    up: playstationDpadUp,
-    down: playstationDpadDown,
-    left: playstationDpadLeft,
-    right: playstationDpadRight,
     select: { src: playstationButtonCross, alt: 'Cross button' },
     back: { src: playstationButtonCircle, alt: 'Circle button' },
     pause: { src: playstationButtonOptions, alt: 'Options button' },
   }),
   switch: controllerActionPrompts({
-    up: switchDpadUp,
-    down: switchDpadDown,
-    left: switchDpadLeft,
-    right: switchDpadRight,
     select: { src: switchButtonB, alt: 'B button' },
     back: { src: switchButtonA, alt: 'A button' },
     pause: { src: switchButtonPlus, alt: 'Plus button' },
   }),
   steamdeck: controllerActionPrompts({
-    up: steamdeckDpadUp,
-    down: steamdeckDpadDown,
-    left: steamdeckDpadLeft,
-    right: steamdeckDpadRight,
     select: { src: steamdeckButtonA, alt: 'A button' },
     back: { src: steamdeckButtonB, alt: 'B button' },
     pause: { src: steamdeckButtonOptions, alt: 'Options button' },
@@ -143,11 +86,6 @@ const controllerPrompts = {
 
 const buttonGlyphs = {
   keyboard: {
-    navigate: arrowKeyPrompts(),
-    move: [
-      { text: 'WASD', alt: 'WASD keys' },
-      ...arrowKeyPrompts(),
-    ],
     select: [{ src: keyboardEnter, alt: 'Enter key' }],
     eat: [{ text: 'Space', alt: 'Space key' }, { src: keyboardEnter, alt: 'Enter key' }],
     back: [{ src: keyboardEscape, alt: 'Escape key' }],
