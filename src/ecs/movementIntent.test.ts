@@ -47,6 +47,21 @@ describe('movement input arbitration', () => {
     expect(intent.tapEat).toBeNull();
   });
 
+  test('tapping an empty cell routes to that cell instead of a lily pad', () => {
+    const intent = resolveMovementIntent(input({ tapRequest: gridCellCenter(3, 2) }));
+    expect(intent.breadcrumbs.at(-1)).toEqual({ x: 3, y: 2 });
+    expect(intent.tapTarget).toEqual({ x: 3, y: 2 });
+    expect(intent.tapEat).toBeNull();
+  });
+
+  test('tapping an empty cell works when no lily pads remain', () => {
+    const intent = resolveMovementIntent(input({
+      mathProblems: [], tapRequest: gridCellCenter(2, 1),
+    }));
+    expect(intent.breadcrumbs).toEqual([{ x: 2, y: 1 }]);
+    expect(intent.tapTarget).toEqual({ x: 2, y: 1 });
+  });
+
   test('freeze rejects taps and directional presses while retaining the existing route', () => {
     const frozen = input({
       frozen: true,
@@ -69,6 +84,9 @@ describe('movement input arbitration', () => {
     })).tapEat).toBeNull();
     expect(resolveMovementIntent(input({
       tapRequest: gridCellCenter(1, 1), mathProblems: [problem(1, 1, true)],
+    })).tapEat).toBeNull();
+    expect(resolveMovementIntent(input({
+      tapRequest: gridCellCenter(1, 1), mathProblems: [],
     })).tapEat).toBeNull();
   });
 

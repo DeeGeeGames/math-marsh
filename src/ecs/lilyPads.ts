@@ -38,20 +38,10 @@ const distanceSquaredToCellCenter = (point: BoardPoint, cell: GridCell): number 
   return (point.x - centerX) ** 2 + (point.y - centerY) ** 2;
 };
 
-export const closestActiveLilyPadGridCell = (
-  point: BoardPoint,
-  mathProblems: readonly MathProblemCellEntity[],
-): GridCell | undefined =>
-  activeLilyPadGridCells(mathProblems).reduce<GridCell | undefined>((closest, cell) => {
-    if (!closest) return cell;
-    const distance = distanceSquaredToCellCenter(point, cell);
-    const closestDistance = distanceSquaredToCellCenter(point, closest);
-    if (distance < closestDistance) return cell;
-    if (distance > closestDistance) return closest;
-    return cell.y < closest.y || (cell.y === closest.y && cell.x < closest.x)
-      ? cell
-      : closest;
-  }, undefined);
+export const boardPointGridCell = (point: BoardPoint): GridCell => ({
+  x: Math.min(Math.floor(point.x / GAME_CONFIG.GRID.CELL_SIZE), GAME_CONFIG.GRID.WIDTH - 1),
+  y: Math.min(Math.floor(point.y / GAME_CONFIG.GRID.CELL_SIZE), GAME_CONFIG.GRID.HEIGHT - 1),
+});
 
 export const isPointOnLilyPad = (point: BoardPoint, cell: GridCell): boolean =>
   distanceSquaredToCellCenter(point, cell) <= (GAME_CONFIG.GRID.CELL_SIZE * 0.42) ** 2;

@@ -3,8 +3,8 @@ import { gridToPixel } from './gameUtils';
 import {
   activeLilyPadCellKeys,
   activeLilyPadGridCells,
+  boardPointGridCell,
   collectGridCellKeys,
-  closestActiveLilyPadGridCell,
   gridCellKey,
   isActiveLilyPadCell,
   isPointOnLilyPad,
@@ -64,16 +64,10 @@ describe('lily pad grid helpers', () => {
     expect(isActiveLilyPadCell({ x: 2, y: 1 }, activeCells)).toBe(false);
   });
 
-  test('a click in a gap chooses the nearest active pad, even beside an empty cell', () => {
-    const pads = [
-      mathProblem(0, 0, false),
-      mathProblem(1, 0, true),
-      mathProblem(2, 0, false),
-    ];
-
-    expect(closestActiveLilyPadGridCell({ x: 106, y: 53 }, pads)).toEqual({ x: 0, y: 0 });
-    expect(closestActiveLilyPadGridCell({ x: 180, y: 53 }, pads)).toEqual({ x: 2, y: 0 });
-    expect(closestActiveLilyPadGridCell({ x: 212, y: 53 }, [])).toBeUndefined();
+  test('board points select their own cell, including gaps and the far edge', () => {
+    expect(boardPointGridCell({ x: 106, y: 53 })).toEqual({ x: 1, y: 0 });
+    expect(boardPointGridCell({ x: 180, y: 53 })).toEqual({ x: 1, y: 0 });
+    expect(boardPointGridCell({ x: 636, y: 530 })).toEqual({ x: 5, y: 4 });
   });
 
   test('a gap click near the fly does not count as an Eat tap', () => {

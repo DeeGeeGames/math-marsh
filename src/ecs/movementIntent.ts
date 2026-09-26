@@ -2,7 +2,7 @@ import type { Components, GameAction } from './types';
 import { GAME_CONFIG, MOVEMENT_CONFIG } from '../config';
 import { clamp, gridToPixel, sameGridCell } from './gameUtils';
 import { shortestCardinalRoute } from './tapRoute';
-import { closestActiveLilyPadGridCell, isPointOnLilyPad, type BoardPoint, type GridCell } from './lilyPads';
+import { activeLilyPadCellKeys, boardPointGridCell, isActiveLilyPadCell, isPointOnLilyPad, type BoardPoint, type GridCell } from './lilyPads';
 import type { MathProblemEntity } from './queries';
 
 export type Direction = Extract<GameAction, 'up' | 'down' | 'left' | 'right'>;
@@ -102,8 +102,7 @@ function tapIntent(input: MovementIntentInput): MovementIntent {
     playMoveSound: false,
   };
   if (input.frozen || !tapRequest) return unchanged;
-  const target = closestActiveLilyPadGridCell(tapRequest, mathProblems);
-  if (!target) return unchanged;
+  const target = boardPointGridCell(tapRequest);
 
   const head = pathFollower.breadcrumbs[0];
   const start = head ?? { x: pathFollower.anchorGridX, y: pathFollower.anchorGridY };
@@ -111,7 +110,9 @@ function tapIntent(input: MovementIntentInput): MovementIntent {
   const settled = pathFollower.breadcrumbs.length === 0
     && Math.abs(position.x - startPosition.x) < 1e-3
     && Math.abs(position.y - startPosition.y) < 1e-3;
-  if (settled && sameGridCell(start, target) && isPointOnLilyPad(tapRequest, target)) {
+  if (settled && sameGridCell(start, target)
+    && isActiveLilyPadCell(target, activeLilyPadCellKeys(mathProblems))
+    && isPointOnLilyPad(tapRequest, target)) {
     return { ...unchanged, tapEat: target, tapTarget: target };
   }
 
