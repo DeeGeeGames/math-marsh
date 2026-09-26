@@ -402,7 +402,10 @@ export function applyTutorialStep(
   }
   if (step.id === 'feedback') {
     placePlayer(player, PLAYER_TARGET);
-    ecs.setResource('remainingTimeSeconds', timeAfterWrongAnswer(ecs.getResource('remainingTimeSeconds')));
+    ecs.setResource('remainingTimeSeconds', timeAfterWrongAnswer(
+      ecs.getResource('remainingTimeSeconds'),
+      ecs.getResource('mathDifficulty'),
+    ));
     ecs.setResource('equationMode', {
       ...scriptedEquationMode('basics'),
       feedback: { kind: 'incorrect', startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) },

@@ -11,8 +11,16 @@ export const GAME_CONFIG = {
 
   GAMEPLAY: {
     STARTING_TIME_SECONDS: 90,
-    CORRECT_ANSWER_BONUS_SECONDS: 10,
-    WRONG_ANSWER_PENALTY_SECONDS: 12,
+    CORRECT_ANSWER_BONUS_SECONDS: {
+      easy: 10,
+      medium: 5,
+      expert: 3,
+    } as const,
+    WRONG_ANSWER_PENALTY_SECONDS: {
+      easy: 10,
+      medium: 7,
+      expert: 5,
+    } as const,
     DAMAGE_PENALTY_SECONDS: 15,
     STARTING_LEVEL: 2,
   },

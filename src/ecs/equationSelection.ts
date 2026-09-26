@@ -110,7 +110,7 @@ export function handleEquationProblemSelection(
 
   if (!isCorrect) {
     playSound('incorrect');
-    handleIncorrectEquationSelection(ecs, player, problem, pendingMode);
+    handleIncorrectEquationSelection(ecs, player, problem, pendingMode, mathDifficulty);
     return;
   }
 
@@ -120,7 +120,7 @@ export function handleEquationProblemSelection(
   queueTimeAdjustment(
     ecs,
     problem.components.position,
-    GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS,
+    GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS[mathDifficulty],
     consumptionStartedAt,
   );
   selectedProblems.forEach(selectedProblem => {
@@ -157,12 +157,13 @@ function handleIncorrectEquationSelection(
   player: PlayerCollisionEntity,
   problem: MathProblemEntityWithRenderable,
   equationMode: EquationModeState,
+  mathDifficulty: Resources['mathDifficulty'],
 ): void {
   const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   queueTimeAdjustment(
     ecs,
     problem.components.position,
-    -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS,
+    -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS[mathDifficulty],
     startedAt,
   );
   startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.WRONG_ANSWER);

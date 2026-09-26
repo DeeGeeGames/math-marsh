@@ -1,4 +1,5 @@
 import { GAME_CONFIG } from '../config';
+import type { MathDifficulty } from './types';
 
 export const STARTING_TIME_SECONDS = GAME_CONFIG.GAMEPLAY.STARTING_TIME_SECONDS;
 
@@ -12,8 +13,8 @@ export const formatRemainingTime = (remainingSeconds: number): string => {
 export const timeAfterChange = (remainingSeconds: number, changeSeconds: number): number =>
   Math.max(0, remainingSeconds + changeSeconds);
 
-export const timeForCorrectAnswer = (remainingSeconds: number): number =>
-  timeAfterChange(remainingSeconds, GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS);
+export const timeForCorrectAnswer = (remainingSeconds: number, mathDifficulty: MathDifficulty): number =>
+  timeAfterChange(remainingSeconds, GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS[mathDifficulty]);
 
-export const timeAfterWrongAnswer = (remainingSeconds: number): number =>
-  timeAfterChange(remainingSeconds, -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS);
+export const timeAfterWrongAnswer = (remainingSeconds: number, mathDifficulty: MathDifficulty): number =>
+  timeAfterChange(remainingSeconds, -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS[mathDifficulty]);
