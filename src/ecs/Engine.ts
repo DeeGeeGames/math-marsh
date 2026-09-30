@@ -3,6 +3,7 @@ import { createInputPlugin, gamepadAxisOn, gamepadButtonsOn } from 'ecspresso/pl
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
+import { initialSplashState } from './splashSequence';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
 import { configureImageAssets } from './assets';
@@ -76,6 +77,8 @@ export const gameEngine = ECSpresso.create()
   .withRequired('enemy', 'timers', () => ({}))
   .withRequired('enemy', 'health', () => ({ current: 1, max: 1 }))
   .withScreens(screens => screens
+    .add('studioSplash', { initialState: initialSplashState })
+    .add('engineSplash', { initialState: initialSplashState })
     .add('menu', { initialState: () => ({}) })
     .add('modeSelect', { initialState: () => ({}) })
     .add('howToPlay', { initialState: () => ({}) })

@@ -1,8 +1,9 @@
+import type { SplashScreen } from '../ecs/splashSequence';
 import type { SettingsReturnScreen } from '../ecs/types';
 import type { TemplateResult } from 'lit-html';
 import type { InputPromptItem } from './inputPrompts';
 
-export type UIScreen = Exclude<SettingsReturnScreen, 'tutorial'> | 'settings' | 'tutorialOffer';
+export type UIScreen = Exclude<SettingsReturnScreen, 'tutorial'> | 'settings' | 'tutorialOffer' | SplashScreen;
 
 export type InputPromptPlacement = 'viewport' | 'panel' | 'hud';
 

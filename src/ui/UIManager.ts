@@ -30,6 +30,7 @@ import {
   setAudioScene,
   setAudioSettings,
   unlockAudio,
+  type AudioScene,
 } from '../audio/audio';
 import { getDesktopQuitHandler } from '../platform/desktop';
 import type { FocusDirection } from './spatialNavigation';
@@ -138,6 +139,8 @@ function openSettings(): void {
   const returnTo = engine.getCurrentScreen();
   if (
     returnTo === null
+    || returnTo === 'studioSplash'
+    || returnTo === 'engineSplash'
     || returnTo === 'settings'
     || returnTo === 'levelComplete'
     || returnTo === 'tutorialOffer'
@@ -206,9 +209,14 @@ window.matchMedia('(hover: none) and (pointer: coarse)').addEventListener('chang
   document.addEventListener(eventName, unlockAudio, { once: true });
 });
 
+function audioSceneForScreen(screen: UIScreen): AudioScene {
+  if (screen === 'studioSplash' || screen === 'engineSplash') return 'silent';
+  return screen === 'playing' ? 'game' : 'title';
+}
+
 function presentScreen(screen: UIScreen, retainGameplay: boolean): HTMLElement {
   const root = screenRuntime.presentScreen(screen, retainGameplay);
-  setAudioScene(screen === 'playing' ? 'game' : 'title');
+  setAudioScene(audioSceneForScreen(screen));
   if (screen === 'modeSelect') resetModeSelect(root);
   if (screen === 'playing') requestCanvasResize();
   return root;

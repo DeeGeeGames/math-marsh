@@ -1,0 +1,49 @@
+.splash-screen {
+  z-index: 60;
+  background: radial-gradient(ellipse at 50% 42%, #103c42, #051f24 75%);
+  color: var(--cream);
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  text-align: center;
+}
+
+.splash-card {
+  opacity: 0;
+  width: 100%;
+}
+
+.splash-caption {
+  font-size: clamp(20px, 2.2vw, 36px);
+  letter-spacing: 0.14em;
+  margin-bottom: 20px;
+}
+
+.splash-detail {
+  margin-top: 20px;
+  font-size: clamp(17px, 1.8vw, 28px);
+}
+
+.splash-logo {
+  display: block;
+  width: min(640px, 80vw);
+  height: min(48dvh, 462px);
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+#studioSplash {
+  background: #1a1a1a;
+}
+
+#studioSplash .splash-logo {
+  width: min(960px, 86vw, 136dvh);
+  height: auto;
+}
+
+@media (max-height: 420px) {
+  .splash-caption { margin-bottom: 8px; }
+  .splash-detail { margin-top: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-card { opacity: 1 !important; }
+}

@@ -5,6 +5,7 @@
 @import "./ui/styles/controls.css";
 @import "./ui/styles/prompts.css";
 @import "./ui/styles/menus.css";
+@import "./ui/styles/splash.css";
 @import "./ui/styles/gameplay.css";
 @import "./ui/styles/onboarding.css";
 @import "./ui/styles/touch.css";

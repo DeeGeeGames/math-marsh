@@ -3,6 +3,8 @@ import type { GameEngine } from './Engine';
 const GAMEPLAY_CLOCK_GROUPS = ['timers', 'tweens', 'coroutines'] as const;
 const RUNNING_GAMEPLAY_CLOCK_SCREENS = ['playing', 'tutorial'] as const;
 const PAUSED_GAMEPLAY_CLOCK_SCREENS = [
+  'studioSplash',
+  'engineSplash',
   'menu',
   'modeSelect',
   'howToPlay',

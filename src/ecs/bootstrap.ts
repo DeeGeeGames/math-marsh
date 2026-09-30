@@ -29,9 +29,10 @@ import {
 import { setupScriptedTutorialScene } from '../onboarding/gameplayOnboardingScene';
 import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
 import { addUISystemToEngine } from './systems/UISystem';
+import { addSplashSystemToEngine } from './systems/SplashSystem';
 import { STARTING_TIME_SECONDS } from './runTime';
 
-const INACTIVE_SCREENS = ['menu', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
+const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
 
 const setupCanvas = (): void => {
   const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
@@ -159,6 +160,7 @@ const registerSystems = async (): Promise<void> => {
   addEquationFeedbackSystemToEngine(gameEngine);
   addPauseSystemToEngine(gameEngine);
   addUINavigationSystemToEngine(gameEngine);
+  addSplashSystemToEngine(gameEngine);
   addInputPromptSystemToEngine(gameEngine);
   addLevelCompleteSystemToEngine(gameEngine);
   addRenderSystemToEngine(gameEngine);
@@ -170,6 +172,6 @@ export const initializeGame = async (): Promise<void> => {
   initializeUI(gameEngine);
   await registerSystems();
   setupScreenHooks();
-  await gameEngine.setScreen('menu', {});
+  await gameEngine.setScreen('studioSplash', {});
   startGameLoop();
 };

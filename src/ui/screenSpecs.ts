@@ -1,3 +1,4 @@
+import { createSplashScreenSpec } from './screens/splashScreen';
 import type { ScreenSpec, UIScreen } from './screenTypes';
 import {
   createGameOverScreenSpec,
@@ -20,6 +21,8 @@ export function createScreenSpecs(
   actions: ScreenSpecActions,
 ): Record<UIScreen, ScreenSpec> {
   return {
+    studioSplash: createSplashScreenSpec('studioSplash'),
+    engineSplash: createSplashScreenSpec('engineSplash'),
     menu: createMenuScreenSpec(actions),
     modeSelect: createModeSelectScreenSpec(actions),
     howToPlay: createHowToPlayScreenSpec(actions),
