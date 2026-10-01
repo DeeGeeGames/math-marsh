@@ -107,6 +107,7 @@ export function createScreenRuntime(
       element.inert = retained;
     });
     state.currentScreen = screen;
+    if (screen !== 'playing' && !retainGameplay) delete container.dataset.pondPhase;
     if (screen !== 'playing') {
       focusFirstOn(screen);
       return root;

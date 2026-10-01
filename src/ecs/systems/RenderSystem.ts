@@ -15,6 +15,7 @@ import { collectGridCellKeys } from '../lilyPads';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { cleanupRenderSystem, getCtx } from './render/context';
 import { drawGrid } from './render/grid';
+import { pondThemeForPromptKind } from '../pondTheme';
 import { drawEntity } from './render/entities';
 import {
   drawAnswerConsumptionEffects,
@@ -90,7 +91,7 @@ export const addRenderSystemToEngine = (
         (playerShake?.offsetY ?? 0) * boardShakeScale,
       );
 
-      drawGrid(ctx, ambientTime);
+      drawGrid(ctx, ambientTime, pondThemeForPromptKind(equationMode.promptKind));
 
       const sortedEntities = [...queries.renderableEntities].sort(
         (a, b) => a.components.renderable.layer - b.components.renderable.layer,

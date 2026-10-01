@@ -3,6 +3,7 @@ import { gameplayLevelLabel, updateGameplayUI } from '../../ui/UIManager';
 import { playerQuery } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { tutorialHudLabel } from '../../onboarding/gameplayOnboarding';
+import { pondThemeForPromptKind } from '../pondTheme';
 
 /**
  * UI System
@@ -19,6 +20,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
       'currentLevel',
       'remainingTimeSeconds',
       'gameplayOnboardingSession',
+      'equationMode',
     ])
     .setProcess(({ queries, resources }) => {
       const player = queries.player;
@@ -30,10 +32,11 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         currentLevel,
         remainingTimeSeconds,
         gameplayOnboardingSession,
+        equationMode,
       } = resources;
       const level = tutorialHudLabel(gameplayOnboardingSession)
         ?? gameplayLevelLabel(gameMode, mathDifficulty, currentLevel);
 
-      updateGameplayUI(remainingTimeSeconds, level);
+      updateGameplayUI(remainingTimeSeconds, level, pondThemeForPromptKind(equationMode.promptKind).phase);
     });
 }

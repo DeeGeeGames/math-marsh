@@ -1,0 +1,155 @@
+/* The gameplay HUD publishes the equation stage; screen presentation clears it
+ * on return to the menus and retains it underneath pause/settings overlays. */
+#game-container[data-pond-phase="morning"] {
+  --primary-gradient:
+    radial-gradient(ellipse at 84% 20%, rgba(255, 232, 167, 0.48), transparent 36%),
+    linear-gradient(180deg, var(--sky-top) 0%, #328e9a 48%, #15536a 100%);
+  --celestial-color: #fff0b5;
+  --celestial-glow: rgba(255, 231, 161, 0.38);
+  --sky-top: #7ccdc5;
+  --sky-mid: #a9ded2;
+  --sky-horizon: #ffe7b5;
+  --cloud-color: #fff6dc;
+  --cloud-opacity: 0.66;
+  --hills-far: #77a49a;
+  --hills-near: #477b75;
+  --scenery-reed: #274f47;
+  --scenery-bank: #34645a;
+}
+
+#game-container[data-pond-phase="dusk"] {
+  --primary-gradient:
+    radial-gradient(ellipse at 84% 44%, rgba(255, 183, 117, 0.45), transparent 42%),
+    linear-gradient(180deg, var(--sky-top) 0%, #bf8497 36%, #715c7c 62%, #283f61 100%);
+  --cream-panel: #ffdfbe;
+  --panel-gradient: linear-gradient(135deg, rgba(63, 49, 78, 0.86), rgba(45, 48, 76, 0.76));
+  --secondary-gradient: linear-gradient(135deg, #716078, #354869);
+  --celestial-color: #ffd095;
+  --celestial-glow: rgba(255, 173, 106, 0.4);
+  --sky-top: #79618a;
+  --sky-mid: #c68a9b;
+  --sky-horizon: var(--celestial-color);
+  --cloud-color: #f4bcae;
+  --cloud-opacity: 0.52;
+  --hills-far: #87778c;
+  --hills-near: #584f70;
+  --scenery-reed: #393850;
+  --scenery-bank: #41465d;
+}
+
+#game-container[data-pond-phase="night"] {
+  --primary-gradient:
+    radial-gradient(ellipse at 84% 20%, rgba(143, 185, 226, 0.19), transparent 36%),
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 48%, #101f34 100%);
+  --cream-panel: #d5e5ef;
+  --panel-gradient: linear-gradient(135deg, rgba(26, 47, 78, 0.9), rgba(16, 34, 57, 0.8));
+  --secondary-gradient: linear-gradient(135deg, #3c5d75, #20364e);
+  --celestial-color: #e4f2ff;
+  --celestial-glow: rgba(180, 215, 249, 0.26);
+  --sky-top: #15233f;
+  --sky-mid: #263d63;
+  --sky-horizon: #567693;
+  --cloud-color: #96b2ce;
+  --cloud-opacity: 0.16;
+  --hills-far: #354e6d;
+  --hills-near: #213950;
+  --scenery-reed: #101f30;
+  --scenery-bank: #172e3f;
+}
+
+#game-container[data-pond-phase]::before,
+#game-container[data-pond-phase]::after {
+  display: none;
+}
+
+.pond-scenery {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pond-sky {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 50%;
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-mid) 64%, var(--sky-horizon));
+}
+
+.pond-stars,
+.pond-landscape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pond-stars { display: none; fill: #e4f2ff; }
+[data-pond-phase="night"] .pond-stars { display: block; }
+
+.pond-horizon {
+  position: absolute;
+  top: 40%;
+  width: 100%;
+  height: 20%;
+}
+
+.pond-celestial {
+  position: absolute;
+  top: 14%;
+  right: 9%;
+  width: clamp(52px, 6vw, 110px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--celestial-color);
+  box-shadow: 0 0 44px 18px var(--celestial-glow);
+}
+
+[data-pond-phase="dusk"] .pond-celestial { top: 39%; }
+
+[data-pond-phase="night"] .pond-celestial {
+  background:
+    radial-gradient(circle at 34% 32%, rgba(143, 177, 212, 0.22) 0 9%, transparent 10%),
+    radial-gradient(circle at 65% 62%, rgba(143, 177, 212, 0.18) 0 15%, transparent 16%),
+    var(--celestial-color);
+}
+
+.pond-cloud {
+  position: absolute;
+  width: clamp(180px, 25vw, 440px);
+  height: auto;
+  fill: var(--cloud-color);
+  opacity: var(--cloud-opacity);
+}
+
+.pond-cloud--near { top: 20%; left: -4%; }
+.pond-cloud--far { top: 31%; right: 4%; width: clamp(130px, 19vw, 300px); }
+.pond-cloud--high { top: 10%; left: 25%; width: clamp(100px, 14vw, 230px); opacity: calc(var(--cloud-opacity) * 0.65); }
+
+.pond-hills-far { fill: var(--hills-far); }
+.pond-hills-near { fill: var(--hills-near); }
+.pond-horizon-ripples { fill: none; stroke: var(--celestial-color); stroke-width: 2; opacity: 0.14; }
+.pond-bank { fill: var(--scenery-bank); }
+.pond-reeds { fill: none; stroke: var(--scenery-reed); stroke-width: 5; stroke-linecap: round; }
+.pond-cattails { fill: none; stroke: var(--scenery-reed); stroke-width: 13; stroke-linecap: round; }
+
+[data-pond-phase="dusk"] .hud-chip.level { background: linear-gradient(135deg, #ffe6c6, #f3bb91); }
+[data-pond-phase="night"] .hud-chip.level { background: linear-gradient(135deg, #e4f2ff, #b8d6ea); }
+
+/* Keep a patch of sky above the portrait board, without reserving play space. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .pond-sky { height: 23%; }
+  .pond-horizon { top: 17%; height: 10%; }
+  .pond-celestial { top: 12%; right: 7%; width: 52px; }
+  [data-pond-phase="dusk"] .pond-celestial { top: 17%; }
+  .pond-cloud--near { top: 14%; left: -18%; }
+  .pond-cloud--far { top: 18%; right: -10%; }
+  .pond-cloud--high { top: 9%; left: 24%; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .pond-celestial { top: 20%; right: 7%; width: 44px; box-shadow: 0 0 24px 10px var(--celestial-glow); }
+  [data-pond-phase="dusk"] .pond-celestial { top: 37%; }
+  .pond-cloud--high { display: none; }
+}
