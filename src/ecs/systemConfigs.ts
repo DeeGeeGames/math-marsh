@@ -46,6 +46,7 @@ export const SPIDER_WEB_BUILD_DURATION_MS = 320;
 export const SYSTEM_PRIORITIES = {
   INPUT_PROMPTS: 99,             // Reads ECSpresso input state after the input plugin
   TIMERS: 95,                   // Timer updates after input, before gameplay intent
+  FROG_TONGUE: 90,              // Claim attacks before AI can queue movement in preUpdate
   AI: 85,                       // AI behavior
   MOVEMENT: 80,                 // Movement processing
   ONBOARDING: 79,               // Observes demonstrated actions after input intent
@@ -57,6 +58,5 @@ export const SYSTEM_PRIORITIES = {
   ENEMY_SPAWN: 40,              // Enemy spawning
   PROBLEM_MANAGEMENT: 30,       // Problem lifecycle
   LEVEL_COMPLETE: 25,           // Advances after the level-complete overlay
-  FROG_TONGUE: 22,              // Frog Tongue system (before render, after problem management)
   RENDER: 10,                   // Rendering (should be last)
 } as const;
