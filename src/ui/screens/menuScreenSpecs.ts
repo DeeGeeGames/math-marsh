@@ -31,7 +31,7 @@ const HOW_TO_PLAY_STEPS = [
   },
   {
     title: 'Eat the number',
-    description: 'Once the fly arrives, tap or click it again, or press Eat. You may need two numbers.',
+    description: 'Once the fly arrives, tap or click it again, or press Eat. Fill empty spots from left to right.',
   },
   {
     title: 'Stay safe',

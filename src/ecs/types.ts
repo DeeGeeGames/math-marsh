@@ -167,7 +167,7 @@ export type SettingsScreenConfig = { returnTo: SettingsReturnScreen };
 export type MathDifficulty = 'easy' | 'medium' | 'expert';
 export type EquationOperation = 'add' | 'subtract' | 'multiply' | 'divide';
 export type GameMode = readonly [EquationOperation, ...EquationOperation[]];
-export type EquationPromptKind = 'selectOperands' | 'selectResult';
+export type EquationPromptKind = 'selectOperands' | 'selectResult' | 'selectOperandAndResult';
 
 export interface EquationValueRange {
   min: number;

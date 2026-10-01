@@ -97,7 +97,14 @@ function selectedEquationLayout(
   ctx.save();
   ctx.font = `bold ${objectiveFontSize(margin)}px Arial`;
   const { leftX, fitScale } = objectiveGeometry(ctx, text);
-  const initialCursor = equationMode.promptKind === 'selectResult' ? resultSearchStart : 0;
+  // Start after the fixed operand and operator so matching values animate to the blank.
+  const mixedOperandStart = text.indexOf(' ', text.indexOf(' ') + 1) + 1;
+  const selectionStarts: Record<EquationModeState['promptKind'], number> = {
+    selectResult: resultSearchStart,
+    selectOperands: 0,
+    selectOperandAndResult: mixedOperandStart,
+  };
+  const initialCursor = selectionStarts[equationMode.promptKind];
   const located = selectedProblems.reduce<{
     cursor: number;
     values: LocatedEquationValue[];

@@ -48,8 +48,10 @@ const randomValue = (range: EquationValueRange): number =>
 const valuesInRange = (range: EquationValueRange): number[] =>
   Array.from({ length: range.max - range.min + 1 }, (_, index) => range.min + index);
 
+const levelPromptCycle = ['selectResult', 'selectOperands', 'selectOperandAndResult'] as const;
+
 function difficultyGrowthStepsForLevel(level: number): number {
-  return Math.floor((level - 1) / 2);
+  return Math.floor((level - 1) / levelPromptCycle.length);
 }
 
 const rangeMax = (
@@ -268,7 +270,7 @@ export const operationForMode = (gameMode: GameMode): EquationOperation =>
   randomFrom(gameMode);
 
 export const equationPromptKindForLevel = (level: number): EquationPromptKind =>
-  level % 2 === 1 ? 'selectResult' : 'selectOperands';
+  levelPromptCycle[(level - 1) % levelPromptCycle.length];
 
 export const equationResultRange = (
   operation: EquationOperation,
@@ -298,13 +300,55 @@ export const createEquationModeState = (
   };
 };
 
-export const createRandomEquationCandidate = (state: EquationModeState): EquationCandidate =>
-  operations[state.operation].randomCandidate(state.operandRanges);
+export const createRandomEquationCandidate = (state: EquationModeState): EquationCandidate => {
+  // Zero is the existing unprepared-prompt marker. Mixed prompts need a playable result.
+  if (state.promptKind === 'selectOperandAndResult' && state.operation === 'subtract') {
+    const right = randomValue({
+      ...state.operandRanges.right,
+      max: Math.min(state.operandRanges.right.max, state.operandRanges.left.max - 1),
+    });
+    const left = randomValue({ min: right + 1, max: state.operandRanges.left.max });
+    return { operandValues: [left, right], target: left - right };
+  }
+  return operations[state.operation].randomCandidate(state.operandRanges);
+};
+
+const fixedOperandForMixedSelection: Record<EquationOperation, (operand: number, result: number) => number> = {
+  add: (operand, result) => result - operand,
+  subtract: (operand, result) => result + operand,
+  multiply: (operand, result) => result / operand,
+  divide: (operand, result) => result * operand,
+};
+
+const mixedCandidates = (
+  state: EquationModeState,
+  problems: readonly EquationOperandCandidate[],
+): EquationCandidate[] =>
+  problems.flatMap(operand =>
+    problems
+      .filter(result => result.id !== operand.id && result.value !== 0)
+      .map(result => ({
+        operandValues: [fixedOperandForMixedSelection[state.operation](operand.value, result.value), operand.value],
+        target: result.value,
+      }))
+      .filter(candidate => {
+        const [left, right] = candidate.operandValues;
+        return Number.isInteger(left)
+          && Number.isInteger(candidate.target)
+          && left >= state.operandRanges.left.min && left <= state.operandRanges.left.max
+          && right >= state.operandRanges.right.min && right <= state.operandRanges.right.max
+          && (state.difficulty !== 'easy' || candidate.target >= 0);
+      }),
+  );
 
 export const chooseEquationCandidate = (
   state: EquationModeState,
   operands: readonly EquationOperandCandidate[],
 ): EquationCandidate | undefined => {
+  if (state.promptKind === 'selectOperandAndResult') {
+    const candidates = mixedCandidates(state, operands);
+    return candidates[randomIndex(candidates.length)];
+  }
   const operation = operations[state.operation];
   const candidates = state.promptKind === 'selectResult'
     ? operation.resultCandidates(operands, state.operandRanges)
@@ -317,6 +361,15 @@ export const equationProblemValuesForCandidate = (
   candidate: EquationCandidate,
   totalProblems: number,
 ): number[] => {
+  if (state.promptKind === 'selectOperandAndResult') {
+    const answerValues = [candidate.operandValues[1], candidate.target];
+    const ranges = [state.operandRanges.right, equationResultRange(state.operation, state.operandRanges)];
+    const decoys = Array.from(
+      { length: Math.max(0, totalProblems - answerValues.length) },
+      () => randomValue(randomFrom(ranges)),
+    );
+    return shuffled([...answerValues, ...decoys]);
+  }
   const answerValues = state.promptKind === 'selectResult'
     ? [candidate.target]
     : candidate.operandValues;
@@ -333,6 +386,11 @@ export const equationSelectionText = (
   selectedValues: readonly number[],
 ): string => {
   const operation = operations[state.operation];
+  if (state.promptKind === 'selectOperandAndResult') {
+    const operand = selectedValues[0]?.toString() ?? '_';
+    const result = selectedValues[1]?.toString() ?? '_';
+    return `${state.promptValues[0]} ${operation.symbol} ${operand} = ${result}`;
+  }
   if (state.promptKind === 'selectResult') {
     const result = selectedValues[0]?.toString() ?? '_';
     return `${state.promptValues.join(` ${operation.symbol} `)} = ${result}`;
@@ -347,8 +405,13 @@ export const equationSelectionText = (
 export const evaluateEquationSelection = (
   state: EquationModeState,
   selectedValues: readonly number[],
-): boolean =>
-  selectedValues.length === state.operandsRequired
-    && (state.promptKind === 'selectResult'
-      ? selectedValues[0] === state.target
-      : operations[state.operation].evaluate(selectedValues) === state.target);
+): boolean => {
+  if (selectedValues.length !== state.operandsRequired) return false;
+  if (state.promptKind === 'selectOperandAndResult') {
+    return Number.isInteger(selectedValues[1])
+      && operations[state.operation].evaluate([state.promptValues[0], selectedValues[0]]) === selectedValues[1];
+  }
+  return state.promptKind === 'selectResult'
+    ? selectedValues[0] === state.target
+    : operations[state.operation].evaluate(selectedValues) === state.target;
+};
