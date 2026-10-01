@@ -14,7 +14,6 @@ export const TUTORIAL_PROMPT_SPEC = {
 } as const satisfies Pick<ScreenSpec, 'prompts' | 'promptPlacement'>;
 
 const TUTORIAL_FINISH_LABELS = {
-  level: 'Start Level 2',
   nextTutorial: 'Next Tutorial',
   previousScreen: 'Finish Tutorial',
   newGame: 'Start Playing',
@@ -48,6 +47,8 @@ export function updateGameplayOnboardingUI(
   description.textContent = step.copy;
   backButton.toggleAttribute('disabled', session.stepIndex === 0);
   nextButton.textContent = session.stepIndex === steps.length - 1
-    ? TUTORIAL_FINISH_LABELS[session.returnTo.kind]
+    ? session.returnTo.kind === 'level'
+      ? `Start Level ${session.returnTo.level}`
+      : TUTORIAL_FINISH_LABELS[session.returnTo.kind]
     : 'Next';
 }

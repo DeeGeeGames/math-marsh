@@ -5,6 +5,7 @@ import {
   onboardingCompletionFromStoredValue,
   skippedOnboardingCompletion,
   shouldStartOperandTutorial,
+  shouldStartOperandAndResultTutorial,
   tutorialHudLabel,
   tutorialStepIndex,
   tutorialSteps,
@@ -59,6 +60,15 @@ describe('gameplay onboarding persistence', () => {
     expect(shouldStartOperandTutorial(3, 'pending')).toBe(false);
   });
 
+  test('starts the mixed lesson only on the first arrival at Level 3', () => {
+    expect(shouldStartOperandAndResultTutorial(3, 'pending')).toBe(true);
+    expect(shouldStartOperandAndResultTutorial(3, 'completed')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(3, 'skipped')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(2, 'pending')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(6, 'pending')).toBe(false);
+    expect(tutorialStepIndex('operandAndResult', 99)).toBe(4);
+  });
+
   test('labels only active tutorial sessions for the gameplay HUD', () => {
     expect(tutorialHudLabel({ active: false })).toBeUndefined();
     expect(tutorialHudLabel(
@@ -67,5 +77,8 @@ describe('gameplay onboarding persistence', () => {
     expect(tutorialHudLabel(
       createGameplayOnboardingSession('operands', false, { kind: 'level', level: 2 }),
     )).toBe('Learn Level 2');
+    expect(tutorialHudLabel(
+      createGameplayOnboardingSession('operandAndResult', false, { kind: 'level', level: 3 }),
+    )).toBe('Learn Level 3');
   });
 });

@@ -15,6 +15,7 @@ import {
 const ONBOARDING_COMPLETION_RESOURCES = {
   basics: 'gameplayOnboardingCompletion',
   operands: 'operandOnboardingCompletion',
+  operandAndResult: 'operandAndResultOnboardingCompletion',
 } as const;
 
 const ONBOARDING_COMPLETION_TRANSITIONS = {
@@ -60,12 +61,15 @@ export function startGameplayOnboarding(engine: GameEngine): void {
   void engine.pushScreen('tutorial', config);
 }
 
-async function continueToOperandTutorial(engine: GameEngine): Promise<void> {
+async function continueToNextTutorial(
+  engine: GameEngine,
+  kind: GameplayOnboardingKind,
+): Promise<void> {
   await engine.popScreen();
   await engine.pushScreen('tutorial', {
-    kind: 'operands',
+    kind: kind === 'basics' ? 'operands' : 'operandAndResult',
     isReplay: true,
-    returnTo: { kind: 'previousScreen' },
+    returnTo: kind === 'basics' ? { kind: 'nextTutorial' } : { kind: 'previousScreen' },
   });
 }
 
@@ -75,7 +79,7 @@ function restoreActivePlayer(
 ): void {
   const player = engine.tryGetSingleton(['player', 'position', 'pathFollower'] as const);
   const snapshot = session.playerSnapshot;
-  if (!player || !snapshot) throw new Error('Operand tutorial cannot restore the active player');
+  if (!player || !snapshot) throw new Error('Level tutorial cannot restore the active player');
 
   Object.assign(player.components.position, snapshot.position);
   player.components.player.gameOverPending = snapshot.gameOverPending;
@@ -93,7 +97,7 @@ function continueAfterTutorial(
   session: Extract<GameplayOnboardingSession, { active: true }>,
 ): void {
   if (session.returnTo.kind === 'nextTutorial') {
-    void continueToOperandTutorial(engine);
+    void continueToNextTutorial(engine, session.kind);
     return;
   }
   if (session.returnTo.kind === 'previousScreen') {

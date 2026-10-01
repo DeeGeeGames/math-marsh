@@ -216,6 +216,7 @@ export interface Resources {
   inputPrompt: import('../ui/inputPrompts').InputPromptState;
   gameplayOnboardingCompletion: GameplayOnboardingCompletion;
   operandOnboardingCompletion: GameplayOnboardingCompletion;
+  operandAndResultOnboardingCompletion: GameplayOnboardingCompletion;
   gameplayOnboardingSession: GameplayOnboardingSession;
   tapRequest: BoardPoint | null;
   tapEat: { x: number; y: number } | null;

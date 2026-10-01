@@ -1,5 +1,5 @@
 export type GameplayOnboardingCompletion = 'pending' | 'completed' | 'skipped';
-export type GameplayOnboardingKind = 'basics' | 'operands';
+export type GameplayOnboardingKind = 'basics' | 'operands' | 'operandAndResult';
 
 export const SCRIPTED_TUTORIAL_STEPS = [
   {
@@ -57,6 +57,34 @@ export const OPERAND_TUTORIAL_STEPS = [
   },
 ] as const;
 
+export const OPERAND_AND_RESULT_TUTORIAL_STEPS = [
+  {
+    id: 'emptySpots',
+    title: 'Choose a number and a result',
+    copy: 'The first number is already filled in. Choose the missing number, then choose the result.',
+  },
+  {
+    id: 'firstNumber',
+    title: 'Find the missing number',
+    copy: 'Find 5 on the pond. It goes after the plus sign: 3 + 5.',
+  },
+  {
+    id: 'eatFirstNumber',
+    title: 'Eat the missing number',
+    copy: 'The fly eats 5. Now 3 + 5 is filled in, but the result is still empty.',
+  },
+  {
+    id: 'secondNumber',
+    title: 'Find the result',
+    copy: '3 + 5 makes 8. Find 8 to fill the spot after the equals sign.',
+  },
+  {
+    id: 'finishEquation',
+    title: 'Finish the equation',
+    copy: 'The fly eats 8 to finish 3 + 5 = 8. Always eat the missing number first, then the result.',
+  },
+] as const;
+
 export type GameplayOnboardingReturn =
   | { kind: 'newGame' }
   | { kind: 'level'; level: number }
@@ -89,6 +117,7 @@ export type GameplayOnboardingSession =
 const STORAGE_KEYS = {
   basics: 'math-marsh.gameplayOnboarding',
   operands: 'math-marsh.operandOnboarding',
+  operandAndResult: 'math-marsh.operandAndResultOnboarding',
 } as const satisfies Record<GameplayOnboardingKind, string>;
 
 export function onboardingCompletionFromStoredValue(
@@ -139,15 +168,34 @@ export function shouldStartOperandTutorial(
   return nextLevel === 2 && completion === 'pending';
 }
 
+export function shouldStartOperandAndResultTutorial(
+  nextLevel: number,
+  completion: GameplayOnboardingCompletion,
+): boolean {
+  return nextLevel === 3 && completion === 'pending';
+}
+
+const TUTORIAL_STEPS = {
+  basics: SCRIPTED_TUTORIAL_STEPS,
+  operands: OPERAND_TUTORIAL_STEPS,
+  operandAndResult: OPERAND_AND_RESULT_TUTORIAL_STEPS,
+} as const;
+
+const TUTORIAL_HUD_LABELS = {
+  basics: 'Tutorial',
+  operands: 'Learn Level 2',
+  operandAndResult: 'Learn Level 3',
+} as const;
+
 export function tutorialSteps(
   kind: GameplayOnboardingKind,
 ): ReadonlyArray<{ id: string; title: string; copy: string }> {
-  return kind === 'operands' ? OPERAND_TUTORIAL_STEPS : SCRIPTED_TUTORIAL_STEPS;
+  return TUTORIAL_STEPS[kind];
 }
 
 export function tutorialHudLabel(session: GameplayOnboardingSession): string | undefined {
   if (!session.active) return undefined;
-  return session.kind === 'operands' ? 'Learn Level 2' : 'Tutorial';
+  return TUTORIAL_HUD_LABELS[session.kind];
 }
 
 export function tutorialStepIndex(kind: GameplayOnboardingKind, index: number): number {

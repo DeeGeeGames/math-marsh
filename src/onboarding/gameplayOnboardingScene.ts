@@ -54,6 +54,11 @@ const TUTORIAL_EQUATION_CONFIG = {
     promptKind: 'selectOperands',
     operandsRequired: 2,
   },
+  operandAndResult: {
+    level: 3,
+    promptKind: 'selectOperandAndResult',
+    operandsRequired: 2,
+  },
 } as const satisfies Record<
   GameplayOnboardingKind,
   Pick<EquationModeState, 'level' | 'promptKind' | 'operandsRequired'>
@@ -62,6 +67,7 @@ const TUTORIAL_EQUATION_CONFIG = {
 const TUTORIAL_GRID_OVERRIDES = {
   basics: { 7: 16, 15: TARGET_VALUE },
   operands: { 2: 13, 4: 14, 7: 16, 15: 3, 16: 5 },
+  operandAndResult: { 4: 14, 7: 16, 15: 5, 16: TARGET_VALUE },
 } as const satisfies Record<GameplayOnboardingKind, Readonly<Record<number, number>>>;
 
 function scriptedEquationMode(kind: GameplayOnboardingKind): EquationModeState {
@@ -72,7 +78,7 @@ function scriptedEquationMode(kind: GameplayOnboardingKind): EquationModeState {
     promptKind: config.promptKind,
     operandsRequired: config.operandsRequired,
     target: TARGET_VALUE,
-    promptValues: [3, 5],
+    promptValues: kind === 'operandAndResult' ? [3] : [3, 5],
     selectedProblemIds: [],
     feedback: undefined,
   };
@@ -100,7 +106,7 @@ function spawnTutorialBoard(ecs: GameEngine, kind: GameplayOnboardingKind): void
 }
 
 function spawnTutorialEnemy(ecs: GameEngine, kind: GameplayOnboardingKind): void {
-  if (kind === 'operands') return;
+  if (kind !== 'basics') return;
   const pixel = gridToPixel(ENEMY_START.x, ENEMY_START.y);
   const components = enemyComponents(pixel.x, pixel.y, 'lizard', 'chase');
   const renderable = components.renderable;
@@ -152,11 +158,11 @@ export function setupScriptedTutorialScene(
     : undefined;
   if (!continuesRun && existingPlayer) ecs.removeEntity(existingPlayer.id);
   if (continuesRun && !existingPlayer) {
-    throw new Error('Operand tutorial requires the active player from Level 1');
+    throw new Error('Level tutorial requires the active player from the previous level');
   }
 
   if (!continuesRun) {
-    ecs.setResource('currentLevel', kind === 'operands' ? 2 : 1);
+    ecs.setResource('currentLevel', TUTORIAL_EQUATION_CONFIG[kind].level);
     ecs.setResource('remainingTimeSeconds', STARTING_TIME_SECONDS);
     ecs.setResource('equationsSolved', 0);
   }
@@ -293,27 +299,29 @@ function showCorrectAnswer(
 function showFirstOperand(
   ecs: GameEngine,
   firstProblem: { id: number; components: { mathProblem: { consumed: boolean }; renderable: { size: number } } },
+  kind: GameplayOnboardingKind,
 ): void {
   firstProblem.components.mathProblem.consumed = true;
   firstProblem.components.renderable.size = 0;
   ecs.commands.addComponent(firstProblem.id, 'answerConsumption', { startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) });
   ecs.setResource('equationMode', {
-    ...scriptedEquationMode('operands'),
+    ...scriptedEquationMode(kind),
     selectedProblemIds: [firstProblem.id],
   });
 }
 
-function showCompletedOperands(
+function showCompletedEquation(
   ecs: GameEngine,
   firstProblem: Parameters<typeof showFirstOperand>[1],
   secondProblem: Parameters<typeof showFirstOperand>[1],
+  kind: GameplayOnboardingKind,
 ): void {
   const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   secondProblem.components.mathProblem.consumed = true;
   secondProblem.components.renderable.size = 0;
   ecs.commands.addComponent(secondProblem.id, 'answerConsumption', { startedAt });
   ecs.setResource('equationMode', {
-    ...scriptedEquationMode('operands'),
+    ...scriptedEquationMode(kind),
     selectedProblemIds: [firstProblem.id, secondProblem.id],
     feedback: {
       kind: 'correct',
@@ -323,38 +331,41 @@ function showCompletedOperands(
   });
 }
 
-function applyOperandTutorialStep(
+function applyTwoSelectionTutorialStep(
   ecs: GameEngine,
   session: Extract<GameplayOnboardingSession, { active: true }>,
   player: Parameters<typeof placePlayer>[0] & { id: number },
   mathProblems: Parameters<typeof resetTutorialScene>[2],
 ): void {
-  const firstProblem = mathProblems.find(problem => problem.components.mathProblem.value === 3);
-  const secondProblem = mathProblems.find(problem => problem.components.mathProblem.value === 5);
-  if (!firstProblem || !secondProblem) throw new Error('Operand tutorial numbers are missing');
+  const kind = session.kind;
+  const firstValue = kind === 'operandAndResult' ? 5 : 3;
+  const secondValue = kind === 'operandAndResult' ? TARGET_VALUE : 5;
+  const firstProblem = mathProblems.find(problem => problem.components.mathProblem.value === firstValue);
+  const secondProblem = mathProblems.find(problem => problem.components.mathProblem.value === secondValue);
+  if (!firstProblem || !secondProblem) throw new Error('Two-selection tutorial numbers are missing');
 
   if (session.stepIndex === 1) {
     placePlayer(player, PLAYER_MID);
     ecs.setResource('equationMode', {
-      ...scriptedEquationMode('operands'),
+      ...scriptedEquationMode(kind),
       selectedProblemIds: [firstProblem.id],
     });
   }
   if (session.stepIndex === 2) {
     placePlayer(player, PLAYER_MID);
     animatePlayerTo(ecs, player.id, PLAYER_MID, PLAYER_TARGET, () => {
-      showFirstOperand(ecs, firstProblem);
+      showFirstOperand(ecs, firstProblem, kind);
     });
   }
   if (session.stepIndex === 3) {
     placePlayer(player, PLAYER_TARGET);
-    showFirstOperand(ecs, firstProblem);
+    showFirstOperand(ecs, firstProblem, kind);
   }
   if (session.stepIndex === 4) {
     placePlayer(player, PLAYER_TARGET);
-    showFirstOperand(ecs, firstProblem);
+    showFirstOperand(ecs, firstProblem, kind);
     animatePlayerTo(ecs, player.id, PLAYER_TARGET, PLAYER_SECOND_TARGET, () => {
-      showCompletedOperands(ecs, firstProblem, secondProblem);
+      showCompletedEquation(ecs, firstProblem, secondProblem, kind);
     });
   }
 }
@@ -374,8 +385,8 @@ export function applyTutorialStep(
     session.kind,
   );
   ecs.setResource('remainingTimeSeconds', session.playerSnapshot?.remainingTimeSeconds ?? STARTING_TIME_SECONDS);
-  if (session.kind === 'operands') {
-    applyOperandTutorialStep(ecs, session, player, mathProblems);
+  if (session.kind !== 'basics') {
+    applyTwoSelectionTutorialStep(ecs, session, player, mathProblems);
     return;
   }
   const targetProblem = mathProblems.find(problem => problem.components.mathProblem.value === TARGET_VALUE);
