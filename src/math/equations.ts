@@ -48,10 +48,15 @@ const randomValue = (range: EquationValueRange): number =>
 const valuesInRange = (range: EquationValueRange): number[] =>
   Array.from({ length: range.max - range.min + 1 }, (_, index) => range.min + index);
 
-const levelPromptCycle = ['selectResult', 'selectOperands', 'selectOperandAndResult'] as const;
+const levelPromptCycles = {
+  easy: ['selectResult'],
+  medium: ['selectResult', 'selectOperands'],
+  expert: ['selectResult', 'selectOperands', 'selectOperandAndResult'],
+} as const satisfies Record<MathDifficulty, readonly EquationPromptKind[]>;
 
+// Number ranges grow every three levels regardless of the available prompt types.
 function difficultyGrowthStepsForLevel(level: number): number {
-  return Math.floor((level - 1) / levelPromptCycle.length);
+  return Math.floor((level - 1) / 3);
 }
 
 const rangeMax = (
@@ -269,8 +274,12 @@ const operations: Record<EquationOperation, EquationOperationDefinition> = {
 export const operationForMode = (gameMode: GameMode): EquationOperation =>
   randomFrom(gameMode);
 
-export const equationPromptKindForLevel = (level: number): EquationPromptKind =>
-  levelPromptCycle[(level - 1) % levelPromptCycle.length];
+export function equationPromptKindForLevel(level: number, difficulty: MathDifficulty): EquationPromptKind {
+  const cycle = levelPromptCycles[difficulty];
+  const promptKind = cycle[(level - 1) % cycle.length];
+  if (!promptKind) throw new Error('Equation level must be a positive integer');
+  return promptKind;
+}
 
 export const equationResultRange = (
   operation: EquationOperation,
@@ -285,7 +294,7 @@ export const createEquationModeState = (
   clearedThisLevel = 0,
 ): EquationModeState => {
   const operation = operationForMode(gameMode);
-  const promptKind = equationPromptKindForLevel(level);
+  const promptKind = equationPromptKindForLevel(level, difficulty);
   return {
     operation,
     promptKind,

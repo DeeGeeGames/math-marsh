@@ -6,6 +6,7 @@ import { GAME_CONFIG } from '../../config';
 import { describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import type { GameEngine } from '../Engine';
+import type { MathDifficulty } from '../types';
 import { BOARD_SIZES } from '../boardGeometry';
 import { enemyComponents, mathProblemComponents, playerComponents } from '../entities';
 import { gridToPixel } from '../gameUtils';
@@ -47,14 +48,21 @@ describe('board population', () => {
 	});
 });
 
-async function createProgressionWorld(level: number, roster: readonly EnemyType[]): Promise<GameEngine> {
+async function createProgressionWorld(
+	level: number,
+	roster: readonly EnemyType[],
+	difficulty: MathDifficulty = 'easy',
+): Promise<GameEngine> {
 	const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
 	world.setResource('board', BOARD_SIZES.easy);
 	world.setResource('enemySpawn', { index: 0, roster });
 	world.setResource('currentLevel', level);
 	world.setResource('gameMode', ['add']);
-	world.setResource('mathDifficulty', 'easy');
-	world.setResource('equationMode', { ...createEquationModeState(level, 'easy', ['add']), target: level === 1 ? 3 : 6 });
+	world.setResource('mathDifficulty', difficulty);
+	world.setResource('equationMode', {
+		...createEquationModeState(level, difficulty, ['add']),
+		target: level === 1 ? 3 : 6,
+	});
 	addProblemManagementSystemToEngine(world);
 	await world.initialize();
 	const position = gridToPixel(1, 1);
@@ -105,7 +113,7 @@ describe('level completion with enemies', () => {
 
 	test('caps a two-number level using pending enemies and ignores enemy movement', async () => {
 		const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
-		const world = await createProgressionWorld(2, ['lizard', 'lizard', 'lizard', 'lizard', 'lizard']);
+		const world = await createProgressionWorld(2, ['lizard', 'lizard', 'lizard', 'lizard', 'lizard'], 'medium');
 		const transition = spyOn(world, 'pushScreen').mockImplementation(async () => {});
 		try {
 			const enemy = world.spawn(enemyComponents(0, 0, 'lizard', 'guard'));
@@ -133,7 +141,7 @@ describe('population with occupied pads', () => {
 		test(`uses exactly ${availableCount} available pads without truncating answers`, async () => {
 			const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
 			const generator = spyOn(equations, 'equationProblemValuesForCandidate');
-			const world = await createProgressionWorld(2, []);
+			const world = await createProgressionWorld(2, [], 'medium');
 			const transition = spyOn(world, 'pushScreen').mockImplementation(async () => {});
 			try {
 				const problems = world.getEntitiesWithQuery(['mathProblem']);
@@ -144,7 +152,7 @@ describe('population with occupied pads', () => {
 					}
 					world.mutateComponent(problem.id, 'mathProblem', value => { value.consumed = true; });
 				});
-				world.setResource('equationMode', createEquationModeState(2, 'easy', ['add']));
+				world.setResource('equationMode', createEquationModeState(2, world.getResource('mathDifficulty'), ['add']));
 				world.update(0.01);
 				const active = world.getEntitiesWithQuery(['mathProblem'])
 					.filter(problem => !problem.components.mathProblem.consumed);

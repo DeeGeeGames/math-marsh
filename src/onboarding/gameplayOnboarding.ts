@@ -1,3 +1,6 @@
+import type { MathDifficulty } from '../ecs/types';
+import { equationPromptKindForLevel } from '../math/equations';
+
 export type GameplayOnboardingCompletion = 'pending' | 'completed' | 'skipped';
 export type GameplayOnboardingKind = 'basics' | 'operands' | 'operandAndResult';
 
@@ -163,16 +166,20 @@ export function completedOnboardingCompletion(
 
 export function shouldStartOperandTutorial(
   nextLevel: number,
+  difficulty: MathDifficulty,
   completion: GameplayOnboardingCompletion,
 ): boolean {
-  return nextLevel === 2 && completion === 'pending';
+  return nextLevel === 2 && completion === 'pending'
+    && equationPromptKindForLevel(nextLevel, difficulty) === 'selectOperands';
 }
 
 export function shouldStartOperandAndResultTutorial(
   nextLevel: number,
+  difficulty: MathDifficulty,
   completion: GameplayOnboardingCompletion,
 ): boolean {
-  return nextLevel === 3 && completion === 'pending';
+  return nextLevel === 3 && completion === 'pending'
+    && equationPromptKindForLevel(nextLevel, difficulty) === 'selectOperandAndResult';
 }
 
 const TUTORIAL_STEPS = {

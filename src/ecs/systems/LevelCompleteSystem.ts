@@ -1,4 +1,5 @@
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
+import type { MathDifficulty } from '../types';
 import { LEVEL_COMPLETE_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 import {
   shouldStartOperandTutorial,
@@ -9,12 +10,13 @@ import {
 function goToNextLevel(
   ecs: GameEngine,
   nextLevel: number,
+  mathDifficulty: MathDifficulty,
   operandOnboardingCompletion: GameplayOnboardingCompletion,
   operandAndResultOnboardingCompletion: GameplayOnboardingCompletion,
 ): void {
-  const tutorialKind = shouldStartOperandTutorial(nextLevel, operandOnboardingCompletion)
+  const tutorialKind = shouldStartOperandTutorial(nextLevel, mathDifficulty, operandOnboardingCompletion)
     ? 'operands'
-    : shouldStartOperandAndResultTutorial(nextLevel, operandAndResultOnboardingCompletion)
+    : shouldStartOperandAndResultTutorial(nextLevel, mathDifficulty, operandAndResultOnboardingCompletion)
       ? 'operandAndResult'
       : undefined;
   if (tutorialKind) {
@@ -36,13 +38,13 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
     .setPriority(SYSTEM_PRIORITIES.LEVEL_COMPLETE)
     .inScreens(['levelComplete'])
     .runWhenEmpty()
-    .withResources(['operandOnboardingCompletion', 'operandAndResultOnboardingCompletion'])
-    .setProcess(({ ecs, resources: { operandOnboardingCompletion, operandAndResultOnboardingCompletion } }) => {
+    .withResources(['mathDifficulty', 'operandOnboardingCompletion', 'operandAndResultOnboardingCompletion'])
+    .setProcess(({ ecs, resources: { mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion } }) => {
       const state = ecs.getScreenState('levelComplete');
       const elapsed = performance.now() - state.startedAt;
       if (elapsed < LEVEL_COMPLETE_DURATION_MS || state.transitionStarted) return;
 
       ecs.updateScreenState('levelComplete', { transitionStarted: true });
-      goToNextLevel(ecs, state.nextLevel, operandOnboardingCompletion, operandAndResultOnboardingCompletion);
+      goToNextLevel(ecs, state.nextLevel, mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion);
     });
 }

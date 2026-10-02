@@ -54,18 +54,22 @@ describe('gameplay onboarding persistence', () => {
   });
 
   test('starts the operand lesson only on the first arrival at Level 2', () => {
-    expect(shouldStartOperandTutorial(2, 'pending')).toBe(true);
-    expect(shouldStartOperandTutorial(2, 'completed')).toBe(false);
-    expect(shouldStartOperandTutorial(2, 'skipped')).toBe(false);
-    expect(shouldStartOperandTutorial(3, 'pending')).toBe(false);
+    expect(shouldStartOperandTutorial(2, 'easy', 'pending')).toBe(false);
+    expect(shouldStartOperandTutorial(2, 'medium', 'pending')).toBe(true);
+    expect(shouldStartOperandTutorial(2, 'expert', 'pending')).toBe(true);
+    expect(shouldStartOperandTutorial(2, 'medium', 'completed')).toBe(false);
+    expect(shouldStartOperandTutorial(2, 'medium', 'skipped')).toBe(false);
+    expect(shouldStartOperandTutorial(3, 'medium', 'pending')).toBe(false);
   });
 
   test('starts the mixed lesson only on the first arrival at Level 3', () => {
-    expect(shouldStartOperandAndResultTutorial(3, 'pending')).toBe(true);
-    expect(shouldStartOperandAndResultTutorial(3, 'completed')).toBe(false);
-    expect(shouldStartOperandAndResultTutorial(3, 'skipped')).toBe(false);
-    expect(shouldStartOperandAndResultTutorial(2, 'pending')).toBe(false);
-    expect(shouldStartOperandAndResultTutorial(6, 'pending')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(3, 'easy', 'pending')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(3, 'medium', 'pending')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(3, 'expert', 'pending')).toBe(true);
+    expect(shouldStartOperandAndResultTutorial(3, 'expert', 'completed')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(3, 'expert', 'skipped')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(2, 'expert', 'pending')).toBe(false);
+    expect(shouldStartOperandAndResultTutorial(6, 'expert', 'pending')).toBe(false);
     expect(tutorialStepIndex('operandAndResult', 99)).toBe(4);
   });
 
