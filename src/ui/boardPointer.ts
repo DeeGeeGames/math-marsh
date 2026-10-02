@@ -1,16 +1,17 @@
+import type { BoardSize } from '../ecs/boardGeometry';
 import { GAME_CONFIG } from '../config';
 import { renderMargins } from '../ecs/boardGeometry';
 import type { BoardPoint } from '../ecs/lilyPads';
 
 const MAX_TAP_TRAVEL_PX = 14;
 
-export function boardPointAtCanvasPixel(x: number, y: number): BoardPoint | null {
+export function boardPointAtCanvasPixel(x: number, y: number, board: BoardSize): BoardPoint | null {
   const margins = renderMargins();
   const boardX = x - margins.left;
   const boardY = y - margins.top;
   const cellSize = GAME_CONFIG.GRID.CELL_SIZE;
-  if (boardX < 0 || boardX > GAME_CONFIG.GRID.WIDTH * cellSize
-    || boardY < 0 || boardY > GAME_CONFIG.GRID.HEIGHT * cellSize) return null;
+  if (boardX < 0 || boardX > board.width * cellSize
+    || boardY < 0 || boardY > board.height * cellSize) return null;
   return { x: boardX, y: boardY };
 }
 
@@ -23,7 +24,11 @@ export function boardPointAtClientPoint(
   if (canvas.clientWidth <= 0 || canvas.clientHeight <= 0) return null;
   const x = (clientX - rect.left - canvas.clientLeft) * canvas.width / canvas.clientWidth;
   const y = (clientY - rect.top - canvas.clientTop) * canvas.height / canvas.clientHeight;
-  return boardPointAtCanvasPixel(x, y);
+  const margins = renderMargins();
+  return boardPointAtCanvasPixel(x, y, {
+    width: (canvas.width - margins.left - margins.right) / GAME_CONFIG.GRID.CELL_SIZE,
+    height: (canvas.height - margins.top - margins.bottom) / GAME_CONFIG.GRID.CELL_SIZE,
+  });
 }
 
 export function bindBoardPointer(

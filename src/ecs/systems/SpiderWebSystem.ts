@@ -7,8 +7,9 @@ import { SPIDER_WEB_BUILD_DURATION_MS } from '../systemConfigs';
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
 
 export function createSpiderWeb(ecs: GameEngine, gridX: number, gridY: number): void {
-  if (gridX < 0 || gridX >= GAME_CONFIG.GRID.WIDTH || gridY < 0 || gridY >= GAME_CONFIG.GRID.HEIGHT) {
-    console.error(`🕸️ ERROR: Grid coordinates (${gridX}, ${gridY}) outside bounds (0,0) to (${GAME_CONFIG.GRID.WIDTH-1},${GAME_CONFIG.GRID.HEIGHT-1})`);
+  const board = ecs.getResource('board');
+  if (gridX < 0 || gridX >= board.width || gridY < 0 || gridY >= board.height) {
+    console.error(`🕸️ ERROR: Grid coordinates (${gridX}, ${gridY}) outside bounds (0,0) to (${board.width-1},${board.height-1})`);
     return;
   }
 

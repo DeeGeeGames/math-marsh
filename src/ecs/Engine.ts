@@ -1,3 +1,4 @@
+import { boardForDifficulty } from './boardGeometry';
 import ECSpresso, { type SystemRegistrarOf } from 'ecspresso';
 import { createInputPlugin, gamepadAxisOn, gamepadButtonsOn } from 'ecspresso/plugins/input/input';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
@@ -61,6 +62,7 @@ export const gameEngine = ECSpresso.create()
   .withResourceTypes<Resources>()
   .withResource('gameMode', ['add'] as const)
   .withResource('mathDifficulty', 'easy')
+  .withResource('board', boardForDifficulty('easy'))
   .withResource('currentLevel', 1)
   .withResource('remainingTimeSeconds', GAME_CONFIG.GAMEPLAY.STARTING_TIME_SECONDS)
   .withResource('equationsSolved', 0)

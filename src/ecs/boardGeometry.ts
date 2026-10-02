@@ -1,4 +1,19 @@
 import { GAME_CONFIG } from '../config';
+import type { MathDifficulty } from './types';
+
+export type BoardSize = Readonly<{ width: number; height: number }>;
+
+export const BOARD_SIZES = {
+	easy: { width: 3, height: 3 },
+	medium: { width: 5, height: 4 },
+	expert: { width: 6, height: 5 },
+} as const satisfies Readonly<Record<MathDifficulty, BoardSize>>;
+
+export const TUTORIAL_BOARD = { width: 6, height: 5 } as const satisfies BoardSize;
+
+export function boardForDifficulty(difficulty: MathDifficulty): BoardSize {
+	return BOARD_SIZES[difficulty];
+}
 
 export type RenderMargins = {
 	top: number;
@@ -17,10 +32,10 @@ export const renderMargins = (): RenderMargins => ({
 	left: marginPixels(GAME_CONFIG.RENDER.PLAY_AREA_SIDE_MARGIN_RATIO),
 });
 
-export const canvasPixelSize = (): { width: number; height: number } => {
+export const canvasPixelSize = (board: BoardSize): { width: number; height: number } => {
 	const margins = renderMargins();
-	const gridWidth = GAME_CONFIG.GRID.WIDTH * GAME_CONFIG.GRID.CELL_SIZE;
-	const gridHeight = GAME_CONFIG.GRID.HEIGHT * GAME_CONFIG.GRID.CELL_SIZE;
+	const gridWidth = board.width * GAME_CONFIG.GRID.CELL_SIZE;
+	const gridHeight = board.height * GAME_CONFIG.GRID.CELL_SIZE;
 	return {
 		width: gridWidth + margins.left + margins.right,
 		height: gridHeight + margins.top + margins.bottom,

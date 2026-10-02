@@ -1,3 +1,4 @@
+import { BOARD_SIZES } from './boardGeometry';
 import { describe, expect, test } from 'bun:test';
 import { gridCellCenter, gridToPixel } from './gameUtils';
 import { activeDirection, canContinueFrom, resolveMovementIntent, updateBreadcrumbs } from './movementIntent';
@@ -14,6 +15,7 @@ function problem(x: number, y: number, consumed = false): MathProblemEntity {
 
 function input(overrides: Partial<Parameters<typeof resolveMovementIntent>[0]> = {}): Parameters<typeof resolveMovementIntent>[0] {
   return {
+    board: BOARD_SIZES.expert,
     pathFollower: { anchorGridX: 1, anchorGridY: 1, breadcrumbs: [], speed: 0 },
     position: gridToPixel(1, 1),
     mathProblems: [problem(1, 1), problem(5, 4)],
@@ -103,11 +105,11 @@ describe('movement input arbitration', () => {
     const path: Components['pathFollower'] = {
       anchorGridX: 1, anchorGridY: 1, breadcrumbs: [{ x: 2, y: 1 }], speed: 100,
     };
-    expect(updateBreadcrumbs(path, 'left')).toEqual([]);
-    expect(canContinueFrom({ x: 5, y: 4 }, 'right')).toBe(false);
-    expect(canContinueFrom({ x: 5, y: 4 }, 'down')).toBe(false);
-    expect(canContinueFrom({ x: 5, y: 4 }, 'left')).toBe(true);
-    expect(canContinueFrom({ x: 5, y: 4 }, undefined)).toBe(false);
+    expect(updateBreadcrumbs(path, 'left', BOARD_SIZES.expert)).toEqual([]);
+    expect(canContinueFrom({ x: 5, y: 4 }, 'right', BOARD_SIZES.expert)).toBe(false);
+    expect(canContinueFrom({ x: 5, y: 4 }, 'down', BOARD_SIZES.expert)).toBe(false);
+    expect(canContinueFrom({ x: 5, y: 4 }, 'left', BOARD_SIZES.expert)).toBe(true);
+    expect(canContinueFrom({ x: 5, y: 4 }, undefined, BOARD_SIZES.expert)).toBe(false);
     expect(activeDirection(direction => direction === 'left' || direction === 'right')).toBeUndefined();
   });
 });

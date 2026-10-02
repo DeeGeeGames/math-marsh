@@ -1,3 +1,4 @@
+import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { html, nothing, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
 import flyMoveToward from '../../assets/images/fly-move-toward.png';
@@ -202,9 +203,9 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
         <div id="difficulty-select" class="difficulty-panel hidden mode-difficulty">
           <h2><span id="selected-mode-label">Addition</span> · Choose difficulty</h2>
           <div class="mode-difficulty-options">
-            <button id="easy-difficulty" type="button" class="difficulty-choice easy" data-difficulty="easy">Easy</button>
-            <button type="button" class="difficulty-choice medium" data-difficulty="medium">Medium</button>
-            <button type="button" class="difficulty-choice expert" data-difficulty="expert">Expert</button>
+            <button id="easy-difficulty" type="button" class="difficulty-choice easy" data-difficulty="easy">Easy · ${BOARD_SIZES.easy.width}×${BOARD_SIZES.easy.height}</button>
+            <button type="button" class="difficulty-choice medium" data-difficulty="medium">Medium · ${BOARD_SIZES.medium.width}×${BOARD_SIZES.medium.height}</button>
+            <button type="button" class="difficulty-choice expert" data-difficulty="expert">Expert · ${BOARD_SIZES.expert.width}×${BOARD_SIZES.expert.height}</button>
           </div>
         </div>
 

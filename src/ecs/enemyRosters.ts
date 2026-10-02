@@ -3,7 +3,8 @@ import type { MathDifficulty } from './types';
 
 export type EnemyRoster = Readonly<Partial<Record<EnemyType, number>>>;
 
-export interface EnemyRosterConfig {
+export interface RandomEnemyRosterConfig {
+  readonly repeatPredefined: false;
   readonly predefined: readonly EnemyRoster[];
   readonly random: {
     readonly minEnemies: number;
@@ -14,28 +15,21 @@ export interface EnemyRosterConfig {
   };
 }
 
-// Each entry is one level's total roster, spawned one enemy at a time.
-// After the last entry, the random upper count grows by one at the configured
-// interval, up to maxEnemies. Weights control the relative chance of each type.
+export type EnemyRosterConfig = RandomEnemyRosterConfig | {
+  readonly repeatPredefined: true;
+  readonly predefined: readonly EnemyRoster[];
+};
+
+// Each entry is one level's total roster, with a timed gap between spawns.
+// Repeating tracks cycle through their predefined rosters. Other tracks use
+// weighted random rosters after the last entry, growing up to maxEnemies.
 export const ENEMY_ROSTER_CONFIG = {
   easy: {
-    predefined: [
-      { lizard: 1 },
-      { lizard: 2 },
-      { spider: 1 },
-      { lizard: 1, spider: 1 },
-      { frog: 1 },
-      { spider: 2 },
-    ],
-    random: {
-      minEnemies: 1,
-      initialMaxEnemies: 2,
-      maxEnemies: 3,
-      levelsPerIncrease: 4,
-      weights: { lizard: 5, spider: 3, frog: 1 },
-    },
+    repeatPredefined: true,
+    predefined: [{ lizard: 1 }, { spider: 1 }, { frog: 1 }],
   },
   medium: {
+    repeatPredefined: false,
     predefined: [
       { lizard: 1 },
       { spider: 2 },
@@ -53,6 +47,7 @@ export const ENEMY_ROSTER_CONFIG = {
     },
   },
   expert: {
+    repeatPredefined: false,
     predefined: [
       { lizard: 2 },
       { frog: 1 },
@@ -79,12 +74,17 @@ function validateCount(value: number, path: string): void {
 }
 
 export function validateEnemyRosterConfig(config: EnemyRosterConfig, difficulty: MathDifficulty): void {
+  if (config.repeatPredefined && config.predefined.length === 0) {
+    throw new Error('Repeating enemy rosters require at least one predefined level');
+  }
   const prefix = `Enemy roster configuration (${difficulty})`;
   config.predefined.forEach((roster, index) => {
     ENEMY_TYPES.forEach(type => {
       validateCount(roster[type] ?? 0, `${prefix}.predefined[${index}].${type}`);
     });
   });
+
+  if (config.repeatPredefined) return;
 
   const random = config.random;
   (['minEnemies', 'initialMaxEnemies', 'maxEnemies', 'levelsPerIncrease'] as const).forEach(key => {
@@ -132,6 +132,11 @@ export function enemyRosterForLevel(
 ): readonly EnemyType[] {
   const config: EnemyRosterConfig = ENEMY_ROSTER_CONFIG[difficulty];
   const levelIndex = Math.max(1, Math.floor(level)) - 1;
+  if (config.repeatPredefined) {
+    const predefined = config.predefined[levelIndex % config.predefined.length];
+    if (!predefined) throw new Error('Repeating enemy rosters require at least one predefined level');
+    return expandRoster(predefined);
+  }
   const predefined = config.predefined[levelIndex];
   if (predefined) return expandRoster(predefined);
 

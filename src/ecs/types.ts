@@ -1,3 +1,4 @@
+import type { BoardSize } from './boardGeometry';
 import type { Timer, TimerComponentTypes } from 'ecspresso/plugins/scripting/timers';
 import type { TweenComponentTypes } from 'ecspresso/plugins/scripting/tween';
 import type { CoroutineComponentTypes } from 'ecspresso/plugins/scripting/coroutine';
@@ -211,6 +212,7 @@ export interface EquationModeState extends BaseEquationModeState {
 export interface Resources {
   gameMode: GameMode;
   mathDifficulty: MathDifficulty;
+  board: BoardSize;
   currentLevel: number;
   remainingTimeSeconds: number;
   equationsSolved: number;

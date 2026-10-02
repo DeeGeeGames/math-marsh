@@ -1,3 +1,4 @@
+import type { BoardSize } from '../boardGeometry';
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createEnemy } from '../entities';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
@@ -27,8 +28,8 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
     .addQuery('mathProblems', mathProblemQuery)
     .addQuery('spiderWebs', spiderWebQuery)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
-    .withResources(['currentLevel', 'enemySpawn'])
-    .setProcess(({ queries, ecs, resources: { currentLevel, enemySpawn } }) => {
+    .withResources(['currentLevel', 'enemySpawn', 'board'])
+    .setProcess(({ queries, ecs, resources: { currentLevel, enemySpawn, board } }) => {
       const player = queries.player;
       if (!player || player.components.player.gameOverPending) return;
 
@@ -45,7 +46,7 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
         ...queries.spiderWebs,
       ]);
       const lilyPadCells = activeLilyPadGridCells(queries.mathProblems);
-      const spawned = spawnEnemyOnLilyPad(ecs, nextEnemyType, occupiedCells, lilyPadCells);
+      const spawned = spawnEnemyOnLilyPad(ecs, nextEnemyType, occupiedCells, lilyPadCells, board);
       if (!spawned) {
         player.components.timers.enemySpawn = createTimer(GAME_CONFIG.TIMING.SHORT_DELAY / 1000);
         return;
@@ -65,8 +66,9 @@ function spawnEnemyOnLilyPad(
   enemyType: EnemyType,
   occupiedCells: ReadonlySet<string>,
   lilyPadCells: readonly GridCell[],
+  board: BoardSize,
 ): boolean {
-  const spawnCell = getRandomAvailableLilyPad(occupiedCells, lilyPadCells);
+  const spawnCell = getRandomAvailableLilyPad(occupiedCells, lilyPadCells, board);
   if (!spawnCell) return false;
 
   const pixelPos = gridToPixel(spawnCell.x, spawnCell.y);
@@ -84,10 +86,11 @@ function randomEntry<T>(entries: readonly T[]): T | undefined {
 function getRandomAvailableLilyPad(
   occupiedCells: ReadonlySet<string>,
   lilyPadCells: readonly GridCell[],
+  board: BoardSize,
 ): GridCell | undefined {
   const available = lilyPadCells
     .filter(position => !occupiedCells.has(gridCellKey(position)));
-  const edge = available.filter(isEdgeGridCell);
+  const edge = available.filter(cell => isEdgeGridCell(cell, board));
 
   return randomEntry(edge.length > 0 ? edge : available);
 }

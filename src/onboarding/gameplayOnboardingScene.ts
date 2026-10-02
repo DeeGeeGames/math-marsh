@@ -1,3 +1,4 @@
+import { TUTORIAL_BOARD } from '../ecs/boardGeometry';
 import { gameplayTimeMs } from '../ecs/gameplayClock';
 import { createTweenSequence } from 'ecspresso/plugins/scripting/tween';
 import { GAME_CONFIG } from '../config';
@@ -87,7 +88,7 @@ function scriptedEquationMode(kind: GameplayOnboardingKind): EquationModeState {
 function gridValues(kind: GameplayOnboardingKind): number[] {
   const overrides: Readonly<Record<number, number>> = TUTORIAL_GRID_OVERRIDES[kind];
   return Array.from(
-    { length: GAME_CONFIG.GRID.WIDTH * GAME_CONFIG.GRID.HEIGHT },
+    { length: TUTORIAL_BOARD.width * TUTORIAL_BOARD.height },
     (_, index) => overrides[index] ?? index + 1,
   );
 }
@@ -95,8 +96,8 @@ function gridValues(kind: GameplayOnboardingKind): number[] {
 function spawnTutorialBoard(ecs: GameEngine, kind: GameplayOnboardingKind): void {
   gridValues(kind).forEach((value, index) => {
     const grid = {
-      x: index % GAME_CONFIG.GRID.WIDTH,
-      y: Math.floor(index / GAME_CONFIG.GRID.WIDTH),
+      x: index % TUTORIAL_BOARD.width,
+      y: Math.floor(index / TUTORIAL_BOARD.width),
     };
     const pixel = gridToPixel(grid.x, grid.y);
     ecs.spawn(mathProblemComponents(pixel.x, pixel.y, value, 1), {

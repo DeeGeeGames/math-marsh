@@ -1,9 +1,8 @@
+import type { BoardSize } from '../../boardGeometry';
 import { GAME_CONFIG } from '../../../config';
 import { cellCenter } from '../../gameUtils';
 import type { PlayerEntity } from '../../queries';
 
-const BOARD_WIDTH = GAME_CONFIG.GRID.WIDTH * GAME_CONFIG.GRID.CELL_SIZE;
-const BOARD_HEIGHT = GAME_CONFIG.GRID.HEIGHT * GAME_CONFIG.GRID.CELL_SIZE;
 
 const easeOutCubic = (progress: number): number =>
   1 - (1 - progress) ** 3;
@@ -12,7 +11,10 @@ export function drawDamageFeedback(
   ctx: CanvasRenderingContext2D,
   player: PlayerEntity,
   reducedMotion: boolean,
+  board: BoardSize,
 ): void {
+  const BOARD_WIDTH = board.width * GAME_CONFIG.GRID.CELL_SIZE;
+  const BOARD_HEIGHT = board.height * GAME_CONFIG.GRID.CELL_SIZE;
   const timer = player.components.timers.damageFeedback;
   if (!timer?.active) return;
 

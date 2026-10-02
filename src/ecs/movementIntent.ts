@@ -1,5 +1,6 @@
+import type { BoardSize } from './boardGeometry';
 import type { Components, GameAction } from './types';
-import { GAME_CONFIG, MOVEMENT_CONFIG } from '../config';
+import { MOVEMENT_CONFIG } from '../config';
 import { clamp, gridToPixel, sameGridCell } from './gameUtils';
 import { shortestCardinalRoute } from './tapRoute';
 import { activeLilyPadCellKeys, boardPointGridCell, isActiveLilyPadCell, isPointOnLilyPad, type BoardPoint, type GridCell } from './lilyPads';
@@ -26,32 +27,35 @@ export function activeDirection(
 function adjacentGridPoint(
   gridPoint: Readonly<{ x: number; y: number }>,
   direction: Direction,
+  board: BoardSize,
 ): { x: number; y: number } {
   const delta = DIRECTION_DELTAS[direction];
   return {
-    x: clamp(gridPoint.x + delta.dx, 0, GAME_CONFIG.GRID.WIDTH - 1),
-    y: clamp(gridPoint.y + delta.dy, 0, GAME_CONFIG.GRID.HEIGHT - 1),
+    x: clamp(gridPoint.x + delta.dx, 0, board.width - 1),
+    y: clamp(gridPoint.y + delta.dy, 0, board.height - 1),
   };
 }
 
 export function canContinueFrom(
   gridPoint: Readonly<{ x: number; y: number }>,
   direction: Direction | undefined,
+  board: BoardSize,
 ): boolean {
   if (!direction) return false;
-  const nextGrid = adjacentGridPoint(gridPoint, direction);
+  const nextGrid = adjacentGridPoint(gridPoint, direction, board);
   return nextGrid.x !== gridPoint.x || nextGrid.y !== gridPoint.y;
 }
 
 export function updateBreadcrumbs(
   pathFollower: Readonly<Components['pathFollower']>,
   direction: Direction,
+  board: BoardSize,
 ): Components['pathFollower']['breadcrumbs'] {
   const cursor = pathFollower.breadcrumbs.at(-1) ?? {
     x: pathFollower.anchorGridX,
     y: pathFollower.anchorGridY,
   };
-  const nextGrid = adjacentGridPoint(cursor, direction);
+  const nextGrid = adjacentGridPoint(cursor, direction, board);
 
   if (nextGrid.x === cursor.x && nextGrid.y === cursor.y) {
     return pathFollower.breadcrumbs;
@@ -85,6 +89,7 @@ type MovementIntent = {
 };
 
 type MovementIntentInput = {
+  board: BoardSize;
   pathFollower: Readonly<Components['pathFollower']>;
   position: Readonly<Components['position']>;
   mathProblems: readonly MathProblemEntity[];
@@ -102,7 +107,7 @@ function tapIntent(input: MovementIntentInput): MovementIntent {
     playMoveSound: false,
   };
   if (input.frozen || !tapRequest) return unchanged;
-  const target = boardPointGridCell(tapRequest);
+  const target = boardPointGridCell(tapRequest, input.board);
 
   const head = pathFollower.breadcrumbs[0];
   const start = head ?? { x: pathFollower.anchorGridX, y: pathFollower.anchorGridY };
@@ -118,7 +123,7 @@ function tapIntent(input: MovementIntentInput): MovementIntent {
 
   // Finish the current segment before following a new tap route. Unlike
   // directional queueing, a tap route can cross the entire board.
-  const route = shortestCardinalRoute(start, target);
+  const route = shortestCardinalRoute(start, target, input.board);
   return {
     ...unchanged,
     breadcrumbs: head ? [head, ...route] : route,
@@ -132,6 +137,6 @@ export function resolveMovementIntent(input: MovementIntentInput): MovementInten
   const tap = tapIntent(input);
   if (input.frozen || !input.pressedDirection) return tap;
   const queued = tap.breadcrumbs.length > 1 ? tap.breadcrumbs.slice(0, 1) : tap.breadcrumbs;
-  const breadcrumbs = updateBreadcrumbs({ ...input.pathFollower, breadcrumbs: queued }, input.pressedDirection);
+  const breadcrumbs = updateBreadcrumbs({ ...input.pathFollower, breadcrumbs: queued }, input.pressedDirection, input.board);
   return { ...tap, breadcrumbs, playMoveSound: tap.playMoveSound || breadcrumbs !== queued };
 }

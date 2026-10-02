@@ -3,12 +3,18 @@ import {
   ENEMY_ROSTER_CONFIG,
   enemyRosterForLevel,
   validateEnemyRosterConfig,
-  type EnemyRosterConfig,
+  type RandomEnemyRosterConfig,
 } from './enemyRosters';
 
 describe('enemy rosters', () => {
+  test('Easy repeats a single lizard, spider, frog across all levels', () => {
+    expect(Array.from({ length: 9 }, (_, index) => enemyRosterForLevel(index + 1, 'easy'))).toEqual([
+      ['lizard'], ['spider'], ['frog'], ['lizard'], ['spider'], ['frog'], ['lizard'], ['spider'], ['frog'],
+    ]);
+    expect(enemyRosterForLevel(1000, 'easy', () => { throw new Error('Repeating rosters must not use randomness'); })).toHaveLength(1);
+  });
   test('predefined levels support single types, duplicates, and mixed rosters independently', () => {
-    expect(enemyRosterForLevel(3, 'easy')).toEqual(['spider']);
+    expect(enemyRosterForLevel(2, 'easy')).toEqual(['spider']);
     expect(enemyRosterForLevel(3, 'medium')).toEqual(['frog']);
     expect(enemyRosterForLevel(3, 'expert')).toEqual(['spider', 'spider', 'spider']);
     expect(enemyRosterForLevel(5, 'expert')).toEqual(Array.from({ length: 5 }, () => 'lizard'));
@@ -24,7 +30,7 @@ describe('enemy rosters', () => {
   });
 
   test('random generation begins immediately after each predefined track', () => {
-    (['easy', 'medium', 'expert'] as const).forEach(difficulty => {
+    (['medium', 'expert'] as const).forEach(difficulty => {
       const config = ENEMY_ROSTER_CONFIG[difficulty];
       const firstRandomLevel = config.predefined.length + 1;
       expect(enemyRosterForLevel(firstRandomLevel, difficulty, () => 0)).toHaveLength(config.random.minEnemies);
@@ -33,7 +39,7 @@ describe('enemy rosters', () => {
   });
 
   test('random count grows at the configured interval and stops at the track cap', () => {
-    (['easy', 'medium', 'expert'] as const).forEach(difficulty => {
+    (['medium', 'expert'] as const).forEach(difficulty => {
       const config = ENEMY_ROSTER_CONFIG[difficulty];
       const firstRandomLevel = config.predefined.length + 1;
       const firstIncrease = firstRandomLevel + config.random.levelsPerIncrease;
@@ -52,11 +58,18 @@ describe('enemy rosters', () => {
 });
 
 describe('enemy roster configuration validation', () => {
-  const config: EnemyRosterConfig = ENEMY_ROSTER_CONFIG.easy;
+  test('repeating tracks need only predefined rosters and reject an empty cycle', () => {
+    expect(() => validateEnemyRosterConfig(ENEMY_ROSTER_CONFIG.easy, 'easy')).not.toThrow();
+    expect(() => validateEnemyRosterConfig({ repeatPredefined: true, predefined: [] }, 'easy'))
+      .toThrow('Repeating enemy rosters require at least one predefined level');
+  });
+
+  const config: RandomEnemyRosterConfig = ENEMY_ROSTER_CONFIG.medium;
 
   test('accepts zero counts, an empty predefined track, and disabled enemy types', () => {
     expect(() => validateEnemyRosterConfig({
       predefined: [],
+      repeatPredefined: false,
       random: {
         ...config.random,
         minEnemies: 0,
@@ -94,7 +107,7 @@ describe('enemy roster configuration validation', () => {
   });
 
   test('rejects inverted count ranges', () => {
-    [{ minEnemies: 3 }, { initialMaxEnemies: 4 }, { maxEnemies: 1 }].forEach(overrides => {
+    [{ minEnemies: 4 }, { initialMaxEnemies: 5 }, { maxEnemies: 1 }].forEach(overrides => {
       expect(() => validateEnemyRosterConfig({
         ...config,
         random: { ...config.random, ...overrides },

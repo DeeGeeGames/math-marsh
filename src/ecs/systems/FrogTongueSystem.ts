@@ -125,6 +125,7 @@ function updateTongueSegments(
     return;
   }
 
+  const board = ecs.getResource('board');
   const frogGrid = pixelToGrid(frogPos.x, frogPos.y);
   const blockedCells = collectEnemyBlockedCells(ecs, frogId);
 
@@ -132,7 +133,7 @@ function updateTongueSegments(
     const gx = frogGrid.x + tongue.direction.x * i;
     const gy = frogGrid.y + tongue.direction.y * i;
 
-    if (gx < 0 || gx >= GAME_CONFIG.GRID.WIDTH || gy < 0 || gy >= GAME_CONFIG.GRID.HEIGHT) {
+    if (gx < 0 || gx >= board.width || gy < 0 || gy >= board.height) {
       console.log(`🐸 Tongue hit grid boundary at (${gx}, ${gy}), stopping extension`);
       break;
     }

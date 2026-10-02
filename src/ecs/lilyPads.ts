@@ -1,3 +1,4 @@
+import type { BoardSize } from './boardGeometry';
 import { GAME_CONFIG } from '../config';
 import { pixelToGrid } from './gameUtils';
 
@@ -38,9 +39,9 @@ const distanceSquaredToCellCenter = (point: BoardPoint, cell: GridCell): number 
   return (point.x - centerX) ** 2 + (point.y - centerY) ** 2;
 };
 
-export const boardPointGridCell = (point: BoardPoint): GridCell => ({
-  x: Math.min(Math.floor(point.x / GAME_CONFIG.GRID.CELL_SIZE), GAME_CONFIG.GRID.WIDTH - 1),
-  y: Math.min(Math.floor(point.y / GAME_CONFIG.GRID.CELL_SIZE), GAME_CONFIG.GRID.HEIGHT - 1),
+export const boardPointGridCell = (point: BoardPoint, board: BoardSize): GridCell => ({
+  x: Math.min(Math.floor(point.x / GAME_CONFIG.GRID.CELL_SIZE), board.width - 1),
+  y: Math.min(Math.floor(point.y / GAME_CONFIG.GRID.CELL_SIZE), board.height - 1),
 });
 
 export const isPointOnLilyPad = (point: BoardPoint, cell: GridCell): boolean =>
@@ -57,17 +58,17 @@ export const isActiveLilyPadCell = (
 ): boolean =>
   activeLilyPadCells.has(gridCellKey(cell));
 
-export const gridCells = (): GridCell[] =>
+export const gridCells = (board: BoardSize): GridCell[] =>
   Array.from(
-    { length: GAME_CONFIG.GRID.WIDTH * GAME_CONFIG.GRID.HEIGHT },
+    { length: board.width * board.height },
     (_, index) => ({
-      x: index % GAME_CONFIG.GRID.WIDTH,
-      y: Math.floor(index / GAME_CONFIG.GRID.WIDTH),
+      x: index % board.width,
+      y: Math.floor(index / board.width),
     }),
   );
 
-export const isEdgeGridCell = ({ x, y }: GridCell): boolean =>
+export const isEdgeGridCell = ({ x, y }: GridCell, board: BoardSize): boolean =>
   x === 0
     || y === 0
-    || x === GAME_CONFIG.GRID.WIDTH - 1
-    || y === GAME_CONFIG.GRID.HEIGHT - 1;
+    || x === board.width - 1
+    || y === board.height - 1;

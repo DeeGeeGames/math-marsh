@@ -4,13 +4,12 @@ import frogImage from './assets/images/frog.svg';
 
 export const GAME_CONFIG = {
   GRID: {
-    WIDTH: 6,
-    HEIGHT: 5,
     CELL_SIZE: 106,
   },
 
   GAMEPLAY: {
     STARTING_TIME_SECONDS: 90,
+    LEVEL_CLEAR_RATIO: 2 / 3,
     CORRECT_ANSWER_BONUS_SECONDS: {
       easy: 10,
       medium: 5,

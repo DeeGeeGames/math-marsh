@@ -1,5 +1,8 @@
+import type { BoardSize } from '../../boardGeometry';
 import { canvasPixelSize } from '../../boardGeometry';
 import { GAME_CONFIG } from '../../../config';
+
+const boardReaders = new WeakMap<HTMLCanvasElement, () => BoardSize>();
 
 let canvas: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
@@ -24,8 +27,10 @@ function canvasDisplayBounds(container: Element | null): { width: number; height
 
 const resizeCanvas = (): void => {
 	if (!canvas) return;
+	const readBoard = boardReaders.get(canvas);
+	if (!readBoard) return;
 
-	const gameSize = canvasPixelSize();
+	const gameSize = canvasPixelSize(readBoard());
 
 	// #canvas-container is a flex-1 region below the in-flow top HUD and above
 	// the bottom hints / on-screen touch controls. Sizing against its rect
@@ -63,9 +68,10 @@ const observeContainer = (target: Element): void => {
 	observedTarget = target;
 };
 
-export const initializeRenderSystem = (canvasElement: HTMLCanvasElement): void => {
+export const initializeRenderSystem = (canvasElement: HTMLCanvasElement, getBoard: () => BoardSize): void => {
 	const isFirstInit = canvas === null;
 
+	boardReaders.set(canvasElement, getBoard);
 	canvas = canvasElement;
 	ctx = canvas.getContext('2d');
 

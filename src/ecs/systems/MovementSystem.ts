@@ -14,8 +14,8 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
     .addSingleton('player', playerMovementQuery)
     .addQuery('mathProblems', mathProblemQuery)
     .runWhenEmpty()
-    .withResources(['inputState', 'tapRequest'])
-    .setProcess(({ queries, dt, ecs, resources: { inputState, tapRequest } }) => {
+    .withResources(['inputState', 'tapRequest', 'board'])
+    .setProcess(({ queries, dt, ecs, resources: { inputState, tapRequest, board } }) => {
       const entity = queries.player;
       if (!entity) return;
       const position = entity.components.position;
@@ -28,6 +28,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
 
       if (tapRequest) ecs.setResource('tapRequest', null);
       const intent = resolveMovementIntent({
+        board,
         pathFollower: pf,
         position,
         mathProblems: queries.mathProblems,
@@ -73,7 +74,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
       // Held input reserves a continuation without adding a real breadcrumb,
       // so releasing can still stop the player on the tile being entered.
       const brakeDistance = (pf.speed * pf.speed) / (2 * MOVEMENT_CONFIG.ACCEL);
-      const hasContinuation = canContinueFrom(targetGrid, heldDirection);
+      const hasContinuation = canContinueFrom(targetGrid, heldDirection, board);
       const shouldBrake = pf.breadcrumbs.length <= 1
         && !hasContinuation
         && remaining <= brakeDistance;
@@ -98,7 +99,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
       }
 
       if (pf.breadcrumbs.length === 0 && heldDirection) {
-        pf.breadcrumbs = updateBreadcrumbs(pf, heldDirection);
+        pf.breadcrumbs = updateBreadcrumbs(pf, heldDirection, board);
       }
     });
 }

@@ -27,12 +27,6 @@ import { enemyMoveBaseIntervalForLevel } from '../enemyDifficulty';
 
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
 
-const navGrid: NavGrid = createNavGrid({
-  width: GAME_CONFIG.GRID.WIDTH,
-  height: GAME_CONFIG.GRID.HEIGHT,
-  cellSize: GAME_CONFIG.GRID.CELL_SIZE,
-});
-
 const DIRECTIONS = [
   { x: 0, y: -1 },
   { x: 0, y: 1 },
@@ -56,7 +50,7 @@ const ENEMY_TYPE_MULTIPLIERS: Record<EnemyType, number> = {
 const GUARD_RADIUS = 2;
 const GUARD_MOVE_CHANCE = 0.3;
 
-const cellOf = (entity: { components: { position: { x: number; y: number } } }): number => {
+const cellOf = (entity: { components: { position: { x: number; y: number } } }, navGrid: NavGrid): number => {
   const { x, y } = pixelToGrid(entity.components.position.x, entity.components.position.y);
   return navGrid.cellFromXY(x, y);
 };
@@ -68,7 +62,8 @@ const cellOf = (entity: { components: { position: { x: number; y: number } } }):
 function nextStepTowards(
   startCell: number,
   goalCell: number,
-  blocked: Set<number>
+  blocked: Set<number>,
+  navGrid: NavGrid,
 ): GridCell | undefined {
   if (startCell === goalCell) return navGrid.cellToXY(startCell);
   const path = findPath(navGrid, startCell, goalCell, { blockedCells: blocked });
@@ -77,6 +72,7 @@ function nextStepTowards(
 }
 
 interface AIContext {
+  navGrid: NavGrid;
   enemy: EnemyEntity;
   player: PlayerEntity;
   currentGrid: GridCell;
@@ -99,21 +95,22 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
     .addQuery('enemies', { ...enemyQuery, optional: ['frogTongue'], mutates: ['enemy', 'timers'] } as const)
     .addQuery('mathProblems', mathProblemQuery)
     .addSingleton('player', playerQuery)
-    .withResources(['currentLevel'])
-    .setProcess(({ queries, ecs, resources: { currentLevel } }) => {
+    .withResources(['currentLevel', 'board'])
+    .setProcess(({ queries, ecs, resources: { currentLevel, board } }) => {
+      const navGrid = createNavGrid({ ...board, cellSize: GAME_CONFIG.GRID.CELL_SIZE });
       const { enemies, player } = queries;
       if (!player) return;
 
       // Shared per-frame blocker set: all enemy cells plus destination cells
       // already claimed by earlier enemy decisions this frame.
-      const blocked = new Set(enemies.map(cellOf));
+      const blocked = new Set(enemies.map(enemy => cellOf(enemy, navGrid)));
       const activeLilyPadCells = activeLilyPadCellKeys(queries.mathProblems);
 
       for (const enemy of enemies) {
         if (enemy.components.timers.enemySpawnTelegraph?.active) continue;
         if (isEntityAnimating(ecs, enemy.id)) continue;
         if (isFrogAttacking(enemy.components.frogTongue)) continue;
-        processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, currentLevel);
+        processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, currentLevel, navGrid);
       }
     });
 }
@@ -125,6 +122,7 @@ function processEnemyAI(
   blocked: Set<number>,
   activeLilyPadCells: ReadonlySet<string>,
   currentLevel: number,
+  navGrid: NavGrid,
 ): void {
   const enemyPos = enemy.components.position;
   const enemyData = enemy.components.enemy;
@@ -136,7 +134,7 @@ function processEnemyAI(
   const startCell = navGrid.cellFromXY(currentGrid.x, currentGrid.y);
 
   const { x: nextGridX, y: nextGridY } = AI_PROCESSORS[enemyData.behaviorType]({
-    enemy, player, currentGrid, startCell, blocked, activeLilyPadCells,
+    enemy, player, currentGrid, startCell, blocked, activeLilyPadCells, navGrid,
   });
 
   const newPixelPos = gridToPixel(nextGridX, nextGridY);
@@ -156,7 +154,7 @@ function processEnemyAI(
       Math.random() < SPIDER_CONFIG.WEB_PLACEMENT_CHANCE) {
     // The spider has vacated startCell, so the only thing that could occupy
     // it is the player.
-    if (startCell !== cellOf(player)) {
+    if (startCell !== cellOf(player, navGrid)) {
       createSpiderWeb(ecs, currentGrid.x, currentGrid.y);
     }
   }
@@ -176,16 +174,17 @@ function calculateMoveInterval(behaviorType: AIBehavior, currentLevel: number, e
 const randomEntry = <T>(entries: readonly T[]): T | undefined =>
   entries[Math.floor(Math.random() * entries.length)];
 
-const cellIndex = ({ x, y }: GridCell): number => navGrid.cellFromXY(x, y);
+const cellIndex = ({ x, y }: GridCell, navGrid: NavGrid): number => navGrid.cellFromXY(x, y);
 
 const pathBlockedCells = (
   activeLilyPadCells: ReadonlySet<string>,
   occupiedCells: ReadonlySet<number>,
+  navGrid: NavGrid,
 ): Set<number> =>
   new Set([
-    ...gridCells()
+    ...gridCells(navGrid)
       .filter(cell => !isActiveLilyPadCell(cell, activeLilyPadCells))
-      .map(cellIndex),
+      .map(cell => cellIndex(cell, navGrid)),
     ...occupiedCells,
   ]);
 
@@ -193,12 +192,13 @@ const adjacentLilyPadMoves = (
   currentGrid: GridCell,
   activeLilyPadCells: ReadonlySet<string>,
   blocked: ReadonlySet<number>,
+  navGrid: NavGrid,
 ): GridCell[] =>
   DIRECTIONS
     .map(({ x, y }) => ({ x: currentGrid.x + x, y: currentGrid.y + y }))
     .filter(({ x, y }) => x >= 0 && x < navGrid.width && y >= 0 && y < navGrid.height)
     .filter(cell => isActiveLilyPadCell(cell, activeLilyPadCells))
-    .filter(cell => !blocked.has(cellIndex(cell)));
+    .filter(cell => !blocked.has(cellIndex(cell, navGrid)));
 
 const nextLilyPadStepTowards = (
   ctx: AIContext,
@@ -206,8 +206,9 @@ const nextLilyPadStepTowards = (
 ): GridCell =>
   nextStepTowards(
     ctx.startCell,
-    navGrid.cellFromXY(target.x, target.y),
-    pathBlockedCells(ctx.activeLilyPadCells, ctx.blocked),
+    ctx.navGrid.cellFromXY(target.x, target.y),
+    pathBlockedCells(ctx.activeLilyPadCells, ctx.blocked, ctx.navGrid),
+    ctx.navGrid,
   ) ?? processRandomAI(ctx);
 
 function processChaseAI(ctx: AIContext): GridCell {
@@ -227,7 +228,7 @@ function processPatrolAI(ctx: AIContext): GridCell {
   const enemyData = enemy.components.enemy;
 
   if (!enemyData.waypoints || enemyData.waypoints.length === 0) {
-    enemyData.waypoints = generatePatrolWaypoints(currentGrid);
+    enemyData.waypoints = generatePatrolWaypoints(currentGrid, ctx.navGrid);
     enemyData.currentWaypoint = 0;
   }
 
@@ -245,8 +246,8 @@ function processPatrolAI(ctx: AIContext): GridCell {
   return nextLilyPadStepTowards(ctx, target);
 }
 
-function processRandomAI({ currentGrid, blocked, activeLilyPadCells }: AIContext): GridCell {
-  return randomEntry(adjacentLilyPadMoves(currentGrid, activeLilyPadCells, blocked)) ?? currentGrid;
+function processRandomAI({ currentGrid, blocked, activeLilyPadCells, navGrid }: AIContext): GridCell {
+  return randomEntry(adjacentLilyPadMoves(currentGrid, activeLilyPadCells, blocked, navGrid)) ?? currentGrid;
 }
 
 function processGuardAI(ctx: AIContext): GridCell {
@@ -272,10 +273,10 @@ function processGuardAI(ctx: AIContext): GridCell {
   return stepDistance <= GUARD_RADIUS ? step : currentGrid;
 }
 
-function generatePatrolWaypoints(startPos: { x: number; y: number }): Array<{ x: number; y: number }> {
+function generatePatrolWaypoints(startPos: { x: number; y: number }, navGrid: NavGrid): Array<{ x: number; y: number }> {
   const size = 3;
-  const maxX = GAME_CONFIG.GRID.WIDTH - 1;
-  const maxY = GAME_CONFIG.GRID.HEIGHT - 1;
+  const maxX = navGrid.width - 1;
+  const maxY = navGrid.height - 1;
   return [
     { x: startPos.x, y: startPos.y },
     { x: Math.min(maxX, startPos.x + size), y: startPos.y },

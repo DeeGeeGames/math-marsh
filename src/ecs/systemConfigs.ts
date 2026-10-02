@@ -6,11 +6,6 @@ import type { EquationFeedbackKind } from './types';
  * Centralized configuration for all ECS systems
  */
 
-// Problem Management System Configuration (unique values not in GAME_CONFIG)
-export const PROBLEM_CONFIG = {
-  TOTAL_PROBLEMS: 30,           // Total problems needed to fill entire 6x5 grid
-} as const;
-
 // AI System Configuration (unique values not in GAME_CONFIG)
 export const AI_CONFIG = {
   BASE_MOVE_INTERVAL: 2_500,       // Base milliseconds between enemy moves (slowed down)

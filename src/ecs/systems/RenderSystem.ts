@@ -14,7 +14,7 @@ import {
 import { collectGridCellKeys } from '../lilyPads';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { cleanupRenderSystem, getCtx } from './render/context';
-import { drawGrid } from './render/grid';
+import { createPondRenderer } from './render/grid';
 import { pondThemeForPromptKind } from '../pondTheme';
 import { drawEntity } from './render/entities';
 import {
@@ -49,6 +49,8 @@ const reducedMotionPreference = typeof window === 'undefined'
 export const addRenderSystemToEngine = (
   systems: GameSystemRegistrar,
 ): void => {
+  const pondRenderers = new Map<string, ReturnType<typeof createPondRenderer>>();
+
   systems.addSystem('renderSystem')
     .setPriority(SYSTEM_PRIORITIES.RENDER)
     .inScreens(['playing', 'tutorial', 'levelComplete'])
@@ -61,9 +63,9 @@ export const addRenderSystemToEngine = (
     .addQuery('enemies', enemyQuery)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
-    .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds', 'gameplayClock'])
+    .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds', 'gameplayClock', 'board'])
     .setOnDetach(cleanupRenderSystem)
-    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback, remainingTimeSeconds, gameplayClock } }) => {
+    .setProcess(({ queries, ecs, resources: { equationMode, tapFeedback, remainingTimeSeconds, gameplayClock, board } }) => {
       const ctx = getCtx();
       if (!ctx) return;
 
@@ -93,6 +95,9 @@ export const addRenderSystemToEngine = (
         (playerShake?.offsetY ?? 0) * boardShakeScale,
       );
 
+      const boardKey = `${board.width},${board.height}`;
+      const drawGrid = pondRenderers.get(boardKey) ?? createPondRenderer(board);
+      pondRenderers.set(boardKey, drawGrid);
       drawGrid(ctx, ambientTime, pondThemeForPromptKind(equationMode.promptKind));
 
       const sortedEntities = [...queries.renderableEntities].sort(
@@ -146,6 +151,7 @@ export const addRenderSystemToEngine = (
         queries.frogTongues,
         currentTime,
         reducedMotion,
+        board,
       );
       drawAnswerConsumptionEffects(
         ctx,
@@ -166,7 +172,7 @@ export const addRenderSystemToEngine = (
       drawSelectionDisruptionEffects(ctx, queries.disruptions, currentTime, reducedMotion);
       if (queries.player) {
         drawFrozenPlayerEffect(ctx, queries.player, currentTime);
-        drawDamageFeedback(ctx, queries.player, reducedMotion);
+        drawDamageFeedback(ctx, queries.player, reducedMotion, board);
       }
       ctx.restore();
 

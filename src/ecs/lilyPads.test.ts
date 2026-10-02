@@ -1,3 +1,4 @@
+import { BOARD_SIZES } from './boardGeometry';
 import { describe, expect, test } from 'bun:test';
 import { gridToPixel } from './gameUtils';
 import {
@@ -65,9 +66,9 @@ describe('lily pad grid helpers', () => {
   });
 
   test('board points select their own cell, including gaps and the far edge', () => {
-    expect(boardPointGridCell({ x: 106, y: 53 })).toEqual({ x: 1, y: 0 });
-    expect(boardPointGridCell({ x: 180, y: 53 })).toEqual({ x: 1, y: 0 });
-    expect(boardPointGridCell({ x: 636, y: 530 })).toEqual({ x: 5, y: 4 });
+    expect(boardPointGridCell({ x: 106, y: 53 }, BOARD_SIZES.expert)).toEqual({ x: 1, y: 0 });
+    expect(boardPointGridCell({ x: 180, y: 53 }, BOARD_SIZES.expert)).toEqual({ x: 1, y: 0 });
+    expect(boardPointGridCell({ x: 636, y: 530 }, BOARD_SIZES.expert)).toEqual({ x: 5, y: 4 });
   });
 
   test('a gap click near the fly does not count as an Eat tap', () => {

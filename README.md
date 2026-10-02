@@ -18,6 +18,8 @@ Open the local address printed by Bun. The main menu has a **How to Play** guide
 - Move with the arrow keys, WASD, gamepad D-pad or left stick, or the optional on-screen D-pad.
 - Eat a number with Space, Enter, the gamepad's primary button, or the on-screen Eat button. On a touch or pointer device, select a lily pad to move there, then select the fly to eat the number.
 - Use Escape or the gamepad Start button to pause. F1 opens settings. Settings include sound effects, background music, and the on-screen controls mode.
+- Boards are 3×3 on Easy, 5×4 on Medium, and 6×5 on Expert. Easy has one enemy per level, rotating through lizard, spider, and frog. Scripted tutorials use a 6×5 board.
+- Levels normally require clearing two thirds of the board. Larger enemy rosters lower that target to leave one pad per enemy, plus one extra for two-number answers.
 - Correct answers add time; wrong answers and enemy hits cost time. Levels cycle through finding the result, both operands, then one operand and the result. Number ranges increase after each three-level cycle.
 
 Gamepad actions currently use the controller reported in slot 0. Controller selection and reconnect handling are still being developed.

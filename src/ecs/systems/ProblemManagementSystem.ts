@@ -1,3 +1,5 @@
+import { gridCells } from '../lilyPads';
+import { levelClearTarget } from '../levelProgression';
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createMathProblem } from '../entities';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
@@ -17,7 +19,7 @@ import {
   type PlayerEntity,
   type PositionEntity
 } from '../queries';
-import { PROBLEM_CONFIG, SYSTEM_PRIORITIES } from '../systemConfigs';
+import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { Resources } from '../types';
 import { playSound } from '../../audio/audio';
 
@@ -40,7 +42,7 @@ export function addProblemManagementSystemToEngine(
     .addQuery('mathProblems', mathProblemWithRenderableQuery)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
     .addQuery('allPositions', positionEntityQuery)
-    .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty'])
+    .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn'])
     .setProcess(({ queries, ecs, resources }) => {
       const player = queries.player;
       const activeProblems = queries.mathProblems.filter(
@@ -56,6 +58,7 @@ export function addProblemManagementSystemToEngine(
               queries.allPositions,
               resources.currentLevel,
               resources.equationMode,
+              resources.board,
             )
           : resources.equationMode;
         const nextEquationMode = equationStateFromBoard(
@@ -77,9 +80,11 @@ export function addProblemManagementSystemToEngine(
           queries.mathProblems,
           resources.currentLevel,
           nextEquationMode,
+          resources.board,
+          resources.enemySpawn.roster.length,
         );
       }
-      cleanupConsumedProblems(ecs, queries.mathProblems);
+      cleanupConsumedProblems(ecs, queries.mathProblems, resources.board);
     });
 }
 
@@ -91,33 +96,26 @@ function populateFullGrid(
   allPositionEntities: PositionEntity[],
   currentLevel: number,
   equationMode: Resources['equationMode'],
+  board: Resources['board'],
 ): Resources['equationMode'] {
+  const availablePositions = getAllGridPositionsWithoutMathProblems(allPositionEntities, board);
+  if (availablePositions.length < equationMode.operandsRequired) return equationMode;
+
   const candidate = createRandomEquationCandidate(equationMode);
-  const allProblems = equationProblemValuesForCandidate(
+  const problemValues = equationProblemValuesForCandidate(
     equationMode,
     candidate,
-    PROBLEM_CONFIG.TOTAL_PROBLEMS,
-  ).map(value => ({ value }));
-  
-  // Get ALL grid positions that don't already have math problems
-  const availablePositions = getAllGridPositionsWithoutMathProblems(allPositionEntities);
-  
-  const problemsToPlace = Math.min(allProblems.length, availablePositions.length);
+    availablePositions.length,
+  );
 
-  allProblems.slice(0, problemsToPlace).forEach((problem, i) => {
-    const gridPos = availablePositions[i];
+  availablePositions.forEach((gridPos, index) => {
+    const value = problemValues[index];
+    if (value === undefined) throw new Error('Board generation is missing a pad value');
     const pixelPos = gridToPixel(gridPos.x, gridPos.y);
-    
-    createMathProblem(
-      ecs.commands,
-      pixelPos.x,
-      pixelPos.y,
-      problem.value,
-      1
-    );
+    createMathProblem(ecs.commands, pixelPos.x, pixelPos.y, value, 1);
   });
-  
-  console.log(`Populated grid with ${problemsToPlace} problems for level ${currentLevel} - ALL grid positions filled`);
+
+  console.log(`Populated ${availablePositions.length} available pads for level ${currentLevel}`);
   return {
     ...equationMode,
     target: candidate.target,
@@ -132,16 +130,7 @@ function populateFullGrid(
  */
 const gridKey = (x: number, y: number): string => `${x},${y}`;
 
-const gridPositions = (): Array<{ x: number; y: number }> =>
-  Array.from(
-    { length: GAME_CONFIG.GRID.WIDTH * GAME_CONFIG.GRID.HEIGHT },
-    (_, index) => ({
-      x: index % GAME_CONFIG.GRID.WIDTH,
-      y: Math.floor(index / GAME_CONFIG.GRID.WIDTH),
-    }),
-  );
-
-function getAllGridPositionsWithoutMathProblems(allPositionEntities: PositionEntity[]): { x: number; y: number }[] {
+function getAllGridPositionsWithoutMathProblems(allPositionEntities: PositionEntity[], board: Resources['board']): { x: number; y: number }[] {
   const mathProblemPositions = new Set(
     allPositionEntities
       .filter(entity => entity.components.mathProblem)
@@ -153,7 +142,7 @@ function getAllGridPositionsWithoutMathProblems(allPositionEntities: PositionEnt
       ),
   );
 
-  return gridPositions().filter(({ x, y }) => !mathProblemPositions.has(gridKey(x, y)));
+  return gridCells(board).filter(({ x, y }) => !mathProblemPositions.has(gridKey(x, y)));
 }
 
 function activeEquationProblems(mathProblems: MathProblemEntityWithRenderable[]): MathProblemEntityWithRenderable[] {
@@ -204,6 +193,8 @@ function checkEquationLevelCompletion(
   mathProblems: MathProblemEntityWithRenderable[],
   currentLevel: number,
   equationMode: Resources['equationMode'],
+  board: Resources['board'],
+  enemyCount: number,
 ): void {
   if (equationMode.feedback?.kind === 'correct') return;
 
@@ -211,7 +202,8 @@ function checkEquationLevelCompletion(
   const noPromptAvailable = mathProblems.length > 0
     && activeCount > 0
     && equationMode.target === 0;
-  const shouldAdvance = equationMode.clearedThisLevel >= 10
+  const clearTarget = levelClearTarget(board, enemyCount, equationMode.operandsRequired);
+  const shouldAdvance = equationMode.clearedThisLevel >= clearTarget
     || (mathProblems.length > 0 && activeCount < equationMode.operandsRequired)
     || noPromptAvailable;
 
@@ -231,8 +223,9 @@ function checkEquationLevelCompletion(
 /**
  * Clean up consumed problems that are no longer visible
  */
-function cleanupConsumedProblems(ecs: GameEngine, mathProblems: MathProblemEntityWithRenderable[]): void {
-  if (mathProblems.length <= PROBLEM_CONFIG.TOTAL_PROBLEMS) return;
+function cleanupConsumedProblems(ecs: GameEngine, mathProblems: MathProblemEntityWithRenderable[], board: Resources['board']): void {
+  // Retain the current board until level completion has observed its consumed pads.
+  if (mathProblems.length <= board.width * board.height) return;
 
   mathProblems
     .filter(problem =>

@@ -1,3 +1,4 @@
+import { boardForDifficulty, TUTORIAL_BOARD } from './boardGeometry';
 import { initializeEngine, startGameLoop, gameEngine } from './Engine';
 import { createPlayer } from './entities';
 import type { PlayingScreenConfig } from './types';
@@ -38,7 +39,7 @@ const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'modeSelect', 
 const setupCanvas = (): void => {
   const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
   if (!canvas) throw new Error('Canvas element not found');
-  initializeRenderSystem(canvas);
+  initializeRenderSystem(canvas, () => gameEngine.getResource('board'));
 };
 
 const resetEnemySpawnSequence = (): void => {
@@ -84,7 +85,8 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
     const existingPlayer = gameEngine.tryGetSingleton(playerQuery.with);
     if (existingPlayer) gameEngine.removeEntity(existingPlayer.id);
 
-    const playerPixelPos = gridToPixel(3, 2);
+    const board = gameEngine.getResource('board');
+    const playerPixelPos = gridToPixel(Math.floor(board.width / 2), Math.floor(board.height / 2));
     createPlayer(gameEngine, playerPixelPos.x, playerPixelPos.y);
   }
 
@@ -116,6 +118,7 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenResume('paused', showPausedScreen);
 
   gameEngine.onScreenEnter('playing', ({ config }) => {
+    gameEngine.setResource('board', boardForDifficulty(gameEngine.getResource('mathDifficulty')));
     showGameplayScreen('normal');
     setupCanvas();
     gameEngine.setResource('gameplayOnboardingSession', { active: false });
@@ -127,6 +130,7 @@ const setupScreenHooks = (): void => {
   });
 
   gameEngine.onScreenEnter('tutorial', ({ config }) => {
+    gameEngine.setResource('board', TUTORIAL_BOARD);
     showGameplayScreen('tutorial');
     setupCanvas();
     setupScriptedTutorialScene(gameEngine, config);

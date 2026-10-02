@@ -1,3 +1,4 @@
+import type { BoardSize } from '../../boardGeometry';
 import { GAME_CONFIG } from '../../../config';
 import {
   cellCenter,
@@ -123,7 +124,7 @@ const drawTongueTip = (
   ctx.fill();
 };
 
-function telegraphedCells(frog: FrogTongueEntity): Array<{ x: number; y: number }> {
+function telegraphedCells(frog: FrogTongueEntity, board: BoardSize): Array<{ x: number; y: number }> {
   const start = pixelToGrid(
     frog.components.position.x,
     frog.components.position.y,
@@ -135,9 +136,9 @@ function telegraphedCells(frog: FrogTongueEntity): Array<{ x: number; y: number 
     y: start.y + direction.y * (index + 1),
   })).filter(({ x, y }) => (
     x >= 0
-    && x < GAME_CONFIG.GRID.WIDTH
+    && x < board.width
     && y >= 0
-    && y < GAME_CONFIG.GRID.HEIGHT
+    && y < board.height
   ));
 }
 
@@ -146,6 +147,7 @@ export function drawFrogAttackTelegraphs(
   frogs: FrogTongueEntity[],
   currentTime: number,
   reducedMotion: boolean,
+  board: BoardSize,
 ): void {
   frogs.forEach(frog => {
     const tongue = frog.components.frogTongue;
@@ -157,7 +159,7 @@ export function drawFrogAttackTelegraphs(
     const pulse = reducedMotion ? 0.7 : 0.55 + Math.sin(progress * Math.PI * 5) * 0.18;
     const presentation = tonguePresentation(tongue);
     const mouth = mouthAnchor(frog.components.position, presentation.anchor);
-    const cells = telegraphedCells(frog);
+    const cells = telegraphedCells(frog, board);
     const target = cells.at(-1);
     if (!target) return;
 
