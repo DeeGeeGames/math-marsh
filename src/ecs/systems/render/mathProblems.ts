@@ -1,5 +1,5 @@
 import { GAME_CONFIG } from '../../../config';
-import { ANSWER_CONSUMPTION_DURATION_MS } from '../../systemConfigs';
+import { ANSWER_CONSUMPTION_DURATION_MS, SELECTION_DISRUPTION_DURATION_MS } from '../../systemConfigs';
 import { activePlayerGridCell, cellCenter, positionInGridCell } from '../../gameUtils';
 import { gridCellKey, positionedEntityGridCellKey } from '../../lilyPads';
 import type { MathProblemEntity, PlayerEntity } from '../../queries';
@@ -18,6 +18,57 @@ const burstParticles = Array.from({ length: BURST_PARTICLE_COUNT }, (_, index) =
   size: 3 + (index % 3),
   color: index % 2 === 0 ? '#d5f6f4' : '#9bd45e',
 }));
+
+export function drawSelectionDisruptionEffects(
+  ctx: CanvasRenderingContext2D,
+  effects: readonly {
+    components: {
+      position: Readonly<Components['position']>;
+      selectionDisruption: Readonly<Components['selectionDisruption']>;
+    };
+  }[],
+  currentTime: number,
+  reducedMotion: boolean,
+): void {
+  effects.forEach(({ components: { position, selectionDisruption } }) => {
+    const progress = Math.max(0, (currentTime - selectionDisruption.startedAt) / SELECTION_DISRUPTION_DURATION_MS);
+    if (progress >= 1) return;
+    const center = cellCenter(position);
+    const expansion = reducedMotion ? 0 : easeOutCubic(progress) * 16;
+
+    ctx.save();
+    ctx.globalAlpha = 1 - progress;
+    ctx.strokeStyle = '#ffd18a';
+    ctx.lineWidth = 6 - progress * 3;
+    ctx.beginPath();
+    ctx.ellipse(
+      center.x,
+      center.y,
+      lilyPadRadius + 14 + expansion,
+      lilyPadRadius * 0.76 + 12 + expansion,
+      -0.18,
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+    if (!reducedMotion) {
+      burstParticles.forEach(particle => {
+        const distance = lilyPadRadius + 14 + expansion;
+        ctx.fillStyle = '#ffd18a';
+        ctx.beginPath();
+        ctx.arc(
+          center.x + Math.cos(particle.angle) * distance,
+          center.y + Math.sin(particle.angle) * distance * 0.8,
+          3 * (1 - progress),
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      });
+    }
+    ctx.restore();
+  });
+}
 
 type LilyPadMotion = {
   centerX: number;

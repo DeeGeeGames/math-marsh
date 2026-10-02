@@ -19,6 +19,7 @@ import { handleEquationProblemSelection } from '../equationSelection';
 import { playSound } from '../../audio/audio';
 import { queueTimeAdjustment } from '../timeAdjustments';
 import { gameplayTimeMs } from '../gameplayClock';
+import { handleEnemySelectionDisruption } from '../selectionDisruption';
 
 const isInvulnerable = (player: PlayerCollisionEntity): boolean =>
   player.components.timers.invulnerability?.active === true;
@@ -64,6 +65,14 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
       if (!player) return;
       if (player.components.player.gameOverPending) return;
 
+      const equationMode = handleEnemySelectionDisruption(
+        ecs,
+        resources.equationMode,
+        queries.mathProblems,
+        queries.enemies,
+        gameplayTimeMs(resources.gameplayClock),
+      );
+
       const invulnerable = isInvulnerable(player);
       const frozen = player.components.timers.freeze?.active === true;
 
@@ -105,7 +114,7 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
               player,
               problem,
               selectableMathProblems,
-              resources,
+              { ...resources, equationMode },
             );
           }
         }

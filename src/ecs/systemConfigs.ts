@@ -30,6 +30,7 @@ export const AI_CONFIG = {
 } as const;
 
 export const ANSWER_CONSUMPTION_DURATION_MS = 720;
+export const SELECTION_DISRUPTION_DURATION_MS = 480;
 export const CORRECT_ANSWER_HOLD_DURATION_MS = 500;
 
 export const EQUATION_FEEDBACK_DURATION_MS: Record<EquationFeedbackKind, number> = {

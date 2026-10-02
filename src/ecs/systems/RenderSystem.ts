@@ -20,6 +20,7 @@ import { drawEntity } from './render/entities';
 import {
   drawAnswerConsumptionEffects,
   drawEquationSelectionHighlights,
+  drawSelectionDisruptionEffects,
   drawPlayerHighlight,
   drawMathProblemLilyPads,
   drawMathProblemNumbers,
@@ -56,6 +57,7 @@ export const addRenderSystemToEngine = (
     .addSingleton('player', { ...playerQuery, optional: ['shake'] } as const)
     .addQuery('mathProblems', mathProblemQuery)
     .addQuery('timeAdjustments', timeAdjustmentQuery)
+    .addQuery('disruptions', { with: ['position', 'selectionDisruption'], mutates: [] } as const)
     .addQuery('enemies', enemyQuery)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
@@ -161,6 +163,7 @@ export const addRenderSystemToEngine = (
       }
 
       drawEnhancedFrogTongues(ctx, queries.frogTongues, currentTime, 'aboveFrog');
+      drawSelectionDisruptionEffects(ctx, queries.disruptions, currentTime, reducedMotion);
       if (queries.player) {
         drawFrozenPlayerEffect(ctx, queries.player, currentTime);
         drawDamageFeedback(ctx, queries.player, reducedMotion);

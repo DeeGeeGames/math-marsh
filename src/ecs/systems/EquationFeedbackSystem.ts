@@ -1,6 +1,6 @@
 import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
-import { EQUATION_FEEDBACK_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
+import { EQUATION_FEEDBACK_DURATION_MS, SELECTION_DISRUPTION_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { BaseEquationModeState, EquationFeedback } from '../types';
 
 const nextEquationModeForFeedback = (
@@ -18,12 +18,17 @@ export function addEquationFeedbackSystemToEngine(systems: GameSystemRegistrar):
     .setPriority(SYSTEM_PRIORITIES.EQUATION_FEEDBACK)
     .inScreens(['playing'])
     .runWhenEmpty()
-    .withResources(['equationMode'])
-    .setProcess(({ ecs, resources: { equationMode } }) => {
+    .addQuery('disruptions', { with: ['selectionDisruption'], mutates: [] } as const)
+    .withResources(['equationMode', 'gameplayClock'])
+    .setProcess(({ ecs, queries, resources: { equationMode, gameplayClock } }) => {
+      const currentTime = gameplayTimeMs(gameplayClock);
+      queries.disruptions
+        .filter(effect => currentTime - effect.components.selectionDisruption.startedAt >= SELECTION_DISRUPTION_DURATION_MS)
+        .forEach(effect => ecs.commands.removeEntity(effect.id));
       const feedback = equationMode.feedback;
       if (!feedback) return;
 
-      const nextMode = nextEquationModeForFeedback(feedback, gameplayTimeMs(ecs.getResource('gameplayClock')));
+      const nextMode = nextEquationModeForFeedback(feedback, currentTime);
       if (!nextMode) return;
 
       ecs.setResource('equationMode', nextMode);

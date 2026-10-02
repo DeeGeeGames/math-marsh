@@ -105,6 +105,9 @@ export interface Components {
   answerConsumption: {
     startedAt: number;
   };
+  selectionDisruption: {
+    startedAt: number;
+  };
   timeAdjustment: {
     startedAt: number;
     seconds: number;
