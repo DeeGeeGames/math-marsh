@@ -18,7 +18,7 @@ import {
 } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { EnemyType } from '../../types/shared';
-import { enemySpawnIntervalForLevel, enemySpawnOrderForLevel } from '../enemyDifficulty';
+import { enemySpawnIntervalForLevel } from '../enemyDifficulty';
 
 export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('enemySpawnSystem')
@@ -32,22 +32,11 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
       const player = queries.player;
       if (!player || player.components.player.gameOverPending) return;
 
-      const spawnOrder = enemySpawnOrderForLevel(currentLevel);
-      const { index } = enemySpawn;
-      const currentEnemyCount = queries.enemies.length;
-      const cycleComplete = index >= spawnOrder.length;
-
-      if (cycleComplete && currentEnemyCount === 0) {
-        ecs.setResource('enemySpawn', { index: 0 });
-        console.log('🔄 Resetting spawn cycle - ready to spawn new enemy sequence');
-        return;
-      }
-
-      const enemyLimit = Math.min(GAME_CONFIG.ENEMY_SPAWN.MAX_ENEMIES, spawnOrder.length);
-      if (cycleComplete || currentEnemyCount >= enemyLimit) return;
+      const { index, roster } = enemySpawn;
+      if (index >= roster.length) return;
       if (player.components.timers.enemySpawn?.active) return;
 
-      const nextEnemyType = spawnOrder[index];
+      const nextEnemyType = roster[index];
       if (!nextEnemyType) return;
 
       const occupiedCells = collectGridCellKeys([
@@ -62,11 +51,10 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
         return;
       }
 
-      console.log(`Spawned ${nextEnemyType} (#${index + 1}/${spawnOrder.length})`);
+      console.log(`Spawned ${nextEnemyType} (#${index + 1}/${roster.length})`);
 
       const nextIndex = index + 1;
-      ecs.setResource('enemySpawn', { index: nextIndex });
-      if (nextIndex >= spawnOrder.length) console.log(`🔄 Spawn cycle complete - ${spawnOrder.length} enemy types spawned`);
+      ecs.setResource('enemySpawn', { index: nextIndex, roster });
 
       player.components.timers.enemySpawn = createTimer(enemySpawnIntervalForLevel(currentLevel) / 1000);
     });

@@ -60,10 +60,6 @@ export const GAME_CONFIG = {
     DESKTOP_CANVAS_MARGIN_PX: 32,
   },
 
-  ENEMY_SPAWN: {
-    MAX_ENEMIES: 3,
-  },
-
   ENEMY_TYPES: {
     lizard: {
       COLOR: 'red',

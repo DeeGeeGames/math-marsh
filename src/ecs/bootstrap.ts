@@ -31,6 +31,7 @@ import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
 import { addUISystemToEngine } from './systems/UISystem';
 import { addSplashSystemToEngine } from './systems/SplashSystem';
 import { STARTING_TIME_SECONDS } from './runTime';
+import { enemyRosterForLevel } from './enemyRosters';
 
 const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
 
@@ -41,7 +42,13 @@ const setupCanvas = (): void => {
 };
 
 const resetEnemySpawnSequence = (): void => {
-  gameEngine.setResource('enemySpawn', { index: 0 });
+  gameEngine.setResource('enemySpawn', {
+    index: 0,
+    roster: enemyRosterForLevel(
+      gameEngine.getResource('currentLevel'),
+      gameEngine.getResource('mathDifficulty'),
+    ),
+  });
 
   const player = gameEngine.tryGetSingleton(playerQuery.with);
   if (!player) return;

@@ -214,7 +214,7 @@ export interface Resources {
   currentLevel: number;
   remainingTimeSeconds: number;
   equationsSolved: number;
-  enemySpawn: { index: number };
+  enemySpawn: { index: number; roster: readonly EnemyType[] };
   equationMode: EquationModeState;
   inputPrompt: import('../ui/inputPrompts').InputPromptState;
   gameplayOnboardingCompletion: GameplayOnboardingCompletion;
