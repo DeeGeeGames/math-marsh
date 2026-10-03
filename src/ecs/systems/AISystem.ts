@@ -283,12 +283,15 @@ function processPatrolAI(ctx: AIContext): GridCell {
 
   const waypoints = enemyData.waypoints;
   const waypointIndex = enemyData.currentWaypoint ?? 0;
-  const target = waypoints[waypointIndex];
+  // Skip reached (or duplicate) waypoints within this decision, rather than
+  // announcing the current cell and spending a whole idle cycle there.
+  const nextWaypoint = waypoints
+    .map((_, offset) => (waypointIndex + offset) % waypoints.length)
+    .find(index => waypoints[index].x !== currentGrid.x || waypoints[index].y !== currentGrid.y);
+  if (nextWaypoint === undefined) return processRandomAI(ctx);
 
-  if (currentGrid.x === target.x && currentGrid.y === target.y) {
-    enemyData.currentWaypoint = (waypointIndex + 1) % waypoints.length;
-    return currentGrid;
-  }
+  enemyData.currentWaypoint = nextWaypoint;
+  const target = waypoints[nextWaypoint];
 
   if (!isActiveLilyPadCell(target, activeLilyPadCells)) return processRandomAI(ctx);
 
@@ -326,10 +329,16 @@ function generatePatrolWaypoints(startPos: { x: number; y: number }, navGrid: Na
   const size = 3;
   const maxX = navGrid.width - 1;
   const maxY = navGrid.height - 1;
+  const spanX = Math.min(size, maxX);
+  const spanY = Math.min(size, maxY);
+  // Turn inward near an edge so clamping cannot collapse the patrol route
+  // into a line or a single cell at bottom/right spawn positions.
+  const endX = startPos.x + spanX <= maxX ? startPos.x + spanX : Math.max(0, startPos.x - spanX);
+  const endY = startPos.y + spanY <= maxY ? startPos.y + spanY : Math.max(0, startPos.y - spanY);
   return [
     { x: startPos.x, y: startPos.y },
-    { x: Math.min(maxX, startPos.x + size), y: startPos.y },
-    { x: Math.min(maxX, startPos.x + size), y: Math.min(maxY, startPos.y + size) },
-    { x: startPos.x, y: Math.min(maxY, startPos.y + size) },
+    { x: endX, y: startPos.y },
+    { x: endX, y: endY },
+    { x: startPos.x, y: endY },
   ];
 }

@@ -5,20 +5,24 @@ import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import type { GameEngine } from '../Engine';
-import { BOARD_SIZES } from '../boardGeometry';
+import { BOARD_SIZES, type BoardSize } from '../boardGeometry';
 import { enemyComponents, mathProblemComponents, playerComponents } from '../entities';
 import { gridToPixel } from '../gameUtils';
-import { gridCells } from '../lilyPads';
+import { gridCells, type GridCell } from '../lilyPads';
 import { GAME_CONFIG } from '../../config';
 import { addAISystemToEngine } from './AISystem';
 import { addFrogSpriteAnimationSystemToEngine } from './FrogSpriteSystem';
 import { registerFrogTongueInit } from './FrogTongueSystem';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
-import type { EnemyType } from '../../types/shared';
+import type { AIBehavior, EnemyType } from '../../types/shared';
 import type { GameTimer, TimerSlot } from '../types';
 import type { EnemyEntity } from '../queries';
 
-async function createTelegraphWorld(enemyType: EnemyType = 'lizard', level = 1): Promise<{
+async function createTelegraphWorld(enemyType: EnemyType = 'lizard', level = 1, {
+	board = BOARD_SIZES.easy,
+	start = { x: 1, y: 1 },
+	behavior = 'chase',
+}: { board?: BoardSize; start?: GridCell; behavior?: AIBehavior } = {}): Promise<{
 	world: GameEngine;
 	enemy: EnemyEntity;
 	player: { id: number };
@@ -30,7 +34,7 @@ async function createTelegraphWorld(enemyType: EnemyType = 'lizard', level = 1):
 		.withPlugin(createTweenPlugin({ priority: SYSTEM_PRIORITIES.ANIMATION }))
 		.withPlugin(createCoroutinePlugin({ priority: SYSTEM_PRIORITIES.FROG_TONGUE, phase: 'preUpdate' }))
 		.build();
-	world.setResource('board', BOARD_SIZES.easy);
+	world.setResource('board', board);
 	world.setResource('currentLevel', level);
 	addAISystemToEngine(world);
 	addFrogSpriteAnimationSystemToEngine(world);
@@ -38,12 +42,12 @@ async function createTelegraphWorld(enemyType: EnemyType = 'lizard', level = 1):
 	await world.initialize();
 	const playerPosition = gridToPixel(2, 1);
 	const player = world.spawn({ ...playerComponents(playerPosition.x, playerPosition.y), timers: {} });
-	gridCells(BOARD_SIZES.easy).forEach(cell => {
+	gridCells(board).forEach(cell => {
 		const position = gridToPixel(cell.x, cell.y);
 		world.spawn(mathProblemComponents(position.x, position.y, 1, 1));
 	});
-	const position = gridToPixel(1, 1);
-	const spawned = world.spawn({ ...enemyComponents(position.x, position.y, enemyType, 'chase'), timers: {} });
+	const position = gridToPixel(start.x, start.y);
+	const spawned = world.spawn({ ...enemyComponents(position.x, position.y, enemyType, behavior), timers: {} });
 	const enemy = world.getEntitiesWithQuery(['enemy', 'position', 'timers']).find(entity => entity.id === spawned.id);
 	if (!enemy) throw new Error('Telegraph fixture lost its enemy');
 	world.update(0);
@@ -169,6 +173,52 @@ describe('enemy movement telegraphs', () => {
 		} finally {
 			sound.mockRestore();
 			random.mockRestore();
+			await world.dispose();
+		}
+	});
+});
+
+describe('enemy patrol progress', () => {
+	Object.entries(BOARD_SIZES).forEach(([difficulty, board]) => {
+		const corners = [
+			{ x: 0, y: 0 },
+			{ x: board.width - 1, y: 0 },
+			{ x: 0, y: board.height - 1 },
+			{ x: board.width - 1, y: board.height - 1 },
+		];
+		corners.forEach(start => {
+			test(`${difficulty} patrol moves from corner (${start.x}, ${start.y}) on its first cycle`, async () => {
+				const { world, enemy, timer, position } = await createTelegraphWorld('lizard', 1, { board, start, behavior: 'patrol' });
+				try {
+					advance(world, timer.duration * 0.51);
+					expect(enemy.components.enemy.plannedMove).not.toEqual(start);
+					const waypoints = enemy.components.enemy.waypoints ?? [];
+					expect(new Set(waypoints.map(cell => `${cell.x},${cell.y}`)).size).toBe(4);
+					advance(world, timer.duration * 0.51 + 0.75);
+					expect(enemy.components.position).not.toEqual(position);
+				} finally {
+					await world.dispose();
+				}
+			});
+		});
+	});
+
+	test('reaching a waypoint announces the next step without spending a cycle standing still', async () => {
+		const { world, enemy, timer, position } = await createTelegraphWorld('spider', 1, { behavior: 'patrol' });
+		try {
+			world.mutateComponent(enemy.id, 'enemy', data => {
+				data.waypoints = [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }];
+				data.currentWaypoint = 0;
+			});
+			advance(world, timer.duration * 0.51);
+			expect(enemy.components.enemy.plannedMove).toEqual({ x: 2, y: 1 });
+			advance(world, timer.duration * 0.51 + 0.75);
+			expect(enemy.components.position).not.toEqual(position);
+			const nextTimer = enemy.components.timers.enemyMove;
+			if (!nextTimer) throw new Error('Patrol did not start its next cycle');
+			advance(world, nextTimer.duration * 0.51);
+			expect(enemy.components.enemy.plannedMove).toEqual({ x: 2, y: 2 });
+		} finally {
 			await world.dispose();
 		}
 	});
