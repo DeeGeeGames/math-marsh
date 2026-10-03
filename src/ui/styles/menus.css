@@ -1,5 +1,15 @@
+/* Auto margins center the menu only when it fits. Oversized content starts at
+ * the top of the scroll area, and input hints reserve their own space below. */
+#main-menu {
+  justify-content: flex-start;
+  padding: max(env(safe-area-inset-top, 0px), 16px) max(env(safe-area-inset-right, 0px), 16px) max(env(safe-area-inset-bottom, 0px), 16px) max(env(safe-area-inset-left, 0px), 16px);
+}
+
 .menu-shell {
   position: relative;
+  flex-shrink: 0;
+  max-width: 100%;
+  margin-block: auto;
   background:
     radial-gradient(ellipse at 12% 18%, rgba(255, 247, 198, 0.18), transparent 28%),
     radial-gradient(ellipse at 92% 82%, rgba(155, 212, 94, 0.2), transparent 34%),
@@ -11,6 +21,18 @@
     inset 0 1px 0 rgba(255, 247, 198, 0.2);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
+}
+
+.menu-input-prompts.input-prompts-slot--panel {
+  flex-shrink: 0;
+  width: min(92vw, 980px);
+  max-width: 100%;
+  margin-top: 16px;
+  justify-content: flex-start;
+}
+
+.menu-input-prompts .input-prompts-bar {
+  justify-content: flex-start;
 }
 
 .menu-copy {
@@ -155,6 +177,52 @@
   padding: 0.72rem 0.95rem;
   text-align: center;
   white-space: nowrap;
+}
+
+/* Short landscape screens need a height-based layout, including phones below
+ * the usual desktop column breakpoint. Keep touch targets at least 44px. */
+@media (max-height: 600px) and (min-width: 480px) {
+  #main-menu .menu-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+    gap: 24px;
+    padding: 12px 24px;
+  }
+
+  .menu-title {
+    max-width: 100%;
+    font-size: clamp(2rem, 10vh, 4rem);
+  }
+
+  .menu-actions {
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .menu-secondary-actions {
+    gap: 8px;
+  }
+
+  .menu-actions .menu-primary-action,
+  .menu-actions .menu-secondary-action {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+
+  .menu-board {
+    width: min(100%, 56vh, 22rem);
+  }
+
+  .menu-input-prompts.input-prompts-slot--panel {
+    margin-top: 12px;
+  }
+
+  .menu-input-prompts .input-prompts-bar {
+    --input-prompt-min-height: 36px;
+    --input-prompt-font-size: 0.9rem;
+    --input-prompt-glyph-size: 32px;
+    padding: 6px 10px;
+  }
 }
 
 /* Game mode cards with hover effects */

@@ -154,12 +154,12 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       >
         ⛶
       </button>
-      <div class="input-prompts-slot" data-input-prompts></div>
+      <div class="input-prompts-slot menu-input-prompts" data-input-prompts></div>
     `,
     prompts: [
       { action: 'select', label: 'Select' },
     ],
-    promptPlacement: 'viewport',
+    promptPlacement: 'panel',
   };
 }
 
