@@ -249,3 +249,25 @@ export const startEnemyGridMovement = (
     },
   ]).tween);
 };
+
+export function startEnemyGridTurn(
+  ecs: GameEngine,
+  entityId: number,
+  enemyType: SpriteEnemyType,
+  fromGrid: GridPoint,
+  toGrid: GridPoint,
+): void {
+  const enemySprite = ecs.getComponent(entityId, 'enemySprite');
+  if (!enemySprite) return;
+
+  const targetFacing = facingFromDelta(toGrid.x - fromGrid.x, toGrid.y - fromGrid.y);
+  const turnSteps = turnBetween(enemyType, enemySprite.facing, targetFacing);
+  if (turnSteps.length === 0) return;
+
+  const idleStep = walkStepForFacing(enemyType, targetFacing, 0.01);
+  setEnemyFacing(ecs, entityId, targetFacing);
+  startSpriteAnimation(ecs, entityId, [
+    ...turnSteps,
+    { ...idleStep, staticFrameIndex: FRAME_COUNT - 1 },
+  ]);
+}

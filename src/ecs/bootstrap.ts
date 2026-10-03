@@ -12,6 +12,7 @@ import { addPauseSystemToEngine } from './systems/PauseSystem';
 import { addUINavigationSystemToEngine } from './systems/UINavigationSystem';
 import { addInputPromptSystemToEngine } from './systems/InputPromptSystem';
 import { registerGameplaySystems } from './gameplayPlugin';
+import { addFrogSpriteAnimationSystemToEngine } from './systems/FrogSpriteSystem';
 import { registerFrogTongueInit } from './systems/FrogTongueSystem';
 import { playerQuery } from './queries';
 import {
@@ -163,6 +164,9 @@ const registerSystems = async (): Promise<void> => {
 
   registerGameplaySystems(gameplaySystems);
   registerGameplayOnboardingSystem(tutorialSystems);
+  addFrogSpriteAnimationSystemToEngine(gameEngine.systemScope({
+    inScreens: ['playing', 'tutorial'],
+  }));
   addUISystemToEngine(gameEngine.systemScope({
     inScreens: ['playing', 'tutorial'],
   }));

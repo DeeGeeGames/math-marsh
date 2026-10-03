@@ -4,7 +4,6 @@ import { addProblemManagementSystemToEngine } from './systems/ProblemManagementS
 import { addGameplayTimeSystemToEngine } from './systems/GameplayTimeSystem';
 import { addMovementSystemToEngine } from './systems/MovementSystem';
 import { addShakeSystemToEngine } from './systems/AnimationSystem';
-import { addFrogSpriteAnimationSystemToEngine } from './systems/FrogSpriteSystem';
 import { addPlayerSpriteSystemToEngine } from './systems/PlayerSpriteSystem';
 import { addCollisionSystemToEngine } from './systems/CollisionSystem';
 import type { GameSystemRegistrar } from './Engine';
@@ -18,7 +17,6 @@ export function registerGameplaySystems(
   addMovementSystemToEngine(systems);
   addShakeSystemToEngine(systems);
   addPlayerSpriteSystemToEngine(systems);
-  addFrogSpriteAnimationSystemToEngine(systems);
   addCollisionSystemToEngine(systems);
   addAISystemToEngine(systems);
   addEnemySpawnSystemToEngine(systems);

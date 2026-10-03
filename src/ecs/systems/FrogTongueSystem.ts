@@ -61,7 +61,8 @@ function* tongueLifecycle(ecs: GameEngine, frogId: number): CoroutineGenerator {
 
     yield* waitSeconds(COOLDOWN_SECONDS);
     yield* waitSeconds(randomAttackDelaySeconds());
-    yield* waitUntil(() => !isEntityAnimating(ecs, frogId));
+    yield* waitUntil(() => !isEntityAnimating(ecs, frogId) &&
+      ecs.getComponent(frogId, 'enemy')?.plannedMove === undefined);
 
     const direction = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
     const timers = getTimers(ecs, frogId);

@@ -87,6 +87,7 @@ export interface Components {
   enemy: {
     enemyType: EnemyType;
     behaviorType: AIBehavior;
+    plannedMove?: { x: number; y: number };
     aiState?: {
       targetGridX: number;
       targetGridY: number;

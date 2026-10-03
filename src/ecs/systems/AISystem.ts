@@ -2,7 +2,7 @@ import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { createNavGrid, findPath, type NavGrid } from 'ecspresso/plugins/ai/pathfinding';
 import { pixelToGrid, gridToPixel } from '../gameUtils';
-import { GAME_CONFIG } from '../../config';
+import { ANIMATION_CONFIG, GAME_CONFIG } from '../../config';
 import type { AIBehavior, EnemyType } from '../../types/shared';
 import {
   enemyQuery,
@@ -21,8 +21,8 @@ import { AI_CONFIG, SYSTEM_PRIORITIES } from '../systemConfigs';
 import { isEntityAnimating } from './AnimationSystem';
 import { createSpiderWeb } from './SpiderWebSystem';
 import { isFrogAttacking } from './FrogTongueSystem';
-import { startFrogGridMovement } from './FrogSpriteSystem';
-import { startEnemyGridMovement } from './EnemySpriteSystem';
+import { startFrogGridMovement, startFrogGridTurn } from './FrogSpriteSystem';
+import { startEnemyGridMovement, startEnemyGridTurn } from './EnemySpriteSystem';
 import { enemyMoveBaseIntervalForLevel } from '../enemyDifficulty';
 
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
@@ -49,6 +49,9 @@ const ENEMY_TYPE_MULTIPLIERS: Record<EnemyType, number> = {
 
 const GUARD_RADIUS = 2;
 const GUARD_MOVE_CHANCE = 0.3;
+const MOVE_DURATION_S = ANIMATION_CONFIG.MOVEMENT_DURATION / 1000;
+// Leave enough time for a two-part turn (0.36s) in the second half of the pause.
+const MIN_IDLE_DURATION_S = 0.8;
 
 const cellOf = (entity: { components: { position: { x: number; y: number } } }, navGrid: NavGrid): number => {
   const { x, y } = pixelToGrid(entity.components.position.x, entity.components.position.y);
@@ -101,17 +104,31 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
       const { enemies, player } = queries;
       if (!player) return;
 
-      // Shared per-frame blocker set: all enemy cells plus destination cells
-      // already claimed by earlier enemy decisions this frame.
-      const blocked = new Set(enemies.map(enemy => cellOf(enemy, navGrid)));
       const activeLilyPadCells = activeLilyPadCellKeys(queries.mathProblems);
 
-      for (const enemy of enemies) {
-        if (enemy.components.timers.enemySpawnTelegraph?.active) continue;
-        if (isEntityAnimating(ecs, enemy.id)) continue;
-        if (isFrogAttacking(enemy.components.frogTongue)) continue;
+      enemies.forEach(enemy => {
+        if (enemy.components.timers.enemySpawnTelegraph?.active) return;
+        if (isFrogAttacking(enemy.components.frogTongue)) {
+          // An attack can start only before a movement plan is announced.
+          // Resume with a full pause afterward so the next cue has time to read.
+          delete enemy.components.timers.enemyMove;
+          return;
+        }
+        if (isEntityAnimating(ecs, enemy.id) || ecs.hasComponent(enemy.id, 'spriteAnimation')) return;
+
+        // Reserve announced destinations until landing, including plans made
+        // by earlier enemies this frame. An enemy never blocks its own plan.
+        const blocked = new Set(enemies
+          .filter(other => other.id !== enemy.id)
+          .flatMap(other => {
+            const plannedMove = other.components.enemy.plannedMove;
+            return [
+              cellOf(other, navGrid),
+              ...(plannedMove ? [navGrid.cellFromXY(plannedMove.x, plannedMove.y)] : []),
+            ];
+          }));
         processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, currentLevel, navGrid);
-      }
+      });
     });
 }
 
@@ -128,21 +145,57 @@ function processEnemyAI(
   const enemyData = enemy.components.enemy;
   const timers = enemy.components.timers;
 
-  if (timers.enemyMove?.active) return;
-
   const currentGrid = pixelToGrid(enemyPos.x, enemyPos.y);
   const startCell = navGrid.cellFromXY(currentGrid.x, currentGrid.y);
+  const moveTimer = timers.enemyMove;
 
-  const { x: nextGridX, y: nextGridY } = AI_PROCESSORS[enemyData.behaviorType]({
-    enemy, player, currentGrid, startCell, blocked, activeLilyPadCells, navGrid,
-  });
+  if (!moveTimer) {
+    delete enemyData.plannedMove;
+    const moveInterval = calculateMoveInterval(enemyData.behaviorType, currentLevel, enemyData.enemyType);
+    const variation = (Math.random() - 0.5) * moveInterval * 0.2;
+    // The interval previously included the move itself; start the idle timer
+    // after landing, retaining that cadence unless it leaves no useful warning.
+    timers.enemyMove = createTimer(Math.max(
+      MIN_IDLE_DURATION_S,
+      (moveInterval + variation) / 1000 - MOVE_DURATION_S,
+    ));
+    return;
+  }
+
+  if (moveTimer.elapsed < moveTimer.duration / 2) return;
+
+  if (!enemyData.plannedMove) {
+    const nextGrid = AI_PROCESSORS[enemyData.behaviorType]({
+      enemy, player, currentGrid, startCell, blocked, activeLilyPadCells, navGrid,
+    });
+    enemyData.plannedMove = nextGrid;
+    if (nextGrid.x === currentGrid.x && nextGrid.y === currentGrid.y) return;
+
+    if (enemyData.enemyType === 'frog') {
+      startFrogGridTurn(ecs, enemy.id, currentGrid, nextGrid);
+      return;
+    }
+    startEnemyGridTurn(ecs, enemy.id, enemyData.enemyType, currentGrid, nextGrid);
+    return;
+  }
+
+  if (moveTimer.active) return;
+
+  const { x: nextGridX, y: nextGridY } = enemyData.plannedMove;
+  delete timers.enemyMove;
+
+  // A vanished pad or new occupant cancels the move, never redirects it after
+  // the warning. The next idle cycle will announce a fresh decision.
+  if (!isActiveLilyPadCell(enemyData.plannedMove, activeLilyPadCells) ||
+      blocked.has(navGrid.cellFromXY(nextGridX, nextGridY))) {
+    delete enemyData.plannedMove;
+    return;
+  }
 
   const newPixelPos = gridToPixel(nextGridX, nextGridY);
   const moved = newPixelPos.x !== enemyPos.x || newPixelPos.y !== enemyPos.y;
 
   if (moved) {
-    blocked.add(navGrid.cellFromXY(nextGridX, nextGridY));
-
     if (enemyData.enemyType === 'frog') {
       startFrogGridMovement(ecs, enemy.id, currentGrid, { x: nextGridX, y: nextGridY }, newPixelPos.x, newPixelPos.y);
     } else {
@@ -158,10 +211,6 @@ function processEnemyAI(
       createSpiderWeb(ecs, currentGrid.x, currentGrid.y);
     }
   }
-
-  const moveInterval = calculateMoveInterval(enemyData.behaviorType, currentLevel, enemyData.enemyType);
-  const variation = (Math.random() - 0.5) * moveInterval * 0.2;
-  timers.enemyMove = createTimer((moveInterval + variation) / 1000);
 }
 
 function calculateMoveInterval(behaviorType: AIBehavior, currentLevel: number, enemyType: EnemyType): number {

@@ -24,7 +24,6 @@ type SpriteStepOptions = Pick<SpriteStep, 'flipX' | 'reverse' | 'staticFrameInde
 const FRAME_COUNT = 8;
 const MOUTH_OPEN_FRAME_COUNT = 4;
 const TURN_DURATION_S = 0.18;
-const JUMP_INTENT_DELAY_S = 1;
 const MOUTH_OPEN_DURATION_S = 0.16;
 const MOUTH_CLOSE_IDLE_SETTLE_S = 0.01;
 const MOVE_DURATION_S = ANIMATION_CONFIG.MOVEMENT_DURATION / 1000;
@@ -135,25 +134,6 @@ const finalFrameIndexForStep = (step: SpriteStep): number =>
 
 const initialFrameIndexForStep = (step: SpriteStep): number =>
   step.reverse ? step.frameCount - 1 : 0;
-
-const intentDelayStepForFacing = (
-  facing: FrogFacing,
-  turnSteps: readonly SpriteStep[],
-): SpriteStep => {
-  const finalTurnStep = turnSteps.at(-1);
-  if (finalTurnStep) {
-    return spriteStep(finalTurnStep.imageSrc, JUMP_INTENT_DELAY_S, {
-      flipX: finalTurnStep.flipX,
-      staticFrameIndex: finalFrameIndexForStep(finalTurnStep),
-    });
-  }
-
-  const facingStep = hopStepForFacing(facing, JUMP_INTENT_DELAY_S);
-  return {
-    ...facingStep,
-    staticFrameIndex: facingStep.frameCount - 1,
-  };
-};
 
 const applySpriteStep = (
   renderable: AllComponents['renderable'],
@@ -278,7 +258,6 @@ export const startFrogGridMovement = (
   const hopDuration = Math.max(0.2, MOVE_DURATION_S - totalStepDuration(turnSteps));
   const steps = [
     ...turnSteps,
-    intentDelayStepForFacing(targetFacing, turnSteps),
     hopStepForFacing(targetFacing, hopDuration),
   ];
 
@@ -292,7 +271,6 @@ export const startFrogGridMovement = (
 
   ecs.commands.addComponent(entityId, 'tween', createTweenSequence([
     ...turnSteps.map(step => ({ targets, duration: step.duration, easing: easeOutQuad })),
-    { targets, duration: JUMP_INTENT_DELAY_S, easing: easeOutQuad },
     {
       targets: [
         { component: 'position' as const, field: 'x' as const, to: toX },
@@ -303,6 +281,27 @@ export const startFrogGridMovement = (
     },
   ]).tween);
 };
+
+export function startFrogGridTurn(
+  ecs: GameEngine,
+  entityId: number,
+  fromGrid: GridPoint,
+  toGrid: GridPoint,
+): void {
+  const frogSprite = getFrogSpriteAnimationTarget(ecs, entityId);
+  if (!frogSprite) return;
+
+  const targetFacing = facingFromDelta(toGrid.x - fromGrid.x, toGrid.y - fromGrid.y);
+  const turnSteps = turnBetween(frogSprite.facing, targetFacing);
+  if (turnSteps.length === 0) return;
+
+  const idleStep = hopStepForFacing(targetFacing, 0.01);
+  setFrogFacing(ecs, entityId, targetFacing);
+  startSpriteAnimation(ecs, entityId, [
+    ...turnSteps,
+    { ...idleStep, staticFrameIndex: FRAME_COUNT - 1 },
+  ]);
+}
 
 export const startFrogTongueAnimation = (
   ecs: GameEngine,
@@ -345,7 +344,6 @@ export function addFrogSpriteAnimationSystemToEngine(
 ): void {
   systems.addSystem('frogSpriteAnimationSystem')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
-    .inScreens(['playing', 'tutorial'])
     .setProcessEach(
       { with: ['renderable', 'spriteAnimation'], mutates: ['renderable', 'spriteAnimation'] } as const,
       ({ entity, dt, ecs }) => {
