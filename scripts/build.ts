@@ -39,7 +39,7 @@ async function build(): Promise<void> {
     description: 'An arithmetic game set in a lively pond.',
     start_url: withBasePath('/'),
     scope: withBasePath('/'),
-    display: 'standalone',
+    display: 'fullscreen',
     background_color: '#07170f',
     theme_color: '#1f8395',
     icons: [192, 512].map(size => ({
