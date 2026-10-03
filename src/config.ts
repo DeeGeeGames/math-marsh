@@ -13,7 +13,7 @@ export const GAME_CONFIG = {
     CORRECT_ANSWER_BONUS_SECONDS: {
       easy: 10,
       medium: 5,
-      expert: 3,
+      expert: 5,
     } as const,
     WRONG_ANSWER_PENALTY_SECONDS: {
       easy: 10,
