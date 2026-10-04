@@ -320,9 +320,19 @@ function processGuardAI(ctx: AIContext): GridCell {
 
   if (Math.random() >= GUARD_MOVE_CHANCE) return currentGrid;
 
-  const step = processRandomAI(ctx);
-  const stepDistance = Math.abs(step.x - guardPos.x) + Math.abs(step.y - guardPos.y);
-  return stepDistance <= GUARD_RADIUS ? step : currentGrid;
+  const availableMoves = adjacentLilyPadMoves(currentGrid, activeLilyPadCells, ctx.blocked, ctx.navGrid);
+  const guardMoves = availableMoves.filter(step =>
+    Math.abs(step.x - guardPos.x) + Math.abs(step.y - guardPos.y) <= GUARD_RADIUS,
+  );
+  const guardStep = randomEntry(guardMoves);
+  if (guardStep) return guardStep;
+
+  // Consumed pads or other enemies can cut off every move within the old
+  // guard area. Relocate rather than rejecting every remaining escape step.
+  const escapeStep = randomEntry(availableMoves);
+  if (!escapeStep) return currentGrid;
+  enemyData.guardPosition = { x: currentGrid.x, y: currentGrid.y };
+  return escapeStep;
 }
 
 function generatePatrolWaypoints(startPos: { x: number; y: number }, navGrid: NavGrid): Array<{ x: number; y: number }> {
