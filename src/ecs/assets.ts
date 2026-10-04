@@ -2,6 +2,8 @@ import type { AssetConfiguratorFn, AssetDefinition } from 'ecspresso';
 import flyMoveAway from '../assets/images/fly-move-away.png';
 import flyMoveSide from '../assets/images/fly-move-side.png';
 import flyMoveToward from '../assets/images/fly-move-toward.png';
+import flyTurnTowardSide from '../assets/images/fly-turn-toward-side.png';
+import flyTurnSideAway from '../assets/images/fly-turn-side-away.png';
 import frogImage from '../assets/images/frog.svg';
 import lizardImage from '../assets/images/lizard.svg';
 import spiderImage from '../assets/images/spider.png';
@@ -25,6 +27,8 @@ import frogTurnFrontSide from '../assets/images/frog-turn-front-side.png';
 import frogTurnSideAway from '../assets/images/frog-turn-side-away.png';
 
 export {
+  flyTurnTowardSide,
+  flyTurnSideAway,
   flyMoveAway,
   flyMoveSide,
   flyMoveToward,
@@ -54,6 +58,8 @@ export {
 const ENTITY_IMAGE_GROUP = 'entityImages';
 
 const IMAGE_ASSETS = {
+  flyTurnTowardSide,
+  flyTurnSideAway,
   flyMoveAway,
   flyMoveSide,
   flyMoveToward,
@@ -114,6 +120,8 @@ export const configureImageAssets: ImageAssetConfigurator = function configureIm
     .addWithConfig('flyMoveAway', imageAsset(flyMoveAway))
     .addWithConfig('flyMoveSide', imageAsset(flyMoveSide))
     .addWithConfig('flyMoveToward', imageAsset(flyMoveToward))
+    .addWithConfig('flyTurnTowardSide', imageAsset(flyTurnTowardSide))
+    .addWithConfig('flyTurnSideAway', imageAsset(flyTurnSideAway))
     .addWithConfig('frogImage', imageAsset(frogImage))
     .addWithConfig('lizardImage', imageAsset(lizardImage))
     .addWithConfig('spiderImage', imageAsset(spiderImage))
