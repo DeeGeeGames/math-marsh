@@ -6,7 +6,7 @@ import {
 } from '../../systemConfigs';
 import type { MathProblemEntity } from '../../queries';
 import type { EquationFeedbackKind, EquationFeedback, EquationModeState } from '../../types';
-import { formatRemainingTime } from '../../runTime';
+import { formatRemainingTime, LOW_TIME_SECONDS } from '../../runTime';
 
 const textColor = '#fff7c6';
 const shadowColor = 'rgba(9, 41, 44, 0.9)';
@@ -277,7 +277,7 @@ export const drawBoardTime = (
   ctx.translate(ctx.canvas.width - HEADER_SIDE_PADDING, margin * 0.48);
   ctx.scale(fitScale, fitScale);
   ctx.strokeStyle = shadowColor;
-  ctx.fillStyle = remainingSeconds <= 15 ? feedbackStyles.incorrect.color : textColor;
+  ctx.fillStyle = remainingSeconds <= LOW_TIME_SECONDS ? feedbackStyles.incorrect.color : textColor;
   drawOutlinedText(ctx, text, 0);
   ctx.restore();
   return target;

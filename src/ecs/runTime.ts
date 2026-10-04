@@ -2,6 +2,7 @@ import { GAME_CONFIG } from '../config';
 import type { MathDifficulty } from './types';
 
 export const STARTING_TIME_SECONDS = GAME_CONFIG.GAMEPLAY.STARTING_TIME_SECONDS;
+export const LOW_TIME_SECONDS = 30;
 
 export const formatRemainingTime = (remainingSeconds: number): string => {
   const totalSeconds = Math.max(0, Math.ceil(remainingSeconds));

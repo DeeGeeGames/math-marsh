@@ -1,3 +1,5 @@
+import { LOW_TIME_SECONDS } from '../ecs/runTime';
+
 export type AudioScene = 'title' | 'game' | 'cutscene' | 'silent';
 
 export type SoundEffect =
@@ -21,8 +23,9 @@ type AudioSettings = {
 
 type MusicLoop = {
   scene: AudioScene;
-  interval: number;
+  timeout: number;
   master: GainNode;
+  warningPending: boolean;
 };
 
 type MusicScene = Exclude<AudioScene, 'silent'>;
@@ -47,11 +50,16 @@ type AudioState = {
   scene: AudioScene;
   music?: MusicLoop;
   lastMoveSoundAt: number;
+  lowTime: boolean;
 };
 
 const AUDIO_SETTINGS_KEY = 'math-marsh-audio-settings';
 const NOTE_C4 = 261.63;
 const MOVE_SOUND_SPACING_MS = 90;
+const GAME_NORMAL_INTERVAL_MS = 430;
+const GAME_URGENT_INTERVAL_MS = GAME_NORMAL_INTERVAL_MS / 1.2;
+const LOW_TIME_BRIDGE_MS = 650;
+const LOW_TIME_WARNING_NOTES = [7, 7, 6, 6, 0] as const;
 
 const DEFAULT_SETTINGS: AudioSettings = {
   soundEffects: true,
@@ -84,6 +92,7 @@ const audioState: AudioState = {
   settings: loadSettings(),
   scene: 'silent',
   lastMoveSoundAt: 0,
+  lowTime: false,
 };
 
 function loadSettings(): AudioSettings {
@@ -215,7 +224,7 @@ function stopMusic(): void {
   if (!music) return;
 
   const context = getContext();
-  window.clearInterval(music.interval);
+  window.clearTimeout(music.timeout);
   music.master.gain.cancelScheduledValues(context.currentTime);
   music.master.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
   window.setTimeout(() => music.master.disconnect(), 250);
@@ -246,19 +255,20 @@ function scheduleTitleMusic(master: GainNode, step: number): void {
 function scheduleGameMusic(master: GainNode, step: number): void {
   const context = getContext();
   const now = context.currentTime + 0.02;
+  const durationScale = gameMusicIntervalMs() / GAME_NORMAL_INTERVAL_MS;
   const bass = GAME_BASS_NOTES[Math.floor(step / 2) % GAME_BASS_NOTES.length];
   const melody = GAME_MELODY_NOTES[step % GAME_MELODY_NOTES.length];
   playTone(master, {
     frequency: frequency(bass),
     start: now,
-    duration: 0.46,
+    duration: 0.46 * durationScale,
     volume: 0.03,
     type: 'sine',
   });
   playTone(master, {
     frequency: frequency(melody + 12),
-    start: now + 0.08,
-    duration: 0.16,
+    start: now + 0.08 * durationScale,
+    duration: 0.16 * durationScale,
     volume: 0.018,
     type: 'triangle',
   });
@@ -317,7 +327,7 @@ const MUSIC_SCENES: Record<MusicScene, MusicSceneConfig> = {
     schedule: scheduleTitleMusic,
   },
   game: {
-    intervalMs: 430,
+    intervalMs: GAME_NORMAL_INTERVAL_MS,
     volume: 0.46,
     schedule: scheduleGameMusic,
   },
@@ -332,6 +342,23 @@ function musicSceneConfig(scene: AudioScene): MusicSceneConfig | undefined {
   if (scene === 'silent') return undefined;
   return MUSIC_SCENES[scene];
 }
+
+const gameMusicIntervalMs = function(): number {
+  return audioState.lowTime ? GAME_URGENT_INTERVAL_MS : GAME_NORMAL_INTERVAL_MS;
+};
+
+const scheduleLowTimeWarning = function(master: GainNode): void {
+  const now = getContext().currentTime + 0.02;
+  LOW_TIME_WARNING_NOTES.forEach(function(note, index): void {
+    playTone(master, {
+      frequency: frequency(note),
+      start: now + index * 0.1,
+      duration: index === LOW_TIME_WARNING_NOTES.length - 1 ? 0.14 : 0.055,
+      volume: 0.025,
+      type: 'square',
+    });
+  });
+};
 
 function startMusic(scene: AudioScene): void {
   const config = musicSceneConfig(scene);
@@ -350,14 +377,29 @@ function startMusic(scene: AudioScene): void {
   config.schedule(master, step.value);
   step.value += 1;
 
-  audioState.music = {
+  const music: MusicLoop = {
     scene,
     master,
-    interval: window.setInterval(() => {
+    timeout: 0,
+    warningPending: false,
+  };
+  // Read the current tempo after each beat so changes keep the melody's place.
+  const scheduleNextBeat = function(delayMs?: number): void {
+    const intervalMs = delayMs ?? (scene === 'game' ? gameMusicIntervalMs() : config.intervalMs);
+    music.timeout = window.setTimeout(function(): void {
+      if (music.warningPending) {
+        music.warningPending = false;
+        scheduleLowTimeWarning(master);
+        scheduleNextBeat(LOW_TIME_BRIDGE_MS);
+        return;
+      }
       config.schedule(master, step.value);
       step.value += 1;
-    }, config.intervalMs),
+      scheduleNextBeat();
+    }, intervalMs);
   };
+  audioState.music = music;
+  scheduleNextBeat();
 }
 
 function playNoteSequence(
@@ -430,8 +472,19 @@ export function setAudioSettings(settings: AudioSettings): void {
 
 export function setAudioScene(scene: AudioScene): void {
   audioState.scene = scene;
+  if (scene !== 'game') audioState.lowTime = false;
   startMusic(scene);
 }
+
+export const setGameMusicTime = function(remainingSeconds: number): void {
+  const lowTime = remainingSeconds <= LOW_TIME_SECONDS;
+  const music = audioState.music;
+  if (music?.scene === 'game') {
+    if (!lowTime) music.warningPending = false;
+    else if (!audioState.lowTime && remainingSeconds > 0) music.warningPending = true;
+  }
+  audioState.lowTime = lowTime;
+};
 
 export function unlockAudio(): void {
   audioState.unlocked = true;
