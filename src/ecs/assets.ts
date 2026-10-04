@@ -1,4 +1,7 @@
 import type { AssetConfiguratorFn, AssetDefinition } from 'ecspresso';
+import flyEatAway from '../assets/images/fly-eat-away.png';
+import flyEatSide from '../assets/images/fly-eat-side.png';
+import flyEatToward from '../assets/images/fly-eat-toward.png';
 import flyMoveAway from '../assets/images/fly-move-away.png';
 import flyMoveSide from '../assets/images/fly-move-side.png';
 import flyMoveToward from '../assets/images/fly-move-toward.png';
@@ -26,6 +29,9 @@ import frogTurnFrontSide from '../assets/images/frog-turn-front-side.png';
 import frogTurnSideAway from '../assets/images/frog-turn-side-away.png';
 
 export {
+  flyEatAway,
+  flyEatSide,
+  flyEatToward,
   flyTurnTowardSide,
   flyTurnSideAway,
   flyMoveAway,
@@ -56,6 +62,9 @@ export {
 const ENTITY_IMAGE_GROUP = 'entityImages';
 
 const IMAGE_ASSETS = {
+  flyEatAway,
+  flyEatSide,
+  flyEatToward,
   flyTurnTowardSide,
   flyTurnSideAway,
   flyMoveAway,
@@ -114,6 +123,9 @@ const imageAsset = (src: string): AssetDefinition<HTMLImageElement> => ({
 
 export const configureImageAssets: ImageAssetConfigurator = function configureImageAssets(assets) {
   return assets
+    .addWithConfig('flyEatAway', imageAsset(flyEatAway))
+    .addWithConfig('flyEatSide', imageAsset(flyEatSide))
+    .addWithConfig('flyEatToward', imageAsset(flyEatToward))
     .addWithConfig('flyMoveAway', imageAsset(flyMoveAway))
     .addWithConfig('flyMoveSide', imageAsset(flyMoveSide))
     .addWithConfig('flyMoveToward', imageAsset(flyMoveToward))

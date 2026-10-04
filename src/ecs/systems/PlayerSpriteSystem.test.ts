@@ -3,9 +3,9 @@ import ECSpresso, { type ConfigOf } from 'ecspresso';
 import type { GameEngine } from '../Engine';
 import { playerComponents } from '../entities';
 import { gridToPixel } from '../gameUtils';
-import { flyMoveSide, flyMoveToward, flyTurnTowardSide } from '../assets';
+import { flyEatAway, flyEatSide, flyEatToward, flyMoveSide, flyMoveToward, flyTurnTowardSide } from '../assets';
 import { addFrogSpriteAnimationSystemToEngine } from './FrogSpriteSystem';
-import { addPlayerSpriteSystemToEngine, nextPlayerSpriteElapsed, playerTurnSteps } from './PlayerSpriteSystem';
+import { addPlayerSpriteSystemToEngine, nextPlayerSpriteElapsed, playerTurnSteps, startPlayerEatingAnimation } from './PlayerSpriteSystem';
 
 describe('player sprite animation', () => {
   test('continues flying from the first frame', () => {
@@ -27,6 +27,47 @@ describe('player sprite animation', () => {
           || from === 'away' && to === 'toward') ? 2 : 1);
         expect(steps.reduce((sum, step) => sum + step.duration, 0)).toBe(from === to ? 0 : 0.18);
       }
+    }
+  });
+
+  test('eats once in every facing, replaces an active turn, and resumes flight', async () => {
+    const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
+    const addSystem = world.addSystem.bind(world);
+    const screen = spyOn(world, 'addSystem').mockImplementation(label => {
+      const system = addSystem(label);
+      spyOn(system, 'inScreens').mockReturnValue(system);
+      return system;
+    });
+    addPlayerSpriteSystemToEngine(world);
+    addFrogSpriteAnimationSystemToEngine(world);
+    await world.initialize();
+    const position = gridToPixel(1, 1);
+    try {
+      for (const facing of ['toward', 'away', 'left', 'right'] as const) {
+        const player = world.spawn(playerComponents(position.x, position.y));
+        world.mutateComponent(player.id, 'playerSprite', sprite => { sprite.facing = facing; });
+        world.addComponent(player.id, 'spriteAnimation', {
+          elapsed: 0, duration: 0.18, currentStep: 0,
+          steps: playerTurnSteps('toward', 'right'),
+        });
+        startPlayerEatingAnimation(world, player.id);
+        world.update(0);
+        const image = facing === 'toward' ? flyEatToward : facing === 'away' ? flyEatAway : flyEatSide;
+        expect(world.getComponent(player.id, 'renderable')?.imageSrc).toBe(image);
+        expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.flipX).toBe(facing === 'left');
+        world.update(0.36);
+        expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.frameIndex).toBe(4);
+        expect(world.getComponent(player.id, 'playerSprite')?.facing).toBe(facing);
+        world.update(0.37);
+        expect(world.hasComponent(player.id, 'spriteAnimation')).toBe(false);
+        world.update(0.01);
+        expect(world.getComponent(player.id, 'renderable')?.imageSrc).not.toBe(image);
+        expect(world.getComponent(player.id, 'position')).toEqual({ ...position, rotation: 0 });
+        world.removeEntity(player.id);
+      }
+    } finally {
+      screen.mockRestore();
+      await world.dispose();
     }
   });
 
