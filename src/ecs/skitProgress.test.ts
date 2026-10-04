@@ -25,7 +25,7 @@ test('scene progress validates saved data and deduplicates known scene IDs', () 
 test('new scenes add to existing saved progress without replacing Snack Break', () => {
 	const oldProgress = skitProgressFromStoredValue('["snack-break"]');
 	const all = [6, 9, 12].reduce(unlockSkitForCompletedLevel, oldProgress);
-	expect(all).toEqual(['snack-break', 'the-shortcut', 'do-not-disturb', 'dinner-committee']);
+	expect(all).toEqual(['snack-break', 'the-big-jump', 'the-web-guitar', 'the-big-plan']);
 	expect(skitProgressFromStoredValue(JSON.stringify(all))).toEqual(all);
 	expect(oldProgress).toEqual(['snack-break']);
 });
