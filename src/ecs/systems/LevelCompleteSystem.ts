@@ -1,6 +1,6 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { LEVEL_COMPLETE_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
-import { shouldPlaySkit } from '../skitSequence';
+import { skitForCompletedLevel } from '../skitSequence';
 import { goToNextLevel } from './nextLevel';
 
 export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): void {
@@ -16,8 +16,9 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
       if (elapsed < LEVEL_COMPLETE_DURATION_MS || state.transitionStarted) return;
 
       ecs.updateScreenState('levelComplete', { transitionStarted: true });
-      if (shouldPlaySkit(state.completedLevel)) {
-        void ecs.setScreen('skit', { nextLevel: state.nextLevel });
+      const skit = skitForCompletedLevel(state.completedLevel);
+      if (skit) {
+        void ecs.setScreen('skit', { nextLevel: state.nextLevel, skitId: skit.id });
         return;
       }
       goToNextLevel(ecs, state.nextLevel, mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion);

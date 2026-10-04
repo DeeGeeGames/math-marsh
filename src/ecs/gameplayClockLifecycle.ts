@@ -6,6 +6,7 @@ const PAUSED_GAMEPLAY_CLOCK_SCREENS = [
   'studioSplash',
   'engineSplash',
   'menu',
+  'skitGallery',
   'modeSelect',
   'howToPlay',
   'tutorialOffer',

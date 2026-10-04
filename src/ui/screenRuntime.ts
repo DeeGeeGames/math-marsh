@@ -99,6 +99,7 @@ export function createScreenRuntime(
     retainGameplay = false,
   ): HTMLElement {
     const root = screenElements.get(screen) ?? createScreen(screen);
+    screenSpecs[screen].onShow?.(root);
     screenElements.forEach((element, candidate) => {
       const retained = retainGameplay && candidate === 'playing';
       element.style.display = candidate === screen || retained

@@ -1,7 +1,7 @@
 import flySide from '../../assets/images/fly-move-side.png';
 import frogSide from '../../assets/images/frog-hop-side.png';
 import frogMouth from '../../assets/images/frog-open-mouth-side.png';
-import { skitPresentation } from '../../ecs/skitSequence';
+import { skitById, type Skit } from '../../ecs/skitSequence';
 import type { ScreenSpec } from '../screenTypes';
 import { BTN_CHROME, BTN_SIZE, inputPromptsSlot, OVERLAY_BASE } from './shared';
 
@@ -21,7 +21,7 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 					<div id="skit-fly" class="skit-fly" style="background-image:url('${flySide}')"></div>
 				</div>
 				<p id="skit-caption" class="skit-caption" aria-live="polite"></p>
-				<button id="skip-skit-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">Skip Skit</button>
+				<button id="skip-skit-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">Skip Scene</button>
 				${inputPromptsSlot()}
 			</section>`,
 		prompts: [{ action: 'select', label: 'Skip' }, { action: 'back', label: 'Skip' }],
@@ -30,10 +30,13 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 	};
 };
 
-export const updateSkitPresentation = function(elapsed: number): void {
+export const updateSkitPresentation = function(elapsed: number, skit: Skit = skitById(undefined)): void {
 	const root = document.getElementById('skit-screen');
 	if (!root) return;
-	const view = skitPresentation(elapsed, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	const title = root.querySelector('#skit-title');
+	if (title) title.textContent = skit.title;
+	root.querySelector('.skit-stage')?.setAttribute('aria-label', skit.stageLabel);
+	const view = skit.presentation(elapsed, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 	const fly = root.querySelector<HTMLElement>('#skit-fly');
 	const frog = root.querySelector<HTMLElement>('#skit-frog');
 	const tongue = root.querySelector<HTMLElement>('#skit-tongue');

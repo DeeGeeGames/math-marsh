@@ -47,7 +47,8 @@ import {
   updateGameplayOnboardingUI,
 } from '../onboarding/gameplayOnboardingUI';
 import { createScreenRuntime } from './screenRuntime';
-import { SKIT_DURATION_SECONDS } from '../ecs/skitSequence';
+import { skitById, type SkitId } from '../ecs/skitSequence';
+import type { SkitProgress } from '../ecs/skitProgress';
 import { playerQuery } from '../ecs/queries';
 
 export { gameplayLevelLabel };
@@ -161,6 +162,7 @@ function openSettings(): void {
     || returnTo === 'controllerRecovery'
     || returnTo === 'levelComplete'
     || returnTo === 'skit'
+    || returnTo === 'skitGallery'
     || returnTo === 'tutorialOffer'
   ) return;
   playSound('uiSelect');
@@ -199,13 +201,24 @@ const SCREENS = createScreenSpecs({
   goToMenu,
   openModeSelect,
   openHowToPlay,
+  openSkitGallery: function(): void {
+    playSound('uiSelect');
+    void requireEngine().setScreen('skitGallery', {});
+  },
+  getSkitProgress: function(): SkitProgress { return requireEngine().getResource('skitProgress'); },
+  replaySkit: function(id: SkitId): void {
+    const engine = requireEngine();
+    if (engine.getCurrentScreen() !== 'skitGallery' || !engine.getResource('skitProgress').includes(id)) return;
+    playSound('uiSelect');
+    void engine.setScreen('skit', { replay: true, skitId: id });
+  },
   openSettings,
   quitApplication,
   pauseGame,
   skipSkit: function(): void {
     const engine = requireEngine();
     if (engine.getCurrentScreen() !== 'skit') return;
-    engine.updateScreenState('skit', { elapsed: SKIT_DURATION_SECONDS });
+    engine.updateScreenState('skit', { elapsed: skitById(engine.getScreenState('skit').skitId).durationSeconds });
   },
   wireFullscreenButton,
   wireTouchControlsSetting: (root) => wireTouchControlsSetting(root, requestCanvasResize),
