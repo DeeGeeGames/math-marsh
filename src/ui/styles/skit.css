@@ -46,6 +46,7 @@
 .scene-web span { position: absolute; left: 50%; top: 60%; width: 57%; border-top: 3px solid #fff7c6; transform-origin: left center; }
 .scene-diagram { position: absolute; left: 41%; top: 49%; width: 18%; height: 27%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff0b7; border: 3px solid #a2824c; border-radius: 12px; color: #704328; font-size: clamp(17px, 6cqh, 30px); line-height: 1; font-weight: 900; box-shadow: 0 5px 0 #153e4933; }
 .scene-diagram[hidden] { display: none; }
+.scene-diagram span { white-space: nowrap; }
 #skit-screen[data-scene="the-big-plan"] #scene-spider::before { content: ''; position: absolute; left: 50%; bottom: 94%; height: 100cqh; border-left: 2px solid #f3ffe4bb; }
 .scene-splash { position: absolute; left: 47%; top: 72%; width: 22%; height: 12%; border: 5px solid #c8fff3; border-top-color: transparent; border-radius: 50%; box-shadow: 0 7px 0 #9ae2d766; }
 .scene-splash::before, .scene-splash::after { content: ''; position: absolute; bottom: 70%; width: 12%; height: 75%; border-radius: 50%; background: #c8fff3; transform: rotate(-30deg); }
@@ -59,6 +60,7 @@
 	.skit-caption { min-height: 116px; padding: 10px 12px; }
 	.scene-actor { width: min(28%, 43cqh); }
 	.scene-fly { width: min(17%, 23cqh); }
+	.scene-diagram { left: 36%; width: 28%; }
 }
 @media (max-height: 600px) and (orientation: landscape) {
 	.skit-kicker { display: none; }

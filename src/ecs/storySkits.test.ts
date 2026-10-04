@@ -57,8 +57,17 @@ test('story beats', () => {
 	const asking = bigPlanPresentation(8);
 	expect(asking.fly.x).toBeCloseTo(50); expect(asking.diagram).toBe(true);
 	const bonk = bigPlanPresentation(11.6);
-	expect(bonk.burst).toBe('BONK!'); expect(bonk.fly.y).toBeLessThan(25);
+	expect(bonk.burst).toBe('BONK!'); expect(bonk.fly.y).toBeLessThan(35);
 	expect(bigPlanPresentation(14).tongue).toBe(true);
 	expect(bigPlanPresentation(14).caption).toContain('AGAIN');
 	expect(bigPlanPresentation(19.9).fly.x).toBeGreaterThan(100);
+});
+
+test('Big Plan keeps the hovering fly inside the stage until its exit', () => {
+	// The fly slot is at most 23% of stage height, anchored at its bottom.
+	for (const reducedMotion of [false, true]) {
+		for (let tick = 113; tick < 175; tick += 1) {
+			expect(bigPlanPresentation(tick / 10, reducedMotion).fly.y).toBeGreaterThan(23);
+		}
+	}
 });

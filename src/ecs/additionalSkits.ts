@@ -218,7 +218,8 @@ export const bigPlanPresentation = function(time: number, reducedMotion = false)
 	const zipAway = ease(time, CHARGE + 0.3, 0.4);
 	const leave = ease(time, EXIT, 1.5);
 	const flyX = 110 - landOnDot * 60 + zipAway * 20 + leave * 45;
-	const flyY = 20 + landOnDot * 50 - zipAway * 52;
+	// Keep the hovering fly's full sprite below the stage ceiling after dodging.
+	const flyY = 20 + landOnDot * 50 - zipAway * 43;
 	const extend = ease(time, TONGUE, 0.3);
 	const catchPad = ease(time, TONGUE + 0.3, 0.8);
 	return {
