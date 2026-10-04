@@ -1,5 +1,4 @@
-// Replaces PR #21's src/ecs/additionalSkits.test.ts and the Snack Break timing tests in skitSequence.test.ts.
-// Lives at src/ecs/storySkits.test.ts; imports the rewritten src/ecs/additionalSkits.ts (= skits.ts).
+// Story, timing, and caption tests for the skits defined in src/ecs/additionalSkits.ts.
 import { expect, test } from 'bun:test';
 import { SKITS } from './skitSequence';
 import { BIG_JUMP_BEATS, WEB_GUITAR_BEATS, BIG_PLAN_BEATS, SNACK_BREAK_BEATS, bigJumpPresentation, webGuitarPresentation, bigPlanPresentation, snackBreakPresentation } from './additionalSkits';

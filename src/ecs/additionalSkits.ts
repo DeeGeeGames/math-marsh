@@ -12,7 +12,7 @@
 import type { SkitPresentation } from './skitSequence';
 
 // ---------------------------------------------------------------------------
-// Shared types (identical to PR #21 additionalSkits.ts)
+// Shared types
 // ---------------------------------------------------------------------------
 
 // Scene poses are percentages of the stage. The ECS screen remains the sole clock.
@@ -81,7 +81,7 @@ export const BIG_PLAN_BEATS = [
 ] as const satisfies readonly Beat[];
 
 // ---------------------------------------------------------------------------
-// Motion helpers (same math as PR #21)
+// Motion helpers
 // ---------------------------------------------------------------------------
 
 const clamp = function(value: number): number { return Math.max(0, Math.min(1, value)); };
@@ -156,7 +156,7 @@ export const bigJumpPresentation = function(time: number, reducedMotion = false)
 	// Rocking back and forth while counting (wind-up), a puzzled lean on "um…".
 	const windUp = time >= 3 && time < 5.5 && !reducedMotion ? Math.sin(time * 6) * 4 : 0;
 	const puzzled = time >= 4.6 && time < JUMP ? -10 : 0;
-	// "What hat?": looks around by rocking left/right (tilt keeps the hat attached; see review.md).
+	// "What hat?": looks around by rocking left/right (tilt, not facing, because the hat position in skitScreen.ts ignores facing).
 	const lookAround = time >= 12.5 ? (reducedMotion ? -8 : Math.sin((time - 12.5) * 4.5) * 12) : 0;
 	const lizardY = emerged
 		? 95 - rise * 19
@@ -239,7 +239,7 @@ export const bigPlanPresentation = function(time: number, reducedMotion = false)
 };
 
 // ---------------------------------------------------------------------------
-// Registry entries for src/ecs/skitSequence.ts `SKITS` (same fields as today).
+// Registry entries for src/ecs/skitSequence.ts `SKITS`.
 // ---------------------------------------------------------------------------
 
 export const SKIT_ENTRIES = [{
