@@ -6,6 +6,7 @@ import type {
 } from '../ecs/types';
 import {
   applyTouchControlsVisibility,
+  hideAutoTouchControls,
   wireTouchControlsSetting,
 } from './touchControls';
 import {
@@ -50,6 +51,7 @@ import { createScreenRuntime } from './screenRuntime';
 import { skitById, type SkitId } from '../ecs/skitSequence';
 import type { SkitProgress } from '../ecs/skitProgress';
 import { playerQuery } from '../ecs/queries';
+import { boardPointGridCell, isPointOnLilyPad, isActiveLilyPadCell, activeLilyPadCellKeys } from '../ecs/lilyPads';
 
 export { gameplayLevelLabel };
 
@@ -227,6 +229,12 @@ const SCREENS = createScreenSpecs({
     const engine = requireEngine();
     if (engine.getCurrentScreen() !== 'playing') return;
     engine.setResource('tapRequest', point);
+    const cell = boardPointGridCell(point, engine.getResource('board'));
+    if (isPointOnLilyPad(point, cell)
+      && isActiveLilyPadCell(cell, activeLilyPadCellKeys(engine.getEntitiesWithQuery(['position', 'mathProblem'])))) {
+      hideAutoTouchControls();
+      requestCanvasResize();
+    }
   },
 });
 

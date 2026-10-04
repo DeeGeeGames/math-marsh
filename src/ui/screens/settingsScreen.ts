@@ -34,6 +34,7 @@ export function createSettingsScreenSpec(actions: ScreenSpecActions): ScreenSpec
           <div class="settings-panel p-3 md:p-6 landscape:p-3 rounded-xl">
             <h3 class="text-base md:text-xl landscape:text-base font-semibold mb-2 md:mb-4 landscape:mb-2">Touch Controls</h3>
             <p class="text-xs md:text-sm opacity-80 mb-2">Use the on-screen gamepad, or tap lily pads to move and tap the fly to eat.</p>
+            <p class="text-xs md:text-sm opacity-80 mb-2">Auto hides the gamepad when you tap a lily pad. Use the gamepad button at the top to turn it back on.</p>
             <div class="flex flex-col md:flex-row gap-2 md:gap-3">
               <button class="touch-mode-btn flex-1 text-white border-none px-3 py-2 landscape:py-2 md:py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-touch-mode="auto">Auto</button>
               <button class="touch-mode-btn flex-1 text-white border-none px-3 py-2 landscape:py-2 md:py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-touch-mode="on">Always On</button>
