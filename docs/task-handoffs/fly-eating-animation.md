@@ -12,3 +12,11 @@ Artwork used the built-in image generation tool with the existing front, side, a
 2. Remove only the background and external glow/shadow; preserve all 24 sprites, their 8-by-3 grid, colors, wings, faces, poses, and locations. Deliver true transparent alpha without an opaque backdrop or drawn checkerboard.
 
 Deterministic ImageMagick preparation split the grid, trimmed bounds at alpha above 12%, scaled each row uniformly to a maximum visible height of 225 px, and bottom-centered frames in 256 px cells. Geometry tests cover all new sheets. Original artwork was preserved.
+
+## Rear-facing arm correction
+
+The rear eating artwork showed raised forelegs over the back in frames 2, 3, and 5. Revised `fly-eat-away.png` keeps the mouth-reaching forelegs occluded on the far side of the head/body, with subtle head movement and wing poses conveying the bite. The existing eight 256 px cells and 720 ms playback contract remain intact. Front and side artwork and gameplay code are unchanged.
+
+Built-in imagegen edit prompt: edit the rear eating sheet using the rear flight sheet as anatomy reference; remove raised hands over the back and restore uninterrupted head/body outlines; preserve all eight frames, order, wing poses, antennas, colors, outlines, scale, center, foot baseline, and subtle chewing motion; rear view throughout, no visible face, food, props, extra legs, labels, or checkerboard; transparent background, neutral first/last frames. ImageMagick split the generated row into eight cells, trimmed at alpha above 12%, uniformly scaled to a maximum height of 225 px, and bottom-centered each cell in the existing atlas.
+
+Validation: focused self-review inspected all eight frames for occlusion and alignment. T3 browser decoded the final 2048x256 transparent sheet and advanced a canvas playback probe to frame 4 at the existing 90 ms frame interval. The preview screenshot retained the game splash rather than showing the injected review canvas, so visual evidence is the directly inspected atlas, not an in-game playback screenshot. `bun run check` passed all 176 tests, lint, typecheck, and build (two existing lint warnings). Temporary browser overlay/timer and dev server were removed/stopped.
