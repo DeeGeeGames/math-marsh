@@ -38,6 +38,7 @@ export const shouldShowTouchControls = (mode: TouchControlsMode): boolean =>
 
 export const applyTouchControlsVisibility = (mode: TouchControlsMode = loadTouchControlsMode()): void => {
 	document.body.dataset.touchControls = shouldShowTouchControls(mode) ? 'on' : 'off';
+	refreshTouchModeButtons(document, mode);
 	scheduleTouchControlsLayout();
 };
 
@@ -65,6 +66,13 @@ export const wireTouchControlsSetting = (
 			saveTouchControlsMode(next);
 			applyTouchControlsVisibility(next);
 			refreshTouchModeButtons(root, next);
+			onChange();
+		});
+	});
+	root.querySelectorAll<HTMLButtonElement>('[data-show-touch-controls]').forEach(function(button) {
+		button.addEventListener('click', function() {
+			saveTouchControlsMode('on');
+			applyTouchControlsVisibility('on');
 			onChange();
 		});
 	});

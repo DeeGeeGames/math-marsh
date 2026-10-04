@@ -26,6 +26,9 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
         <div id="level-display" class="hud-chip level">Addition - Easy - Level 1</div>
 
         <div class="gameplay-actions" role="group" aria-label="Game controls">
+          <button id="show-gamepad-btn" data-show-touch-controls type="button" class="utility-btn gameplay-action" aria-label="Show gamepad" title="Show gamepad">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 6h10a4 4 0 0 1 4 4v7a2 2 0 0 1-3.4 1.4L15 16H9l-2.6 2.4A2 2 0 0 1 3 17v-7a4 4 0 0 1 4-4Z M6 11h4 M8 9v4 M16 10h.01 M18 13h.01" /></svg>
+          </button>
           <button id="hud-fullscreen-btn" type="button" class="utility-btn gameplay-action gameplay-fullscreen" aria-label="Enter fullscreen">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" /></svg>
           </button>
@@ -84,6 +87,7 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
     wire: (root): void => {
       $(root, '#pause-btn').addEventListener('click', actions.pauseGame);
       actions.wireFullscreenButton($<HTMLButtonElement>(root, '#hud-fullscreen-btn'));
+      actions.wireTouchControlsSetting(root);
       bindGameplayHud(root);
       bindTouchControls(root);
       bindBoardPointer($<HTMLCanvasElement>(root, '#game-canvas'), actions.tapBoardPoint);
