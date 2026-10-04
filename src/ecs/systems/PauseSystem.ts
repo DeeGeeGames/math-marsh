@@ -1,3 +1,4 @@
+import { gameActions } from '../controllerSelection';
 import type { GameSystemRegistrar } from '../Engine';
 import { playerQuery } from '../queries';
 
@@ -6,12 +7,13 @@ import { playerQuery } from '../queries';
 // UI screen so the same key/button drives back/cancel uniformly.
 export function addPauseSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('pauseSystem')
+    .inGroup('gameplay')
     .inScreens(['playing'])
     .addSingleton('player', playerQuery)
-    .withResources(['inputState'])
-    .setProcess(({ ecs, queries, resources: { inputState } }) => {
+    .withResources(['inputState', 'controllerSelection'])
+    .setProcess(({ ecs, queries, resources: { inputState, controllerSelection } }) => {
       if (!queries.player || queries.player.components.player.gameOverPending) return;
-      if (!inputState.actions.justActivated('pause')) return;
+      if (!gameActions(inputState, controllerSelection).justActivated('pause')) return;
       void ecs.pushScreen('paused', {});
     });
 }

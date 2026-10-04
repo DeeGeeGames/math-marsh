@@ -1,0 +1,607 @@
+{
+  "fixture": "T3 collaborative browser; simulated Gamepad API and desktop quit; timer-based RAF; 1280x800",
+  "observations": [
+    {
+      "clock": 0,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "Start Game",
+      "label": "fresh menu",
+      "level": 1,
+      "platform": "keyboard",
+      "quitRequests": 0,
+      "screen": "menu",
+      "selection": {
+        "blockFrame": false,
+        "owner": null,
+        "waitingForNeutral": false
+      },
+      "text": "Math Marsh\nStart Game\nHow to Play\nSettings\nQuit\n8\n12\n16\n24\n6 x 4 = ?\nSelect",
+      "time": 90,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "clock": 0,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "Start Game",
+      "label": "slot 1 claim consumed with held buttons and axis",
+      "level": 1,
+      "platform": "xbox",
+      "quitRequests": 0,
+      "screen": "menu",
+      "selection": {
+        "blockFrame": true,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 1
+        },
+        "waitingForNeutral": true
+      },
+      "text": "Math Marsh\nStart Game\nHow to Play\nSettings\nQuit\n8\n12\n16\n24\n6 x 4 = ?\nSelect",
+      "time": 90,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "clock": 0,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "Start Tutorial",
+      "label": "tutorial offer via slot 1",
+      "level": 1,
+      "platform": "xbox",
+      "quitRequests": 0,
+      "screen": "tutorialOffer",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 1
+        },
+        "waitingForNeutral": false
+      },
+      "text": "FIRST GAME\n\nLearn on the pond\n\nTry a short game that shows you how to play. You can skip it now and play it again later.\n\nStart Tutorial\nSkip and Play\nSelect",
+      "time": 90,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [
+        {
+          "x": 2,
+          "y": 2
+        }
+      ],
+      "clock": 0.1496000000089407,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        Tutorial\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          NextBackSkip\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT",
+      "label": "tutorial via slot 1",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 126.15514285849673,
+        "y": 212
+      },
+      "quitRequests": 0,
+      "screen": "tutorial",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 1
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nTutorial\nNext\nBack\nSkip\n\nSTEP 1 OF 5\n\nMove across the pond\n\nThe fly moves from one lily pad to the next.\n\nBack\nNext\nSkip Tutorial",
+      "time": 90,
+      "tutorial": {
+        "active": true,
+        "isReplay": false,
+        "kind": "basics",
+        "returnTo": {
+          "kind": "newGame"
+        },
+        "stepIndex": 0
+      }
+    },
+    {
+      "breadcrumbs": [
+        {
+          "x": 2,
+          "y": 2
+        }
+      ],
+      "clock": 0.1496000000089407,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "controller-continue-btn",
+      "focusedText": "Continue",
+      "label": "tutorial: disconnected",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 126.15514285849673,
+        "y": 212
+      },
+      "quitRequests": 0,
+      "screen": "controllerRecovery",
+      "selection": {
+        "blockFrame": false,
+        "owner": null,
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nTutorial\nNext\nBack\nSkip\n\nSTEP 1 OF 5\n\nMove across the pond\n\nThe fly moves from one lily pad to the next.\n\nBack\nNext\nSkip Tutorial\nCONTROLLER DISCONNECTED\n\nYour game is paused. Press A or Start on a controller to connect.\n\nRelease the controls, then select Continue. Keyboard and touch also work.\n\nContinue\nContinue",
+      "time": 90,
+      "tutorial": {
+        "active": true,
+        "isReplay": false,
+        "kind": "basics",
+        "returnTo": {
+          "kind": "newGame"
+        },
+        "stepIndex": 0
+      }
+    },
+    {
+      "breadcrumbs": [
+        {
+          "x": 2,
+          "y": 2
+        }
+      ],
+      "clock": 0.32779999999701975,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        Tutorial\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          NextBackSkip\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT\n      \n    \n      \n        CONTROLLER DISCONNECTED\n        Your game is paused. Press A or Start on a controller to connect.\n        Release the controls, then select Continue. Keyboard and touch also work.\n        Continue\n        Continue",
+      "label": "tutorial: recovered",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 153.13971428526298,
+        "y": 212
+      },
+      "quitRequests": 0,
+      "screen": "tutorial",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 2
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nTutorial\nNext\nBack\nSkip\n\nSTEP 1 OF 5\n\nMove across the pond\n\nThe fly moves from one lily pad to the next.\n\nBack\nNext\nSkip Tutorial",
+      "time": 90,
+      "tutorial": {
+        "active": true,
+        "isReplay": false,
+        "kind": "basics",
+        "returnTo": {
+          "kind": "newGame"
+        },
+        "stepIndex": 0
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 0.4925,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        AdditionEasyLevel 1\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          EatPause\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT\n      \n    \n      \n        CONTROLLER DISCONNECTED\n        Your game is paused. Press A or Start on a controller to connect.\n        Release the controls, then select Continue. Keyboard and touch also work.\n        Continue\n        Continue",
+      "label": "gameplay",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 106,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "playing",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 2
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause",
+      "time": 89.85660000000895,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [
+        {
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "clock": 0.6624000000059604,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        AdditionEasyLevel 1\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          EatPause\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT\n      \n    \n      \n        CONTROLLER DISCONNECTED\n        Your game is paused. Press A or Start on a controller to connect.\n        Release the controls, then select Continue. Keyboard and touch also work.\n        Continue\n        Continue",
+      "label": "owner stick movement",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 136.98774000183704,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "playing",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 2
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause",
+      "time": 89.68670000000297,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [
+        {
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "clock": 0.6624000000059604,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "controller-continue-btn",
+      "focusedText": "Continue",
+      "label": "playing: disconnected",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 136.98774000183704,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "controllerRecovery",
+      "selection": {
+        "blockFrame": false,
+        "owner": null,
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause\nCONTROLLER DISCONNECTED\n\nYour game is paused. Press A or Start on a controller to connect.\n\nRelease the controls, then select Continue. Keyboard and touch also work.\n\nContinue\nContinue",
+      "time": 89.68670000000297,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [
+        {
+          "x": 2,
+          "y": 1
+        }
+      ],
+      "clock": 0.8181000000089406,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        AdditionEasyLevel 1\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          EatPause\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT\n      \n    \n      \n        CONTROLLER DISCONNECTED\n        Your game is paused. Press A or Start on a controller to connect.\n        Release the controls, then select Continue. Keyboard and touch also work.\n        Continue\n        Continue",
+      "label": "playing: recovered",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 183.6977400027311,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "playing",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 3
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause",
+      "time": 89.531,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 1.0021000000089404,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "controller-continue-btn",
+      "focusedText": "Continue",
+      "label": "paused: disconnected",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "controllerRecovery",
+      "selection": {
+        "blockFrame": false,
+        "owner": null,
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause\nCONTROLLER DISCONNECTED\n\nYour game is paused. Press A or Start on a controller to connect.\n\nRelease the controls, then select Continue. Keyboard and touch also work.\n\nContinue\nContinue",
+      "time": 89.34700000000001,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 1.0021000000089404,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "resume-btn",
+      "focusedText": "Resume Game",
+      "label": "paused: recovered",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "paused",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 1
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause\nPAUSED\nResume Game\nSettings\nFullscreen: Off\nQuit to Menu\nSelect\nBack",
+      "time": 89.34700000000001,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 1.0021000000089404,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "controller-continue-btn",
+      "focusedText": "Continue",
+      "label": "settings: disconnected",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "controllerRecovery",
+      "selection": {
+        "blockFrame": false,
+        "owner": null,
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause\nCONTROLLER DISCONNECTED\n\nYour game is paused. Press A or Start on a controller to connect.\n\nRelease the controls, then select Continue. Keyboard and touch also work.\n\nContinue\nContinue",
+      "time": 89.34700000000001,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 1.0021000000089404,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "sound-effects",
+      "focusedText": "",
+      "label": "settings: recovered",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "settings",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 2
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause\nSettings\nAudio\nSound Effects\nBackground Music\nTouch Controls\nAuto\nAlways On\nAlways Off\n← Back to Game\nSelect\nBack",
+      "time": 89.34700000000001,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 1.1526000000089405,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "controller-continue-btn",
+      "focusedText": "Continue",
+      "label": "levelComplete: disconnected",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "controllerRecovery",
+      "selection": {
+        "blockFrame": false,
+        "owner": null,
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause\nCONTROLLER DISCONNECTED\n\nYour game is paused. Press A or Start on a controller to connect.\n\nRelease the controls, then select Continue. Keyboard and touch also work.\n\nContinue\nContinue",
+      "time": 89.19650000000003,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 1.1526000000089405,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        AdditionEasyLevel 1\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          EatPause\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT\n      \n    \n      \n        CONTROLLER DISCONNECTED\n        Your game is paused. Press A or Start on a controller to connect.\n        Release the controls, then select Continue. Keyboard and touch also work.\n        Continue\n        Continue\n      \n    \n      \n        PAUSED\n\n        \n          \n            Resume Game\n          \n          \n            Settings\n          \n           Fullscreen: Off\n          \n            Quit to Menu\n          \n        \n        SelectBack\n      \n    \n      \n        Settings\n\n        \n          \n            Audio\n            \n              \n                \n                Sound Effects\n              \n              \n                \n                Background Music\n              \n            \n          \n\n          \n            Touch Controls\n            Show on-screen D-pad and Eat button.\n            \n              Auto\n              Always On\n              Always Off\n            \n          \n        \n\n        ← Back to Game\n        SelectBack",
+      "label": "levelComplete: restored remaining celebration",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "levelComplete",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 3
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause",
+      "time": 89.19650000000003,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 2.4220000000149016,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "play-again-btn",
+      "focusedText": "Play Again",
+      "label": "normal death-delay results",
+      "level": 2,
+      "platform": "xbox",
+      "position": {
+        "rotation": 1080,
+        "x": 212,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "gameOver",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 3
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Game Over Level 2 · 0 equations solved\n\nThe pond goes quiet. Try another run.\n\nPlay Again\nMain Menu\nSelect",
+      "time": 0,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 2.5766000000089417,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "A game by\n        \n        \n      \n    \n      \n        Built with\n        \n        Entity Component System\n      \n    \n      \n        \n          \n            Math Marsh\n          \n\n          \n            \n              Start Game\n            \n            \n              \n                How to Play\n              \n              \n                Settings\n              \n              \n                \n                  Quit\n                \n              \n            \n          \n        \n\n        \n          \n            8\n            \n            12\n            \n            \n            16\n            \n            \n            24\n          \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          \n    \n  \n          6 x 4 = ?\n        \n      \n\n      \n      Select\n    \n      \n        \n          Select Math Mode\n          Choose one or more operations, then a difficulty to start.\n        \n\n        \n          \n            +\n            Addition\n            2 + 3 = ?\n          \n          \n            −\n            Subtraction\n            7 − 3 = ?\n          \n          \n            ×\n            Multiplication\n            3 × 4 = ?\n          \n          \n            ÷\n            Division\n            12 ÷ 3 = ?\n          \n          \n            ← Back to Menu\n          \n        \n\n        \n          Addition · Choose difficulty\n          \n            Easy · 3×3\n            Medium · 5×4\n            Expert · 6×5\n          \n        \n\n        SelectBack\n      \n    \n      \n        First game\n        \n          Learn on the pond\n        \n        \n          Try a short game that shows you how to play. You can skip it now and play it again later.\n        \n        \n          \n            Start Tutorial\n          \n          \n            Skip and Play\n          \n        \n        Select\n      \n    \n      \n\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\t\n\t\t\t\t\n\t\t\t\n\t\t\n\t\n      \n        \n          Time left: 1:30\n        \n\n        AdditionEasyLevel 1\n\n        \n          \n          \n            \n            Pause\n          \n        \n      \n\n      \n        \n      \n\n      \n        \n          EatPause\n        \n      \n\n      \n        \n          Step 1 of 5\n          Move across the pond\n          The fly moves from one lily pad to the next.\n        \n        \n          \n            Back\n          \n          Next\n          \n            Skip Tutorial\n          \n        \n      \n\n      \n        ▲\n        ▲\n        ▲\n        ▲\n      \n      \n        EAT\n      \n    \n      \n        CONTROLLER DISCONNECTED\n        Your game is paused. Press A or Start on a controller to connect.\n        Release the controls, then select Continue. Keyboard and touch also work.\n        Continue\n        Continue\n      \n    \n      \n        PAUSED\n\n        \n          \n            Resume Game\n          \n          \n            Settings\n          \n           Fullscreen: Off\n          \n            Quit to Menu\n          \n        \n        SelectBack\n      \n    \n      \n        Settings\n\n        \n          \n            Audio\n            \n              \n                \n                Sound Effects\n              \n              \n                \n                Background Music\n              \n            \n          \n\n          \n            Touch Controls\n            Show on-screen D-pad and Eat button.\n            \n              Auto\n              Always On\n              Always Off\n            \n          \n        \n\n        ← Back to Game\n        SelectBack\n      \n    \n      \n        \n          \n            \n            \n          \n\n          \n            Game Over\n          \n\n          Level 2 · 0 equations solved\n\n          \n            The pond goes quiet. Try another run.\n          \n\n          \n            \n              Play Again\n            \n            \n              Main Menu\n            \n          \n        \n        Select",
+      "label": "controller retry",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 106,
+        "y": 106
+      },
+      "quitRequests": 0,
+      "screen": "playing",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 3
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Time left: 1:30\nAddition\nEasy\nLevel 1\nPause\nEat\nPause",
+      "time": 89.84540000000595,
+      "tutorial": {
+        "active": false
+      }
+    },
+    {
+      "breadcrumbs": [],
+      "clock": 2.5947000000178826,
+      "equationsSolved": 0,
+      "errors": [],
+      "focus": "",
+      "focusedText": "Quit",
+      "label": "desktop quit mock invoked",
+      "level": 1,
+      "platform": "xbox",
+      "position": {
+        "rotation": 0,
+        "x": 106,
+        "y": 106
+      },
+      "quitRequests": 1,
+      "screen": "menu",
+      "selection": {
+        "blockFrame": false,
+        "owner": {
+          "id": "Browser fixture Xbox controller",
+          "slot": 3
+        },
+        "waitingForNeutral": false
+      },
+      "text": "Math Marsh\nStart Game\nHow to Play\nSettings\nQuit\n8\n12\n16\n24\n6 x 4 = ?\nSelect",
+      "time": 89.82729999999701,
+      "tutorial": {
+        "active": false
+      }
+    }
+  ],
+  "passed": true
+}

@@ -343,6 +343,7 @@ export function addFrogSpriteAnimationSystemToEngine(
   systems: GameSystemRegistrar,
 ): void {
   systems.addSystem('frogSpriteAnimationSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
     .setProcessEach(
       { with: ['renderable', 'spriteAnimation'], mutates: ['renderable', 'spriteAnimation'] } as const,

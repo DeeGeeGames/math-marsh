@@ -23,6 +23,7 @@ import { enemySpawnIntervalForLevel } from '../enemyDifficulty';
 
 export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('enemySpawnSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.ENEMY_SPAWN)
     .addQuery('enemies', enemyQuery)
     .addQuery('mathProblems', mathProblemQuery)

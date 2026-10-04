@@ -6,14 +6,14 @@ import { updateSplashOpacity } from '../../ui/screens/splashScreen';
 export function addSplashSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('splashSystem')
     .inScreens([...SPLASH_SCREENS])
-    .withResources(['inputState'])
-    .setProcess(({ ecs, dt, resources: { inputState } }) => {
+    .withResources(['inputState', 'controllerSelection'])
+    .setProcess(({ ecs, dt, resources: { inputState, controllerSelection } }) => {
       const screen = ecs.getCurrentScreen();
       if (screen !== 'studioSplash' && screen !== 'engineSplash') return;
       const state = ecs.getScreenState(screen);
       if (state.transitionStarted) return;
       const skipRequested = state.skipRequested
-        || splashAdvancePressed(inputState);
+        || splashAdvancePressed(inputState, controllerSelection);
       const next = advanceSplash({ ...state, skipRequested }, dt);
       ecs.updateScreenState(screen, next);
       updateSplashOpacity(screen, splashOpacity(next));

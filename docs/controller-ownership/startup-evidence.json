@@ -1,0 +1,72 @@
+{
+  "engineSplash": {
+    "clock": 0,
+    "equationsSolved": 0,
+    "errors": [],
+    "focus": "",
+    "level": 1,
+    "platform": "xbox",
+    "quitRequests": 0,
+    "screen": "engineSplash",
+    "selection": {
+      "blockFrame": false,
+      "owner": {
+        "id": "Browser fixture Xbox controller",
+        "slot": 1
+      },
+      "waitingForNeutral": false
+    },
+    "text": "Built with\n\nEntity Component System",
+    "time": 90,
+    "tutorial": {
+      "active": false
+    }
+  },
+  "menu": {
+    "clock": 0,
+    "equationsSolved": 0,
+    "errors": [],
+    "focus": "",
+    "level": 1,
+    "platform": "xbox",
+    "quitRequests": 0,
+    "screen": "menu",
+    "selection": {
+      "blockFrame": false,
+      "owner": {
+        "id": "Browser fixture Xbox controller",
+        "slot": 1
+      },
+      "waitingForNeutral": false
+    },
+    "text": "Math Marsh\nStart Game\nHow to Play\nSettings\nQuit\n8\n12\n16\n24\n6 x 4 = ?\nSelect",
+    "time": 90,
+    "tutorial": {
+      "active": false
+    }
+  },
+  "passed": true,
+  "startup": {
+    "clock": 0,
+    "equationsSolved": 0,
+    "errors": [],
+    "focus": "",
+    "level": 1,
+    "platform": "xbox",
+    "quitRequests": 0,
+    "screen": "studioSplash",
+    "selection": {
+      "blockFrame": true,
+      "owner": {
+        "id": "Browser fixture Xbox controller",
+        "slot": 1
+      },
+      "waitingForNeutral": true
+    },
+    "text": "A game by",
+    "time": 90,
+    "tutorial": {
+      "active": false
+    }
+  }
+}

@@ -35,6 +35,7 @@ function goToNextLevel(
 
 export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('levelCompleteSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.LEVEL_COMPLETE)
     .inScreens(['levelComplete'])
     .runWhenEmpty()

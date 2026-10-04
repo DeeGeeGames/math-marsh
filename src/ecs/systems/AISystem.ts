@@ -93,6 +93,7 @@ const AI_PROCESSORS: Record<AIBehavior, (ctx: AIContext) => GridCell> = {
 
 export function addAISystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('aiSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.AI)
     .inPhase('preUpdate')
     .addQuery('enemies', { ...enemyQuery, optional: ['frogTongue'], mutates: ['enemy', 'timers'] } as const)

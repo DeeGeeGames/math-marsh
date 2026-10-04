@@ -40,6 +40,7 @@ export const SPIDER_WEB_BUILD_DURATION_MS = 320;
 
 // System Priorities (for consistent ordering)
 export const SYSTEM_PRIORITIES = {
+  CONTROLLER_SELECTION: 99.5,   // Rebind after input polling, before clocks and gameplay
   INPUT_PROMPTS: 99,             // Reads ECSpresso input state after the input plugin
   TIMERS: 95,                   // Timer updates after input, before gameplay intent
   FROG_TONGUE: 90,              // Claim attacks before AI can queue movement in preUpdate
