@@ -1,5 +1,5 @@
 import spiderImage from '../../assets/images/spider.png';
-import lizardImage from '../../assets/images/lizard.svg';
+import lizardWalkSide from '../../assets/lizard-walk-side.png';
 import type { AdditionalSkitPresentation } from '../../ecs/additionalSkits';
 import flySide from '../../assets/images/fly-move-side.png';
 import frogSide from '../../assets/images/frog-hop-side.png';
@@ -24,7 +24,7 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 						<div id="scene-diagram" class="scene-diagram">↑<br>← ● →</div>
 						<div id="scene-tongue" class="skit-tongue"></div>
 						<div id="scene-frog" class="scene-actor scene-frog" style="background-image:url('${frogSide}')"></div>
-						<div id="scene-lizard" class="scene-actor" style="background-image:url('${lizardImage}')"></div>
+						<div id="scene-lizard" class="scene-actor scene-lizard" style="background-image:url('${lizardWalkSide}')"></div>
 						<div id="scene-spider" class="scene-actor" style="background-image:url('${spiderImage}')"></div>
 						<div id="scene-fly" class="scene-actor scene-fly" style="background-image:url('${flySide}')"></div>
 						<div id="scene-pad" class="skit-pad"></div><div id="scene-splash" class="scene-splash">SPLASH!</div>
@@ -130,7 +130,10 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 	if (root.dataset.scene === 'the-shortcut' && view.lizard.visible && view.pad.tilt < 0) {
 		const lizard = root.querySelector<HTMLElement>('#scene-lizard');
 		const pad = root.querySelector<HTMLElement>('#scene-pad');
-		if (lizard && pad) pad.style.top = `${lizard.offsetTop - lizard.offsetWidth * .8}px`;
+		if (lizard && pad) {
+			pad.style.left = `${lizard.offsetLeft + lizard.offsetWidth * .18}px`;
+			pad.style.top = `${lizard.offsetTop - lizard.offsetWidth * .8}px`;
+		}
 	}
 	const caption = root.querySelector('#skit-caption');
 	if (caption && caption.textContent !== view.caption) caption.textContent = view.caption;

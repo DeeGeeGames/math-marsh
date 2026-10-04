@@ -1,4 +1,4 @@
-import lizardImage from './assets/images/lizard.svg';
+import lizardWalkToward from './assets/lizard-walk-toward.png';
 import spiderImage from './assets/images/spider.png';
 import frogImage from './assets/images/frog.svg';
 
@@ -62,7 +62,7 @@ export const GAME_CONFIG = {
   ENEMY_TYPES: {
     lizard: {
       COLOR: 'red',
-      IMAGE: lizardImage,
+      IMAGE: lizardWalkToward,
       MOVE_SPEED_MULTIPLIER: 1.0,
       AI_BEHAVIORS: ['chase', 'patrol', 'random', 'guard'] as const,
     },

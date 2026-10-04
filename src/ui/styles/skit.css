@@ -51,3 +51,4 @@
 .scene-pluck { position: absolute; left: 64%; top: 40%; width: 8%; height: 10%; border-left: 4px solid #3e241c; border-bottom: 4px solid #3e241c; transform: rotate(-25deg); z-index: 2; }
 
 .skit-stage { container-type: size; }
+.scene-lizard { background-size: 800% 100%; background-position: 0 0; }
