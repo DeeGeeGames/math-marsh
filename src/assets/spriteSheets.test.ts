@@ -11,6 +11,9 @@ type PngDimensions = {
 };
 
 const EIGHT_FRAME_SHEETS = [
+	'images/fly-eat-away.png',
+	'images/fly-eat-side.png',
+	'images/fly-eat-toward.png',
 	'images/fly-move-away.png',
 	'images/fly-move-side.png',
 	'images/fly-move-toward.png',

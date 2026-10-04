@@ -18,6 +18,7 @@ import type {
 import { playSound } from '../audio/audio';
 import { GAME_CONFIG } from '../config';
 import { queueTimeAdjustment } from './timeAdjustments';
+import { startPlayerEatingAnimation } from './systems/PlayerSpriteSystem';
 
 type EquationSelectionResources = Readonly<Pick<
   Resources,
@@ -115,6 +116,7 @@ export function handleEquationProblemSelection(
   }
 
   playSound('correct');
+  startPlayerEatingAnimation(ecs, player.id);
   ecs.setResource('equationsSolved', ecs.getResource('equationsSolved') + 1);
   const consumptionStartedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   queueTimeAdjustment(
