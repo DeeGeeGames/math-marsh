@@ -13,16 +13,10 @@ import { closeFrogMouth, startFrogTongueAnimation } from './FrogSpriteSystem';
 import { FROG_TONGUE_WINDUP_DURATION_MS } from '../systemConfigs';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { playSound } from '../../audio/audio';
+import { frogTongueDirection } from '../frogTongueAim';
 
 const FROG_CONFIG = GAME_CONFIG.ENEMY_TYPES.frog;
 const CELL = GAME_CONFIG.GRID.CELL_SIZE;
-
-const DIRECTIONS = [
-  { x:  0, y: -1 },
-  { x:  0, y:  1 },
-  { x: -1, y:  0 },
-  { x:  1, y:  0 },
-] as const;
 
 const COOLDOWN_SECONDS = FROG_CONFIG.TONGUE_COOLDOWN / 1000;
 const HOLD_SECONDS = FROG_CONFIG.TONGUE_HOLD_DURATION / 1000;
@@ -64,7 +58,13 @@ function* tongueLifecycle(ecs: GameEngine, frogId: number): CoroutineGenerator {
     yield* waitUntil(() => !isEntityAnimating(ecs, frogId) &&
       ecs.getComponent(frogId, 'enemy')?.plannedMove === undefined);
 
-    const direction = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+    const frogPosition = ecs.getComponent(frogId, 'position');
+    const player = ecs.tryGetSingleton(['player', 'position']);
+    if (!frogPosition || !player) continue;
+
+    // Aim once before the warning, leaving the player time to dodge.
+    const direction = frogTongueDirection(frogPosition, player.components.position);
+    if (!direction) continue;
     const timers = getTimers(ecs, frogId);
     tongue.direction = direction;
     tongue.phase = 'windingUp';

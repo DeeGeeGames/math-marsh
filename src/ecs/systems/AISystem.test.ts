@@ -155,6 +155,7 @@ describe('enemy movement telegraphs', () => {
 			advance(world, 0.6);
 			expect(enemy.components.enemy.plannedMove).toEqual({ x: 1, y: 2 });
 			expect(world.getComponent(enemy.id, 'frogTongue')?.phase).toBe('idle');
+			world.mutateComponent(player.id, 'position', position => Object.assign(position, gridToPixel(0, 2)));
 			advance(world, 1.1);
 			expect(enemy.components.position).toEqual(gridToPixel(1, 2));
 			expect(world.getComponent(enemy.id, 'frogTongue')?.phase).toBe('windingUp');
@@ -170,6 +171,30 @@ describe('enemy movement telegraphs', () => {
 			expect(timer.elapsed).toBe(0);
 			advance(world, timer.duration * 0.49);
 			expect(enemy.components.enemy.plannedMove).toBeUndefined();
+		} finally {
+			sound.mockRestore();
+			random.mockRestore();
+			await world.dispose();
+		}
+	});
+});
+
+describe('frog tongue targeting', () => {
+	test('an edge frog aims at the player and holds its warning direction after the player moves', async () => {
+		const random = spyOn(Math, 'random').mockReturnValue(0.5);
+		const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
+		const { world, enemy, player, timer } = await createTelegraphWorld('frog', 1, { start: { x: 0, y: 0 } });
+		try {
+			timer.duration = 100;
+			world.mutateComponent(player.id, 'position', position => Object.assign(position, gridToPixel(2, 1)));
+			advance(world, 5.6);
+			expect(world.getComponent(enemy.id, 'frogTongue')?.phase).toBe('windingUp');
+			expect(world.getComponent(enemy.id, 'frogTongue')?.direction).toEqual({ x: 1, y: 0 });
+			expect(world.getComponent(enemy.id, 'frogSprite')?.facing).toBe('right');
+			world.mutateComponent(player.id, 'position', position => Object.assign(position, gridToPixel(0, 2)));
+			advance(world, 1);
+			expect(world.getComponent(enemy.id, 'frogTongue')?.direction).toEqual({ x: 1, y: 0 });
+			expect(world.getComponent(enemy.id, 'frogTongue')?.segments).toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }]);
 		} finally {
 			sound.mockRestore();
 			random.mockRestore();

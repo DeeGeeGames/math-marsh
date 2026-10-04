@@ -27,7 +27,6 @@ const main = async (): Promise<void> => {
     renderInApp(`
       <div class="flex items-center justify-center w-full h-full p-4">
         <div class="error-panel p-6 md:p-8 rounded-lg max-w-md w-full text-center">
-          <div class="text-6xl mb-4">⚠️</div>
           <h2 class="text-xl md:text-2xl font-bold mb-4">Failed to Load Game</h2>
           <p class="mb-2 text-sm md:text-base">An error occurred while loading Math Marsh.</p>
           <p class="text-sm md:text-base mb-6">Please refresh the page to try again.</p>
