@@ -1,35 +1,72 @@
-.skit-layout {
-	width: min(88vw, 1100px);
-	text-align: center;
-}
-.skit-kicker { color: #b7ff88; font-size: clamp(14px, 1.5vw, 22px); letter-spacing: .15em; text-transform: uppercase; }
-#skit-title { font-size: clamp(28px, 4vw, 56px); font-weight: 800; color: #fff7c6; }
+.skit-layout { width: min(90vw, 1100px); text-align: center; }
+.skit-kicker { color: #c8f4ad; font-size: clamp(13px, 1.4vw, 20px); letter-spacing: .12em; text-transform: uppercase; }
+#skit-title { font-size: clamp(28px, 4vw, 54px); line-height: 1.2; font-weight: 800; color: #fff7d3; text-shadow: 0 3px 0 #123d4866; }
 .skit-stage {
 	position: relative;
+	container-type: size;
 	width: 100%;
-	height: min(43vh, 440px);
+	height: min(44vh, 440px);
 	min-height: 150px;
 	margin: 18px auto;
 	overflow: hidden;
-	border: 3px solid #6d9a62;
-	border-radius: 24px;
-	background: radial-gradient(ellipse at 70% 5%, #d7eaa0 0%, transparent 38%), linear-gradient(#a6c784 0%, #719a6a 34%, #326f65 35%, #123d48 100%);
-	box-shadow: 0 18px 60px #071f3680, inset 0 -18px 45px #123142;
+	border: 3px solid #9abc79;
+	border-radius: 28px;
+	background: radial-gradient(ellipse at 78% 8%, #fff0ad 0%, transparent 40%), linear-gradient(#bdd994 0%, #88b77a 35%, #448e81 36%, #205c68 100%);
+	box-shadow: 0 14px 40px #071f364d, inset 0 -12px 32px #12314266;
 }
-.skit-reeds { position: absolute; inset: 20% 0 auto; height: 20%; background: repeating-linear-gradient(100deg, transparent 0 34px, #3b694b 35px 39px, transparent 40px 60px); opacity: .45; }
-.skit-ripple { position: absolute; left: 10%; top: 73%; width: 80%; height: 12%; border: 3px solid #b5ead34a; border-radius: 50%; }
-.skit-perch, .skit-pad { position: absolute; background: #7cb745; border: 3px solid #40743c; border-radius: 50%; box-shadow: inset 0 -8px 0 #5f943e; }
+.skit-stage::before { content: ''; position: absolute; top: 11%; left: 8%; width: 10%; height: 5%; border-radius: 50%; background: #fff8cf88; box-shadow: 25cqw 2cqh 0 #fff8cf55, 65cqw -1cqh 0 #fff8cf66; }
+.skit-reeds { position: absolute; inset: 24% 0 auto; height: 16%; background: repeating-linear-gradient(100deg, transparent 0 34px, #4b7e52 35px 39px, transparent 40px 60px); opacity: .45; }
+.skit-ripple { position: absolute; left: 10%; top: 77%; width: 80%; height: 12%; border: 3px solid #b5ead34a; border-radius: 50%; }
+.skit-perch, .skit-pad, .skit-gap-pad { position: absolute; background: #9acd59; border: 3px solid #4c813f; border-radius: 50%; box-shadow: inset 0 -6px 0 #74a547; }
 .skit-perch { left: 9%; top: 64%; width: 27%; height: 15%; }
-.skit-pad { width: 15%; height: 10%; }
-.skit-pad::after { content: ''; position: absolute; left: 50%; top: 0; height: 50%; border-left: 3px solid #40743c; transform: rotate(25deg); }
+.skit-pad { width: 12%; height: 8%; }
+.skit-pad::after { content: ''; position: absolute; left: 50%; top: 0; height: 50%; border-left: 3px solid #4c813f; transform: rotate(25deg); }
 .skit-frog { position: absolute; left: 23%; top: 73%; width: min(25%, 27vh); aspect-ratio: 1; background-repeat: no-repeat; transform-origin: bottom center; }
 .skit-fly { position: absolute; width: min(12%, 14vh); aspect-ratio: 1; background-size: 800% 100%; background-repeat: no-repeat; transform: translate(-50%, -100%); }
 .skit-tongue { position: absolute; left: 27%; top: 61%; height: 3%; background: #f58c9e; border: 2px solid #b65872; border-radius: 999px; }
-.skit-caption { display: flex; align-items: center; justify-content: center; min-height: 2.8em; margin-bottom: 12px; font-size: clamp(19px, 2.5vw, 32px); font-weight: 700; color: #fff7c6; }
-@media (max-height: 500px) and (orientation: landscape) {
+.skit-caption { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 112px; margin: 0 auto 14px; padding: 10px 18px; border: 1px solid #bfebbb55; border-radius: 20px; background: #103e4bdb; font-size: clamp(21px, 2.5vw, 32px); line-height: 1.25; font-weight: 700; color: #fff7d3; }
+.skit-speaker { font-size: .55em; line-height: 1.2; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c6edff; }
+.skit-speaker[data-speaker="lizard"] { color: #ffcf82; }
+.skit-speaker[data-speaker="frog"] { color: #c7f48e; }
+.skit-speaker[data-speaker="spider"] { color: #e0c9ff; }
+.skit-extra { display: none; position: absolute; inset: 0; }
+#skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-extra { display: block; }
+#skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-stage > :is(.skit-perch, .skit-tongue, .skit-pad, .skit-frog, .skit-fly) { display: none; }
+.scene-actor { position: absolute; width: min(21%, 43cqh); aspect-ratio: 1; background-size: contain; background-repeat: no-repeat; background-position: center; transform-origin: center; filter: drop-shadow(0 3px 1px #123d4833); }
+.scene-frog, .scene-lizard { background-size: 800% 100%; background-position: 0 0; }
+.scene-fly { width: min(12%, 23cqh); background-size: 800% 100%; background-position: 0 0; }
+.skit-gap-pad { top: 72%; width: 25%; height: 13%; }
+.skit-gap-left { left: 5%; }.skit-gap-right { right: 5%; }
+#skit-screen[data-scene="the-web-guitar"] .skit-gap-pad { display: none; }
+#skit-screen[data-scene="the-big-plan"] .skit-gap-left { left: 8%; top: 75%; width: 84%; height: 20%; }
+#skit-screen[data-scene="the-big-plan"] .skit-gap-right { display: none; }
+.scene-web { position: absolute; left: 27%; top: 14%; width: 45%; height: 58%; border: 3px solid #f3ffe4; border-radius: 45%; background: repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 43deg, #e8ffe1bb 44deg 46deg, transparent 47deg 90deg); box-shadow: -8px 0 #547b37, 8px 0 #547b37; }
+.scene-web::before, .scene-web::after { content: ''; position: absolute; inset: 16%; border: 2px solid #e8ffe1bb; border-radius: 45%; }
+.scene-web::after { inset: 32%; }
+.scene-web span { position: absolute; left: 50%; top: 60%; width: 57%; border-top: 3px solid #fff7c6; transform-origin: left center; }
+.scene-diagram { position: absolute; left: 41%; top: 49%; width: 18%; height: 27%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff0b7; border: 3px solid #a2824c; border-radius: 12px; color: #704328; font-size: clamp(17px, 6cqh, 30px); line-height: 1; font-weight: 900; box-shadow: 0 5px 0 #153e4933; }
+.scene-diagram[hidden] { display: none; }
+.scene-diagram span { white-space: nowrap; }
+#skit-screen[data-scene="the-big-plan"] #scene-spider::before { content: ''; position: absolute; left: 50%; bottom: 94%; height: 100cqh; border-left: 2px solid #f3ffe4bb; }
+.scene-splash { position: absolute; left: 47%; top: 72%; width: 22%; height: 12%; border: 5px solid #c8fff3; border-top-color: transparent; border-radius: 50%; box-shadow: 0 7px 0 #9ae2d766; }
+.scene-splash::before, .scene-splash::after { content: ''; position: absolute; bottom: 70%; width: 12%; height: 75%; border-radius: 50%; background: #c8fff3; transform: rotate(-30deg); }
+.scene-splash::before { left: 10%; }.scene-splash::after { right: 10%; transform: rotate(30deg); }
+.scene-burst { position: absolute; left: 58%; top: 42%; transform: translateX(-50%) rotate(-7deg); padding: 4px 12px; border-radius: 16px; background: #fff7d3; color: #285767; font-size: clamp(20px, 4cqw, 42px); line-height: 1.15; font-weight: 900; white-space: nowrap; box-shadow: 0 4px 0 #123d4833; }
+#skit-screen[data-scene="the-web-guitar"] .scene-burst { left: 50%; top: 77%; color: #614b7e; }
+#skit-screen[data-scene="the-big-plan"] .scene-burst { left: 50%; top: 25%; }
+.scene-pluck { position: absolute; left: 69%; top: 44%; width: 4%; height: 9%; border-right: 3px solid #fff7c6; border-radius: 50%; transform: rotate(-15deg); }
+@media (max-width: 600px) {
+	.skit-stage { height: 38vh; }
+	.skit-caption { min-height: 116px; padding: 10px 12px; }
+	.scene-actor { width: min(28%, 43cqh); }
+	.scene-fly { width: min(17%, 23cqh); }
+	.scene-diagram { left: 36%; width: 28%; }
+}
+@media (max-height: 600px) and (orientation: landscape) {
 	.skit-kicker { display: none; }
 	#skit-title { font-size: 24px; }
 	.skit-stage { margin: 8px auto; min-height: 100px; height: 40vh; }
-	.skit-caption { min-height: 1.5em; font-size: 18px; margin-bottom: 6px; }
+	.skit-caption { min-height: 66px; font-size: 20px; margin-bottom: 6px; padding: 6px 12px; }
 	#skip-skit-btn { padding: 8px 20px; }
 }
+@media (prefers-reduced-motion: reduce) { .scene-burst { transform: translateX(-50%); } }

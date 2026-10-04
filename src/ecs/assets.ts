@@ -5,7 +5,6 @@ import flyMoveToward from '../assets/images/fly-move-toward.png';
 import flyTurnTowardSide from '../assets/images/fly-turn-toward-side.png';
 import flyTurnSideAway from '../assets/images/fly-turn-side-away.png';
 import frogImage from '../assets/images/frog.svg';
-import lizardImage from '../assets/images/lizard.svg';
 import spiderImage from '../assets/images/spider.png';
 import lizardWalkAway from '../assets/lizard-walk-away.png';
 import lizardWalkSide from '../assets/lizard-walk-side.png';
@@ -33,7 +32,6 @@ export {
   flyMoveSide,
   flyMoveToward,
   frogImage,
-  lizardImage,
   spiderImage,
   lizardWalkAway,
   lizardWalkSide,
@@ -64,7 +62,6 @@ const IMAGE_ASSETS = {
   flyMoveSide,
   flyMoveToward,
   frogImage,
-  lizardImage,
   spiderImage,
   lizardWalkAway,
   lizardWalkSide,
@@ -123,7 +120,6 @@ export const configureImageAssets: ImageAssetConfigurator = function configureIm
     .addWithConfig('flyTurnTowardSide', imageAsset(flyTurnTowardSide))
     .addWithConfig('flyTurnSideAway', imageAsset(flyTurnSideAway))
     .addWithConfig('frogImage', imageAsset(frogImage))
-    .addWithConfig('lizardImage', imageAsset(lizardImage))
     .addWithConfig('spiderImage', imageAsset(spiderImage))
     .addWithConfig('lizardWalkAway', imageAsset(lizardWalkAway))
     .addWithConfig('lizardWalkSide', imageAsset(lizardWalkSide))

@@ -3,7 +3,7 @@ import { skitProgressFromStoredValue, unlockSkitForCompletedLevel, type SkitProg
 
 test('completing level three unlocks Snack Break once without changing existing progress', () => {
 	const locked: SkitProgress = [];
-	for (const level of [0, 1, 2, 4, 6, 9]) {
+	for (const level of [0, 1, 2, 4, 5, 7, 8, 10, 11, 13]) {
 		expect(unlockSkitForCompletedLevel(locked, level)).toBe(locked);
 	}
 	const unlocked = unlockSkitForCompletedLevel(locked, 3);
@@ -20,4 +20,12 @@ test('scene progress validates saved data and deduplicates known scene IDs', () 
 		expect(skitProgressFromStoredValue(stored)).toEqual([]);
 	}
 	expect(skitProgressFromStoredValue(JSON.stringify(['snack-break']))).toEqual(['snack-break']);
+});
+
+test('new scenes add to existing saved progress without replacing Snack Break', () => {
+	const oldProgress = skitProgressFromStoredValue('["snack-break"]');
+	const all = [6, 9, 12].reduce(unlockSkitForCompletedLevel, oldProgress);
+	expect(all).toEqual(['snack-break', 'the-big-jump', 'the-web-guitar', 'the-big-plan']);
+	expect(skitProgressFromStoredValue(JSON.stringify(all))).toEqual(all);
+	expect(oldProgress).toEqual(['snack-break']);
 });
