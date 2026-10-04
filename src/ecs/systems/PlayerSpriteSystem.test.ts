@@ -3,7 +3,8 @@ import ECSpresso, { type ConfigOf } from 'ecspresso';
 import type { GameEngine } from '../Engine';
 import { playerComponents } from '../entities';
 import { gridToPixel } from '../gameUtils';
-import { flyEatAway, flyEatSide, flyEatToward, flyMoveSide, flyMoveToward, flyTurnTowardSide } from '../assets';
+import { flyMoveAway, flyEatSide, flyEatToward, flyMoveSide, flyMoveToward, flyTurnTowardSide } from '../assets';
+import { addShakeSystemToEngine } from './AnimationSystem';
 import { addFrogSpriteAnimationSystemToEngine } from './FrogSpriteSystem';
 import { addPlayerSpriteSystemToEngine, nextPlayerSpriteElapsed, playerTurnSteps, startPlayerEatingAnimation } from './PlayerSpriteSystem';
 
@@ -39,6 +40,7 @@ describe('player sprite animation', () => {
       return system;
     });
     addPlayerSpriteSystemToEngine(world);
+    addShakeSystemToEngine(world);
     addFrogSpriteAnimationSystemToEngine(world);
     await world.initialize();
     const position = gridToPixel(1, 1);
@@ -52,16 +54,28 @@ describe('player sprite animation', () => {
         });
         startPlayerEatingAnimation(world, player.id);
         world.update(0);
-        const image = facing === 'toward' ? flyEatToward : facing === 'away' ? flyEatAway : flyEatSide;
+        const image = facing === 'toward' ? flyEatToward : facing === 'away' ? flyMoveAway : flyEatSide;
         expect(world.getComponent(player.id, 'renderable')?.imageSrc).toBe(image);
         expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.flipX).toBe(facing === 'left');
+        expect(world.getComponent(player.id, 'shake')?.intensity).toBe(facing === 'away' ? 2 : undefined);
         world.update(0.36);
+        const shake = world.getComponent(player.id, 'shake');
+        if (facing === 'away') {
+          expect(shake?.duration).toBe(0.72);
+          expect(Math.abs(shake?.offsetX ?? Infinity)).toBeLessThanOrEqual(1);
+          expect(Math.abs(shake?.offsetY ?? Infinity)).toBeLessThanOrEqual(1);
+        }
         expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.frameIndex).toBe(4);
         expect(world.getComponent(player.id, 'playerSprite')?.facing).toBe(facing);
         world.update(0.37);
         expect(world.hasComponent(player.id, 'spriteAnimation')).toBe(false);
+        expect(world.hasComponent(player.id, 'shake')).toBe(false);
         world.update(0.01);
-        expect(world.getComponent(player.id, 'renderable')?.imageSrc).not.toBe(image);
+        if (facing === 'away') {
+          expect(world.getComponent(player.id, 'renderable')?.imageSrc).toBe(flyMoveAway);
+        } else {
+          expect(world.getComponent(player.id, 'renderable')?.imageSrc).not.toBe(image);
+        }
         expect(world.getComponent(player.id, 'position')).toEqual({ ...position, rotation: 0 });
         world.removeEntity(player.id);
       }
@@ -81,6 +95,7 @@ describe('player sprite animation', () => {
       return system;
     });
     addPlayerSpriteSystemToEngine(world);
+    addShakeSystemToEngine(world);
     addFrogSpriteAnimationSystemToEngine(world);
     await world.initialize();
     const position = gridToPixel(1, 1);
