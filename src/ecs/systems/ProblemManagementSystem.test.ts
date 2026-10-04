@@ -12,6 +12,7 @@ import { enemyComponents, mathProblemComponents, playerComponents } from '../ent
 import { gridToPixel } from '../gameUtils';
 import { createEquationModeState, evaluateEquationSelection } from '../../math/equations';
 import { addProblemManagementSystemToEngine } from './ProblemManagementSystem';
+import { selectableEquationProblems } from '../selectableEquationProblems';
 
 describe('board population', () => {
 	(['easy', 'medium', 'expert'] as const).forEach(difficulty => {
@@ -30,21 +31,125 @@ describe('board population', () => {
 					await world.initialize();
 					const position = gridToPixel(1, 1);
 					world.spawn({ ...playerComponents(position.x, position.y), timers: {} });
+					[gridToPixel(0, 0), gridToPixel(board.width - 1, board.height - 1)].forEach(position => {
+						world.spawn(enemyComponents(position.x, position.y, 'lizard', 'guard'));
+					});
 					world.update(0.01);
 					const problems = world.getEntitiesWithQuery(['mathProblem', 'position']);
 					const state = world.getResource('equationMode');
 					expect(problems).toHaveLength(board.width * board.height);
 					expect(problems.every(problem => problem.components.position.x < board.width * GAME_CONFIG.GRID.CELL_SIZE
 						&& problem.components.position.y < board.height * GAME_CONFIG.GRID.CELL_SIZE)).toBe(true);
+					const selectable = selectableEquationProblems(
+						world.getEntitiesWithQuery(['mathProblem', 'position', 'collider', 'renderable'])
+							.map(problem => ({ ...problem, components: { ...problem.components, answerConsumption: problem.components.answerConsumption } })),
+						world.getEntitiesWithQuery(['enemy', 'position']),
+					);
 					const solutions = state.operandsRequired === 1
-						? problems.map(problem => [problem.components.mathProblem.value])
-						: problems.flatMap(left => problems.filter(right => right.id !== left.id)
+						? selectable.map(problem => [problem.components.mathProblem.value])
+						: selectable.flatMap(left => selectable.filter(right => right.id !== left.id)
 							.map(right => [left.components.mathProblem.value, right.components.mathProblem.value]));
 					expect(solutions.some(values => evaluateEquationSelection(state, values))).toBe(true);
 					await world.dispose();
 				}));
 			});
 		});
+	});
+});
+
+describe('equations with enemy-occupied answers', () => {
+	([
+		{ level: 1, difficulty: 'easy', target: 10, occupiedValue: 10, freeValues: [3] },
+		{ level: 2, difficulty: 'medium', target: 9, occupiedValue: 6, freeValues: [3, 3] },
+		{ level: 3, difficulty: 'expert', target: 9, occupiedValue: 9, freeValues: [3, 6] },
+	] as const).forEach(({ level, difficulty, target, occupiedValue, freeValues }) => {
+		test(`${difficulty} replaces a blocked prompt using only free pads`, async () => {
+			const world = await createProgressionWorld(level, ['lizard'], difficulty);
+			try {
+				const problems = world.getEntitiesWithQuery(['mathProblem', 'position']);
+				const blocked = problems[0];
+				if (!blocked) throw new Error('Missing test pad');
+				world.mutateComponent(blocked.id, 'mathProblem', problem => { problem.value = occupiedValue; });
+				problems.slice(1).forEach((problem, index) => {
+					const value = freeValues[index % freeValues.length];
+					if (value === undefined) throw new Error('Missing free test value');
+					world.mutateComponent(problem.id, 'mathProblem', problem => { problem.value = value; });
+				});
+				world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
+				world.setResource('equationMode', {
+					...world.getResource('equationMode'), target, promptValues: [6, 3], selectedProblemIds: [blocked.id],
+				});
+				world.update(0.01);
+				const state = world.getResource('equationMode');
+				expect(state.target).not.toBe(target);
+				expect(state.selectedProblemIds).toEqual([]);
+				expect(evaluateEquationSelection(state, freeValues)).toBe(true);
+				// A stationary enemy must not cause repeated prompt changes.
+				world.update(0.01);
+				expect(world.getResource('equationMode')).toBe(state);
+			} finally {
+				await world.dispose();
+			}
+		});
+	});
+
+	test('preserves the prompt and partial selection when another copy of the answer is free', async () => {
+		const world = await createProgressionWorld(2, ['lizard'], 'medium');
+		try {
+			const problems = world.getEntitiesWithQuery(['mathProblem', 'position']);
+			const blocked = problems[0];
+			const selected = problems[1];
+			if (!blocked || !selected) throw new Error('Missing test pads');
+			world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
+			const state = { ...world.getResource('equationMode'), selectedProblemIds: [selected.id] };
+			world.setResource('equationMode', state);
+			world.update(0.01);
+			expect(world.getResource('equationMode')).toBe(state);
+		} finally {
+			await world.dispose();
+		}
+	});
+
+	test('waits for success feedback, then repairs a next prompt blocked during the hold', async () => {
+		const world = await createProgressionWorld(1, ['lizard']);
+		try {
+			const blocked = world.getEntitiesWithQuery(['mathProblem', 'position'])[0];
+			if (!blocked) throw new Error('Missing test pad');
+			world.mutateComponent(blocked.id, 'mathProblem', problem => { problem.value = 10; });
+			const nextMode = { ...world.getResource('equationMode'), target: 10, promptValues: [7, 3] };
+			const feedbackMode = { ...world.getResource('equationMode'), feedback: { kind: 'correct' as const, startedAt: 0, nextMode } };
+			world.setResource('equationMode', feedbackMode);
+			world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
+			world.update(0.01);
+			expect(world.getResource('equationMode')).toBe(feedbackMode);
+			world.setResource('equationMode', nextMode);
+			world.update(0.01);
+			expect(world.getResource('equationMode').target).toBe(3);
+		} finally {
+			await world.dispose();
+		}
+	});
+
+	test('completes instead of waiting when two distinct free answer pads no longer exist', async () => {
+		const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
+		const world = await createProgressionWorld(2, ['lizard'], 'medium');
+		const transition = spyOn(world, 'pushScreen').mockImplementation(async () => {});
+		try {
+			const problems = world.getEntitiesWithQuery(['mathProblem', 'position']);
+			const blocked = problems[0];
+			if (!blocked) throw new Error('Missing test pad');
+			problems.slice(2).forEach(problem => {
+				world.mutateComponent(problem.id, 'mathProblem', value => { value.consumed = true; });
+			});
+			world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
+			world.update(0.01);
+			expect(world.getResource('equationMode').target).toBe(0);
+			expect(transition).toHaveBeenCalledWith('levelComplete', expect.objectContaining({ completedLevel: 2, nextLevel: 3 }));
+		} finally {
+			await world.dispose();
+			transition.mockRestore();
+			sound.mockRestore();
+		}
 	});
 });
 
