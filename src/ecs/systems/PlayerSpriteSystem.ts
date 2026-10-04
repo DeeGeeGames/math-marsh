@@ -1,7 +1,8 @@
 import { GAME_CONFIG } from '../../config';
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import type { AllComponents } from '../types';
-import { flyEatAway, flyEatSide, flyEatToward, flyMoveAway, flyMoveSide, flyMoveToward, flyTurnSideAway, flyTurnTowardSide } from '../assets';
+import { flyEatSide, flyEatToward, flyMoveAway, flyMoveSide, flyMoveToward, flyTurnSideAway, flyTurnTowardSide } from '../assets';
+import { startShake } from './AnimationSystem';
 import { gridToPixel } from '../gameUtils';
 import { ANSWER_CONSUMPTION_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 
@@ -20,9 +21,12 @@ export const startPlayerEatingAnimation = function(ecs: GameEngine, entityId: nu
   const player = ecs.getComponent(entityId, 'player');
   if (!sprite || !player || player.gameOverPending || !ecs.hasComponent(entityId, 'renderable')) return;
   const imageSrc = sprite.facing === 'toward' ? flyEatToward
-    : sprite.facing === 'away' ? flyEatAway : flyEatSide;
+    : sprite.facing === 'away' ? flyMoveAway : flyEatSide;
   const flipX = sprite.facing === 'left';
   const duration = ANSWER_CONSUMPTION_DURATION_MS / 1000;
+  if (sprite.facing === 'away') {
+    startShake(ecs, entityId, 2, ANSWER_CONSUMPTION_DURATION_MS);
+  }
   ecs.mutateComponent(entityId, 'playerSprite', state => { state.elapsed = 0; });
   ecs.mutateComponent(entityId, 'renderable', renderable => {
     renderable.imageSrc = imageSrc;
