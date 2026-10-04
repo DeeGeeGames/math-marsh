@@ -152,7 +152,6 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
         type="button"
         class="utility-btn absolute top-3 right-3 md:top-4 md:right-4 text-white border-none w-10 h-10 md:w-12 md:h-12 rounded-md cursor-pointer text-lg md:text-xl transition-colors duration-200 flex items-center justify-center z-10"
       >
-        ⛶
       </button>
       <div class="input-prompts-slot menu-input-prompts" data-input-prompts></div>
     `,
