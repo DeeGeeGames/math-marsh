@@ -1,7 +1,7 @@
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { activePlayerGridCell, pixelToGrid, positionInGridCell, sameGridCell, sameGridPosition } from '../gameUtils';
-import { collectGridCellKeys, positionedEntityGridCellKey } from '../lilyPads';
+import { selectableEquationProblems } from '../selectableEquationProblems';
 import {
   playerCollisionQuery,
   mathProblemWithRenderableQuery,
@@ -98,10 +98,7 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
       }
 
       const activeProblemCell = activePlayerGridCell(player);
-      const enemyOccupiedCells = collectGridCellKeys(queries.enemies);
-      const selectableMathProblems = queries.mathProblems
-        .filter(problem => !problem.components.mathProblem.consumed)
-        .filter(problem => !enemyOccupiedCells.has(positionedEntityGridCellKey(problem)));
+      const selectableMathProblems = selectableEquationProblems(queries.mathProblems, queries.enemies);
 
       // Check for math problems that can be consumed
       for (const problem of selectableMathProblems) {

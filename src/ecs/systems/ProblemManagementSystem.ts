@@ -1,4 +1,5 @@
-import { gridCells } from '../lilyPads';
+import { collectGridCellKeys, gridCellKey, gridCells } from '../lilyPads';
+import { selectableEquationProblems } from '../selectableEquationProblems';
 import { levelClearTarget } from '../levelProgression';
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createMathProblem } from '../entities';
@@ -10,11 +11,13 @@ import {
   createEquationModeState,
   createRandomEquationCandidate,
   equationProblemValuesForCandidate,
+  evaluateEquationSelection,
 } from '../../math/equations';
 import {
   mathProblemWithRenderableQuery,
   playerQuery,
   positionEntityQuery,
+  enemyQuery,
   type MathProblemEntityWithRenderable,
   type PlayerEntity,
   type PositionEntity
@@ -42,6 +45,7 @@ export function addProblemManagementSystemToEngine(
     .addQuery('mathProblems', mathProblemWithRenderableQuery)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
     .addQuery('allPositions', positionEntityQuery)
+    .addQuery('enemies', enemyQuery)
     .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn'])
     .setProcess(({ queries, ecs, resources }) => {
       const player = queries.player;
@@ -59,13 +63,16 @@ export function addProblemManagementSystemToEngine(
               resources.currentLevel,
               resources.equationMode,
               resources.board,
+              queries.enemies,
             )
           : resources.equationMode;
-        const nextEquationMode = equationStateFromBoard(
-          queries.mathProblems,
-          resources,
-          populatedEquationMode,
-        );
+        const nextEquationMode = shouldSpawnProblems
+          ? populatedEquationMode
+          : equationStateFromBoard(
+              selectableEquationProblems(queries.mathProblems, queries.enemies),
+              resources,
+              populatedEquationMode,
+            );
 
         if (shouldSpawnProblems) {
           player.components.timers.problemSpawn = createTimer(GAME_CONFIG.TIMING.SHORT_DELAY / 1000);
@@ -97,19 +104,24 @@ function populateFullGrid(
   currentLevel: number,
   equationMode: Resources['equationMode'],
   board: Resources['board'],
+  enemies: readonly PositionEntity[],
 ): Resources['equationMode'] {
   const availablePositions = getAllGridPositionsWithoutMathProblems(allPositionEntities, board);
-  if (availablePositions.length < equationMode.operandsRequired) return equationMode;
+  const occupiedCells = collectGridCellKeys(enemies);
+  const selectablePositions = availablePositions.filter(cell => !occupiedCells.has(gridCellKey(cell)));
+  const occupiedPositions = availablePositions.filter(cell => occupiedCells.has(gridCellKey(cell)));
+  if (selectablePositions.length < equationMode.operandsRequired) return equationMode;
 
   const candidate = createRandomEquationCandidate(equationMode);
   const problemValues = equationProblemValuesForCandidate(
     equationMode,
     candidate,
-    availablePositions.length,
+    selectablePositions.length,
   );
 
-  availablePositions.forEach((gridPos, index) => {
-    const value = problemValues[index];
+  // Put the guaranteed answers on free pads; occupied pads can still display numbers.
+  [...selectablePositions, ...occupiedPositions].forEach((gridPos, index) => {
+    const value = problemValues[index % problemValues.length];
     if (value === undefined) throw new Error('Board generation is missing a pad value');
     const pixelPos = gridToPixel(gridPos.x, gridPos.y);
     createMathProblem(ecs.commands, pixelPos.x, pixelPos.y, value, 1);
@@ -162,7 +174,8 @@ function equationStateFromBoard(
     ? currentState
     : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
-  if (state.target !== 0) return currentState;
+  if (state.feedback?.kind === 'correct') return currentState;
+  if (state.target !== 0 && hasSelectableSolution(state, mathProblems)) return currentState;
 
   const candidate = chooseEquationCandidate(
     state,
@@ -172,15 +185,31 @@ function equationStateFromBoard(
     })),
   );
 
-  if (!candidate) return currentState;
+  if (!candidate && state.target === 0) return currentState;
 
   return {
     ...state,
-    target: candidate.target,
-    promptValues: candidate.operandValues,
+    target: candidate?.target ?? 0,
+    promptValues: candidate?.operandValues ?? [],
     selectedProblemIds: [],
+    feedback: undefined,
   };
 }
+
+const hasSelectableSolution = function (
+  state: Resources['equationMode'],
+  problems: readonly MathProblemEntityWithRenderable[],
+): boolean {
+  if (state.operandsRequired === 1) {
+    return problems.some(problem => evaluateEquationSelection(state, [problem.components.mathProblem.value]));
+  }
+  return problems.some(left => problems.some(right =>
+    left.id !== right.id && evaluateEquationSelection(state, [
+      left.components.mathProblem.value,
+      right.components.mathProblem.value,
+    ]),
+  ));
+};
 
 /**
  * Pushes a level-complete overlay, preserving the completed board while
