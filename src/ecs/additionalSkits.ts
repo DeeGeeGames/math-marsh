@@ -1,22 +1,12 @@
-// Math Marsh: rewritten intermission skits (standalone proposal, NOT committed to the repo).
+// Math Marsh intermission skits: dialogue tables, timelines, and registry entries.
 //
-// Drop-in target: PR #21's data shape.
-//   - Snack Break   -> `SkitPresentation` (bespoke snack-break DOM path in skitScreen.ts)
-//   - other scenes  -> `AdditionalSkitPresentation` (generic `.skit-extra` DOM path from PR #21)
-//   - registry      -> the `SKITS` array in src/ecs/skitSequence.ts
-//
-// To use: replace src/ecs/additionalSkits.ts with this file, then in skitSequence.ts
-//   1. import { snackBreakPresentation, SNACK_BREAK_DURATION_SECONDS, SKIT_ENTRIES } from './additionalSkits';
-//   2. use `SKITS = SKIT_ENTRIES` (or copy the entries inline), keeping `as const`.
-// Scene IDs are renamed to match the new titles: 'the-shortcut' -> 'the-big-jump',
-// 'do-not-disturb' -> 'the-web-guitar', 'dinner-committee' -> 'the-big-plan' ('snack-break' is unchanged).
-// Safe because none of the three old ids ever shipped on master (saved unlocks only hold
-// 'snack-break'), and unknown saved ids are already filtered out by skitProgressFromStoredValue.
-// Eng must rename the matching `#skit-screen[data-scene="…"]` selectors in skit.css and the ids in
-// skitProgress.test.ts (see pr21-adoption.patch).
+// Holds all four skits: Snack Break (bespoke `SkitPresentation` staging in skitScreen.ts) and
+// The Big Jump, The Web Guitar, and The Big Plan (generic `AdditionalSkitPresentation` staging on
+// the `.skit-extra` layer). Also exports the shared scene types and `SKIT_ENTRIES`, which
+// skitSequence.ts uses as `SKITS`.
 //
 // Each skit's dialogue lives in a BEATS table (speaker, start time, line), so writers can edit
-// lines and timing without touching motion code. Captions keep the existing
+// lines and timing without touching motion code. Captions keep the
 // `Speaker: “line”` string format that skitScreen.ts `updateCaption` parses.
 
 import type { SkitPresentation } from './skitSequence';
@@ -153,7 +143,7 @@ export const snackBreakPresentation = function(elapsed: number, reducedMotion = 
 };
 
 // ---------------------------------------------------------------------------
-// Skit 2 — The Big Jump (after level 6). Uses PR #21's former 'the-shortcut' layout:
+// Skit 2 — The Big Jump (after level 6). Layout:
 // two gap pads (left/right), floating pad in the middle, splash ring at ~58% x.
 // ---------------------------------------------------------------------------
 
@@ -186,7 +176,7 @@ export const bigJumpPresentation = function(time: number, reducedMotion = false)
 };
 
 // ---------------------------------------------------------------------------
-// Skit 3 — The Web Guitar (after level 9). Uses PR #21's former 'do-not-disturb' layout:
+// Skit 3 — The Web Guitar (after level 9). Layout:
 // web in the middle, spider in the web, pluck strand on the right side.
 // ---------------------------------------------------------------------------
 
@@ -209,7 +199,7 @@ export const webGuitarPresentation = function(time: number, reducedMotion = fals
 };
 
 // ---------------------------------------------------------------------------
-// Skit 4 — The Big Plan (after level 12). Uses PR #21's former 'dinner-committee' layout:
+// Skit 4 — The Big Plan (after level 12). Layout:
 // one big pad along the bottom, plan card ("↓ / → ● ←") in the middle, spider on a thread.
 // Fly lands right on the plan's dot while they plan, joins in, zips away at GO.
 // ---------------------------------------------------------------------------
