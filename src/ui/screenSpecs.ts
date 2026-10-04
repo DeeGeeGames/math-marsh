@@ -1,4 +1,5 @@
 import { createSkitScreenSpec } from './screens/skitScreen';
+import { createSkitGalleryScreenSpec } from './screens/skitGalleryScreen';
 import { createSplashScreenSpec } from './screens/splashScreen';
 import type { ScreenSpec, UIScreen } from './screenTypes';
 import {
@@ -26,6 +27,7 @@ export function createScreenSpecs(
     studioSplash: createSplashScreenSpec('studioSplash'),
     engineSplash: createSplashScreenSpec('engineSplash'),
     skit: createSkitScreenSpec(actions.skipSkit),
+    skitGallery: createSkitGalleryScreenSpec(actions),
     menu: createMenuScreenSpec(actions),
     modeSelect: createModeSelectScreenSpec(actions),
     howToPlay: createHowToPlayScreenSpec(actions),

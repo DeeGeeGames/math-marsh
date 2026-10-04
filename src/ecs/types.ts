@@ -211,6 +211,7 @@ export interface EquationModeState extends BaseEquationModeState {
 }
 
 export interface Resources {
+  skitProgress: import('./skitProgress').SkitProgress;
   controllerSelection: import('./controllerSelection').ControllerSelection;
   gameMode: GameMode;
   mathDifficulty: MathDifficulty;

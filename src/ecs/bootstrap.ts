@@ -36,10 +36,12 @@ import { addUISystemToEngine } from './systems/UISystem';
 import { addSplashSystemToEngine } from './systems/SplashSystem';
 import { addSkitSystemToEngine } from './systems/SkitSystem';
 import { updateSkitPresentation } from '../ui/screens/skitScreen';
+import { skitById } from './skitSequence';
+import { saveSkitProgress, unlockSkitForCompletedLevel } from './skitProgress';
 import { STARTING_TIME_SECONDS } from './runTime';
 import { enemyRosterForLevel } from './enemyRosters';
 
-const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
+const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'skitGallery', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
 
 const setupCanvas = (): void => {
   const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
@@ -118,10 +120,19 @@ const setupScreenHooks = (): void => {
 
   const showSkit = function(): void {
     showScreen('skit');
-    updateSkitPresentation(gameEngine.getScreenState('skit').elapsed);
+    const state = gameEngine.getScreenState('skit');
+    updateSkitPresentation(state.elapsed, skitById(state.skitId));
   };
   gameEngine.onScreenEnter('skit', showSkit);
   gameEngine.onScreenResume('skit', showSkit);
+
+  gameEngine.onScreenEnter('levelComplete', ({ config, ecs }) => {
+    const progress = ecs.getResource('skitProgress');
+    const unlocked = unlockSkitForCompletedLevel(progress, config.completedLevel);
+    if (unlocked === progress) return;
+    ecs.setResource('skitProgress', unlocked);
+    saveSkitProgress(unlocked);
+  });
 
   INACTIVE_SCREENS.forEach(registerInactiveScreen);
 

@@ -1,5 +1,7 @@
 import type { GameMode, MathDifficulty } from '../../ecs/types';
 import type { BoardPoint } from '../../ecs/lilyPads';
+import type { SkitId } from '../../ecs/skitSequence';
+import type { SkitProgress } from '../../ecs/skitProgress';
 
 export type ScreenSpecActions = {
   startGame: (mode: GameMode, difficulty: MathDifficulty) => void;
@@ -12,6 +14,9 @@ export type ScreenSpecActions = {
   goToMenu: () => void;
   openModeSelect: () => void;
   openHowToPlay: () => void;
+  openSkitGallery: () => void;
+  replaySkit: (id: SkitId) => void;
+  getSkitProgress: () => SkitProgress;
   openSettings: () => void;
   quitApplication?: () => void;
   pauseGame: () => void;

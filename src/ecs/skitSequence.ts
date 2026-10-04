@@ -1,6 +1,5 @@
-// One intermission after level three. Later skits can extend this schedule.
 export const shouldPlaySkit = function(completedLevel: number): boolean {
-	return completedLevel === 3;
+	return skitForCompletedLevel(completedLevel) !== undefined;
 };
 
 export const SKIT_DURATION_SECONDS = 12;
@@ -31,4 +30,28 @@ export const skitPresentation = function(elapsed: number, reducedMotion = false)
 			: elapsed < 8.5 ? 'Frog: “Why does this taste like salad?”'
 			: 'Fly: “You should try the numbers!”',
 	};
+};
+
+// Add each playable scene here; the intermission schedule and gallery share it.
+export const SKITS = [{
+	id: 'snack-break',
+	title: 'Snack Break',
+	completedLevel: 3,
+	durationSeconds: SKIT_DURATION_SECONDS,
+	presentation: skitPresentation,
+	stageLabel: 'A frog tries to catch a fly, but catches a lily pad instead. The fly escapes.',
+}] as const;
+
+export type Skit = (typeof SKITS)[number];
+export type SkitId = Skit['id'];
+export type SkitScreenConfig =
+	| { nextLevel: number; skitId?: SkitId; replay?: false }
+	| { replay: true; skitId: SkitId; nextLevel?: never };
+
+export const skitForCompletedLevel = function(completedLevel: number): Skit | undefined {
+	return SKITS.find(skit => skit.completedLevel === completedLevel);
+};
+
+export const skitById = function(id: SkitId | undefined): Skit {
+	return SKITS.find(skit => skit.id === id) ?? SKITS[0];
 };

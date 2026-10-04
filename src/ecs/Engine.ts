@@ -6,6 +6,8 @@ import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { controllerActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { initialSplashState } from './splashSequence';
+import { loadSkitProgress } from './skitProgress';
+import type { SkitScreenConfig } from './skitSequence';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
 import { configureImageAssets } from './assets';
@@ -59,6 +61,7 @@ export const gameEngine = ECSpresso.create()
   .withResource('enemySpawn', { index: 0, roster: [] })
   .withResource('equationMode', createEquationModeState(1, 'easy', ['add']))
   .withResource('controllerSelection', initialControllerSelection())
+  .withResource('skitProgress', loadSkitProgress())
   .withResource('inputPrompt', { platform: 'keyboard', gamepadAxesActive: [] })
   .withResource('gameplayOnboardingCompletion', loadOnboardingCompletion('basics'))
   .withResource('operandOnboardingCompletion', loadOnboardingCompletion('operands'))
@@ -74,6 +77,7 @@ export const gameEngine = ECSpresso.create()
     .add('studioSplash', { initialState: initialSplashState })
     .add('engineSplash', { initialState: initialSplashState })
     .add('menu', { initialState: () => ({}) })
+    .add('skitGallery', { initialState: () => ({}) })
     .add('modeSelect', { initialState: () => ({}) })
     .add('howToPlay', { initialState: () => ({}) })
     .add('tutorialOffer', { initialState: () => ({}) })
@@ -86,7 +90,7 @@ export const gameEngine = ECSpresso.create()
       }),
     })
     .add('skit', {
-      initialState: (config: { nextLevel: number }) => ({ ...config, elapsed: 0, transitionStarted: false }),
+      initialState: (config: SkitScreenConfig) => ({ ...config, elapsed: 0, transitionStarted: false }),
     })
     .add('controllerRecovery', { initialState: () => ({ startedAt: performance.now() }) })
     .add('paused', { initialState: () => ({}) })

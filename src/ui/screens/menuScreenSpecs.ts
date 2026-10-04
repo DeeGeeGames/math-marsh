@@ -108,6 +108,9 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
               Start Game
             </button>
             <div class="menu-secondary-actions">
+              <button @click=${actions.openSkitGallery} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
+                Scenes
+              </button>
               <button @click=${actions.openHowToPlay} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
                 How to Play
               </button>
