@@ -4,6 +4,8 @@
  * body[data-touch-controls] based on (hover: none, pointer: coarse) or the
  * user's Settings override. */
 .touch-controls { display: none; }
+#show-gamepad-btn { display: none; }
+body[data-touch-controls="off"] #gameplay-ui:not(.tutorial-mode) #show-gamepad-btn { display: inline-flex; }
 body[data-touch-controls="on"] .touch-controls { display: grid; }
 body[data-touch-controls="on"] #touch-action { display: flex; align-items: center; justify-content: center; }
 body[data-touch-controls="on"] .input-prompts-slot { display: none; }
