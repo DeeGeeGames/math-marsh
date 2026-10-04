@@ -224,6 +224,39 @@ describe('enemy patrol progress', () => {
 	});
 });
 
+describe('lizard guard progress', () => {
+	[false, true].forEach(consumeReturnPad => {
+		test(consumeReturnPad
+			? 'relocates its guard area when consumed pads leave only outward moves'
+			: 'chooses an available move inside its guard area instead of rejecting an outward move', async () => {
+			const random = spyOn(Math, 'random').mockReturnValue(0);
+			const { world, enemy, timer, position } = await createTelegraphWorld('lizard', 1, {
+				start: { x: 2, y: 0 }, behavior: 'guard',
+			});
+			try {
+				world.mutateComponent(enemy.id, 'enemy', data => { data.guardPosition = { x: 0, y: 0 }; });
+				if (consumeReturnPad) {
+					const returnPosition = gridToPixel(1, 0);
+					const problem = world.getEntitiesWithQuery(['mathProblem', 'position'])
+						.find(entity => entity.components.position.x === returnPosition.x && entity.components.position.y === returnPosition.y);
+					if (!problem) throw new Error('Guard fixture has no return pad');
+					world.mutateComponent(problem.id, 'mathProblem', data => { data.consumed = true; });
+				}
+				const target = consumeReturnPad ? { x: 2, y: 1 } : { x: 1, y: 0 };
+				advance(world, timer.duration * 0.51);
+				expect(enemy.components.enemy.plannedMove).toEqual(target);
+				expect(enemy.components.enemy.guardPosition).toEqual(consumeReturnPad ? { x: 2, y: 0 } : { x: 0, y: 0 });
+				expect(enemy.components.position).toEqual(position);
+				advance(world, timer.duration * 0.51 + 0.75);
+				expect(enemy.components.position).toEqual(gridToPixel(target.x, target.y));
+			} finally {
+				random.mockRestore();
+				await world.dispose();
+			}
+		});
+	});
+});
+
 describe('AI board bounds', () => {
 	Object.entries(BOARD_SIZES).forEach(([difficulty, board]) => {
 		test(`${difficulty} keeps all AI behaviors and patrol waypoints inside the active board`, async () => {
