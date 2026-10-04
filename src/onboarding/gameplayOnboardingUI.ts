@@ -1,4 +1,5 @@
 import type { ScreenSpec } from '../ui/screenTypes';
+import { shouldShowTutorialTouchGuidance, tutorialTouchGuidance, tutorialTouchIllustration } from './tutorialTouchGuidance';
 import {
   tutorialSteps,
   type GameplayOnboardingSession,
@@ -18,6 +19,41 @@ const TUTORIAL_FINISH_LABELS = {
   previousScreen: 'Finish Tutorial',
   newGame: 'Start Playing',
 } as const;
+
+export const updateTutorialTouchGuidance = function(
+  session: GameplayOnboardingSession,
+  touchSupported: boolean,
+  controllerConnected: boolean,
+): void {
+  const illustration = document.getElementById('tutorial-touch-guidance');
+  const description = document.getElementById('gameplay-onboarding-copy');
+  const panel = document.getElementById('gameplay-onboarding');
+  if (!illustration || !description || !panel || !session.active) return;
+  const guidance = shouldShowTutorialTouchGuidance(touchSupported, controllerConnected)
+    ? tutorialTouchGuidance(session)
+    : undefined;
+  panel.classList.toggle('touch-guidance', guidance !== undefined);
+  illustration.hidden = guidance === undefined;
+  const step = tutorialSteps(session.kind)[session.stepIndex];
+  const copy = guidance?.copy ?? step?.copy;
+  if (copy !== undefined && description.textContent !== copy) description.textContent = copy;
+  if (!guidance || illustration.dataset.action === guidance.action) return;
+  illustration.dataset.action = guidance.action;
+  illustration.innerHTML = `
+    <figure class="tutorial-tap-example">
+      ${tutorialTouchIllustration(guidance.action)}
+      <figcaption>${guidance.caption}</figcaption>
+    </figure>
+    <div class="tutorial-gamepad-option">
+      <svg viewBox="0 0 150 64" aria-hidden="true" focusable="false">
+        <path d="M25 3h20v19h19v20H45v19H25V42H6V22h19Z" fill="#0f4f62" stroke="#fff7c6" stroke-width="2" />
+        <path d="m30 15 5-6 5 6m-10 35 5 6 5-6M18 27l-6 5 6 5m34-10 6 5-6 5" fill="none" stroke="#fff7c6" stroke-width="2" />
+        <circle cx="116" cy="32" r="27" fill="#527f36" stroke="#fff7c6" stroke-width="2" />
+        <text x="116" y="37" text-anchor="middle" fill="#fff7c6" font-size="15" font-weight="800">EAT</text>
+      </svg>
+      <p><strong>Or use the virtual gamepad</strong><br>Arrows move; EAT eats on the current pad. Settings → Touch Controls → Always On.</p>
+    </div>`;
+};
 
 export function updateGameplayOnboardingUI(
   session: GameplayOnboardingSession,

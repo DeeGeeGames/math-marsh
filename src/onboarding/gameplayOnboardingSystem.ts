@@ -12,6 +12,8 @@ import {
 } from './gameplayOnboardingFlow';
 import { applyTutorialStep } from './gameplayOnboardingScene';
 import type { GameplayOnboardingSession } from './gameplayOnboarding';
+import { updateTutorialTouchGuidance } from './gameplayOnboardingUI';
+import { isTouchPrimary } from '../ui/touchControls';
 
 export function registerGameplayOnboardingSystem(
   systems: GameSystemRegistrar,
@@ -42,6 +44,11 @@ export function registerGameplayOnboardingSystem(
         gameplayOnboardingSession,
       } = resources;
       if (!gameplayOnboardingSession.active) return;
+      updateTutorialTouchGuidance(
+        gameplayOnboardingSession,
+        isTouchPrimary() || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0),
+        inputState.gamepads.some(gamepad => gamepad.connected),
+      );
       const player = queries.player;
       if (!player) return;
 
