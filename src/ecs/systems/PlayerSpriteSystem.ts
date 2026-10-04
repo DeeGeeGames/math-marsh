@@ -74,6 +74,7 @@ export function nextPlayerSpriteElapsed(elapsed: number, dt: number): number {
 
 export function addPlayerSpriteSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('playerSpriteSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
     .inScreens(['playing', 'tutorial'])
     .setProcessEach(

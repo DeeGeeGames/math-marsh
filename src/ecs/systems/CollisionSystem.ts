@@ -1,3 +1,4 @@
+import { gameActions } from '../controllerSelection';
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { activePlayerGridCell, pixelToGrid, positionInGridCell, sameGridCell, sameGridPosition } from '../gameUtils';
@@ -51,13 +52,14 @@ const applyPlayerDamage = (
 // Add the collision system to ECSpresso
 export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('collisionSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.COLLISION)
     .addSingleton('player', { ...playerCollisionQuery, mutates: ['player', 'timers'] } as const)
     .addQuery('mathProblems', { ...mathProblemWithRenderableQuery, mutates: ['mathProblem', 'renderable'] } as const)
     .addQuery('enemies', enemyWithColliderQuery)
     .addQuery('spiderWebs', spiderWebWithRenderableQuery)
     .addQuery('frogTongues', frogTongueQuery)
-    .withResources(['inputState', 'equationMode', 'gameMode', 'mathDifficulty', 'tapEat', 'gameplayClock', 'equationsSolved'])
+    .withResources(['inputState', 'controllerSelection', 'equationMode', 'gameMode', 'mathDifficulty', 'tapEat', 'gameplayClock', 'equationsSolved'])
     .setProcess(({ queries, ecs, resources }) => {
       const tapEat = resources.tapEat;
       if (tapEat) ecs.setResource('tapEat', null);
@@ -104,7 +106,7 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
       for (const problem of selectableMathProblems) {
         // Math problems follow the intended active tile, not the rendered midpoint.
         if (positionInGridCell(problem.components.position, activeProblemCell)) {
-          if (resources.inputState.actions.justActivated('eat')
+          if (gameActions(resources.inputState, resources.controllerSelection).justActivated('eat')
             || (tapEat && sameGridCell(tapEat, activeProblemCell))) {
             handleEquationProblemSelection(
               ecs,

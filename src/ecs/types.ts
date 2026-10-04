@@ -211,6 +211,7 @@ export interface EquationModeState extends BaseEquationModeState {
 }
 
 export interface Resources {
+  controllerSelection: import('./controllerSelection').ControllerSelection;
   gameMode: GameMode;
   mathDifficulty: MathDifficulty;
   board: BoardSize;

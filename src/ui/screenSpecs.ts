@@ -3,6 +3,7 @@ import type { ScreenSpec, UIScreen } from './screenTypes';
 import {
   createGameOverScreenSpec,
   createPauseScreenSpec,
+  createControllerRecoveryScreenSpec,
   createPlayingScreenSpec,
 } from './screens/gameplayScreenSpecs';
 import {
@@ -31,5 +32,6 @@ export function createScreenSpecs(
     settings: createSettingsScreenSpec(actions),
     gameOver: createGameOverScreenSpec(actions),
     paused: createPauseScreenSpec(actions),
+    controllerRecovery: createControllerRecoveryScreenSpec(actions),
   };
 }

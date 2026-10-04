@@ -41,6 +41,7 @@ export function addProblemManagementSystemToEngine(
   systems: GameSystemRegistrar,
 ): void {
   systems.addSystem('problemManagementSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.PROBLEM_MANAGEMENT)
     .addQuery('mathProblems', mathProblemWithRenderableQuery)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)

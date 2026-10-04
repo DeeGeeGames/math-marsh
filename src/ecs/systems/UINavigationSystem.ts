@@ -1,3 +1,4 @@
+import { gameActions } from '../controllerSelection';
 import type { GameSystemRegistrar } from '../Engine';
 import { navigateFocus, activateFocus, triggerCancel } from '../../ui/UIManager';
 
@@ -6,10 +7,10 @@ import { navigateFocus, activateFocus, triggerCancel } from '../../ui/UIManager'
 // menus without bespoke event listeners per screen.
 export function addUINavigationSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('uiNavigationSystem')
-    .inScreens(['menu', 'modeSelect', 'howToPlay', 'tutorialOffer', 'paused', 'settings', 'gameOver'])
-    .withResources(['inputState'])
-    .setProcess(({ resources: { inputState } }) => {
-      const a = inputState.actions;
+    .inScreens(['menu', 'modeSelect', 'howToPlay', 'tutorialOffer', 'paused', 'controllerRecovery', 'settings', 'gameOver'])
+    .withResources(['inputState', 'controllerSelection'])
+    .setProcess(({ resources: { inputState, controllerSelection } }) => {
+      const a = gameActions(inputState, controllerSelection);
       if (a.justActivated('up')) navigateFocus('up');
       if (a.justActivated('down')) navigateFocus('down');
       if (a.justActivated('left')) navigateFocus('left');

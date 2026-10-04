@@ -48,27 +48,6 @@ const rememberGamepadAxes = (
     GAMEPAD_AXES.map(axis => isGamepadAxisActive(gamepad, axis)));
 };
 
-const connectedGamepadId = (gamepad: {
-  connected: boolean;
-  id: string | null;
-}): string[] =>
-  gamepad.connected && gamepad.id !== null ? [gamepad.id] : [];
-
-const activeGamepadPlatform = (
-  gamepads: ReadonlyArray<{
-    connected: boolean;
-    id: string | null;
-    justPressed(button: number): boolean;
-    axis(index: number): number;
-  }>,
-  inputPrompt: InputPromptResource,
-): InputPromptPlatform | undefined =>
-  gamepads
-    .filter((gamepad, index) => hasGamepadActivity(index, gamepad, inputPrompt))
-    .flatMap(connectedGamepadId)
-    .map(detectInputPromptPlatform)
-    .at(0);
-
 const updatePlatform = (
   inputPrompt: InputPromptResource,
   platform: InputPromptPlatform,
@@ -81,15 +60,20 @@ const updatePlatform = (
 export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('inputPromptSystem')
     .setPriority(SYSTEM_PRIORITIES.INPUT_PROMPTS)
-    .withResources(['inputState', 'inputPrompt'])
-    .setProcess(({ resources: { inputState, inputPrompt } }) => {
+    .withResources(['inputState', 'inputPrompt', 'controllerSelection'])
+    .setProcess(({ resources: { inputState, inputPrompt, controllerSelection } }) => {
       const keyboardActivity = hasKeyboardActivity(inputState.keyboard);
-      const gamepadPlatform = activeGamepadPlatform(inputState.gamepads, inputPrompt);
+      const owner = controllerSelection.owner;
+      const ownerPad = owner ? inputState.gamepads[owner.slot] : undefined;
+      const gamepadPlatform = owner && ownerPad?.connected
+        && hasGamepadActivity(owner.slot, ownerPad, inputPrompt)
+        ? detectInputPromptPlatform(ownerPad.id ?? '')
+        : undefined;
       rememberGamepadAxes(inputState.gamepads, inputPrompt);
 
-      if (gamepadPlatform) return updatePlatform(inputPrompt, gamepadPlatform);
       if (keyboardActivity || inputState.pointer.justPressed(0)) {
         return updatePlatform(inputPrompt, 'keyboard');
       }
+      if (gamepadPlatform) updatePlatform(inputPrompt, gamepadPlatform);
     });
 }

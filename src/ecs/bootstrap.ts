@@ -1,3 +1,4 @@
+import { addControllerSelectionSystemToEngine, registerControllerRecoveryLifecycle } from './systems/ControllerSelectionSystem';
 import { boardForDifficulty, TUTORIAL_BOARD } from './boardGeometry';
 import { initializeEngine, startGameLoop, gameEngine } from './Engine';
 import { createPlayer } from './entities';
@@ -20,6 +21,7 @@ import {
   setRunResult,
   showGameplayScreen,
   showPauseScreen,
+  showControllerRecoveryScreen,
   showScreen,
   showSettingsScreen,
 } from '../ui/UIManager';
@@ -99,6 +101,9 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
  */
 const setupScreenHooks = (): void => {
   registerGameplayClockLifecycle(gameEngine);
+  registerControllerRecoveryLifecycle(gameEngine);
+  gameEngine.onScreenEnter('controllerRecovery', showControllerRecoveryScreen);
+  gameEngine.onScreenResume('levelComplete', () => showGameplayScreen('normal'));
 
   const registerInactiveScreen = (screen: (typeof INACTIVE_SCREENS)[number]): void => {
     function showInactiveScreen(): void {
@@ -144,6 +149,9 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenEnter('settings', ({ config }) => {
     showSettingsScreen(config.returnTo);
   });
+  gameEngine.onScreenResume('settings', ({ config }) => {
+    showSettingsScreen(config.returnTo);
+  });
 
   function showGameOverScreen(): void {
     showScreen('gameOver');
@@ -173,6 +181,7 @@ const registerSystems = async (): Promise<void> => {
   registerFrogTongueInit(gameEngine);
 
   addEquationFeedbackSystemToEngine(gameEngine);
+  addControllerSelectionSystemToEngine(gameEngine);
   addPauseSystemToEngine(gameEngine);
   addUINavigationSystemToEngine(gameEngine);
   addSplashSystemToEngine(gameEngine);

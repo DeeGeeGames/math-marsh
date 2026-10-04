@@ -1,0 +1,8 @@
+{
+  "viewport": { "width": 1280, "height": 800 },
+  "screen": "controllerRecovery",
+  "dialog": { "x": 352, "y": 158, "width": 576, "height": 484 },
+  "button": { "x": 378, "y": 456, "width": 524, "height": 60 },
+  "headingFont": "36px",
+  "bodyFont": "20px"
+}

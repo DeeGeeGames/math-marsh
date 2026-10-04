@@ -1,3 +1,4 @@
+import { gameActions } from '../ecs/controllerSelection';
 import type { GameSystemRegistrar } from '../ecs/Engine';
 import {
   mathProblemWithRenderableQuery,
@@ -18,6 +19,7 @@ export function registerGameplayOnboardingSystem(
   let appliedSession: GameplayOnboardingSession | undefined;
 
   systems.addSystem('gameplayOnboardingSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.ONBOARDING)
     .addSingleton('player', {
       ...playerCollisionQuery,
@@ -32,10 +34,11 @@ export function registerGameplayOnboardingSystem(
       optional: ['enemySprite'],
       mutates: ['position', 'renderable', 'timers'],
     } as const)
-    .withResources(['inputState', 'gameplayOnboardingSession'])
+    .withResources(['inputState', 'controllerSelection', 'gameplayOnboardingSession'])
     .setProcess(({ queries, ecs, resources }) => {
       const {
         inputState,
+        controllerSelection,
         gameplayOnboardingSession,
       } = resources;
       if (!gameplayOnboardingSession.active) return;
@@ -53,14 +56,14 @@ export function registerGameplayOnboardingSystem(
         );
       }
 
-      if (inputState.actions.justActivated('back')) {
+      if (gameActions(inputState, controllerSelection).justActivated('back')) {
         previousGameplayOnboardingStep(ecs);
         return;
       }
-      if (inputState.actions.justActivated('skip')) {
+      if (gameActions(inputState, controllerSelection).justActivated('skip')) {
         skipGameplayOnboarding(ecs);
         return;
       }
-      if (inputState.actions.justActivated('eat')) nextGameplayOnboardingStep(ecs);
+      if (gameActions(inputState, controllerSelection).justActivated('eat')) nextGameplayOnboardingStep(ecs);
     });
 }

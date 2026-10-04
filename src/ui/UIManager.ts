@@ -157,6 +157,7 @@ function openSettings(): void {
     || returnTo === 'studioSplash'
     || returnTo === 'engineSplash'
     || returnTo === 'settings'
+    || returnTo === 'controllerRecovery'
     || returnTo === 'levelComplete'
     || returnTo === 'tutorialOffer'
   ) return;
@@ -247,6 +248,10 @@ export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
     mode === 'tutorial' ? TUTORIAL_PROMPT_SPEC : undefined,
   );
   showScreen('playing');
+}
+
+export function showControllerRecoveryScreen(): void {
+  presentScreen('controllerRecovery', true);
 }
 
 export function showPauseScreen(): void {

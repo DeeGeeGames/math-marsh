@@ -1,3 +1,4 @@
+import { gameActions } from '../controllerSelection';
 import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
 import { MOVEMENT_CONFIG } from '../../config';
@@ -9,13 +10,14 @@ import { activeDirection, canContinueFrom, resolveMovementIntent, updateBreadcru
 
 export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('movementSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.MOVEMENT)
     .inPhase('preUpdate')
     .addSingleton('player', playerMovementQuery)
     .addQuery('mathProblems', mathProblemQuery)
     .runWhenEmpty()
-    .withResources(['inputState', 'tapRequest', 'board'])
-    .setProcess(({ queries, dt, ecs, resources: { inputState, tapRequest, board } }) => {
+    .withResources(['inputState', 'controllerSelection', 'tapRequest', 'board'])
+    .setProcess(({ queries, dt, ecs, resources: { inputState, controllerSelection, tapRequest, board } }) => {
       const entity = queries.player;
       if (!entity) return;
       const position = entity.components.position;
@@ -34,7 +36,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
         mathProblems: queries.mathProblems,
         tapRequest,
         frozen,
-        pressedDirection: activeDirection(direction => inputState.actions.justActivated(direction)),
+        pressedDirection: activeDirection(direction => gameActions(inputState, controllerSelection).justActivated(direction)),
       });
       pf.breadcrumbs = intent.breadcrumbs;
       if (intent.tapEat) ecs.setResource('tapEat', intent.tapEat);
@@ -53,7 +55,7 @@ export function addMovementSystemToEngine(systems: GameSystemRegistrar): void {
       }
 
       const heldDirection = activeDirection(
-        direction => inputState.actions.isActive(direction),
+        direction => gameActions(inputState, controllerSelection).isActive(direction),
       );
 
       const head = pf.breadcrumbs[0];

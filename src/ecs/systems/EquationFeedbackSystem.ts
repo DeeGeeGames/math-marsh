@@ -15,6 +15,7 @@ const nextEquationModeForFeedback = (
 
 export function addEquationFeedbackSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('equationFeedbackSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.EQUATION_FEEDBACK)
     .inScreens(['playing'])
     .runWhenEmpty()

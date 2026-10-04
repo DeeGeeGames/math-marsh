@@ -1,3 +1,4 @@
+import type { ControllerSelection } from './controllerSelection';
 import type { InputState, KeyCode } from 'ecspresso/plugins/input/input';
 
 const LETTER_KEYS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'] as const;
@@ -13,8 +14,10 @@ const OTHER_KEYS = [
 const SPLASH_KEYS = [...LETTER_KEYS, ...UPPERCASE_KEYS, ...OTHER_KEYS];
 const STANDARD_GAMEPAD_BUTTONS = Array.from({ length: 17 }, (_, index) => index);
 
-export function splashAdvancePressed(input: Pick<InputState, 'keyboard' | 'pointer' | 'gamepads'>): boolean {
+export function splashAdvancePressed(input: Pick<InputState, 'keyboard' | 'pointer' | 'gamepads'>, selection: Readonly<ControllerSelection>): boolean {
+  const ownerSlot = selection.owner?.slot;
   return SPLASH_KEYS.some(key => input.keyboard.justPressed(key))
     || [0, 1, 2].some(button => input.pointer.justPressed(button))
-    || STANDARD_GAMEPAD_BUTTONS.some(button => input.gamepads[0]?.justPressed(button));
+    || (!selection.blockFrame && ownerSlot !== undefined
+      && STANDARD_GAMEPAD_BUTTONS.some(button => input.gamepads[ownerSlot]?.justPressed(button)));
 }

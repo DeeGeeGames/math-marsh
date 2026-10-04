@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "scope": "synthetic keyboard, pointer and touch DOM events",
+  "state": {
+    "breadcrumbs": [
+      {
+        "x": 2,
+        "y": 2
+      }
+    ],
+    "clock": 0.6042999999970196,
+    "equationsSolved": 0,
+    "errors": [],
+    "focus": "",
+    "level": 1,
+    "platform": "keyboard",
+    "position": {
+      "rotation": 0,
+      "x": 192.99571428571426,
+      "y": 212
+    },
+    "quitRequests": 0,
+    "screen": "tutorial",
+    "selection": {
+      "blockFrame": false,
+      "owner": null,
+      "waitingForNeutral": false
+    },
+    "text": "Time left: 1:30\nTutorial\nNext\nBack\nTab\nSkip\n\nSTEP 1 OF 5\n\nMove across the pond\n\nThe fly moves from one lily pad to the next.\n\nBack\nNext\nSkip Tutorial",
+    "time": 90,
+    "tutorial": {
+      "active": true,
+      "isReplay": false,
+      "kind": "basics",
+      "returnTo": {
+        "kind": "newGame"
+      },
+      "stepIndex": 0
+    }
+  }
+}

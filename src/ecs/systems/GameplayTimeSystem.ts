@@ -7,6 +7,7 @@ import { gameplayTimeMs } from '../gameplayClock';
 
 export function addGameplayTimeSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('gameplayTimeSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.GAMEPLAY_TIME)
     .addSingleton('player', { ...playerCollisionQuery, mutates: ['player', 'timers'] } as const)
     .addQuery('timeAdjustments', timeAdjustmentQuery)

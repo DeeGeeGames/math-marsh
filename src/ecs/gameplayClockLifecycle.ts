@@ -11,11 +11,12 @@ const PAUSED_GAMEPLAY_CLOCK_SCREENS = [
   'tutorialOffer',
   'levelComplete',
   'paused',
+  'controllerRecovery',
   'settings',
   'gameOver',
 ] as const;
 
-function pauseGameplayClocks(ecs: GameEngine): void {
+export function pauseGameplayClocks(ecs: GameEngine): void {
   GAMEPLAY_CLOCK_GROUPS.forEach(group => ecs.disableSystemGroup(group));
 }
 

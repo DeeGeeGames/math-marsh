@@ -91,6 +91,7 @@ export const startShake = (
 
 export function addShakeSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('shakeSystem')
+    .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.ANIMATION)
     .inScreens(['playing', 'tutorial'])
     .setProcessEach({ with: ['shake'], mutates: ['shake'] } as const, ({ entity, dt, ecs }) => {
