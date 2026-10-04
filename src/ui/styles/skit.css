@@ -1,0 +1,35 @@
+.skit-layout {
+	width: min(88vw, 1100px);
+	text-align: center;
+}
+.skit-kicker { color: #b7ff88; font-size: clamp(14px, 1.5vw, 22px); letter-spacing: .15em; text-transform: uppercase; }
+#skit-title { font-size: clamp(28px, 4vw, 56px); font-weight: 800; color: #fff7c6; }
+.skit-stage {
+	position: relative;
+	width: 100%;
+	height: min(43vh, 440px);
+	min-height: 150px;
+	margin: 18px auto;
+	overflow: hidden;
+	border: 3px solid #6d9a62;
+	border-radius: 24px;
+	background: radial-gradient(ellipse at 70% 5%, #d7eaa0 0%, transparent 38%), linear-gradient(#a6c784 0%, #719a6a 34%, #326f65 35%, #123d48 100%);
+	box-shadow: 0 18px 60px #071f3680, inset 0 -18px 45px #123142;
+}
+.skit-reeds { position: absolute; inset: 20% 0 auto; height: 20%; background: repeating-linear-gradient(100deg, transparent 0 34px, #3b694b 35px 39px, transparent 40px 60px); opacity: .45; }
+.skit-ripple { position: absolute; left: 10%; top: 73%; width: 80%; height: 12%; border: 3px solid #b5ead34a; border-radius: 50%; }
+.skit-perch, .skit-pad { position: absolute; background: #7cb745; border: 3px solid #40743c; border-radius: 50%; box-shadow: inset 0 -8px 0 #5f943e; }
+.skit-perch { left: 9%; top: 64%; width: 27%; height: 15%; }
+.skit-pad { width: 15%; height: 10%; }
+.skit-pad::after { content: ''; position: absolute; left: 50%; top: 0; height: 50%; border-left: 3px solid #40743c; transform: rotate(25deg); }
+.skit-frog { position: absolute; left: 23%; top: 73%; width: min(25%, 27vh); aspect-ratio: 1; background-repeat: no-repeat; transform-origin: bottom center; }
+.skit-fly { position: absolute; width: min(12%, 14vh); aspect-ratio: 1; background-size: 800% 100%; background-repeat: no-repeat; transform: translate(-50%, -100%); }
+.skit-tongue { position: absolute; left: 27%; top: 61%; height: 3%; background: #f58c9e; border: 2px solid #b65872; border-radius: 999px; }
+.skit-caption { display: flex; align-items: center; justify-content: center; min-height: 2.8em; margin-bottom: 12px; font-size: clamp(19px, 2.5vw, 32px); font-weight: 700; color: #fff7c6; }
+@media (max-height: 500px) and (orientation: landscape) {
+	.skit-kicker { display: none; }
+	#skit-title { font-size: 24px; }
+	.skit-stage { margin: 8px auto; min-height: 100px; height: 40vh; }
+	.skit-caption { min-height: 1.5em; font-size: 18px; margin-bottom: 6px; }
+	#skip-skit-btn { padding: 8px 20px; }
+}

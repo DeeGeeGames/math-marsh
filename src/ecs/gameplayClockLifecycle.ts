@@ -10,6 +10,7 @@ const PAUSED_GAMEPLAY_CLOCK_SCREENS = [
   'howToPlay',
   'tutorialOffer',
   'levelComplete',
+  'skit',
   'paused',
   'controllerRecovery',
   'settings',

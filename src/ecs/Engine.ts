@@ -85,6 +85,9 @@ export const gameEngine = ECSpresso.create()
         transitionStarted: false,
       }),
     })
+    .add('skit', {
+      initialState: (config: { nextLevel: number }) => ({ ...config, elapsed: 0, transitionStarted: false }),
+    })
     .add('controllerRecovery', { initialState: () => ({ startedAt: performance.now() }) })
     .add('paused', { initialState: () => ({}) })
     .add('settings', { initialState: (config: SettingsScreenConfig) => ({ ...config }) })

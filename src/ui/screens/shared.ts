@@ -15,6 +15,7 @@ export type ScreenSpecActions = {
   openSettings: () => void;
   quitApplication?: () => void;
   pauseGame: () => void;
+  skipSkit: () => void;
   wireFullscreenButton: (button: HTMLButtonElement) => void;
   wireAudioSettings: (root: ParentNode) => void;
   wireTouchControlsSetting: (root: ParentNode) => void;
