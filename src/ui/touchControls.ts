@@ -6,6 +6,7 @@ const STORAGE_KEY = 'math-marsh.touchControls';
 const TOUCH_QUERY = '(hover: none) and (pointer: coarse)';
 
 const MODES: readonly TouchControlsMode[] = ['auto', 'on', 'off'];
+let autoHidden = false;
 
 const isMode = (value: unknown): value is TouchControlsMode =>
 	typeof value === 'string' && MODES.some((m) => m === value);
@@ -20,6 +21,7 @@ export const loadTouchControlsMode = (): TouchControlsMode => {
 };
 
 export const saveTouchControlsMode = (mode: TouchControlsMode): void => {
+	autoHidden = false;
 	try {
 		localStorage.setItem(STORAGE_KEY, mode);
 	} catch {
@@ -34,7 +36,14 @@ export const isTouchPrimary = (): boolean => {
 };
 
 export const shouldShowTouchControls = (mode: TouchControlsMode): boolean =>
-	mode === 'on' || (mode === 'auto' && isTouchPrimary());
+	mode === 'on' || (mode === 'auto' && !autoHidden && isTouchPrimary());
+
+// Keep Auto selected while remembering direct pad input for this session.
+export const hideAutoTouchControls = function(): void {
+	if (loadTouchControlsMode() !== 'auto' || autoHidden) return;
+	autoHidden = true;
+	applyTouchControlsVisibility();
+};
 
 export const applyTouchControlsVisibility = (mode: TouchControlsMode = loadTouchControlsMode()): void => {
 	document.body.dataset.touchControls = shouldShowTouchControls(mode) ? 'on' : 'off';
