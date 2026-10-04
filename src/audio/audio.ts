@@ -1,4 +1,4 @@
-export type AudioScene = 'title' | 'game' | 'silent';
+export type AudioScene = 'title' | 'game' | 'cutscene' | 'silent';
 
 export type SoundEffect =
   | 'uiBack'
@@ -61,6 +61,23 @@ const DEFAULT_SETTINGS: AudioSettings = {
 const TITLE_NOTES = [0, 4, 7, 12, 9, 7, 4, 2] as const;
 const GAME_BASS_NOTES = [-12, -7, -5, -10] as const;
 const GAME_MELODY_NOTES = [0, 3, 5, 7, 10, 7, 5, 3] as const;
+// Bright C, F, C, G phrases with a bouncing bass and offbeat chords.
+const CUTSCENE_CHORDS = [
+  [-24, 0, 4, 7],
+  [-19, 0, 5, 9],
+  [-24, 0, 4, 7],
+  [-17, -1, 2, 7],
+] as const;
+const CUTSCENE_MELODY = [
+  12, null, 16, 19, 21, null, 19, 16,
+  14, 16, 19, null, 16, null, 12, null,
+  17, null, 21, 24, 21, null, 19, 17,
+  16, 17, 21, null, 17, null, 12, null,
+  16, null, 19, 24, 21, 19, 16, null,
+  19, null, 16, 14, 12, null, 16, null,
+  14, null, 19, 23, 21, null, 19, 17,
+  16, 14, 11, null, 7, null, 14, 11,
+] as const;
 
 const audioState: AudioState = {
   unlocked: false,
@@ -256,6 +273,43 @@ function scheduleGameMusic(master: GainNode, step: number): void {
   }
 }
 
+const scheduleCutsceneMusic = function(master: GainNode, step: number): void {
+  const now = getContext().currentTime + 0.02;
+  const phraseStep = step % 16;
+  const chord = CUTSCENE_CHORDS[Math.floor(step / 16) % CUTSCENE_CHORDS.length];
+
+  if (phraseStep % 4 === 0) {
+    playTone(master, {
+      frequency: frequency(chord[0] + (phraseStep % 8 === 0 ? 0 : 7)),
+      start: now,
+      duration: 0.25,
+      volume: 0.03,
+      type: 'sine',
+    });
+  }
+  if (phraseStep % 4 === 2) {
+    chord.slice(1).forEach(note => {
+      playTone(master, {
+        frequency: frequency(note),
+        start: now,
+        duration: 0.16,
+        volume: 0.01,
+        type: 'triangle',
+      });
+    });
+  }
+
+  const melody = CUTSCENE_MELODY[step % CUTSCENE_MELODY.length];
+  if (melody === null) return;
+  playTone(master, {
+    frequency: frequency(melody),
+    start: now + (step % 2 === 0 ? 0 : 0.035),
+    duration: 0.23,
+    volume: 0.022,
+    type: 'triangle',
+  });
+};
+
 const MUSIC_SCENES: Record<MusicScene, MusicSceneConfig> = {
   title: {
     intervalMs: 520,
@@ -266,6 +320,11 @@ const MUSIC_SCENES: Record<MusicScene, MusicSceneConfig> = {
     intervalMs: 430,
     volume: 0.46,
     schedule: scheduleGameMusic,
+  },
+  cutscene: {
+    intervalMs: 320,
+    volume: 0.46,
+    schedule: scheduleCutsceneMusic,
   },
 } as const;
 

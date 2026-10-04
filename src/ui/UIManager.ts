@@ -247,6 +247,7 @@ window.matchMedia('(hover: none) and (pointer: coarse)').addEventListener('chang
 
 function audioSceneForScreen(screen: UIScreen): AudioScene {
   if (screen === 'studioSplash' || screen === 'engineSplash') return 'silent';
+  if (screen === 'skit') return 'cutscene';
   return screen === 'playing' ? 'game' : 'title';
 }
 
