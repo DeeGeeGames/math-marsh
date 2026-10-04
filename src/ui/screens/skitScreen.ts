@@ -21,7 +21,12 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 						<div class="skit-gap-pad skit-gap-left"></div><div class="skit-gap-pad skit-gap-right"></div>
 						<div id="scene-pluck" class="scene-pluck"></div>
 						<div id="scene-web" class="scene-web"><span></span></div>
-						<div id="scene-diagram" class="scene-diagram"><span>↓</span><span>→ ● ←</span></div>
+						<div id="scene-diagram" class="scene-diagram">
+							<div class="scene-plan">
+								<span id="scene-plan-arrows" class="plan-arrows"><span>→</span><span>→</span><span>→</span></span>
+								<b class="plan-target">FLY</b>
+							</div>
+						</div>
 						<div id="scene-tongue" class="skit-tongue"></div>
 						<div id="scene-frog" class="scene-actor scene-frog" style="background-image:url('${frogSide}')"></div>
 						<div id="scene-lizard" class="scene-actor scene-lizard" style="background-image:url('${lizardWalkSide}')"></div>
@@ -106,6 +111,8 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		element.hidden = !view[prop];
 		if (prop === 'web') element.style.transform = `rotate(${view.webTilt}deg) scale(${view.webBuild})`;
 	}
+	const arrows = root.querySelector<HTMLElement>('#scene-plan-arrows');
+	if (arrows) arrows.style.transform = `rotate(${view.diagramTurn * 180}deg)`;
 	const burst = root.querySelector<HTMLElement>('#scene-burst');
 	if (burst) {
 		burst.hidden = !view.burst;
@@ -122,8 +129,10 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		frog.style.backgroundPositionX = view.tongue ? '100%' : '0%';
 	}
 	if (view.tongue && tongue && frog && caughtPad) {
-		const mouthX = frog.offsetLeft + frog.offsetWidth * .12;
-		const mouthY = frog.offsetTop - frog.offsetWidth * .52;
+		const facingLeft = frog.style.transform.includes('scaleX(-1)');
+		const width = frog.offsetWidth;
+		const mouthX = frog.offsetLeft + width * (facingLeft ? -0.22 : 0.22);
+		const mouthY = frog.offsetTop - width * 0.55;
 		const dx = caughtPad.offsetLeft - mouthX;
 		const dy = caughtPad.offsetTop - caughtPad.offsetHeight / 2 - mouthY;
 		tongue.style.left = `${mouthX}px`;

@@ -45,15 +45,15 @@ export const SKITS = [{
 }, {
 	id: 'the-shortcut', title: 'The Shortcut', completedLevel: 6,
 	durationSeconds: ADDITIONAL_SKIT_DURATION_SECONDS, presentation: shortcutPresentation,
-	stageLabel: 'Lizard tries a big jump, splashes into the pond, then pops up wearing a lily pad. Fly calls him a lily pad with toes.',
+	stageLabel: 'Lizard tries to jump to a small pad in the middle of the pond. He splashes through it and comes up wearing the pad. Fly tells him it is on his head.',
 }, {
 	id: 'do-not-disturb', title: 'Do Not Disturb', completedLevel: 9,
 	durationSeconds: ADDITIONAL_SKIT_DURATION_SECONDS, presentation: doNotDisturbPresentation,
-	stageLabel: 'Spider settles down for a nap. Fly plucks the web like a harp. Spider bounces, enjoys the wiggles, and asks for another bouncy lullaby.',
+	stageLabel: 'Spider waits in a finished web and asks for quiet. Fly plucks a loose strand twice. The web bounces Spider, and he says the sound is him.',
 }, {
 	id: 'dinner-committee', title: 'Dinner Committee', completedLevel: 12,
 	durationSeconds: ADDITIONAL_SKIT_DURATION_SECONDS, presentation: dinnerCommitteePresentation,
-	stageLabel: 'Fly points to the middle of the snack team’s map. Frog, Spider, and Lizard bump together, then spread out. Frog catches a leaf, and Fly suggests a salad picnic.',
+	stageLabel: 'Frog, Spider, and Lizard follow a plan whose arrows point at Fly. Fly turns the arrows around. The three run into each other, and Frog’s tongue catches a lily pad again.',
 }] as const;
 
 export type Skit = (typeof SKITS)[number];
