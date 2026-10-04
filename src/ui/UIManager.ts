@@ -47,6 +47,7 @@ import {
   updateGameplayOnboardingUI,
 } from '../onboarding/gameplayOnboardingUI';
 import { createScreenRuntime } from './screenRuntime';
+import { SKIT_DURATION_SECONDS } from '../ecs/skitSequence';
 import { playerQuery } from '../ecs/queries';
 
 export { gameplayLevelLabel };
@@ -159,6 +160,7 @@ function openSettings(): void {
     || returnTo === 'settings'
     || returnTo === 'controllerRecovery'
     || returnTo === 'levelComplete'
+    || returnTo === 'skit'
     || returnTo === 'tutorialOffer'
   ) return;
   playSound('uiSelect');
@@ -200,6 +202,11 @@ const SCREENS = createScreenSpecs({
   openSettings,
   quitApplication,
   pauseGame,
+  skipSkit: function(): void {
+    const engine = requireEngine();
+    if (engine.getCurrentScreen() !== 'skit') return;
+    engine.updateScreenState('skit', { elapsed: SKIT_DURATION_SECONDS });
+  },
   wireFullscreenButton,
   wireTouchControlsSetting: (root) => wireTouchControlsSetting(root, requestCanvasResize),
   wireAudioSettings,

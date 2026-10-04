@@ -1,37 +1,7 @@
-import type { GameEngine, GameSystemRegistrar } from '../Engine';
-import type { MathDifficulty } from '../types';
+import type { GameSystemRegistrar } from '../Engine';
 import { LEVEL_COMPLETE_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
-import {
-  shouldStartOperandTutorial,
-  shouldStartOperandAndResultTutorial,
-  type GameplayOnboardingCompletion,
-} from '../../onboarding/gameplayOnboarding';
-
-function goToNextLevel(
-  ecs: GameEngine,
-  nextLevel: number,
-  mathDifficulty: MathDifficulty,
-  operandOnboardingCompletion: GameplayOnboardingCompletion,
-  operandAndResultOnboardingCompletion: GameplayOnboardingCompletion,
-): void {
-  const tutorialKind = shouldStartOperandTutorial(nextLevel, mathDifficulty, operandOnboardingCompletion)
-    ? 'operands'
-    : shouldStartOperandAndResultTutorial(nextLevel, mathDifficulty, operandAndResultOnboardingCompletion)
-      ? 'operandAndResult'
-      : undefined;
-  if (tutorialKind) {
-    void ecs.setScreen('tutorial', {
-      kind: tutorialKind,
-      isReplay: false,
-      returnTo: { kind: 'level', level: nextLevel },
-    });
-    return;
-  }
-  void ecs.setScreen('playing', {
-    level: nextLevel,
-    isFreshGame: false,
-  });
-}
+import { shouldPlaySkit } from '../skitSequence';
+import { goToNextLevel } from './nextLevel';
 
 export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('levelCompleteSystem')
@@ -46,6 +16,10 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
       if (elapsed < LEVEL_COMPLETE_DURATION_MS || state.transitionStarted) return;
 
       ecs.updateScreenState('levelComplete', { transitionStarted: true });
+      if (shouldPlaySkit(state.completedLevel)) {
+        void ecs.setScreen('skit', { nextLevel: state.nextLevel });
+        return;
+      }
       goToNextLevel(ecs, state.nextLevel, mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion);
     });
 }

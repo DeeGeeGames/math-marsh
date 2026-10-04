@@ -34,6 +34,8 @@ import { setupScriptedTutorialScene } from '../onboarding/gameplayOnboardingScen
 import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
 import { addUISystemToEngine } from './systems/UISystem';
 import { addSplashSystemToEngine } from './systems/SplashSystem';
+import { addSkitSystemToEngine } from './systems/SkitSystem';
+import { updateSkitPresentation } from '../ui/screens/skitScreen';
 import { STARTING_TIME_SECONDS } from './runTime';
 import { enemyRosterForLevel } from './enemyRosters';
 
@@ -114,6 +116,13 @@ const setupScreenHooks = (): void => {
     gameEngine.onScreenResume(screen, showInactiveScreen);
   };
 
+  const showSkit = function(): void {
+    showScreen('skit');
+    updateSkitPresentation(gameEngine.getScreenState('skit').elapsed);
+  };
+  gameEngine.onScreenEnter('skit', showSkit);
+  gameEngine.onScreenResume('skit', showSkit);
+
   INACTIVE_SCREENS.forEach(registerInactiveScreen);
 
   function showPausedScreen(): void {
@@ -185,6 +194,7 @@ const registerSystems = async (): Promise<void> => {
   addPauseSystemToEngine(gameEngine);
   addUINavigationSystemToEngine(gameEngine);
   addSplashSystemToEngine(gameEngine);
+  addSkitSystemToEngine(gameEngine);
   addInputPromptSystemToEngine(gameEngine);
   addLevelCompleteSystemToEngine(gameEngine);
   addRenderSystemToEngine(gameEngine);

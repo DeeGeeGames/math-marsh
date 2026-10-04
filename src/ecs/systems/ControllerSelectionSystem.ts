@@ -3,7 +3,7 @@ import { advanceControllerSelection, controllerActionMap } from '../controllerSe
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { pauseGameplayClocks } from '../gameplayClockLifecycle';
 
-const RUN_SCREENS = ['playing', 'tutorial', 'levelComplete'] as const;
+const RUN_SCREENS = ['playing', 'tutorial', 'levelComplete', 'skit'] as const;
 
 export function addControllerSelectionSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('controllerSelectionSystem')
