@@ -1,9 +1,9 @@
 import { GAME_CONFIG } from '../../config';
-import type { GameSystemRegistrar } from '../Engine';
+import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import type { AllComponents } from '../types';
-import { flyMoveAway, flyMoveSide, flyMoveToward, flyTurnSideAway, flyTurnTowardSide } from '../assets';
+import { flyEatAway, flyEatSide, flyEatToward, flyMoveAway, flyMoveSide, flyMoveToward, flyTurnSideAway, flyTurnTowardSide } from '../assets';
 import { gridToPixel } from '../gameUtils';
-import { SYSTEM_PRIORITIES } from '../systemConfigs';
+import { ANSWER_CONSUMPTION_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 
 type Facing = AllComponents['playerSprite']['facing'];
 type SpriteStep = AllComponents['spriteAnimation']['steps'][number];
@@ -12,6 +12,29 @@ const FRAME_COUNT = 8;
 const FRAME_DURATION_S = 1 / 24;
 const ANIMATION_DURATION_S = FRAME_COUNT * FRAME_DURATION_S;
 const TURN_DURATION_S = 0.18;
+
+// Consumption takes presentation ownership immediately, including during a turn.
+// Movement continues; the latest path direction is picked up after the bite.
+export const startPlayerEatingAnimation = function(ecs: GameEngine, entityId: number): void {
+  const sprite = ecs.getComponent(entityId, 'playerSprite');
+  const player = ecs.getComponent(entityId, 'player');
+  if (!sprite || !player || player.gameOverPending || !ecs.hasComponent(entityId, 'renderable')) return;
+  const imageSrc = sprite.facing === 'toward' ? flyEatToward
+    : sprite.facing === 'away' ? flyEatAway : flyEatSide;
+  const flipX = sprite.facing === 'left';
+  const duration = ANSWER_CONSUMPTION_DURATION_MS / 1000;
+  ecs.mutateComponent(entityId, 'playerSprite', state => { state.elapsed = 0; });
+  ecs.mutateComponent(entityId, 'renderable', renderable => {
+    renderable.imageSrc = imageSrc;
+    renderable.spriteSheet = { frameCount: FRAME_COUNT, frameIndex: 0, flipX };
+  });
+  ecs.commands.addComponent(entityId, 'spriteAnimation', {
+    elapsed: 0,
+    duration,
+    currentStep: 0,
+    steps: [{ imageSrc, frameCount: FRAME_COUNT, duration, flipX }],
+  });
+};
 
 // Opposite facings pass through a shared view instead of flipping instantly.
 export const playerTurnSteps = function(from: Facing, to: Facing): SpriteStep[] {
@@ -86,8 +109,7 @@ export function addPlayerSpriteSystemToEngine(systems: GameSystemRegistrar): voi
       ({ entity, dt, ecs }) => {
         const { pathFollower, player, playerSprite, position, renderable } = entity.components;
         if (player.gameOverPending) return;
-        // The shared sprite animation system owns the renderable during a turn.
-        // Finish that turn before responding to the latest movement direction.
+        // The shared system owns presentation during turns and eating.
         if (entity.components.spriteAnimation) return;
 
         const targetGrid = pathFollower.breadcrumbs[0] ?? {
