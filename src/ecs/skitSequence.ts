@@ -1,4 +1,4 @@
-import { shortcutPresentation, doNotDisturbPresentation, dinnerCommitteePresentation } from './additionalSkits';
+import { ADDITIONAL_SKIT_DURATION_SECONDS, shortcutPresentation, doNotDisturbPresentation, dinnerCommitteePresentation } from './additionalSkits';
 
 export const shouldPlaySkit = function(completedLevel: number): boolean {
 	return skitForCompletedLevel(completedLevel) !== undefined;
@@ -30,7 +30,7 @@ export const skitPresentation = function(elapsed: number, reducedMotion = false)
 		caption: elapsed < 3.3 ? 'Frog: “Snack time!”'
 			: elapsed < 5.8 ? 'Fly: “Missed me!”'
 			: elapsed < 8.5 ? 'Frog: “Why does this taste like salad?”'
-			: 'Fly: “You should try the numbers!”',
+			: 'Fly: “One extra-green lunch!”',
 	};
 };
 
@@ -44,16 +44,16 @@ export const SKITS = [{
 	stageLabel: 'A frog tries to catch a fly, but catches a lily pad instead. The fly escapes.',
 }, {
 	id: 'the-shortcut', title: 'The Shortcut', completedLevel: 6,
-	durationSeconds: SKIT_DURATION_SECONDS, presentation: shortcutPresentation,
-	stageLabel: 'Lizard measures a leap. Fly flies across effortlessly. Lizard jumps short, splashes down, and emerges wearing a lily pad as a hat.',
+	durationSeconds: ADDITIONAL_SKIT_DURATION_SECONDS, presentation: shortcutPresentation,
+	stageLabel: 'Lizard tries a big jump, splashes into the pond, then pops up wearing a lily pad. Fly calls him a lily pad with toes.',
 }, {
 	id: 'do-not-disturb', title: 'Do Not Disturb', completedLevel: 9,
-	durationSeconds: SKIT_DURATION_SECONDS, presentation: doNotDisturbPresentation,
-	stageLabel: 'Spider builds a web between reeds. Fly plucks a loose strand twice, bouncing Spider like a harp string, then flies away.',
+	durationSeconds: ADDITIONAL_SKIT_DURATION_SECONDS, presentation: doNotDisturbPresentation,
+	stageLabel: 'Spider settles down for a nap. Fly plucks the web like a harp. Spider bounces, enjoys the wiggles, and asks for another bouncy lullaby.',
 }, {
 	id: 'dinner-committee', title: 'Dinner Committee', completedLevel: 12,
-	durationSeconds: SKIT_DURATION_SECONDS, presentation: dinnerCommitteePresentation,
-	stageLabel: 'Frog, Spider, and Lizard plan to catch Fly. Fly rotates their diagram, causing them to charge into each other. Frog then catches another lily pad.',
+	durationSeconds: ADDITIONAL_SKIT_DURATION_SECONDS, presentation: dinnerCommitteePresentation,
+	stageLabel: 'Fly points to the middle of the snack team’s map. Frog, Spider, and Lizard bump together, then spread out. Frog catches a leaf, and Fly suggests a salad picnic.',
 }] as const;
 
 export type Skit = (typeof SKITS)[number];

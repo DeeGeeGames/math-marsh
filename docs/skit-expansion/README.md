@@ -1,5 +1,7 @@
 # Additional marsh intermissions
 
+**Current version:** [PR 21 child-focused polish and preview](polish/README.md). The report and frames below describe the initial implementation and are retained as historical evidence. Current scripts, durations, and screenshots are in the polish handoff.
+
 Implements issues #17, #18, and #19, authorized by the owner's request to execute the open skit tasks on 2026-10-04. Uses the proposed placements: The Shortcut after level 6, Do Not Disturb after level 9, Dinner Committee after level 12. Snack Break remains after level 3; no repeats beyond level 12.
 
 The existing scene registry, screen clock, recovery hooks, next-level routing, and gallery support are reused. No caller signature or saved-data format changes: existing Snack Break unlocks are retained, and new scene IDs use the existing validation and unlock paths. The gallery automatically lists the added scenes. Owner correction: removed the obsolete `images/lizard.svg` and its unused asset registration; the skits use the same eight-frame `lizard-walk-side.png` sheet as gameplay, and the configured default image uses `lizard-walk-toward.png`. The hat is aligned to the corrected side-view head. Existing character art plus CSS props suffice; no generated art, new scheduler, audio, or framework escape hatch was needed.

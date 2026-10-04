@@ -14,20 +14,21 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 		className: `${OVERLAY_BASE} app-background`,
 		html: `
 			<section class="skit-layout" aria-labelledby="skit-title">
-				<header><p class="skit-kicker">Marsh intermission</p><h1 id="skit-title">Snack Break</h1></header>
+				<header><p class="skit-kicker">A little marsh mischief</p><h1 id="skit-title">Snack Break</h1></header>
 				<div class="skit-stage" role="img" aria-label="A frog tries to catch a fly, but catches a lily pad instead. The fly escapes.">
 					<div class="skit-reeds"></div><div class="skit-ripple"></div>
 					<div class="skit-extra" aria-hidden="true">
 						<div class="skit-gap-pad skit-gap-left"></div><div class="skit-gap-pad skit-gap-right"></div>
 						<div id="scene-pluck" class="scene-pluck"></div>
 						<div id="scene-web" class="scene-web"><span></span></div>
-						<div id="scene-diagram" class="scene-diagram">↑<br>← ● →</div>
+						<div id="scene-diagram" class="scene-diagram"><span>↓</span><span>→ ● ←</span></div>
 						<div id="scene-tongue" class="skit-tongue"></div>
 						<div id="scene-frog" class="scene-actor scene-frog" style="background-image:url('${frogSide}')"></div>
 						<div id="scene-lizard" class="scene-actor scene-lizard" style="background-image:url('${lizardWalkSide}')"></div>
 						<div id="scene-spider" class="scene-actor" style="background-image:url('${spiderImage}')"></div>
 						<div id="scene-fly" class="scene-actor scene-fly" style="background-image:url('${flySide}')"></div>
-						<div id="scene-pad" class="skit-pad"></div><div id="scene-splash" class="scene-splash">SPLASH!</div>
+						<div id="scene-pad" class="skit-pad"></div><div id="scene-splash" class="scene-splash"></div>
+						<div id="scene-burst" class="scene-burst"></div>
 					</div>
 					<div class="skit-perch"></div>
 					<div id="skit-tongue" class="skit-tongue"></div>
@@ -35,7 +36,7 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 					<div id="skit-frog" class="skit-frog"></div>
 					<div id="skit-fly" class="skit-fly" style="background-image:url('${flySide}')"></div>
 				</div>
-				<p id="skit-caption" class="skit-caption" aria-live="polite"></p>
+				<p id="skit-caption" class="skit-caption" aria-live="polite" aria-atomic="true"><span id="skit-speaker" class="skit-speaker"></span> <span id="skit-line"></span></p>
 				<button id="skip-skit-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">Skip Scene</button>
 				${inputPromptsSlot()}
 			</section>`,
@@ -62,7 +63,6 @@ export const updateSkitPresentation = function(elapsed: number, skit: Skit = ski
 	const frog = root.querySelector<HTMLElement>('#skit-frog');
 	const tongue = root.querySelector<HTMLElement>('#skit-tongue');
 	const pad = root.querySelector<HTMLElement>('#skit-pad');
-	const caption = root.querySelector('#skit-caption');
 	if (fly) {
 		fly.style.left = `${view.flyX}%`;
 		fly.style.top = `${Math.max(fly.offsetWidth + 12, (fly.parentElement?.offsetHeight ?? 0) * view.flyY / 100)}px`;
@@ -86,7 +86,7 @@ export const updateSkitPresentation = function(elapsed: number, skit: Skit = ski
 		pad.style.top = `${view.padY}%`;
 		pad.style.transform = `translate(-50%, -50%) rotate(${view.padCaught ? -25 : 0}deg)`;
 	}
-	if (caption && caption.textContent !== view.caption) caption.textContent = view.caption;
+	updateCaption(root, view.caption);
 };
 
 const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPresentation): void {
@@ -97,14 +97,19 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		element.hidden = !pose.visible;
 		element.style.left = `${pose.x}%`;
 		element.style.top = `${pose.y}%`;
-		element.style.transform = `translate(-50%, -100%) rotate(${pose.tilt}deg)`;
+		element.style.transform = `translate(-50%, -100%) rotate(${pose.tilt}deg) scaleX(${pose.facing})`;
+		if (actor === 'fly' || actor === 'lizard') element.style.backgroundPositionX = `${pose.frame / 7 * 100}%`;
 	}
 	for (const prop of ['web', 'diagram', 'tongue', 'splash', 'pluck'] as const) {
 		const element = root.querySelector<HTMLElement>(`#scene-${prop}`);
 		if (!element) continue;
 		element.hidden = !view[prop];
 		if (prop === 'web') element.style.transform = `rotate(${view.webTilt}deg) scale(${view.webBuild})`;
-		if (prop === 'diagram') element.style.transform = `rotate(${view.diagramTilt}deg)`;
+	}
+	const burst = root.querySelector<HTMLElement>('#scene-burst');
+	if (burst) {
+		burst.hidden = !view.burst;
+		if (burst.textContent !== view.burst) burst.textContent = view.burst;
 	}
 	const strand = root.querySelector<HTMLElement>('.scene-web span');
 	if (strand) strand.style.transform = view.pluck ? 'rotate(-12deg)' : 'rotate(0deg)';
@@ -123,11 +128,11 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		const dy = caughtPad.offsetTop - caughtPad.offsetHeight / 2 - mouthY;
 		tongue.style.left = `${mouthX}px`;
 		tongue.style.top = `${mouthY}px`;
-		tongue.style.width = `${Math.hypot(dx, dy)}px`;
+		tongue.style.width = `${Math.hypot(dx, dy) * view.tongueReach}px`;
 		tongue.style.transformOrigin = 'left center';
 		tongue.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
 	}
-	if (root.dataset.scene === 'the-shortcut' && view.lizard.visible && view.pad.tilt < 0) {
+	if (view.hat && view.lizard.visible) {
 		const lizard = root.querySelector<HTMLElement>('#scene-lizard');
 		const pad = root.querySelector<HTMLElement>('#scene-pad');
 		if (lizard && pad) {
@@ -135,6 +140,20 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 			pad.style.top = `${lizard.offsetTop - lizard.offsetWidth * .8}px`;
 		}
 	}
-	const caption = root.querySelector('#skit-caption');
-	if (caption && caption.textContent !== view.caption) caption.textContent = view.caption;
+	updateCaption(root, view.caption);
+};
+
+// Keep speaker and dialogue stable between beats, including the live region.
+const updateCaption = function(root: HTMLElement, caption: string): void {
+	const speaker = root.querySelector<HTMLElement>('#skit-speaker');
+	const line = root.querySelector('#skit-line');
+	const match = /^(Fly|Frog|Spider|Lizard|Together): “(.*)”$/.exec(caption);
+	const name = match?.[1] ?? '';
+	const words = match?.[2] ?? caption;
+	if (speaker) {
+		if (speaker.textContent !== name) speaker.textContent = name;
+		speaker.hidden = !name;
+		speaker.dataset.speaker = name.toLowerCase();
+	}
+	if (line && line.textContent !== words) line.textContent = words;
 };
