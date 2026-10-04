@@ -147,20 +147,20 @@ export function createPauseScreenSpec(actions: ScreenSpecActions): ScreenSpec {
     className: `${OVERLAY_BASE} contextual-gameplay-overlay`,
     html: `
       <div class="pause-panel overlay-panel text-center w-[min(92vw,28rem)] px-6 py-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-        <h2 id="pause-title" class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 md:mb-12 drop-shadow-lg">⏸️ PAUSED</h2>
+        <h2 id="pause-title" class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8 md:mb-12 drop-shadow-lg">PAUSED</h2>
 
         <div class="flex flex-col gap-4 md:gap-5">
           <button id="resume-btn" class="btn-success ${BTN_CHROME} ${BTN_SIZE.lg} w-full">
-            ▶️ Resume Game
+            Resume Game
           </button>
           <button id="pause-settings-btn" class="btn-primary ${BTN_CHROME} ${BTN_SIZE.md} w-full">
-            ⚙️ Settings
+            Settings
           </button>
           <button id="pause-fullscreen-btn" type="button" class="fullscreen-control btn-secondary ${BTN_CHROME} ${BTN_SIZE.md} w-full flex items-center justify-center gap-2">
             Fullscreen: Off
           </button>
           <button id="quit-to-menu-btn" class="btn-danger ${BTN_CHROME} ${BTN_SIZE.md} w-full">
-            🏠 Quit to Menu
+            Quit to Menu
           </button>
         </div>
         ${inputPromptsSlot()}
