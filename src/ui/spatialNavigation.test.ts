@@ -55,4 +55,21 @@ describe('findSpatialTargetIndex', () => {
 	test('returns the first target when current focus is missing', () => {
 		expect(findSpatialTargetIndex([rect(0, 0), rect(120, 0)], -1, 'right')).toBe(0);
 	});
+
+	test('keeps horizontal operation navigation in its row above a centered Back button', () => {
+		const rects = [
+			rect(0, 0, 400, 140),
+			rect(420, 0, 400, 140),
+			rect(0, 160, 400, 140),
+			rect(420, 160, 400, 140),
+			rect(180, 320, 460, 60),
+		];
+
+		expect(findSpatialTargetIndex(rects, 2, 'right')).toBe(3);
+		expect(findSpatialTargetIndex(rects, 3, 'left')).toBe(2);
+		expect(findSpatialTargetIndex(rects, 2, 'left')).toBeNull();
+		expect(findSpatialTargetIndex(rects, 3, 'right')).toBeNull();
+		expect(findSpatialTargetIndex(rects, 2, 'down')).toBe(4);
+		expect(findSpatialTargetIndex(rects, 3, 'down')).toBe(4);
+	});
 });

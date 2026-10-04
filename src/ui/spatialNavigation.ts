@@ -68,6 +68,12 @@ export function findSpatialTargetIndex(
 	return rects
 		.map((rect, index) => {
 			if (index === currentIndex) return null;
+			// Horizontal navigation stays in the current visual row. A centered
+			// control below a grid must not compete with its left/right neighbors.
+			if ((direction === 'left' || direction === 'right')
+				&& Math.min(currentRect.bottom, rect.bottom) <= Math.max(currentRect.top, rect.top)) {
+				return null;
+			}
 			return scoreCandidate(currentCenter, center(rect), direction, index);
 		})
 		.filter((candidate): candidate is ScoredIndex => candidate !== null)
