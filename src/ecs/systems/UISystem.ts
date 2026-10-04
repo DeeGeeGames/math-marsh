@@ -4,6 +4,7 @@ import { playerQuery } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { tutorialHudLabel } from '../../onboarding/gameplayOnboarding';
 import { pondThemeForPromptKind } from '../pondTheme';
+import { setGameMusicTime } from '../../audio/audio';
 
 /**
  * UI System
@@ -38,5 +39,6 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         ?? gameplayLevelLabel(gameMode, mathDifficulty, currentLevel);
 
       updateGameplayUI(remainingTimeSeconds, level, pondThemeForPromptKind(equationMode.promptKind).phase);
+      setGameMusicTime(remainingTimeSeconds);
     });
 }
