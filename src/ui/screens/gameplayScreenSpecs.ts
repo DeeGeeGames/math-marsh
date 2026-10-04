@@ -59,8 +59,8 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
           <button id="tutorial-next-btn" type="button" class="btn-success ${BTN_CHROME} ${BTN_SIZE.md}">
             Next
           </button>
-          <button id="skip-tutorial-btn" type="button" class="tutorial-skip-btn">
-            Skip
+          <button id="skip-tutorial-btn" type="button" class="tutorial-skip-btn btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">
+            Skip Tutorial
           </button>
         </div>
       </section>

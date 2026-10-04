@@ -61,14 +61,9 @@
 
 .gameplay-onboarding-actions .tutorial-skip-btn {
   grid-column: 1 / -1;
-  justify-self: center;
-  padding: 4px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--cream);
-  font-size: 0.9rem;
-  text-decoration: underline;
-  cursor: pointer;
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
 }
 
 .gameplay-onboarding-actions button:disabled {
