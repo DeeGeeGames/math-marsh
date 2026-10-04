@@ -51,6 +51,7 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
           <p id="gameplay-onboarding-kicker" class="gameplay-onboarding-kicker">Step 1 of 5</p>
           <h2 id="gameplay-onboarding-title">Move across the pond</h2>
           <p id="gameplay-onboarding-copy">The fly moves from one lily pad to the next.</p>
+          <div id="tutorial-touch-guidance" hidden></div>
         </div>
         <div class="gameplay-onboarding-actions">
           <button id="tutorial-back-btn" type="button" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">
