@@ -551,9 +551,18 @@
   }
 }
 
+/* Keep the top reachable when the results or input hints need scrolling. */
+#game-over-screen {
+  justify-content: flex-start;
+  padding-block: max(env(safe-area-inset-top, 0px), 16px) max(env(safe-area-inset-bottom, 0px), 16px);
+}
+
 .game-over-layout {
   position: relative;
   z-index: 1;
+  flex-shrink: 0;
+  max-width: 100%;
+  margin-block: auto;
 }
 
 .game-over-shell {
@@ -677,6 +686,34 @@
   margin-inline: auto;
   gap: 10px;
   justify-items: stretch;
+}
+
+@media (max-height: 800px) {
+  .game-over-shell {
+    padding-block: 20px;
+  }
+
+  .game-over-emblem {
+    width: clamp(3rem, 10vh, 5rem);
+    margin-bottom: 8px;
+  }
+
+  .game-over-title {
+    font-size: clamp(2.5rem, 8vh, 4rem);
+  }
+
+  .game-over-shell .run-result,
+  .game-over-message {
+    margin-top: 12px;
+  }
+
+  .game-over-actions {
+    margin-top: 16px;
+  }
+
+  .game-over-layout .input-prompts-slot--panel {
+    margin-top: 12px;
+  }
 }
 
 /* Menus / overlays: respect safe-area insets and avoid clipping when content
