@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
 import { shouldPlaySkit, skitPresentation, SKIT_DURATION_SECONDS } from './skitSequence';
 
-test('the intermission only follows level three', () => {
-	expect([0, 1, 2, 3, 4, 6, 9].filter(shouldPlaySkit)).toEqual([3]);
+test('intermissions follow only the four scheduled levels', () => {
+	expect(Array.from({ length: 31 }, (_, level) => level).filter(shouldPlaySkit)).toEqual([3, 6, 9, 12]);
 });
 
 test('the fly dodges before the lily pad is pulled to the frog, then escapes', () => {

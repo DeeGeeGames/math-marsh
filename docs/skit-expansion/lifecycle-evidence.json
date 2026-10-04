@@ -1,0 +1,142 @@
+[
+  {
+    "before": [
+      42,
+      7
+    ],
+    "frozen": [
+      42,
+      7
+    ],
+    "level": 3,
+    "nextLevel": 4,
+    "nextScreen": "playing",
+    "resumed": {
+      "elapsed": 4.1,
+      "nextLevel": 4,
+      "skitId": "snack-break",
+      "transitionStarted": false
+    },
+    "scene": "snack-break",
+    "state": {
+      "elapsed": 4,
+      "nextLevel": 4,
+      "skitId": "snack-break",
+      "transitionStarted": false
+    },
+    "suspended": {
+      "elapsed": 4,
+      "nextLevel": 4,
+      "skitId": "snack-break",
+      "transitionStarted": false
+    }
+  },
+  {
+    "before": [
+      42,
+      7
+    ],
+    "frozen": [
+      42,
+      7
+    ],
+    "level": 6,
+    "nextLevel": 7,
+    "nextScreen": "playing",
+    "resumed": {
+      "elapsed": 4.1,
+      "nextLevel": 7,
+      "skitId": "the-shortcut",
+      "transitionStarted": false
+    },
+    "scene": "the-shortcut",
+    "state": {
+      "elapsed": 4,
+      "nextLevel": 7,
+      "skitId": "the-shortcut",
+      "transitionStarted": false
+    },
+    "suspended": {
+      "elapsed": 4,
+      "nextLevel": 7,
+      "skitId": "the-shortcut",
+      "transitionStarted": false
+    }
+  },
+  {
+    "before": [
+      42,
+      7
+    ],
+    "frozen": [
+      42,
+      7
+    ],
+    "level": 9,
+    "nextLevel": 10,
+    "nextScreen": "playing",
+    "resumed": {
+      "elapsed": 4.1,
+      "nextLevel": 10,
+      "skitId": "do-not-disturb",
+      "transitionStarted": false
+    },
+    "scene": "do-not-disturb",
+    "state": {
+      "elapsed": 4,
+      "nextLevel": 10,
+      "skitId": "do-not-disturb",
+      "transitionStarted": false
+    },
+    "suspended": {
+      "elapsed": 4,
+      "nextLevel": 10,
+      "skitId": "do-not-disturb",
+      "transitionStarted": false
+    }
+  },
+  {
+    "before": [
+      42,
+      7
+    ],
+    "frozen": [
+      42,
+      7
+    ],
+    "level": 12,
+    "nextLevel": 13,
+    "nextScreen": "playing",
+    "resumed": {
+      "elapsed": 4.1,
+      "nextLevel": 13,
+      "skitId": "dinner-committee",
+      "transitionStarted": false
+    },
+    "scene": "dinner-committee",
+    "state": {
+      "elapsed": 4,
+      "nextLevel": 13,
+      "skitId": "dinner-committee",
+      "transitionStarted": false
+    },
+    "suspended": {
+      "elapsed": 4,
+      "nextLevel": 13,
+      "skitId": "dinner-committee",
+      "transitionStarted": false
+    }
+  },
+  {
+    "level": 4,
+    "nextLevel": 5,
+    "nextScreen": "playing",
+    "scene": null
+  },
+  {
+    "level": 13,
+    "nextLevel": 14,
+    "nextScreen": "playing",
+    "scene": null
+  }
+]

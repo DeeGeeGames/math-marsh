@@ -1,3 +1,6 @@
+import spiderImage from '../../assets/images/spider.png';
+import lizardImage from '../../assets/images/lizard.svg';
+import type { AdditionalSkitPresentation } from '../../ecs/additionalSkits';
 import flySide from '../../assets/images/fly-move-side.png';
 import frogSide from '../../assets/images/frog-hop-side.png';
 import frogMouth from '../../assets/images/frog-open-mouth-side.png';
@@ -14,6 +17,18 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 				<header><p class="skit-kicker">Marsh intermission</p><h1 id="skit-title">Snack Break</h1></header>
 				<div class="skit-stage" role="img" aria-label="A frog tries to catch a fly, but catches a lily pad instead. The fly escapes.">
 					<div class="skit-reeds"></div><div class="skit-ripple"></div>
+					<div class="skit-extra" aria-hidden="true">
+						<div class="skit-gap-pad skit-gap-left"></div><div class="skit-gap-pad skit-gap-right"></div>
+						<div id="scene-pluck" class="scene-pluck"></div>
+						<div id="scene-web" class="scene-web"><span></span></div>
+						<div id="scene-diagram" class="scene-diagram">↑<br>← ● →</div>
+						<div id="scene-tongue" class="skit-tongue"></div>
+						<div id="scene-frog" class="scene-actor scene-frog" style="background-image:url('${frogSide}')"></div>
+						<div id="scene-lizard" class="scene-actor" style="background-image:url('${lizardImage}')"></div>
+						<div id="scene-spider" class="scene-actor" style="background-image:url('${spiderImage}')"></div>
+						<div id="scene-fly" class="scene-actor scene-fly" style="background-image:url('${flySide}')"></div>
+						<div id="scene-pad" class="skit-pad"></div><div id="scene-splash" class="scene-splash">SPLASH!</div>
+					</div>
 					<div class="skit-perch"></div>
 					<div id="skit-tongue" class="skit-tongue"></div>
 					<div id="skit-pad" class="skit-pad"></div>
@@ -36,7 +51,13 @@ export const updateSkitPresentation = function(elapsed: number, skit: Skit = ski
 	const title = root.querySelector('#skit-title');
 	if (title) title.textContent = skit.title;
 	root.querySelector('.skit-stage')?.setAttribute('aria-label', skit.stageLabel);
-	const view = skit.presentation(elapsed, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	root.dataset.scene = skit.id;
+	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	if (skit.id !== 'snack-break') {
+		updateAdditionalScene(root, skit.presentation(elapsed, reducedMotion));
+		return;
+	}
+	const view = skit.presentation(elapsed, reducedMotion);
 	const fly = root.querySelector<HTMLElement>('#skit-fly');
 	const frog = root.querySelector<HTMLElement>('#skit-frog');
 	const tongue = root.querySelector<HTMLElement>('#skit-tongue');
@@ -65,5 +86,52 @@ export const updateSkitPresentation = function(elapsed: number, skit: Skit = ski
 		pad.style.top = `${view.padY}%`;
 		pad.style.transform = `translate(-50%, -50%) rotate(${view.padCaught ? -25 : 0}deg)`;
 	}
+	if (caption && caption.textContent !== view.caption) caption.textContent = view.caption;
+};
+
+const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPresentation): void {
+	for (const actor of ['fly', 'frog', 'spider', 'lizard', 'pad'] as const) {
+		const element = root.querySelector<HTMLElement>(`#scene-${actor}`);
+		const pose = view[actor];
+		if (!element) continue;
+		element.hidden = !pose.visible;
+		element.style.left = `${pose.x}%`;
+		element.style.top = `${pose.y}%`;
+		element.style.transform = `translate(-50%, -100%) rotate(${pose.tilt}deg)`;
+	}
+	for (const prop of ['web', 'diagram', 'tongue', 'splash', 'pluck'] as const) {
+		const element = root.querySelector<HTMLElement>(`#scene-${prop}`);
+		if (!element) continue;
+		element.hidden = !view[prop];
+		if (prop === 'web') element.style.transform = `rotate(${view.webTilt}deg) scale(${view.webBuild})`;
+		if (prop === 'diagram') element.style.transform = `rotate(${view.diagramTilt}deg)`;
+	}
+	const strand = root.querySelector<HTMLElement>('.scene-web span');
+	if (strand) strand.style.transform = view.pluck ? 'rotate(-12deg)' : 'rotate(0deg)';
+	const tongue = root.querySelector<HTMLElement>('#scene-tongue');
+	const frog = root.querySelector<HTMLElement>('#scene-frog');
+	const caughtPad = root.querySelector<HTMLElement>('#scene-pad');
+	if (frog) {
+		frog.style.backgroundImage = `url('${view.tongue ? frogMouth : frogSide}')`;
+		frog.style.backgroundSize = `${view.tongue ? 400 : 800}% 100%`;
+		frog.style.backgroundPositionX = view.tongue ? '100%' : '0%';
+	}
+	if (view.tongue && tongue && frog && caughtPad) {
+		const mouthX = frog.offsetLeft + frog.offsetWidth * .12;
+		const mouthY = frog.offsetTop - frog.offsetWidth * .52;
+		const dx = caughtPad.offsetLeft - mouthX;
+		const dy = caughtPad.offsetTop - caughtPad.offsetHeight / 2 - mouthY;
+		tongue.style.left = `${mouthX}px`;
+		tongue.style.top = `${mouthY}px`;
+		tongue.style.width = `${Math.hypot(dx, dy)}px`;
+		tongue.style.transformOrigin = 'left center';
+		tongue.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+	}
+	if (root.dataset.scene === 'the-shortcut' && view.lizard.visible && view.pad.tilt < 0) {
+		const lizard = root.querySelector<HTMLElement>('#scene-lizard');
+		const pad = root.querySelector<HTMLElement>('#scene-pad');
+		if (lizard && pad) pad.style.top = `${lizard.offsetTop - lizard.offsetWidth * .8}px`;
+	}
+	const caption = root.querySelector('#skit-caption');
 	if (caption && caption.textContent !== view.caption) caption.textContent = view.caption;
 };

@@ -33,3 +33,21 @@
 	.skit-caption { min-height: 1.5em; font-size: 18px; margin-bottom: 6px; }
 	#skip-skit-btn { padding: 8px 20px; }
 }
+.skit-extra { display: none; position: absolute; inset: 0; }
+#skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-extra { display: block; }
+#skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-stage > :is(.skit-perch, .skit-tongue, .skit-pad, .skit-frog, .skit-fly) { display: none; }
+.scene-actor { position: absolute; width: min(19%, 38cqh); aspect-ratio: 1; background-size: contain; background-repeat: no-repeat; background-position: center; transform-origin: bottom center; }
+.scene-frog { background-size: 800% 100%; background-position: 0 0; }
+.scene-fly { width: min(12%, 20cqh); background-size: 800% 100%; background-position: 0 0; }
+.skit-gap-pad { position: absolute; top: 72%; width: 25%; height: 13%; background: #7cb745; border: 3px solid #40743c; border-radius: 50%; }
+.skit-gap-left { left: 5%; }.skit-gap-right { right: 5%; }
+#skit-screen[data-scene="do-not-disturb"] .skit-gap-pad,
+#skit-screen[data-scene="dinner-committee"] .skit-gap-pad { display: none; }
+.scene-web { position: absolute; left: 27%; top: 15%; width: 45%; height: 55%; border: 4px solid #e8ffe1; border-radius: 35%; background: repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg 28deg, #e8ffe1 29deg 31deg, transparent 32deg 60deg); box-shadow: -12px 0 #547b37, 12px 0 #547b37; }
+.scene-web span { position: absolute; left: 50%; top: 60%; width: 57%; border-top: 4px solid #fff7c6; }
+.scene-diagram { position: absolute; left: 39%; top: 47%; width: 22%; height: 32%; background: #fff0b7; border: 3px solid #765c38; border-radius: 8px; color: #704328; font-size: clamp(20px, 3vw, 38px); line-height: 1; font-weight: 900; }
+#scene-tongue { left: 42%; top: 65%; width: 36%; }
+.scene-splash { position: absolute; left: 43%; top: 57%; color: #d1fffa; font-size: clamp(20px, 4vw, 48px); font-weight: 900; border-bottom: 9px dotted #b4ece1; transform: rotate(-8deg); }
+.scene-pluck { position: absolute; left: 64%; top: 40%; width: 8%; height: 10%; border-left: 4px solid #3e241c; border-bottom: 4px solid #3e241c; transform: rotate(-25deg); z-index: 2; }
+
+.skit-stage { container-type: size; }

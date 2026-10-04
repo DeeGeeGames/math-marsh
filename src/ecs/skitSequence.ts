@@ -1,3 +1,5 @@
+import { shortcutPresentation, doNotDisturbPresentation, dinnerCommitteePresentation } from './additionalSkits';
+
 export const shouldPlaySkit = function(completedLevel: number): boolean {
 	return skitForCompletedLevel(completedLevel) !== undefined;
 };
@@ -40,6 +42,18 @@ export const SKITS = [{
 	durationSeconds: SKIT_DURATION_SECONDS,
 	presentation: skitPresentation,
 	stageLabel: 'A frog tries to catch a fly, but catches a lily pad instead. The fly escapes.',
+}, {
+	id: 'the-shortcut', title: 'The Shortcut', completedLevel: 6,
+	durationSeconds: SKIT_DURATION_SECONDS, presentation: shortcutPresentation,
+	stageLabel: 'Lizard measures a leap. Fly flies across effortlessly. Lizard jumps short, splashes down, and emerges wearing a lily pad as a hat.',
+}, {
+	id: 'do-not-disturb', title: 'Do Not Disturb', completedLevel: 9,
+	durationSeconds: SKIT_DURATION_SECONDS, presentation: doNotDisturbPresentation,
+	stageLabel: 'Spider builds a web between reeds. Fly plucks a loose strand twice, bouncing Spider like a harp string, then flies away.',
+}, {
+	id: 'dinner-committee', title: 'Dinner Committee', completedLevel: 12,
+	durationSeconds: SKIT_DURATION_SECONDS, presentation: dinnerCommitteePresentation,
+	stageLabel: 'Frog, Spider, and Lizard plan to catch Fly. Fly rotates their diagram, causing them to charge into each other. Frog then catches another lily pad.',
 }] as const;
 
 export type Skit = (typeof SKITS)[number];
