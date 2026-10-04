@@ -1,4 +1,12 @@
 /* Button gradients for primary actions */
+[data-input-platform]:not([data-input-platform="keyboard"]) .fullscreen-floating {
+  display: none;
+}
+
+[data-mobile-pwa="true"] .fullscreen-control {
+  display: none;
+}
+
 .btn-success {
   background:
     radial-gradient(ellipse at 18% 18%, rgba(255, 247, 198, 0.25), transparent 32%),

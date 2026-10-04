@@ -88,6 +88,8 @@ export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void
       rememberGamepadAxes(inputState.gamepads, inputPrompt);
 
       if (gamepadPlatform) return updatePlatform(inputPrompt, gamepadPlatform);
-      if (keyboardActivity) return updatePlatform(inputPrompt, 'keyboard');
+      if (keyboardActivity || inputState.pointer.justPressed(0)) {
+        return updatePlatform(inputPrompt, 'keyboard');
+      }
     });
 }
