@@ -32,7 +32,7 @@ import {
   unlockAudio,
   type AudioScene,
 } from '../audio/audio';
-import { getDesktopQuitHandler } from '../platform/desktop';
+import { getDesktopFullscreenController, getDesktopQuitHandler } from '../platform/desktop';
 import type { FocusDirection } from './spatialNavigation';
 import type { UIScreen } from './screenTypes';
 import {
@@ -57,6 +57,14 @@ let stopObservingGameplayOnboarding: (() => void) | undefined;
 export function initializeUI(engine: GameEngine): void {
   stopObservingGameplayOnboarding?.();
   uiEngine = engine;
+  // Capture installed mode before a browser fullscreen request can change it.
+  document.documentElement.dataset.mobilePwa = String(
+    getDesktopFullscreenController() === undefined
+    && window.matchMedia('(hover: none)').matches
+    && (window.matchMedia('(display-mode: standalone)').matches
+      || window.matchMedia('(display-mode: fullscreen)').matches)
+    && document.fullscreenElement === null,
+  );
   stopObservingGameplayOnboarding = engine.onResourceChange(
     'gameplayOnboardingSession',
     updateGameplayOnboardingUI,
@@ -74,15 +82,22 @@ const syncFullscreenButton = (button: HTMLButtonElement): void => {
   const label = active ? 'Exit fullscreen' : 'Enter fullscreen';
   button.setAttribute('aria-label', label);
   button.title = label;
+  button.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">${active
+    ? '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>'
+    : '<path d="M5 14h2v3h3v2H5v-5zm2-4H5V5h5v2H7v3zm7 7h3v-3h2v5h-5v-2zm3-7V7h-3V5h5v5h-2z"/>'}</svg>${button.id === 'pause-fullscreen-btn' ? ` Fullscreen: ${active ? 'On' : 'Off'}` : ''}`;
 };
 
 const wireFullscreenButton = (button: HTMLButtonElement): void => {
+  button.classList.add('fullscreen-control');
+  if (button.id !== 'pause-fullscreen-btn') button.classList.add('fullscreen-floating');
   if (!isFullscreenSupported()) {
     button.style.display = 'none';
     return;
   }
   syncFullscreenButton(button);
-  button.addEventListener('click', () => { void toggleFullscreen(); });
+  button.addEventListener('click', () => {
+    void toggleFullscreen().catch(() => syncFullscreenButton(button));
+  });
   onFullscreenChange(() => syncFullscreenButton(button));
 };
 

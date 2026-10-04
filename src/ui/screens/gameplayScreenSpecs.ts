@@ -156,6 +156,9 @@ export function createPauseScreenSpec(actions: ScreenSpecActions): ScreenSpec {
           <button id="pause-settings-btn" class="btn-primary ${BTN_CHROME} ${BTN_SIZE.md} w-full">
             ⚙️ Settings
           </button>
+          <button id="pause-fullscreen-btn" type="button" class="fullscreen-control btn-secondary ${BTN_CHROME} ${BTN_SIZE.md} w-full flex items-center justify-center gap-2">
+            Fullscreen: Off
+          </button>
           <button id="quit-to-menu-btn" class="btn-danger ${BTN_CHROME} ${BTN_SIZE.md} w-full">
             🏠 Quit to Menu
           </button>
@@ -171,6 +174,7 @@ export function createPauseScreenSpec(actions: ScreenSpecActions): ScreenSpec {
     wire: (root): void => {
       $(root, '#resume-btn').addEventListener('click', actions.returnToPreviousScreen);
       $(root, '#pause-settings-btn').addEventListener('click', actions.openSettings);
+      actions.wireFullscreenButton($<HTMLButtonElement>(root, '#pause-fullscreen-btn'));
       $(root, '#quit-to-menu-btn').addEventListener('click', actions.goToMenu);
     },
     onCancel: actions.returnToPreviousScreen,

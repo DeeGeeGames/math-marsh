@@ -125,6 +125,7 @@ export function createScreenRuntime(
 
   function updateInputPromptPlatform(platform: InputPromptPlatform): void {
     state.currentPromptPlatform = platform;
+    container.dataset.inputPlatform = platform;
     screenElements.forEach((root, screen) => {
       renderPromptSlot(root, promptSpecForScreen(screen));
     });
