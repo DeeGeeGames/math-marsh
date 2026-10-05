@@ -1,0 +1,37 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background: #0d1c1c; color: #eef7f2; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1440px; padding: 32px; margin: auto; }
+header { margin-bottom: 28px; }
+h1 { font-size: clamp(30px, 4vw, 44px); margin: 4px 0 8px; }
+h2 { font-size: 24px; margin-top: 0; }
+h3 { margin: 24px 0 12px; }
+p { color: #b5cbc4; line-height: 1.5; }
+.eyebrow { letter-spacing: .15em; color: #8ad4b1; font-size: 13px; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 24px; }
+.panel { background: #172b2a; border: 1px solid #37514b; border-radius: 16px; padding: 24px; min-width: 0; }
+button, select { font: inherit; font-size: 16px; color: inherit; background: #243f39; border: 1px solid #5a776a; border-radius: 8px; min-height: 48px; padding: 10px 14px; cursor: pointer; }
+button:hover { background: #35584c; }
+button[aria-pressed=true], .primary { background: #a6e7b4; color: #10291d; border-color: #a6e7b4; font-weight: 650; }
+:focus-visible { outline: 3px solid #ffe3a1; outline-offset: 4px; }
+.characters, .transport, .options { display: flex; flex-wrap: wrap; gap: 12px; }
+.characters { margin-bottom: 20px; }
+label { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+select { max-width: 100%; }
+.stage { display: grid; place-items: center; min-height: 300px; margin: 20px 0 16px; border-radius: 12px; overflow: hidden; }
+.checker { background: repeating-conic-gradient(#33453f 0% 25%, #293b35 0% 50%) 0 / 32px 32px; }
+.dark { background: #08100e; }
+.light { background: #e7eee6; }
+#sprite-frame { width: min(280px, 100%); aspect-ratio: 1; background-repeat: no-repeat; }
+.frame-info { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; color: #b5cbc4; }
+.frame-info strong { color: #eef7f2; }
+#frame-scrubber { width: 100%; height: 40px; accent-color: #a6e7b4; margin: 8px 0; }
+.options { align-items: center; margin-top: 20px; }
+input[type=checkbox] { width: 22px; height: 22px; accent-color: #a6e7b4; }
+.audio-list { display: grid; gap: 10px; }
+.effects { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.audio-list button, .effects button { text-align: left; }
+.audio-status { display: grid; gap: 12px; margin-top: 24px; }
+.hint { font-size: 14px; margin-bottom: 0; }
+@media (max-width: 850px) { main { padding: 20px; } .workspace { grid-template-columns: 1fr; } }
+@media (max-width: 450px) { main { padding: 12px; } .panel { padding: 16px; } .stage { min-height: 260px; } .transport button { flex: 1; } }

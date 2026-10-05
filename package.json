@@ -20,6 +20,7 @@
   "desktopName": "math-marsh",
   "scripts": {
     "dev": "bun --port 3000 --console index.html",
+    "dev:assets": "bun --port 3001 --console asset-preview.html",
     "build": "bun run typecheck && bun run scripts/build.ts",
     "desktop:dev": "bun run scripts/desktop-dev.ts",
     "desktop:build": "bun run scripts/desktop-build.ts",
