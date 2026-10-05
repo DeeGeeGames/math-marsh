@@ -3,6 +3,7 @@ import { html, render } from 'lit-html';
 import { configureImageAssets } from '../ecs/assets';
 import { createAudioPreview, type SoundEffect } from '../audio/audio';
 import { CHARACTERS, EFFECTS, MUSIC, SPRITES, type SpritePreview } from './assetCatalog';
+import { ANSWER_CONSUMPTION_DURATION_MS } from '../ecs/systemConfigs';
 
 const root = document.querySelector<HTMLElement>('#preview-app');
 if (!root) throw new Error('Preview root not found');
@@ -27,7 +28,12 @@ const updateFrame = function(): void {
 	const frameElement = document.querySelector<HTMLElement>('#sprite-frame');
 	const frameLabel = document.querySelector<HTMLElement>('#frame-label');
 	const scrubber = document.querySelector<HTMLInputElement>('#frame-scrubber');
-	if (frameElement) frameElement.style.backgroundPosition = `${state.sprite.frameCount === 1 ? 0 : state.frame / (state.sprite.frameCount - 1) * 100}% 0`;
+	if (frameElement) {
+		frameElement.style.backgroundPosition = `${state.sprite.frameCount === 1 ? 0 : state.frame / (state.sprite.frameCount - 1) * 100}% 0`;
+		const shake = state.sprite.key === 'flyEatAway' && state.playing
+			? 2 * (1 - state.elapsed / (ANSWER_CONSUMPTION_DURATION_MS / 1000)) : 0;
+		frameElement.style.transform = `translate(${(Math.random() - 0.5) * shake * 2}px, ${(Math.random() - 0.5) * shake * 2}px) scaleX(${state.flipX ? -1 : 1})`;
+	}
 	if (frameLabel) frameLabel.textContent = `Frame ${state.frame + 1} / ${state.sprite.frameCount}`;
 	if (scrubber) scrubber.value = String(state.frame);
 };
@@ -106,6 +112,13 @@ const draw = function(): void {
 ecs.addSystem('assetPreviewPlayback').withResources(['preview']).setProcess(function({ dt, resources }): void {
 	const preview = resources.preview;
 	if (!preview.playing || document.hidden) return;
+	if (preview.sprite.key === 'flyEatAway') {
+		preview.elapsed = (preview.elapsed + dt * preview.speed) % (ANSWER_CONSUMPTION_DURATION_MS / 1000);
+		const frame = Math.floor(preview.elapsed * preview.sprite.fps) % preview.sprite.frameCount;
+		preview.frame = preview.reverse ? preview.sprite.frameCount - 1 - frame : frame;
+		updateFrame();
+		return;
+	}
 	preview.elapsed += dt * preview.speed * preview.sprite.fps;
 	const frames = Math.floor(preview.elapsed);
 	if (frames === 0) return;
@@ -118,7 +131,7 @@ let animationFrame = 0;
 let ready = false;
 let lastTime = performance.now();
 const tick = function(time: number): void {
-	ecs.update(document.hidden ? 0 : Math.min((time - lastTime) / 1000, 0.1));
+	ecs.update(document.hidden ? 0 : Math.max(0, Math.min((time - lastTime) / 1000, 0.1)));
 	lastTime = time;
 	animationFrame = requestAnimationFrame(tick);
 };
