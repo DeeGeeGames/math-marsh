@@ -505,3 +505,31 @@ export function playSound(effect: SoundEffect): void {
   resumeAudioContext();
   playEffectBody(effect, context);
 }
+
+// Used only by the standalone development entry point. Settings remain in memory.
+export const createAudioPreview = function(): {
+  playMusic: (scene: AudioScene, lowTime: boolean) => void;
+  playEffect: (effect: SoundEffect) => void;
+  stop: () => void;
+  dispose: () => void;
+} {
+  audioState.settings = { soundEffects: true, backgroundMusic: true };
+  const stop = function(): void {
+    setAudioScene('silent');
+    const context = audioState.context;
+    delete audioState.context;
+    audioState.unlocked = false;
+    if (context) void context.close();
+  };
+  return {
+    playMusic: function(scene, lowTime): void {
+      setAudioScene('silent');
+      unlockAudio();
+      setAudioScene(scene);
+      if (lowTime) setGameMusicTime(LOW_TIME_SECONDS);
+    },
+    playEffect: function(effect): void { playSound(effect); },
+    stop,
+    dispose: stop,
+  };
+};

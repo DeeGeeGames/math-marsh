@@ -28,6 +28,7 @@ Gamepad actions currently use the controller reported in slot 0. Controller sele
 
 | Command | Purpose |
 | --- | --- |
+| `bun run dev:assets` | Open the standalone character animation and audio preview on port 3001 |
 | `bun run check` | Lint, unit tests, typecheck, and browser build |
 | `bun run test:e2e` | Playwright browser tests |
 | `bun run build` | Build the browser app into `dist/` |
@@ -35,6 +36,8 @@ Gamepad actions currently use the controller reported in slot 0. Controller sele
 | `bun run desktop:dev` | Run the Electron shell with the development server |
 | `bun run desktop:check` | Typecheck and build the Electron renderer |
 | `bun run desktop:package:linux` / `bun run desktop:package:win` | Package desktop builds for the named platform |
+
+Run `bun run dev:assets` and open `http://localhost:3001`. Select Fly, Frog, Lizard, or Spider, then an animation. Play it on a loop, step forward or backward, or scrub to a frame; stepping pauses playback. The inspector also supports speed, mirroring, reverse playback, and contrasting backdrops. Music and sound effect buttons use the game’s audio synthesis, including the low-time warning. Stop all audio silences playback; saved game audio settings are unchanged. This entry point is excluded from production and desktop builds.
 
 The main entry points are `src/main.ts` and `src/ecs/bootstrap.ts`. `src/ecs/Engine.ts` configures ECSpresso screens, input, resources, and plugins; `src/ecs/gameplayPlugin.ts` groups gameplay systems. `src/ui/screens/` defines DOM screens, and `src/ecs/systems/RenderSystem.ts` draws the Canvas board. Game balance lives mainly in `src/config.ts`, `src/ecs/systemConfigs.ts`, and `src/math/equations.ts`. Read [AGENTS.md](AGENTS.md) before changing ECS or input behavior.
 
