@@ -25,8 +25,11 @@ export function addGameplayTimeSystemToEngine(systems: GameSystemRegistrar): voi
         timeAfterChange(remainingTimeSeconds, -dt),
       );
       ecs.setResource('remainingTimeSeconds', remaining);
-      const bonusInFlight = equationMode.feedback?.kind === 'correct'
-        && currentTime - equationMode.feedback.startedAt < ANSWER_CONSUMPTION_DURATION_MS;
+      const bonusInFlight = queries.timeAdjustments.some(({ components: { timeAdjustment } }) =>
+        timeAdjustment.seconds > 0
+          && currentTime - timeAdjustment.startedAt < ANSWER_CONSUMPTION_DURATION_MS
+      ) || (equationMode.feedback?.kind === 'correct'
+        && currentTime - equationMode.feedback.startedAt < ANSWER_CONSUMPTION_DURATION_MS);
       if (remaining === 0 && !bonusInFlight) {
         const penaltyArrived = arrived.some(entity => entity.components.timeAdjustment.seconds < 0);
         triggerGameOver(ecs, player, penaltyArrived ? 'Game Over!' : 'Time ran out');

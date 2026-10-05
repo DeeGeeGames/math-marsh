@@ -1,4 +1,5 @@
 import { boardForDifficulty } from './boardGeometry';
+import { frameDeltaSeconds } from './frameTime';
 import ECSpresso, { type SystemRegistrarOf } from 'ecspresso';
 import { createInputPlugin } from 'ecspresso/plugins/input/input';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
@@ -124,7 +125,7 @@ export function startGameLoop(): void {
 function gameLoop(currentTime: number): void {
   if (!gameRunning) return;
 
-  const deltaTime = document.hidden ? 0 : (currentTime - lastFrameTime) / 1000;
+  const deltaTime = frameDeltaSeconds(currentTime, lastFrameTime, document.hidden);
   lastFrameTime = currentTime;
 
   gameEngine.update(deltaTime);
