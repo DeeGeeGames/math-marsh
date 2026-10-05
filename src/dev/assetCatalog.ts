@@ -24,7 +24,7 @@ export const SPRITES: readonly SpritePreview[] = CHARACTERS.flatMap(function(cha
 		return {
 			key, character, frameCount,
 			label: key.slice(prefix.length).replace(/([A-Z])/g, ' $1').trim(),
-			fps: frameCount / duration,
+			fps: key === 'flyEatAway' ? 12 : frameCount / duration,
 		};
 	});
 });

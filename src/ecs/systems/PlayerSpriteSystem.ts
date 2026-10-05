@@ -24,6 +24,11 @@ export const startPlayerEatingAnimation = function(ecs: GameEngine, entityId: nu
     : sprite.facing === 'away' ? flyMoveAway : flyEatSide;
   const flipX = sprite.facing === 'left';
   const duration = ANSWER_CONSUMPTION_DURATION_MS / 1000;
+  const awayCycleDuration = ANIMATION_DURATION_S * 2;
+  const steps: SpriteStep[] = sprite.facing === 'away' ? [
+    { imageSrc, frameCount: FRAME_COUNT, duration: awayCycleDuration, flipX },
+    { imageSrc, frameCount: FRAME_COUNT, duration: duration - awayCycleDuration, flipX, staticFrameIndex: 0 },
+  ] : [{ imageSrc, frameCount: FRAME_COUNT, duration, flipX }];
   if (sprite.facing === 'away') {
     startShake(ecs, entityId, 2, ANSWER_CONSUMPTION_DURATION_MS);
   }
@@ -36,7 +41,7 @@ export const startPlayerEatingAnimation = function(ecs: GameEngine, entityId: nu
     elapsed: 0,
     duration,
     currentStep: 0,
-    steps: [{ imageSrc, frameCount: FRAME_COUNT, duration, flipX }],
+    steps,
   });
 };
 

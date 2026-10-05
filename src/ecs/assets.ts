@@ -1,5 +1,4 @@
 import type { AssetConfiguratorFn, AssetDefinition } from 'ecspresso';
-import flyEatAway from '../assets/images/fly-eat-away.png';
 import flyEatSide from '../assets/images/fly-eat-side.png';
 import flyEatToward from '../assets/images/fly-eat-toward.png';
 import flyMoveAway from '../assets/images/fly-move-away.png';
@@ -27,6 +26,9 @@ import frogMouthOpenSide from '../assets/images/frog-open-mouth-side.png';
 import frogMouthOpenToward from '../assets/images/frog-mouth-open-front.png';
 import frogTurnFrontSide from '../assets/images/frog-turn-front-side.png';
 import frogTurnSideAway from '../assets/images/frog-turn-side-away.png';
+
+// Away eating reuses the flight frames; the animation supplies speed and shake.
+const flyEatAway = flyMoveAway;
 
 export {
   flyEatAway,

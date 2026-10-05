@@ -58,7 +58,9 @@ describe('player sprite animation', () => {
         expect(world.getComponent(player.id, 'renderable')?.imageSrc).toBe(image);
         expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.flipX).toBe(facing === 'left');
         expect(world.getComponent(player.id, 'shake')?.intensity).toBe(facing === 'away' ? 2 : undefined);
-        world.update(0.36);
+        world.update(1 / 12 + 0.001);
+        expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.frameIndex).toBe(facing === 'away' ? 1 : 0);
+        world.update(0.36 - (1 / 12 + 0.001));
         const shake = world.getComponent(player.id, 'shake');
         if (facing === 'away') {
           expect(shake?.duration).toBe(0.72);
@@ -67,7 +69,9 @@ describe('player sprite animation', () => {
         }
         expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.frameIndex).toBe(4);
         expect(world.getComponent(player.id, 'playerSprite')?.facing).toBe(facing);
-        world.update(0.37);
+        world.update(0.34);
+        expect(world.getComponent(player.id, 'renderable')?.spriteSheet?.frameIndex).toBe(facing === 'away' ? 0 : 7);
+        world.update(0.03);
         expect(world.hasComponent(player.id, 'spriteAnimation')).toBe(false);
         expect(world.hasComponent(player.id, 'shake')).toBe(false);
         world.update(0.01);
