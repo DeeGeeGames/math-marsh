@@ -74,18 +74,24 @@ export const updateSkitPresentation = function(elapsed: number, skit: Skit = ski
 		frog.style.backgroundPositionX = view.mouthOpen ? '100%' : '0%';
 		frog.style.transform = `translate(-50%, -100%) rotate(${view.frogTilt}deg)`;
 	}
-	if (tongue && frog && pad) {
-		// Anchor the tongue to the mouth in the square sprite slot at every viewport.
-		const mouthY = frog.offsetTop - frog.offsetWidth * 0.52;
-		tongue.style.top = `${mouthY}px`;
-		tongue.style.width = `${view.tongueReach * 39}%`;
-		pad.style.marginTop = `${mouthY - (frog.parentElement?.offsetHeight ?? 0) * 0.61}px`;
+	if (pad && frog) {
+		pad.hidden = !view.padVisible;
+		placeCaughtPad(pad, frog, view.frogTilt, 1, view.padCatch, view.padScale,
+			(frog.parentElement?.offsetWidth ?? 0) * view.padX / 100,
+			(frog.parentElement?.offsetHeight ?? 0) * view.padY / 100);
 	}
-	if (pad) {
-		pad.style.left = `${view.padX}%`;
-		pad.style.top = `${view.padY}%`;
-		pad.style.transform = `translate(-50%, -50%) rotate(${view.padCaught ? -25 : 0}deg)`;
+	if (tongue && frog) {
+		tongue.hidden = view.tongueReach <= 0;
+		const mouth = spriteAnchor(frog, view.frogTilt, 1, .28, -.02);
+		const dx = (frog.parentElement?.offsetWidth ?? 0) * .66 - mouth.x;
+		const dy = (frog.parentElement?.offsetHeight ?? 0) * .63 - mouth.y;
+		tongue.style.left = `${mouth.x}px`;
+		tongue.style.top = `${mouth.y}px`;
+		tongue.style.width = `${view.tongueReach * Math.hypot(dx, dy)}px`;
+		tongue.style.transformOrigin = 'left center';
+		tongue.style.transform = `translateY(-50%) rotate(${Math.atan2(dy, dx)}rad)`;
 	}
+
 	updateCaption(root, view.caption);
 };
 
@@ -97,7 +103,16 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		element.hidden = !pose.visible;
 		element.style.left = `${pose.x}%`;
 		element.style.top = `${pose.y}%`;
-		element.style.transform = `translate(-50%, -100%) rotate(${pose.tilt}deg) scaleX(${pose.facing})`;
+		element.style.transform = `translate(-50%, ${actor === 'pad' ? '-50%' : '-100%'}) rotate(${pose.tilt}deg) scaleX(${pose.facing}) scaleY(${actor === 'lizard' ? view.lizardSquash : 1})`;
+		if (actor === 'lizard') {
+			const waterline = (element.parentElement?.offsetHeight ?? 0) * .76;
+			// Counter the actor's tilt so the pond surface stays horizontal on screen.
+			const radians = pose.tilt * Math.PI / 180;
+			const depth = (waterline - element.offsetTop + element.offsetWidth / 2) / element.offsetWidth;
+			const left = 50 + (depth + Math.sin(radians) / 2) / Math.cos(radians) * 100;
+			const right = 50 + (depth - Math.sin(radians) / 2) / Math.cos(radians) * 100;
+			element.style.clipPath = view.lizardInWater ? `polygon(0 0, 100% 0, 100% ${right}%, 0 ${left}%)` : '';
+		}
 		if (actor === 'fly' || actor === 'lizard') element.style.backgroundPositionX = `${pose.frame / 7 * 100}%`;
 	}
 	for (const prop of ['web', 'diagram', 'tongue', 'splash', 'pluck'] as const) {
@@ -105,6 +120,25 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		if (!element) continue;
 		element.hidden = !view[prop];
 		if (prop === 'web') element.style.transform = `rotate(${view.webTilt}deg) scale(${view.webBuild})`;
+	}
+	if (view.web) {
+		const web = root.querySelector<HTMLElement>('#scene-web');
+		const spider = root.querySelector<HTMLElement>('#scene-spider');
+		const fly = root.querySelector<HTMLElement>('#scene-fly');
+		const pluck = root.querySelector<HTMLElement>('#scene-pluck');
+		if (web && spider && fly && pluck) {
+			const centreX = web.offsetLeft;
+			const centreY = web.offsetTop + web.offsetHeight / 2;
+			spider.style.left = `${centreX}px`;
+			spider.style.top = `${centreY + spider.offsetWidth / 2 + (view.spider.y - 58) * (web.parentElement?.offsetHeight ?? 0) / 100}px`;
+			const contactX = centreX + web.offsetWidth / 2;
+			const enter = Math.max(0, Math.min(1, (112 - view.fly.x) / 40));
+			const stageWidth = web.parentElement?.offsetWidth ?? 0;
+			fly.style.left = `${stageWidth * 1.12 * (1 - enter) + (contactX + fly.offsetWidth / 3) * enter}px`;
+			fly.style.top = `${centreY + fly.offsetWidth / 2}px`;
+			pluck.style.left = `${contactX}px`;
+			pluck.style.top = `${centreY}px`;
+		}
 	}
 	const burst = root.querySelector<HTMLElement>('#scene-burst');
 	if (burst) {
@@ -117,30 +151,55 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 	const frog = root.querySelector<HTMLElement>('#scene-frog');
 	const caughtPad = root.querySelector<HTMLElement>('#scene-pad');
 	if (frog) {
-		frog.style.backgroundImage = `url('${view.tongue ? frogMouth : frogSide}')`;
-		frog.style.backgroundSize = `${view.tongue ? 400 : 800}% 100%`;
-		frog.style.backgroundPositionX = view.tongue ? '100%' : '0%';
+		frog.style.backgroundImage = `url('${view.mouthOpen ? frogMouth : frogSide}')`;
+		frog.style.backgroundSize = `${view.mouthOpen ? 400 : 800}% 100%`;
+		frog.style.backgroundPositionX = view.mouthOpen ? '100%' : `${view.frog.frame / 7 * 100}%`;
 	}
-	if (view.tongue && tongue && frog && caughtPad) {
-		const mouthX = frog.offsetLeft + frog.offsetWidth * .12;
-		const mouthY = frog.offsetTop - frog.offsetWidth * .52;
-		const dx = caughtPad.offsetLeft - mouthX;
-		const dy = caughtPad.offsetTop - caughtPad.offsetHeight / 2 - mouthY;
-		tongue.style.left = `${mouthX}px`;
-		tongue.style.top = `${mouthY}px`;
+	if (caughtPad && frog && view.padCatch > 0) {
+		placeCaughtPad(caughtPad, frog, view.frog.tilt, view.frog.facing, view.padCatch,
+			view.padScale, caughtPad.offsetLeft, caughtPad.offsetTop);
+	}
+	if (view.tongue && tongue && frog) {
+		const mouth = spriteAnchor(frog, view.frog.tilt, view.frog.facing, .28, -.02);
+		const stage = frog.parentElement;
+		// Retraction shortens the tongue toward the mouth; the caught pad follows separately.
+		const dx = (stage?.offsetWidth ?? 0) * .78 - mouth.x;
+		const dy = (stage?.offsetHeight ?? 0) * .86 - mouth.y;
+		tongue.style.left = `${mouth.x}px`;
+		tongue.style.top = `${mouth.y}px`;
 		tongue.style.width = `${Math.hypot(dx, dy) * view.tongueReach}px`;
 		tongue.style.transformOrigin = 'left center';
-		tongue.style.transform = `rotate(${Math.atan2(dy, dx)}rad)`;
+		tongue.style.transform = `translateY(-50%) rotate(${Math.atan2(dy, dx)}rad)`;
 	}
 	if (view.hat && view.lizard.visible) {
 		const lizard = root.querySelector<HTMLElement>('#scene-lizard');
-		const pad = root.querySelector<HTMLElement>('#scene-pad');
-		if (lizard && pad) {
-			pad.style.left = `${lizard.offsetLeft + lizard.offsetWidth * .18}px`;
-			pad.style.top = `${lizard.offsetTop - lizard.offsetWidth * .8}px`;
+		if (lizard && caughtPad) {
+			const anchor = spriteAnchor(lizard, view.lizard.tilt, view.lizard.facing, .12, -.36);
+			caughtPad.style.left = `${caughtPad.offsetLeft + (anchor.x - caughtPad.offsetLeft) * view.hatTravel}px`;
+			caughtPad.style.top = `${caughtPad.offsetTop + (anchor.y - caughtPad.offsetTop) * view.hatTravel}px`;
+			caughtPad.style.transform = `translate(-50%, -50%) rotate(${view.lizard.tilt * view.hatTravel}deg)`;
 		}
 	}
+
 	updateCaption(root, view.caption);
+};
+
+// Coordinates relative to the square sprite's centre, before its tilt/facing transform.
+const spriteAnchor = function(element: HTMLElement, tilt: number, facing: 1 | -1, x: number, y: number): { x: number; y: number } {
+	const radians = tilt * Math.PI / 180;
+	const size = element.offsetWidth;
+	return {
+		x: element.offsetLeft + size * (x * facing * Math.cos(radians) - y * Math.sin(radians)),
+		y: element.offsetTop - size / 2 + size * (x * facing * Math.sin(radians) + y * Math.cos(radians)),
+	};
+};
+
+const placeCaughtPad = function(pad: HTMLElement, frog: HTMLElement, tilt: number, facing: 1 | -1,
+	catchProgress: number, scale: number, fromX: number, fromY: number): void {
+	const mouth = spriteAnchor(frog, tilt, facing, .28, -.02);
+	pad.style.left = `${fromX + (mouth.x - fromX) * catchProgress}px`;
+	pad.style.top = `${fromY + (mouth.y - fromY) * catchProgress}px`;
+	pad.style.transform = `translate(-50%, -50%) rotate(${tilt * catchProgress - 20 * catchProgress}deg) scale(${scale})`;
 };
 
 // Keep speaker and dialogue stable between beats, including the live region.
