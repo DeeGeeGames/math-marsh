@@ -83,7 +83,7 @@ export function handleEquationProblemSelection(
   resources: EquationSelectionResources,
 ): void {
   const { equationMode, gameMode, mathDifficulty } = resources;
-  if (equationMode.target === 0) return;
+  if (equationMode.target === null) return;
   if (equationMode.feedback?.kind === 'correct') return;
 
   const selectableProblemIds = new Set(mathProblems.map(candidate => candidate.id));

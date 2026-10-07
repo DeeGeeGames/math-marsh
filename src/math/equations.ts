@@ -300,7 +300,7 @@ export const createEquationModeState = (
     promptKind,
     difficulty,
     operandsRequired: promptKind === 'selectResult' ? 1 : operations[operation].operandCount,
-    target: 0,
+    target: null,
     promptValues: [],
     selectedProblemIds: [],
     clearedThisLevel,
@@ -310,15 +310,6 @@ export const createEquationModeState = (
 };
 
 export const createRandomEquationCandidate = (state: EquationModeState): EquationCandidate => {
-  // Zero is the existing unprepared-prompt marker. Mixed prompts need a playable result.
-  if (state.promptKind === 'selectOperandAndResult' && state.operation === 'subtract') {
-    const right = randomValue({
-      ...state.operandRanges.right,
-      max: Math.min(state.operandRanges.right.max, state.operandRanges.left.max - 1),
-    });
-    const left = randomValue({ min: right + 1, max: state.operandRanges.left.max });
-    return { operandValues: [left, right], target: left - right };
-  }
   return operations[state.operation].randomCandidate(state.operandRanges);
 };
 
@@ -335,7 +326,7 @@ const mixedCandidates = (
 ): EquationCandidate[] =>
   problems.flatMap(operand =>
     problems
-      .filter(result => result.id !== operand.id && result.value !== 0)
+      .filter(result => result.id !== operand.id)
       .map(result => ({
         operandValues: [fixedOperandForMixedSelection[state.operation](operand.value, result.value), operand.value],
         target: result.value,
@@ -415,7 +406,7 @@ export const evaluateEquationSelection = (
   state: EquationModeState,
   selectedValues: readonly number[],
 ): boolean => {
-  if (selectedValues.length !== state.operandsRequired) return false;
+  if (state.target === null || selectedValues.length !== state.operandsRequired) return false;
   if (state.promptKind === 'selectOperandAndResult') {
     return Number.isInteger(selectedValues[1])
       && operations[state.operation].evaluate([state.promptValues[0], selectedValues[0]]) === selectedValues[1];
