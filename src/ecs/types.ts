@@ -198,7 +198,7 @@ export interface BaseEquationModeState {
   promptKind: EquationPromptKind;
   difficulty: MathDifficulty;
   operandsRequired: number;
-  target: number;
+  target: number | null;
   promptValues: number[];
   selectedProblemIds: number[];
   clearedThisLevel: number;

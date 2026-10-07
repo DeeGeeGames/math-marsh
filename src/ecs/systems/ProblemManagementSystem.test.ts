@@ -12,6 +12,9 @@ import { enemyComponents, mathProblemComponents, playerComponents } from '../ent
 import { gridToPixel } from '../gameUtils';
 import { createEquationModeState, evaluateEquationSelection } from '../../math/equations';
 import { addProblemManagementSystemToEngine } from './ProblemManagementSystem';
+import type { MathProblemEntityWithRenderable } from '../queries';
+import { handleEquationProblemSelection } from '../equationSelection';
+import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { selectableEquationProblems } from '../selectableEquationProblems';
 
 describe('board population', () => {
@@ -143,7 +146,7 @@ describe('equations with enemy-occupied answers', () => {
 			});
 			world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
 			world.update(0.01);
-			expect(world.getResource('equationMode').target).toBe(0);
+			expect(world.getResource('equationMode').target).toBeNull();
 			expect(transition).toHaveBeenCalledWith('levelComplete', expect.objectContaining({ completedLevel: 2, nextLevel: 3 }));
 		} finally {
 			await world.dispose();
@@ -240,7 +243,6 @@ describe('level completion with enemies', () => {
 	});
 });
 
-
 describe('population with occupied pads', () => {
 	[1, 2].forEach(availableCount => {
 		test(`uses exactly ${availableCount} available pads without truncating answers`, async () => {
@@ -277,5 +279,133 @@ describe('population with occupied pads', () => {
 				sound.mockRestore();
 			}
 		});
+	});
+});
+
+const testMathProblems = function(world: GameEngine): MathProblemEntityWithRenderable[] {
+	return world.getEntitiesWithQuery(['position', 'mathProblem', 'collider', 'renderable'])
+		.map(problem => ({ ...problem, components: { ...problem.components, answerConsumption: problem.components.answerConsumption } }));
+};
+
+describe('premature completion regressions', () => {
+	(['add', 'subtract', 'multiply', 'divide'] as const).forEach(operation => {
+		test(`Easy ${operation} requires six answers even when remaining numbers cannot form a prompt`, async () => {
+			const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
+			const world = await createProgressionWorld(1, ['lizard']);
+			const transition = spyOn(world, 'pushScreen').mockImplementation(async () => {});
+			try {
+				world.setResource('gameMode', [operation]);
+				world.setResource('equationMode', createEquationModeState(1, 'easy', [operation]));
+				world.setResource('equationsSolved', 0);
+				world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
+				// 11 cannot be an Easy level-one result for any of these operations.
+				world.getEntitiesWithQuery(['mathProblem']).forEach(problem => {
+					world.mutateComponent(problem.id, 'mathProblem', value => { value.value = 11; });
+				});
+				const occupied = gridToPixel(2, 2);
+				world.spawn(enemyComponents(occupied.x, occupied.y, 'lizard', 'guard'));
+				const player = world.getSingleton(['position', 'player', 'pathFollower', 'collider', 'timers']);
+				for (let solved = 1; solved <= 6; solved += 1) {
+					world.update(0.01);
+					expect(transition).not.toHaveBeenCalled();
+					const state = world.getResource('equationMode');
+					const free = selectableEquationProblems(
+						testMathProblems(world),
+						world.getEntitiesWithQuery(['position', 'enemy']),
+					);
+					const answer = free.find(problem => evaluateEquationSelection(state, [problem.components.mathProblem.value]));
+					if (!answer) throw new Error('No playable answer after restoring the board');
+					handleEquationProblemSelection(world, player, answer, free, {
+						equationMode: state, gameMode: [operation], mathDifficulty: 'easy',
+					});
+					world.update(0.01);
+					expect(transition).not.toHaveBeenCalled();
+					const next = world.getResource('equationMode').feedback?.nextMode;
+					if (!next) throw new Error('Expected correct-answer feedback');
+					world.setResource('equationMode', next);
+					world.update(0.01);
+					expect(world.getResource('equationMode').clearedThisLevel).toBe(solved);
+					expect(world.getResource('equationsSolved')).toBe(solved);
+					expect(world.getEntitiesWithQuery(['mathProblem']).filter(problem => problem.components.mathProblem.consumed)).toHaveLength(solved);
+					if (solved < 6) expect(transition).not.toHaveBeenCalled();
+				}
+				expect(transition).toHaveBeenCalledTimes(1);
+				expect(transition).toHaveBeenCalledWith('levelComplete', expect.objectContaining({ completedLevel: 1, nextLevel: 2 }));
+			} finally {
+				await world.dispose();
+				transition.mockRestore();
+				sound.mockRestore();
+			}
+		});
+	});
+
+	test('a zero-result subtraction prompt remains playable and can be consumed', async () => {
+		const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
+		const world = await createProgressionWorld(1, ['lizard']);
+		const transition = spyOn(world, 'pushScreen').mockImplementation(async () => {});
+		try {
+			clearPads(world, 2);
+			const answer = testMathProblems(world)
+				.find(problem => !problem.components.mathProblem.consumed);
+			if (!answer) throw new Error('Missing zero answer pad');
+			world.mutateComponent(answer.id, 'mathProblem', problem => { problem.value = 0; });
+			const state = { ...createEquationModeState(1, 'easy', ['subtract'], 2), target: 0, promptValues: [3, 3] };
+			world.setResource('gameMode', ['subtract']);
+			world.setResource('equationMode', state);
+			world.setResource('equationsSolved', 2);
+			world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
+			world.update(0.01);
+			expect(world.getResource('equationMode')).toBe(state);
+			expect(transition).not.toHaveBeenCalled();
+			handleEquationProblemSelection(
+				world,
+				world.getSingleton(['position', 'player', 'pathFollower', 'collider', 'timers']),
+				answer,
+				testMathProblems(world),
+				{ equationMode: state, gameMode: ['subtract'], mathDifficulty: 'easy' },
+			);
+			expect(answer.components.mathProblem.consumed).toBe(true);
+			expect(world.getResource('equationsSolved')).toBe(3);
+			expect(world.getResource('equationMode').feedback?.kind).toBe('correct');
+		} finally {
+			await world.dispose();
+			transition.mockRestore();
+			sound.mockRestore();
+		}
+	});
+
+	test('restores a two-pad answer without changing consumed or enemy-occupied pads', async () => {
+		const world = await createProgressionWorld(2, ['lizard'], 'medium');
+		const transition = spyOn(world, 'pushScreen').mockImplementation(async () => {});
+		try {
+			clearPads(world, 2);
+			world.setResource('gameMode', ['divide']);
+			world.setResource('equationMode', createEquationModeState(2, 'medium', ['divide'], 2));
+			const problems = world.getEntitiesWithQuery(['position', 'mathProblem']);
+			const primes = [17, 19, 23, 29, 31, 37, 41, 43, 47];
+			problems.forEach((problem, index) => {
+				const value = primes[index];
+				if (value === undefined) throw new Error('Missing test value');
+				world.mutateComponent(problem.id, 'mathProblem', data => { data.value = value; });
+			});
+			const blocked = problems[2];
+			if (!blocked) throw new Error('Missing occupied pad');
+			world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
+			world.update(0.01);
+			expect(transition).not.toHaveBeenCalled();
+			expect(blocked.components.mathProblem.value).toBe(23);
+			expect(problems.slice(0, 2).map(problem => problem.components.mathProblem.value)).toEqual([17, 19]);
+			const free = selectableEquationProblems(
+				testMathProblems(world),
+				world.getEntitiesWithQuery(['position', 'enemy']),
+			);
+			const state = world.getResource('equationMode');
+			expect(free.some(left => free.some(right => left.id !== right.id
+				&& evaluateEquationSelection(state, [left.components.mathProblem.value, right.components.mathProblem.value])))).toBe(true);
+			expect(state.clearedThisLevel).toBe(2);
+		} finally {
+			await world.dispose();
+			transition.mockRestore();
+		}
 	});
 });

@@ -59,7 +59,7 @@ const objectiveTextForMode = (
     return problem ? [problem.components.mathProblem.value] : [];
   });
 
-  return equationMode.target === 0
+  return equationMode.target === null
     ? 'Preparing equation'
     : equationSelectionText(equationMode, selectedValues);
 };

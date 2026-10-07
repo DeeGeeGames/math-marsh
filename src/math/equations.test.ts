@@ -206,7 +206,6 @@ describe('mixed operand and result prompts', () => {
           const candidate = createRandomEquationCandidate(state);
           const values = equationProblemValuesForCandidate(state, candidate, 18);
           const populated = { ...state, target: candidate.target, promptValues: candidate.operandValues };
-          expect(candidate.target).not.toBe(0);
           expect(evaluateEquationSelection(populated, [candidate.operandValues[1], candidate.target])).toBe(true);
           expect(values).toContain(candidate.operandValues[1]);
           expect(values).toContain(candidate.target);
@@ -253,5 +252,24 @@ describe('mixed operand and result prompts', () => {
   test('reports no candidate when remaining pads cannot form a valid pair', () => {
     const state = createEquationModeState(3, 'expert', ['add']);
     expect(chooseEquationCandidate(state, [{ id: 1, value: 100 }, { id: 2, value: 200 }])).toBeUndefined();
+  });
+});
+
+describe('zero answers and unprepared prompts', () => {
+  test('an unprepared prompt cannot accept an answer', () => {
+    const state = createEquationModeState(1, 'easy', ['subtract']);
+    expect(state.target).toBeNull();
+    expect(evaluateEquationSelection(state, [0])).toBe(false);
+  });
+
+  test('zero can be the result of both result-only and mixed subtraction prompts', () => {
+    const resultState = { ...createEquationModeState(1, 'easy', ['subtract']), target: 0, promptValues: [3, 3] };
+    expect(evaluateEquationSelection(resultState, [0])).toBe(true);
+    expect(equationSelectionText(resultState, [])).toBe('3 - 3 = _');
+    const mixedState = createEquationModeState(3, 'expert', ['subtract']);
+    const candidate = chooseEquationCandidate(mixedState, [{ id: 1, value: 3 }, { id: 2, value: 0 }]);
+    if (!candidate) throw new Error('Expected a zero-result mixed prompt');
+    expect(candidate.target).toBe(0);
+    expect(evaluateEquationSelection({ ...mixedState, ...candidate, promptValues: candidate.operandValues }, [3, 0])).toBe(true);
   });
 });

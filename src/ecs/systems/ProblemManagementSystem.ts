@@ -12,6 +12,7 @@ import {
   createRandomEquationCandidate,
   equationProblemValuesForCandidate,
   evaluateEquationSelection,
+  type EquationCandidate,
 } from '../../math/equations';
 import {
   mathProblemWithRenderableQuery,
@@ -43,7 +44,7 @@ export function addProblemManagementSystemToEngine(
   systems.addSystem('problemManagementSystem')
     .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.PROBLEM_MANAGEMENT)
-    .addQuery('mathProblems', mathProblemWithRenderableQuery)
+    .addQuery('mathProblems', { ...mathProblemWithRenderableQuery, mutates: ['mathProblem'] } as const)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
     .addQuery('allPositions', positionEntityQuery)
     .addQuery('enemies', enemyQuery)
@@ -176,9 +177,9 @@ function equationStateFromBoard(
     : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
   if (state.feedback?.kind === 'correct') return currentState;
-  if (state.target !== 0 && hasSelectableSolution(state, mathProblems)) return currentState;
+  if (state.target !== null && hasSelectableSolution(state, mathProblems)) return currentState;
 
-  const candidate = chooseEquationCandidate(
+  const existingCandidate = chooseEquationCandidate(
     state,
     activeEquationProblems(mathProblems).map(problem => ({
       id: problem.id,
@@ -186,16 +187,37 @@ function equationStateFromBoard(
     })),
   );
 
-  if (!candidate && state.target === 0) return currentState;
+  // Keep the level's cleared pads and progress. If the remaining free numbers
+  // cannot form a prompt, replace only the pads needed for one valid answer.
+  const freeProblems = activeEquationProblems(mathProblems);
+  const candidate = existingCandidate ?? (freeProblems.length >= state.operandsRequired
+    ? restorePlayableAnswer(state, freeProblems)
+    : undefined);
+
+  if (!candidate && state.target === null) return currentState;
 
   return {
     ...state,
-    target: candidate?.target ?? 0,
+    target: candidate?.target ?? null,
     promptValues: candidate?.operandValues ?? [],
     selectedProblemIds: [],
     feedback: undefined,
   };
 }
+
+const restorePlayableAnswer = function (
+  state: Resources['equationMode'],
+  freeProblems: readonly MathProblemEntityWithRenderable[],
+): EquationCandidate {
+  const candidate = createRandomEquationCandidate(state);
+  const values = equationProblemValuesForCandidate(state, candidate, state.operandsRequired);
+  values.forEach((value, index) => {
+    const problem = freeProblems[index];
+    if (!problem) throw new Error('Missing free pad for a restored answer');
+    problem.components.mathProblem.value = value;
+  });
+  return candidate;
+};
 
 const hasSelectableSolution = function (
   state: Resources['equationMode'],
@@ -231,7 +253,7 @@ function checkEquationLevelCompletion(
   const activeCount = activeEquationProblems(mathProblems).length;
   const noPromptAvailable = mathProblems.length > 0
     && activeCount > 0
-    && equationMode.target === 0;
+    && equationMode.target === null;
   const clearTarget = levelClearTarget(board, enemyCount, equationMode.operandsRequired);
   const shouldAdvance = equationMode.clearedThisLevel >= clearTarget
     || (mathProblems.length > 0 && activeCount < equationMode.operandsRequired)
