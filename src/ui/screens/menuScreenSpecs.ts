@@ -1,10 +1,10 @@
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { html, nothing, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
-import flyMoveToward from '../../assets/images/fly-move-toward.png';
-import frogHopToward from '../../assets/images/frog-hop-toward.png';
-import lizardWalkToward from '../../assets/lizard-walk-toward.png';
-import spiderWalkToward from '../../assets/spider-walk-toward.png';
+import flyMoveToward from '../../assets/sprites/fly/fly-move-toward.png';
+import frogHopToward from '../../assets/sprites/frog/frog-hop-toward.png';
+import lizardWalkToward from '../../assets/sprites/lizard/lizard-walk-toward.png';
+import spiderWalkToward from '../../assets/sprites/spider/spider-walk-toward.png';
 import type { GameMode } from '../../ecs/types';
 import { $ } from '../dom';
 import {
