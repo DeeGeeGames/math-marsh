@@ -21,7 +21,8 @@ export type AdditionalSkitPresentation = {
 	fly: ScenePose; frog: ScenePose; spider: ScenePose; lizard: ScenePose;
 	pad: ScenePose; splash: boolean; web: boolean; webTilt: number; webBuild: number; pluck: boolean;
 	diagram: boolean; tongue: boolean; caption: string;
-	hat: boolean; burst: string; tongueReach: number;
+	hat: boolean; hatTravel: number; padCatch: number; padScale: number; mouthOpen: boolean;
+	burst: string; tongueReach: number; lizardInWater: boolean; lizardSquash: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -54,7 +55,7 @@ export const BIG_JUMP_BEATS = [
 	{ at: 3, speaker: 'Lizard', line: 'One… two… um…' },
 	{ at: 5.5, speaker: 'Fly', line: 'Three! After two comes three!' },
 	{ at: 7.5, speaker: 'Lizard', line: 'Thanks! WHEEE!' },
-	{ at: 10, speaker: 'Fly', line: 'Nice hat!' },
+	{ at: 10.5, speaker: 'Fly', line: 'Nice hat!' },
 	{ at: 12.5, speaker: 'Lizard', line: 'What hat?' },
 ] as const satisfies readonly Beat[];
 
@@ -103,7 +104,8 @@ const emptyScene = function(): AdditionalSkitPresentation {
 		fly: pose(75, 25), frog: pose(20, 72, 0, false), spider: pose(50, 50, 0, false),
 		lizard: pose(20, 70, 0, false), pad: pose(65, 75, 0, false),
 		splash: false, web: false, webTilt: 0, webBuild: 1, pluck: false, diagram: false, tongue: false,
-		hat: false, burst: '', tongueReach: 0, caption: '',
+		hat: false, hatTravel: 0, padCatch: 0, padScale: 1, mouthOpen: false,
+		burst: '', tongueReach: 0, lizardInWater: false, lizardSquash: 1, caption: '',
 	};
 };
 // Decaying wobble after a pluck/bump; 0 before `start` and under reduced motion.
@@ -121,7 +123,7 @@ const wobbleAfter = function(time: number, start: number, amount: number, decay:
 
 export const snackBreakPresentation = function(elapsed: number, reducedMotion = false): SkitPresentation {
 	const reachStart = 4.4;
-	const dodge = clamp((elapsed - 4.8) / 0.45);
+	const dodge = clamp((elapsed - 4.3) / 0.4);
 	const retract = clamp((elapsed - 5.6) / 0.7);
 	const exit = clamp((elapsed - 12.8) / 1.3);
 	const reach = clamp((elapsed - reachStart) / 0.4) * (1 - retract);
@@ -133,9 +135,12 @@ export const snackBreakPresentation = function(elapsed: number, reducedMotion = 
 		flyY: 55 - dodge * 28 + (reducedMotion ? 0 : Math.sin(elapsed * 5) * 1.2),
 		frogTilt: reducedMotion || !chewing ? 0 : Math.sin((elapsed - 7) * Math.PI * 6) * 4,
 		tongueReach: reach,
-		padX: 66 - retract * 39,
-		padY: 63 - retract * 2,
+		padX: 66,
+		padY: 63,
 		padCaught: elapsed >= 5.3,
+		padCatch: retract,
+		padScale: 1 - ease(elapsed, 7, 2.5) * 0.7,
+		padVisible: elapsed < 9.8,
 		mouthOpen: (elapsed >= 4.2 && elapsed < 7) || (chewing && chompOpen),
 		flyFrame: reducedMotion ? 0 : Math.floor(elapsed * 24) % 8,
 		caption: captionAt(SNACK_BREAK_BEATS, elapsed),
@@ -156,19 +161,26 @@ export const bigJumpPresentation = function(time: number, reducedMotion = false)
 	// Rocking back and forth while counting (wind-up), a puzzled lean on "um…".
 	const windUp = time >= 3 && time < 5.5 && !reducedMotion ? Math.sin(time * 6) * 4 : 0;
 	const puzzled = time >= 4.6 && time < JUMP ? -10 : 0;
-	// "What hat?": looks around by rocking left/right (tilt, not facing, because the hat position in skitScreen.ts ignores facing).
+	// The hat shares the same rotated sprite anchor during the puzzled look.
 	const lookAround = time >= 12.5 ? (reducedMotion ? -8 : Math.sin((time - 12.5) * 4.5) * 12) : 0;
-	const lizardY = emerged
-		? 95 - rise * 19
-		: 73 - (reducedMotion ? 0 : Math.sin(jump * Math.PI) * 22);
+	const crouch = time < JUMP ? ease(time, 7.1, .6) : 0;
+	const sink = ease(time, SPLASH, .4);
+	const lizardY = emerged ? 112 - rise * 22
+		: time >= SPLASH ? 73 + sink * 39
+			: 73 + crouch * 3 - Math.sin(jump * Math.PI) * (reducedMotion ? 10 : 22);
+	// Reuse the existing side walk's tucked and extended legs as key jump poses.
+	const jumpFrame = time < 7.1 ? 0 : time < JUMP ? 2 : jump < .75 ? 4 : 6;
+	const flightTilt = time >= JUMP && time < SPLASH ? -18 + jump * 36 : 0;
 	const flyX = 81 - ease(time, 10, 0.8) * 9; // leans in to admire the hat
 	return {
 		...emptyScene(),
 		// Fly bounces with excitement while shouting "Three!"
 		fly: flying(time, flyX, 30 - (time >= 5.5 && time < 7.5 && !reducedMotion ? Math.abs(Math.sin(time * 8)) * 5 : 0), reducedMotion, -1),
-		lizard: pose(20 + ease(time, JUMP, SPLASH - JUMP) * 38, lizardY, windUp + puzzled + lookAround, !underwater, 1),
-		pad: pose(emerged ? 58 : 65, emerged ? 56 : 81, emerged ? -12 : 0),
-		hat: emerged,
+		lizard: { ...pose(20 + ease(time, JUMP, SPLASH - JUMP) * 38, lizardY,
+			windUp + puzzled + lookAround + flightTilt), frame: time >= SPLASH ? 0 : jumpFrame },
+		lizardInWater: time >= SPLASH, lizardSquash: 1 - crouch * .15,
+		pad: pose(65, 81),
+		hat: emerged, hatTravel: ease(time, EMERGE, 0.4),
 		splash: underwater,
 		burst: underwater ? 'SPLOOSH!' : '',
 		caption: captionAt(BIG_JUMP_BEATS, time),
@@ -206,7 +218,7 @@ export const webGuitarPresentation = function(time: number, reducedMotion = fals
 
 export const bigPlanPresentation = function(time: number, reducedMotion = false): AdditionalSkitPresentation {
 	const CHARGE = 10.5; const BONK = CHARGE + 0.8; const REBOUND = BONK + 0.2;
-	const TONGUE = 13.7; const EXIT = 17.5;
+	const TONGUE = 12.4; const EXIT = 17.5;
 	const charge = ease(time, CHARGE, BONK - CHARGE);
 	const rebound = ease(time, REBOUND, 0.9);
 	const bonked = time >= BONK && time < BONK + 1.2;
@@ -232,8 +244,9 @@ export const bigPlanPresentation = function(time: number, reducedMotion = false)
 			...pose(80 - charge * 22 + rebound * 14, 82, shake, true, -1),
 			frame: reducedMotion || time < CHARGE || time >= BONK ? 0 : Math.floor(time * 12) % 8,
 		},
-		pad: pose(78 - catchPad * 40, 86 - catchPad * 8, catchPad * -12),
-		tongue: extend > 0 && time < TONGUE + 1.3, tongueReach: extend,
+		pad: pose(78, 86, 0, time < 15.6), padCatch: catchPad,
+		padScale: 1 - ease(time, 14.4, 1.2) * 0.7, mouthOpen: time >= TONGUE && time < 15.6,
+		tongue: extend > 0 && catchPad < 1, tongueReach: extend * (1 - catchPad),
 		burst: bonked ? 'BONK!' : '',
 		caption: captionAt(BIG_PLAN_BEATS, time),
 	};

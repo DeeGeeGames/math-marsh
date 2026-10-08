@@ -6,7 +6,7 @@ export const shouldPlaySkit = function(completedLevel: number): boolean {
 
 export type SkitPresentation = {
 	flyX: number; flyY: number; frogTilt: number; tongueReach: number;
-	padX: number; padY: number; padCaught: boolean; mouthOpen: boolean; flyFrame: number; caption: string;
+	padX: number; padY: number; padCaught: boolean; padCatch: number; padScale: number; padVisible: boolean; mouthOpen: boolean; flyFrame: number; caption: string;
 };
 
 // Add each playable scene here; the intermission schedule and gallery share it.
