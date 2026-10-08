@@ -1,6 +1,6 @@
-import lizardWalkToward from './assets/lizard-walk-toward.png';
-import spiderImage from './assets/images/spider.png';
-import frogImage from './assets/images/frog.svg';
+import lizardWalkToward from './assets/sprites/lizard/lizard-walk-toward.png';
+import spiderImage from './assets/sprites/spider/spider.png';
+import frogImage from './assets/sprites/frog/frog.svg';
 
 export const GAME_CONFIG = {
   GRID: {

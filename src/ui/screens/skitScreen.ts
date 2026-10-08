@@ -1,9 +1,9 @@
-import spiderImage from '../../assets/images/spider.png';
-import lizardWalkSide from '../../assets/lizard-walk-side.png';
+import spiderImage from '../../assets/sprites/spider/spider.png';
+import lizardWalkSide from '../../assets/sprites/lizard/lizard-walk-side.png';
 import type { AdditionalSkitPresentation } from '../../ecs/additionalSkits';
-import flySide from '../../assets/images/fly-move-side.png';
-import frogSide from '../../assets/images/frog-hop-side.png';
-import frogMouth from '../../assets/images/frog-open-mouth-side.png';
+import flySide from '../../assets/sprites/fly/fly-move-side.png';
+import frogSide from '../../assets/sprites/frog/frog-hop-side.png';
+import frogMouth from '../../assets/sprites/frog/frog-open-mouth-side.png';
 import { skitById, type Skit } from '../../ecs/skitSequence';
 import type { ScreenSpec } from '../screenTypes';
 import { BTN_CHROME, BTN_SIZE, inputPromptsSlot, OVERLAY_BASE } from './shared';
