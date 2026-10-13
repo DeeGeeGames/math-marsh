@@ -9,8 +9,8 @@ import {
 describe('endurance run time', () => {
   test('awards time by difficulty without a time bank cap', () => {
     expect(timeForCorrectAnswer(STARTING_TIME_SECONDS, 'easy')).toBe(STARTING_TIME_SECONDS + 10);
-    expect(timeForCorrectAnswer(STARTING_TIME_SECONDS, 'medium')).toBe(STARTING_TIME_SECONDS + 5);
-    expect(timeForCorrectAnswer(600, 'expert')).toBe(607);
+    expect(timeForCorrectAnswer(STARTING_TIME_SECONDS, 'medium')).toBe(STARTING_TIME_SECONDS + 10);
+    expect(timeForCorrectAnswer(600, 'expert')).toBe(610);
   });
 
   test('wrong answers cost time by difficulty and penalties stop at zero', () => {

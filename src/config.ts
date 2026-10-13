@@ -12,8 +12,8 @@ export const GAME_CONFIG = {
     LEVEL_CLEAR_RATIO: 2 / 3,
     CORRECT_ANSWER_BONUS_SECONDS: {
       easy: 10,
-      medium: 5,
-      expert: 7,
+      medium: 10,
+      expert: 10,
     } as const,
     WRONG_ANSWER_PENALTY_SECONDS: {
       easy: 10,
