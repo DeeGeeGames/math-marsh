@@ -39,6 +39,7 @@ export const MUSIC = [
 export const EFFECTS = {
 	uiBack: 'UI back', uiSelect: 'UI select', move: 'Move',
 	answerSelect: 'Answer select', answerDeselect: 'Answer deselect',
+	equationChange: 'Equation changed',
 	correct: 'Correct answer', incorrect: 'Incorrect answer', damage: 'Damage',
 	web: 'Spider web', frogTongue: 'Frog tongue',
 	levelComplete: 'Level complete', gameOver: 'Game over',

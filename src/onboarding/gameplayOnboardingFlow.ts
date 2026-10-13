@@ -39,7 +39,7 @@ function recordOnboardingCompletion(
 
 export function startNormalGame(engine: GameEngine): void {
   void engine.setScreen('playing', {
-    level: 1,
+    level: engine.getResource('startingLevel'),
     isFreshGame: true,
   });
 }

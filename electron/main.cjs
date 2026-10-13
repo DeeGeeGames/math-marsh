@@ -12,7 +12,7 @@ const createWindow = () => {
 		minHeight: 720,
 		backgroundColor: '#07170f',
 		title: 'Math Marsh',
-		icon: join(PROJECT_ROOT, 'src/assets/images/math-marsh-icon.png'),
+		icon: join(PROJECT_ROOT, 'src/assets/icons/math-marsh-icon.png'),
 		autoHideMenuBar: true,
 		fullscreenable: true,
 		show: false,

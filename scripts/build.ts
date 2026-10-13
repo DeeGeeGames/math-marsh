@@ -28,7 +28,7 @@ async function build(): Promise<void> {
   if (!result.success) throw new Error('Browser bundle failed');
 
   await Promise.all(pwaFiles.map(file => copyFile(
-    resolve(projectRoot, 'src/assets/images', file),
+    resolve(projectRoot, 'src/assets/icons', file),
     resolve(distRoot, file),
   )));
 

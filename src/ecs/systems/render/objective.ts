@@ -19,6 +19,13 @@ export type EquationValueTarget = {
   y: number;
 };
 
+export const boardObjectiveRegion = function(ctx: CanvasRenderingContext2D, margin: number): {
+  left: number; width: number; x: number; y: number;
+} {
+  const width = ctx.canvas.width * HEADER_SPLIT_RATIO - HEADER_GAP - HEADER_SIDE_PADDING;
+  return { left: HEADER_SIDE_PADDING, width, x: HEADER_SIDE_PADDING + width / 2, y: margin * 0.48 };
+};
+
 type LocatedEquationValue = {
   id: number;
   start: number;

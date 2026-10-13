@@ -1,6 +1,6 @@
-import lizardWalkToward from './assets/lizard-walk-toward.png';
-import spiderImage from './assets/images/spider.png';
-import frogImage from './assets/images/frog.svg';
+import lizardWalkToward from './assets/sprites/lizard/lizard-walk-toward.png';
+import spiderImage from './assets/sprites/spider/spider.png';
+import frogImage from './assets/sprites/frog/frog.svg';
 
 export const GAME_CONFIG = {
   GRID: {
@@ -12,7 +12,13 @@ export const GAME_CONFIG = {
     LEVEL_CLEAR_RATIO: 2 / 3,
     CORRECT_ANSWER_BONUS_SECONDS: {
       easy: 10,
-      medium: 5,
+      medium: 10,
+      expert: 10,
+    } as const,
+    // Added per level beyond level 1, on top of the base answer reward.
+    CORRECT_ANSWER_LEVEL_BONUS_SECONDS: {
+      easy: 1,
+      medium: 2,
       expert: 3,
     } as const,
     WRONG_ANSWER_PENALTY_SECONDS: {

@@ -3,7 +3,7 @@ import * as audio from '../../audio/audio';
 import { gridCells } from '../lilyPads';
 import type { EnemyType } from '../../types/shared';
 import { GAME_CONFIG } from '../../config';
-import { describe, expect, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import type { GameEngine } from '../Engine';
 import type { MathDifficulty } from '../types';
@@ -16,6 +16,16 @@ import type { MathProblemEntityWithRenderable } from '../queries';
 import { handleEquationProblemSelection } from '../equationSelection';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { selectableEquationProblems } from '../selectableEquationProblems';
+import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
+import { SYSTEM_PRIORITIES } from '../systemConfigs';
+import { startEnemyGridMovement } from './EnemySpriteSystem';
+
+let restoreSound: (() => void) | undefined;
+beforeEach(function(): void {
+	const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
+	restoreSound = function(): void { sound.mockRestore(); };
+});
+afterEach(function(): void { restoreSound?.(); });
 
 describe('board population', () => {
 	(['easy', 'medium', 'expert'] as const).forEach(difficulty => {
@@ -24,6 +34,7 @@ describe('board population', () => {
 				await Promise.all([1, 2, 3].map(async level => {
 					const board = BOARD_SIZES[difficulty];
 					const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
+					world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
 					world.setResource('board', board);
 					world.setResource('enemySpawn', { index: 0, roster: [] });
 					world.setResource('currentLevel', level);
@@ -41,6 +52,7 @@ describe('board population', () => {
 					const problems = world.getEntitiesWithQuery(['mathProblem', 'position']);
 					const state = world.getResource('equationMode');
 					expect(problems).toHaveLength(board.width * board.height);
+				expect(state.changeNotice).toBeUndefined();
 					expect(problems.every(problem => problem.components.position.x < board.width * GAME_CONFIG.GRID.CELL_SIZE
 						&& problem.components.position.y < board.height * GAME_CONFIG.GRID.CELL_SIZE)).toBe(true);
 					const selectable = selectableEquationProblems(
@@ -61,6 +73,74 @@ describe('board population', () => {
 });
 
 describe('equations with enemy-occupied answers', () => {
+	(['easy', 'medium', 'expert'] as const).forEach(difficulty => {
+		test(`${difficulty} keeps a single-result 15 while an enemy moves onto only one of two 15s`, async () => {
+			const world = ECSpresso.create<ConfigOf<GameEngine>>()
+				.withPlugin(createTweenPlugin({ priority: SYSTEM_PRIORITIES.ANIMATION }))
+				.build();
+			try {
+				world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
+				world.setResource('board', BOARD_SIZES[difficulty]);
+				world.setResource('enemySpawn', { index: 0, roster: ['lizard', 'lizard'] });
+				world.setResource('currentLevel', 1);
+				world.setResource('gameMode', ['add']);
+				world.setResource('mathDifficulty', difficulty);
+				const state = {
+					...createEquationModeState(1, difficulty, ['add']),
+					target: 15,
+					promptValues: [7, 8],
+				};
+				world.setResource('equationMode', state);
+				addProblemManagementSystemToEngine(world);
+				await world.initialize();
+				world.spawn({ ...playerComponents(0, 0), timers: {} });
+				[3, 15, 15].forEach((value, index) => {
+					const position = gridToPixel(index, 0);
+					world.spawn(mathProblemComponents(position.x, position.y, value, 1));
+				});
+				const enemy = world.spawn({ ...enemyComponents(0, 0, 'lizard', 'guard'), timers: {} });
+				const firstAnswerPosition = gridToPixel(1, 0);
+				const freeAnswerPosition = gridToPixel(2, 0);
+				expect(state.promptKind).toBe('selectResult');
+				expect(state.operandsRequired).toBe(1);
+				world.update(0);
+				expect(world.getResource('equationMode')).toBe(state);
+
+				startEnemyGridMovement(world, enemy.id, 'lizard', { x: 0, y: 0 }, { x: 1, y: 0 },
+					firstAnswerPosition.x, firstAnswerPosition.y);
+				// Exercise real movement interpolation and equation checks on every frame.
+				Array.from({ length: 100 }).forEach(() => {
+					world.update(0.01);
+					expect(world.getResource('equationMode')).toBe(state);
+				});
+				expect(world.getComponent(enemy.id, 'position')).toEqual(firstAnswerPosition);
+				const freeAnswers = selectableEquationProblems(
+					world.getEntitiesWithQuery(['mathProblem', 'position', 'collider', 'renderable'])
+						.map(function(problem) {
+							return { ...problem, components: { ...problem.components, answerConsumption: problem.components.answerConsumption } };
+						}),
+					world.getEntitiesWithQuery(['enemy', 'position']),
+				).filter(problem => problem.components.mathProblem.value === 15);
+				expect(freeAnswers).toHaveLength(1);
+				expect(freeAnswers[0]?.components.position).toEqual(freeAnswerPosition);
+				expect(state.changeNotice).toBeUndefined();
+				expect(audio.playSound).not.toHaveBeenCalled();
+
+				// Control: cycling should occur once both 15s really are occupied.
+				world.spawn({
+					...enemyComponents(freeAnswerPosition.x, freeAnswerPosition.y, 'lizard', 'guard'), timers: {},
+				});
+				world.update(0.01);
+				expect(world.getResource('equationMode').target).not.toBe(15);
+				expect(world.getResource('equationMode').changeNotice?.reason).toBe('answerBlocked');
+				expect(audio.playSound).toHaveBeenCalledTimes(1);
+				expect(audio.playSound).toHaveBeenCalledWith('equationChange');
+			} finally {
+				await world.dispose();
+			}
+		});
+	});
+
 	([
 		{ level: 1, difficulty: 'easy', target: 10, occupiedValue: 10, freeValues: [3] },
 		{ level: 2, difficulty: 'medium', target: 9, occupiedValue: 6, freeValues: [3, 3] },
@@ -86,10 +166,18 @@ describe('equations with enemy-occupied answers', () => {
 				const state = world.getResource('equationMode');
 				expect(state.target).not.toBe(target);
 				expect(state.selectedProblemIds).toEqual([]);
+				expect(state.changeNotice).toEqual({
+					startedAt: 0,
+					origin: { x: blocked.components.position.x + GAME_CONFIG.GRID.CELL_SIZE / 2, y: blocked.components.position.y + GAME_CONFIG.GRID.CELL_SIZE / 2 },
+					reason: 'answerBlocked',
+				});
+				expect(audio.playSound).toHaveBeenCalledTimes(1);
+				expect(audio.playSound).toHaveBeenCalledWith('equationChange');
 				expect(evaluateEquationSelection(state, freeValues)).toBe(true);
 				// A stationary enemy must not cause repeated prompt changes.
 				world.update(0.01);
 				expect(world.getResource('equationMode')).toBe(state);
+				expect(audio.playSound).toHaveBeenCalledTimes(1);
 			} finally {
 				await world.dispose();
 			}
@@ -108,6 +196,7 @@ describe('equations with enemy-occupied answers', () => {
 			world.setResource('equationMode', state);
 			world.update(0.01);
 			expect(world.getResource('equationMode')).toBe(state);
+			expect(audio.playSound).not.toHaveBeenCalled();
 		} finally {
 			await world.dispose();
 		}
@@ -125,6 +214,7 @@ describe('equations with enemy-occupied answers', () => {
 			world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
 			world.update(0.01);
 			expect(world.getResource('equationMode')).toBe(feedbackMode);
+			expect(audio.playSound).not.toHaveBeenCalled();
 			world.setResource('equationMode', nextMode);
 			world.update(0.01);
 			expect(world.getResource('equationMode').target).toBe(3);
@@ -156,12 +246,29 @@ describe('equations with enemy-occupied answers', () => {
 	});
 });
 
+test('explains an unavailable answer without blaming an enemy', async () => {
+	const world = await createProgressionWorld(1, []);
+	try {
+		world.setResource('equationMode', { ...world.getResource('equationMode'), target: 9, promptValues: [6, 3] });
+		world.update(0.01);
+		expect(world.getResource('equationMode').changeNotice).toEqual({
+			startedAt: 0,
+			origin: { x: GAME_CONFIG.GRID.CELL_SIZE * 1.5, y: GAME_CONFIG.GRID.CELL_SIZE * 1.5 },
+			reason: 'answerUnavailable',
+		});
+		expect(audio.playSound).toHaveBeenCalledWith('equationChange');
+	} finally {
+		await world.dispose();
+	}
+});
+
 async function createProgressionWorld(
 	level: number,
 	roster: readonly EnemyType[],
 	difficulty: MathDifficulty = 'easy',
 ): Promise<GameEngine> {
 	const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
+	world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
 	world.setResource('board', BOARD_SIZES.easy);
 	world.setResource('enemySpawn', { index: 0, roster });
 	world.setResource('currentLevel', level);

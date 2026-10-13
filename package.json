@@ -66,7 +66,7 @@
       "dist/**",
       "electron/**",
       "!electron/launch.sh",
-      "src/assets/images/math-marsh-icon.png",
+      "src/assets/icons/math-marsh-icon.png",
       "package.json"
     ],
     "extraFiles": [
@@ -83,7 +83,7 @@
         "AppImage",
         "dir"
       ],
-      "icon": "src/assets/images/math-marsh-icon.png",
+      "icon": "src/assets/icons/math-marsh-icon.png",
       "category": "Game",
       "executableArgs": [
         "--no-sandbox"
@@ -96,7 +96,7 @@
         "zip",
         "dir"
       ],
-      "icon": "src/assets/images/math-marsh-icon.png"
+      "icon": "src/assets/icons/math-marsh-icon.png"
     }
   }
 }
