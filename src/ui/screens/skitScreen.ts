@@ -1,9 +1,5 @@
-import spiderImage from '../../assets/images/spider.png';
-import lizardWalkSide from '../../assets/lizard-walk-side.png';
+import { flyMoveSide, frogHopSide, frogMouthOpenSide, lizardWalkSide, spiderWalkToward } from '../../ecs/assets';
 import type { AdditionalSkitPresentation } from '../../ecs/additionalSkits';
-import flySide from '../../assets/images/fly-move-side.png';
-import frogSide from '../../assets/images/frog-hop-side.png';
-import frogMouth from '../../assets/images/frog-open-mouth-side.png';
 import { skitById, type Skit } from '../../ecs/skitSequence';
 import type { ScreenSpec } from '../screenTypes';
 import { BTN_CHROME, BTN_SIZE, inputPromptsSlot, OVERLAY_BASE } from './shared';
@@ -23,10 +19,10 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 						<div id="scene-web" class="scene-web"><span></span></div>
 						<div id="scene-diagram" class="scene-diagram"><span>↓</span><span>→ ● ←</span></div>
 						<div id="scene-tongue" class="skit-tongue"></div>
-						<div id="scene-frog" class="scene-actor scene-frog" style="background-image:url('${frogSide}')"></div>
+						<div id="scene-frog" class="scene-actor scene-frog" style="background-image:url('${frogHopSide}')"></div>
 						<div id="scene-lizard" class="scene-actor scene-lizard" style="background-image:url('${lizardWalkSide}')"></div>
-						<div id="scene-spider" class="scene-actor" style="background-image:url('${spiderImage}')"></div>
-						<div id="scene-fly" class="scene-actor scene-fly" style="background-image:url('${flySide}')"></div>
+						<div id="scene-spider" class="scene-actor scene-spider" style="background-image:url('${spiderWalkToward}')"></div>
+						<div id="scene-fly" class="scene-actor scene-fly" style="background-image:url('${flyMoveSide}')"></div>
 						<div id="scene-pad" class="skit-pad"></div><div id="scene-splash" class="scene-splash"></div>
 						<div id="scene-burst" class="scene-burst"></div>
 					</div>
@@ -34,7 +30,7 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 					<div id="skit-tongue" class="skit-tongue"></div>
 					<div id="skit-pad" class="skit-pad"></div>
 					<div id="skit-frog" class="skit-frog"></div>
-					<div id="skit-fly" class="skit-fly" style="background-image:url('${flySide}')"></div>
+					<div id="skit-fly" class="skit-fly" style="background-image:url('${flyMoveSide}')"></div>
 				</div>
 				<p id="skit-caption" class="skit-caption" aria-live="polite" aria-atomic="true"><span id="skit-speaker" class="skit-speaker"></span> <span id="skit-line"></span></p>
 				<button id="skip-skit-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.md}">Skip Scene</button>
@@ -69,7 +65,7 @@ export const updateSkitPresentation = function(elapsed: number, skit: Skit = ski
 		fly.style.backgroundPositionX = `${view.flyFrame / 7 * 100}%`;
 	}
 	if (frog) {
-		frog.style.backgroundImage = `url('${view.mouthOpen ? frogMouth : frogSide}')`;
+		frog.style.backgroundImage = `url('${view.mouthOpen ? frogMouthOpenSide : frogHopSide}')`;
 		frog.style.backgroundSize = `${view.mouthOpen ? 400 : 800}% 100%`;
 		frog.style.backgroundPositionX = view.mouthOpen ? '100%' : '0%';
 		frog.style.transform = `translate(-50%, -100%) rotate(${view.frogTilt}deg)`;
@@ -105,6 +101,20 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 		element.style.top = `${pose.y}%`;
 		element.style.transform = `translate(-50%, ${actor === 'pad' ? '-50%' : '-100%'}) rotate(${pose.tilt}deg) scaleX(${pose.facing}) scaleY(${actor === 'lizard' ? view.lizardSquash : 1})`;
 		if (actor === 'lizard') {
+			if (view.lizardOnPad) {
+				const pad = root.querySelector<HTMLElement>('.skit-gap-left');
+				if (pad) {
+					// The feet are inset from the sprite slot's bottom; land them on the oval surface.
+					const angle = pose.tilt * Math.PI / 180;
+					const size = element.offsetWidth;
+					const centreX = (element.parentElement?.offsetWidth ?? 0) * pose.x / 100;
+					const footX = centreX + size * (.1 * Math.cos(angle) - .47 * view.lizardSquash * Math.sin(angle));
+					const footYFromBottom = size * (-.5 + .1 * Math.sin(angle) + .47 * view.lizardSquash * Math.cos(angle));
+					const across = Math.max(-1, Math.min(1, (footX - pad.offsetLeft - pad.offsetWidth / 2) / (pad.offsetWidth / 2)));
+					const surface = pad.offsetTop + pad.offsetHeight / 2 * (1 - Math.sqrt(1 - across * across));
+					element.style.top = `${surface + pad.offsetHeight * .12 - footYFromBottom}px`;
+				}
+			}
 			const waterline = (element.parentElement?.offsetHeight ?? 0) * .76;
 			// Counter the actor's tilt so the pond surface stays horizontal on screen.
 			const radians = pose.tilt * Math.PI / 180;
@@ -113,7 +123,7 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 			const right = 50 + (depth - Math.sin(radians) / 2) / Math.cos(radians) * 100;
 			element.style.clipPath = view.lizardInWater ? `polygon(0 0, 100% 0, 100% ${right}%, 0 ${left}%)` : '';
 		}
-		if (actor === 'fly' || actor === 'lizard') element.style.backgroundPositionX = `${pose.frame / 7 * 100}%`;
+		if (actor === 'fly' || actor === 'lizard' || actor === 'spider') element.style.backgroundPositionX = `${pose.frame / 7 * 100}%`;
 	}
 	for (const prop of ['web', 'diagram', 'tongue', 'splash', 'pluck'] as const) {
 		const element = root.querySelector<HTMLElement>(`#scene-${prop}`);
@@ -151,7 +161,7 @@ const updateAdditionalScene = function(root: HTMLElement, view: AdditionalSkitPr
 	const frog = root.querySelector<HTMLElement>('#scene-frog');
 	const caughtPad = root.querySelector<HTMLElement>('#scene-pad');
 	if (frog) {
-		frog.style.backgroundImage = `url('${view.mouthOpen ? frogMouth : frogSide}')`;
+		frog.style.backgroundImage = `url('${view.mouthOpen ? frogMouthOpenSide : frogHopSide}')`;
 		frog.style.backgroundSize = `${view.mouthOpen ? 400 : 800}% 100%`;
 		frog.style.backgroundPositionX = view.mouthOpen ? '100%' : `${view.frog.frame / 7 * 100}%`;
 	}

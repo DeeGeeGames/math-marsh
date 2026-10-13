@@ -22,7 +22,7 @@ export type AdditionalSkitPresentation = {
 	pad: ScenePose; splash: boolean; web: boolean; webTilt: number; webBuild: number; pluck: boolean;
 	diagram: boolean; tongue: boolean; caption: string;
 	hat: boolean; hatTravel: number; padCatch: number; padScale: number; mouthOpen: boolean;
-	burst: string; tongueReach: number; lizardInWater: boolean; lizardSquash: number;
+	burst: string; tongueReach: number; lizardInWater: boolean; lizardOnPad: boolean; lizardSquash: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -105,7 +105,7 @@ const emptyScene = function(): AdditionalSkitPresentation {
 		lizard: pose(20, 70, 0, false), pad: pose(65, 75, 0, false),
 		splash: false, web: false, webTilt: 0, webBuild: 1, pluck: false, diagram: false, tongue: false,
 		hat: false, hatTravel: 0, padCatch: 0, padScale: 1, mouthOpen: false,
-		burst: '', tongueReach: 0, lizardInWater: false, lizardSquash: 1, caption: '',
+		burst: '', tongueReach: 0, lizardInWater: false, lizardOnPad: false, lizardSquash: 1, caption: '',
 	};
 };
 // Decaying wobble after a pluck/bump; 0 before `start` and under reduced motion.
@@ -178,7 +178,7 @@ export const bigJumpPresentation = function(time: number, reducedMotion = false)
 		fly: flying(time, flyX, 30 - (time >= 5.5 && time < 7.5 && !reducedMotion ? Math.abs(Math.sin(time * 8)) * 5 : 0), reducedMotion, -1),
 		lizard: { ...pose(20 + ease(time, JUMP, SPLASH - JUMP) * 38, lizardY,
 			windUp + puzzled + lookAround + flightTilt), frame: time >= SPLASH ? 0 : jumpFrame },
-		lizardInWater: time >= SPLASH, lizardSquash: 1 - crouch * .15,
+		lizardInWater: time >= SPLASH, lizardOnPad: time < JUMP, lizardSquash: 1 - crouch * .15,
 		pad: pose(65, 81),
 		hat: emerged, hatTravel: ease(time, EMERGE, 0.4),
 		splash: underwater,
@@ -203,7 +203,7 @@ export const webGuitarPresentation = function(time: number, reducedMotion = fals
 	return {
 		...emptyScene(),
 		web: true, webTilt: wobble / 4, webBuild: 0.85 + ease(time, 0, 1.5) * 0.15, pluck: plucking,
-		spider: pose(47, 58 + wobble * 0.65 - happyHop, wobble),
+		spider: { ...pose(47, 58 + wobble * 0.65 - happyHop, wobble), frame: 7 },
 		fly: flying(time, 112 - enter * 40, 40 + enter * 15, reducedMotion, -1),
 		burst: plucking ? '♪ TWANG! ♪' : '',
 		caption: captionAt(WEB_GUITAR_BEATS, time),
@@ -239,7 +239,7 @@ export const bigPlanPresentation = function(time: number, reducedMotion = false)
 		diagram: time < CHARGE,
 		fly: flying(time, flyX, flyY, reducedMotion, time >= EXIT ? 1 : -1),
 		frog: pose(20 + charge * 22 - rebound * 12, 82, -shake),
-		spider: pose(50, 43 + charge * 25 - rebound * 20, shake),
+		spider: { ...pose(50, 43 + charge * 25 - rebound * 20, shake), frame: 7 },
 		lizard: {
 			...pose(80 - charge * 22 + rebound * 14, 82, shake, true, -1),
 			frame: reducedMotion || time < CHARGE || time >= BONK ? 0 : Math.floor(time * 12) % 8,

@@ -33,7 +33,7 @@
 #skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-extra { display: block; }
 #skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-stage > :is(.skit-perch, .skit-tongue, .skit-pad, .skit-frog, .skit-fly) { display: none; }
 .scene-actor { position: absolute; width: min(21%, 43cqh); aspect-ratio: 1; background-size: contain; background-repeat: no-repeat; background-position: center; transform-origin: center; filter: drop-shadow(0 3px 1px #123d4833); }
-.scene-frog, .scene-lizard { background-size: 800% 100%; background-position: 0 0; }
+.scene-frog, .scene-lizard, .scene-spider { background-size: 800% 100%; background-position: 0 0; }
 .scene-fly { width: min(12%, 23cqh); background-size: 800% 100%; background-position: 0 0; }
 .skit-gap-pad { top: 72%; width: 25%; height: auto; aspect-ratio: 4 / 1; }
 .skit-gap-left { left: 5%; }.skit-gap-right { right: 5%; }
