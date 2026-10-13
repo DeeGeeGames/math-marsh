@@ -14,8 +14,18 @@ export const formatRemainingTime = (remainingSeconds: number): string => {
 export const timeAfterChange = (remainingSeconds: number, changeSeconds: number): number =>
   Math.max(0, remainingSeconds + changeSeconds);
 
-export const timeForCorrectAnswer = (remainingSeconds: number, mathDifficulty: MathDifficulty): number =>
-  timeAfterChange(remainingSeconds, GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS[mathDifficulty]);
+export const correctAnswerBonusSeconds = function(mathDifficulty: MathDifficulty, level: number): number {
+  return GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS[mathDifficulty]
+    + (level - 1) * GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_LEVEL_BONUS_SECONDS[mathDifficulty];
+};
+
+export const timeForCorrectAnswer = function(
+  remainingSeconds: number,
+  mathDifficulty: MathDifficulty,
+  level = 1,
+): number {
+  return timeAfterChange(remainingSeconds, correctAnswerBonusSeconds(mathDifficulty, level));
+};
 
 export const timeAfterWrongAnswer = (remainingSeconds: number, mathDifficulty: MathDifficulty): number =>
   timeAfterChange(remainingSeconds, -GAME_CONFIG.GAMEPLAY.WRONG_ANSWER_PENALTY_SECONDS[mathDifficulty]);

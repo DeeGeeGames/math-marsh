@@ -18,6 +18,7 @@ import type {
 import { playSound } from '../audio/audio';
 import { GAME_CONFIG } from '../config';
 import { queueTimeAdjustment } from './timeAdjustments';
+import { correctAnswerBonusSeconds } from './runTime';
 import { startPlayerEatingAnimation } from './systems/PlayerSpriteSystem';
 
 type EquationSelectionResources = Readonly<Pick<
@@ -122,7 +123,7 @@ export function handleEquationProblemSelection(
   queueTimeAdjustment(
     ecs,
     problem.components.position,
-    GAME_CONFIG.GAMEPLAY.CORRECT_ANSWER_BONUS_SECONDS[mathDifficulty],
+    correctAnswerBonusSeconds(mathDifficulty, pendingMode.level),
     consumptionStartedAt,
   );
   selectedProblems.forEach(selectedProblem => {
