@@ -1,3 +1,4 @@
+import { initialLevelSelectSequence } from './levelSelectionCheat';
 import { boardForDifficulty } from './boardGeometry';
 import { frameDeltaSeconds } from './frameTime';
 import ECSpresso, { type SystemRegistrarOf } from 'ecspresso';
@@ -57,6 +58,8 @@ export const gameEngine = ECSpresso.create()
   .withResource('mathDifficulty', 'easy')
   .withResource('board', boardForDifficulty('easy'))
   .withResource('currentLevel', 1)
+  .withResource('startingLevel', 1)
+  .withResource('levelSelectionUnlocked', false)
   .withResource('remainingTimeSeconds', GAME_CONFIG.GAMEPLAY.STARTING_TIME_SECONDS)
   .withResource('equationsSolved', 0)
   .withResource('enemySpawn', { index: 0, roster: [] })
@@ -79,7 +82,7 @@ export const gameEngine = ECSpresso.create()
     .add('engineSplash', { initialState: initialSplashState })
     .add('menu', { initialState: () => ({}) })
     .add('skitGallery', { initialState: () => ({}) })
-    .add('modeSelect', { initialState: () => ({}) })
+    .add('modeSelect', { initialState: initialLevelSelectSequence })
     .add('howToPlay', { initialState: () => ({}) })
     .add('tutorialOffer', { initialState: () => ({}) })
     .add('tutorial', { initialState: (config: TutorialScreenConfig) => ({ ...config }) })

@@ -217,6 +217,8 @@ export interface Resources {
   mathDifficulty: MathDifficulty;
   board: BoardSize;
   currentLevel: number;
+  startingLevel: number;
+  levelSelectionUnlocked: boolean;
   remainingTimeSeconds: number;
   equationsSolved: number;
   enemySpawn: { index: number; roster: readonly EnemyType[] };
