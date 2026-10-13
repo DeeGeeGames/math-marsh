@@ -5,7 +5,8 @@ import type { GameEngine, GameSystemRegistrar } from '../Engine';
 import { createMathProblem } from '../entities';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { GAME_CONFIG } from '../../config';
-import { gridToPixel } from '../gameUtils';
+import { cellCenter, gridToPixel } from '../gameUtils';
+import { gameplayTimeMs } from '../gameplayClock';
 import {
   chooseEquationCandidate,
   createEquationModeState,
@@ -48,7 +49,7 @@ export function addProblemManagementSystemToEngine(
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
     .addQuery('allPositions', positionEntityQuery)
     .addQuery('enemies', enemyQuery)
-    .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn'])
+    .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn', 'gameplayClock'])
     .setProcess(({ queries, ecs, resources }) => {
       const player = queries.player;
       const activeProblems = queries.mathProblems.filter(
@@ -68,10 +69,17 @@ export function addProblemManagementSystemToEngine(
               queries.enemies,
             )
           : resources.equationMode;
+        const selectableProblems = selectableEquationProblems(queries.mathProblems, queries.enemies);
+        // Capture the cause before a repair can replace any of the pad values.
+        const blockedAnswer = !shouldSpawnProblems
+          && !hasSelectableSolution(resources.equationMode, selectableProblems)
+          ? activeProblems.find(problem => !selectableProblems.some(free => free.id === problem.id)
+            && participatesInSolution(resources.equationMode, problem, activeProblems))
+          : undefined;
         const nextEquationMode = shouldSpawnProblems
           ? populatedEquationMode
           : equationStateFromBoard(
-              selectableEquationProblems(queries.mathProblems, queries.enemies),
+              selectableProblems,
               resources,
               populatedEquationMode,
             );
@@ -80,7 +88,24 @@ export function addProblemManagementSystemToEngine(
           player.components.timers.problemSpawn = createTimer(GAME_CONFIG.TIMING.SHORT_DELAY / 1000);
         }
         if (nextEquationMode !== resources.equationMode) {
-          ecs.setResource('equationMode', nextEquationMode);
+          const previous = resources.equationMode;
+          const isReplacement = !shouldSpawnProblems
+            && previous.level === nextEquationMode.level
+            && previous.target !== null
+            && nextEquationMode.target !== null;
+          if (isReplacement) {
+            ecs.setResource('equationMode', {
+              ...nextEquationMode,
+              changeNotice: {
+                startedAt: gameplayTimeMs(resources.gameplayClock),
+                origin: cellCenter(blockedAnswer?.components.position ?? player.components.position),
+                reason: blockedAnswer ? 'answerBlocked' : 'answerUnavailable',
+              },
+            });
+            playSound('equationChange');
+          } else {
+            ecs.setResource('equationMode', nextEquationMode);
+          }
         }
 
         checkEquationLevelCompletion(
@@ -231,6 +256,19 @@ const hasSelectableSolution = function (
       left.components.mathProblem.value,
       right.components.mathProblem.value,
     ]),
+  ));
+};
+
+const participatesInSolution = function (
+  state: Resources['equationMode'],
+  problem: MathProblemEntityWithRenderable,
+  problems: readonly MathProblemEntityWithRenderable[],
+): boolean {
+  const value = problem.components.mathProblem.value;
+  if (state.operandsRequired === 1) return evaluateEquationSelection(state, [value]);
+  return problems.some(other => other.id !== problem.id && (
+    evaluateEquationSelection(state, [value, other.components.mathProblem.value])
+      || evaluateEquationSelection(state, [other.components.mathProblem.value, value])
   ));
 };
 

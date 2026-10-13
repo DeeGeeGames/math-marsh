@@ -39,6 +39,7 @@ import {
   enemyEmergencePresentation,
 } from './render/enemyTelegraphs';
 import { drawDamageFeedback } from './render/damageFeedback';
+import { drawEquationChange } from './render/equationChange';
 
 export { initializeRenderSystem } from './render/context';
 
@@ -184,6 +185,7 @@ export const addRenderSystemToEngine = (
         currentTime,
         reducedMotion,
       );
+      drawEquationChange(ctx, equationMode, margins, currentTime, reducedMotion);
 
       const levelComplete = ecs.tryGetScreenState('levelComplete');
       if (levelComplete) {
