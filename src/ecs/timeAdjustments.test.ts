@@ -1,10 +1,13 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
+import * as audio from '../audio/audio';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import type { GameEngine } from './Engine';
 import type { TimerSlot, TutorialScreenConfig } from './types';
 import type { SkitScreenConfig } from './skitSequence';
-import { playerComponents } from './entities';
+import { mathProblemComponents, playerComponents } from './entities';
+import { handleEquationProblemSelection } from './equationSelection';
+import { mathProblemWithRenderableQuery, playerCollisionQuery } from './queries';
 import { frameDeltaSeconds } from './frameTime';
 import { gameplayClockPlugin, gameplayTimeMs } from './gameplayClock';
 import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
@@ -53,6 +56,48 @@ const queueFromPlaying = function(world: GameEngine, seconds: number): void {
 };
 
 describe('run-owned time adjustments', () => {
+  test('a correct level-three answer queues its scaled reward and keeps it through a level change', async () => {
+    const { world } = await createWorld();
+    const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
+    try {
+      const equationMode = {
+        ...createEquationModeState(3, 'medium', ['add']),
+        promptKind: 'selectResult' as const,
+        operandsRequired: 1,
+        target: 3,
+        promptValues: [1, 2],
+      };
+      world.setResource('equationMode', equationMode);
+      world.setResource('equationsSolved', 0);
+      world.spawn(mathProblemComponents(150, 150, 3, 1));
+      let selected = false;
+      world.addSystem('test-equation-selection')
+        .addSingleton('player', playerCollisionQuery)
+        .addSingleton('problem', mathProblemWithRenderableQuery)
+        .setProcess(({ ecs, queries: { player, problem } }) => {
+          if (selected || !player || !problem) return;
+          selected = true;
+          handleEquationProblemSelection(ecs, player, problem, [problem], {
+            equationMode,
+            gameMode: ['add'],
+            mathDifficulty: 'medium',
+          });
+        });
+      world.update(0);
+      expect(world.getSingleton(['timeAdjustment']).components.timeAdjustment.seconds).toBe(14);
+      expect(world.getResource('remainingTimeSeconds')).toBe(20);
+      expect(world.getResource('equationsSolved')).toBe(1);
+      await world.setScreen('playing', { level: 4, isFreshGame: false });
+      world.setResource('equationMode', createEquationModeState(4, 'medium', ['add']));
+      world.update(0.8);
+      expect(world.getResource('remainingTimeSeconds')).toBeCloseTo(33.2);
+      expect(world.getEntitiesWithQuery(['timeAdjustment'])).toHaveLength(0);
+    } finally {
+      sound.mockRestore();
+      world.dispose();
+    }
+  });
+
   test('a long visible frame cannot drain the bank or trigger death', async () => {
     const { world, player } = await createWorld();
     try {

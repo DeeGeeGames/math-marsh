@@ -15,6 +15,12 @@ export const GAME_CONFIG = {
       medium: 10,
       expert: 10,
     } as const,
+    // Added per level beyond level 1, on top of the base answer reward.
+    CORRECT_ANSWER_LEVEL_BONUS_SECONDS: {
+      easy: 1,
+      medium: 2,
+      expert: 3,
+    } as const,
     WRONG_ANSWER_PENALTY_SECONDS: {
       easy: 10,
       medium: 7,
