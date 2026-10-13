@@ -41,13 +41,13 @@ test('reduced motion keeps captions', () => {
 test('story beats', () => {
 	// Snack Break: dodge before pad caught; pad at frog; fly exits
 	expect(snackBreakPresentation(5.4).flyY).toBeLessThan(snackBreakPresentation(2).flyY - 20);
-	expect(snackBreakPresentation(7).padX).toBeCloseTo(27);
+	expect(snackBreakPresentation(7).padCatch).toBe(1);
 	expect(snackBreakPresentation(15.4).flyX).toBeGreaterThan(100);
 	// Big Jump: splash hides lizard, then hat on emergence before "Nice hat!"
-	expect(bigJumpPresentation(9.5).lizard.visible).toBe(false);
+	expect(bigJumpPresentation(9.5).lizardInWater).toBe(true);
 	expect(bigJumpPresentation(9.5).burst).toBe('SPLOOSH!');
 	expect(bigJumpPresentation(10.2).hat).toBe(true);
-	expect(bigJumpPresentation(10.2).caption).toContain('Nice hat');
+	expect(bigJumpPresentation(10.5).caption).toContain('Nice hat');
 	// Web Guitar: pluck during guitar line and during "one more"
 	expect(webGuitarPresentation(6).pluck).toBe(true);
 	expect(webGuitarPresentation(6).caption).toContain('guitar');
@@ -58,8 +58,8 @@ test('story beats', () => {
 	expect(asking.fly.x).toBeCloseTo(50); expect(asking.diagram).toBe(true);
 	const bonk = bigPlanPresentation(11.6);
 	expect(bonk.burst).toBe('BONK!'); expect(bonk.fly.y).toBeLessThan(35);
-	expect(bigPlanPresentation(14).tongue).toBe(true);
-	expect(bigPlanPresentation(14).caption).toContain('AGAIN');
+	expect(bigPlanPresentation(12.8).tongue).toBe(true);
+	expect(bigPlanPresentation(13.5).caption).toContain('AGAIN');
 	expect(bigPlanPresentation(19.9).fly.x).toBeGreaterThan(100);
 });
 
@@ -69,5 +69,39 @@ test('Big Plan keeps the hovering fly inside the stage until its exit', () => {
 		for (let tick = 113; tick < 175; tick += 1) {
 			expect(bigPlanPresentation(tick / 10, reducedMotion).fly.y).toBeGreaterThan(23);
 		}
+	}
+});
+
+
+test('catches, consumption, and retraction remain ordered with and without reduced motion', () => {
+	for (const reduced of [false, true]) {
+		const dodge = snackBreakPresentation(4.7, reduced);
+		expect(dodge.flyY).toBeLessThan(30);
+		expect(dodge.tongueReach).toBeLessThan(1);
+		const chew = snackBreakPresentation(7, reduced);
+		expect(chew.padCatch).toBe(1);
+		expect(chew.tongueReach).toBe(0);
+		expect(snackBreakPresentation(9.5, reduced).padScale).toBeLessThan(chew.padScale);
+		expect(snackBreakPresentation(10, reduced).padVisible).toBe(false);
+		const caught = bigPlanPresentation(13.5, reduced);
+		expect(caught.padCatch).toBe(1);
+		expect(caught.caption).toContain('Got him');
+		expect(bigPlanPresentation(13.2, reduced).tongueReach).toBeLessThan(bigPlanPresentation(12.7, reduced).tongueReach);
+		expect(bigPlanPresentation(14.5, reduced).tongue).toBe(false);
+		expect(bigPlanPresentation(14.5, reduced).mouthOpen).toBe(true);
+		expect(bigPlanPresentation(16, reduced).pad.visible).toBe(false);
+	}
+});
+
+test('jump key poses and hat travel precede the reveal caption', () => {
+	for (const reduced of [false, true]) {
+		expect(bigJumpPresentation(7.6, reduced).lizardSquash).toBeLessThan(1);
+		expect(bigJumpPresentation(8.2, reduced).lizard.frame).not.toBe(bigJumpPresentation(7.6, reduced).lizard.frame);
+		expect(bigJumpPresentation(8.2, reduced).lizard.y).toBeLessThan(73);
+		expect(bigJumpPresentation(9.5, reduced).lizard.y).toBeGreaterThan(100);
+		expect(bigJumpPresentation(10.2, reduced).hatTravel).toBeGreaterThan(0);
+		expect(bigJumpPresentation(10.2, reduced).hatTravel).toBeLessThan(1);
+		expect(bigJumpPresentation(10.5, reduced).hatTravel).toBe(1);
+		expect(bigJumpPresentation(11, reduced).lizardInWater).toBe(true);
 	}
 });
