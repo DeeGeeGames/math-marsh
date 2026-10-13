@@ -208,6 +208,11 @@ export interface BaseEquationModeState {
 
 export interface EquationModeState extends BaseEquationModeState {
   feedback?: EquationFeedback;
+  changeNotice?: {
+    startedAt: number;
+    origin: Readonly<{ x: number; y: number }>;
+    reason: 'answerBlocked' | 'answerUnavailable';
+  };
 }
 
 export interface Resources {

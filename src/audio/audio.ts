@@ -8,6 +8,7 @@ export type SoundEffect =
   | 'move'
   | 'answerSelect'
   | 'answerDeselect'
+  | 'equationChange'
   | 'correct'
   | 'incorrect'
   | 'damage'
@@ -431,6 +432,11 @@ function playEffectBody(effect: SoundEffect, context: AudioContext): void {
     move: () => playTone(master, { frequency: frequency(0), start: now, duration: 0.045, volume: 0.026, type: 'sine' }),
     answerSelect: () => playTone(master, { frequency: frequency(9), start: now, duration: 0.1, volume: 0.05, type: 'triangle' }),
     answerDeselect: () => playNoteSequence(master, now, [9, 2, -3], { step: 0.045, duration: 0.08, volume: 0.035, type: 'triangle' }),
+    equationChange: function(): void {
+      // A hollow low note followed by a bright ping, distinct from the success arpeggio.
+      playTone(master, { frequency: frequency(2), start: now, duration: 0.13, volume: 0.045, type: 'sine' });
+      playTone(master, { frequency: frequency(14), start: now + 0.16, duration: 0.24, volume: 0.045, type: 'sine' });
+    },
     correct: () => playNoteSequence(master, now, [0, 4, 7, 12], { step: 0.055, duration: 0.16, volume: 0.055, type: 'triangle' }),
     incorrect: () => {
       playTone(master, { frequency: frequency(-5), start: now, duration: 0.22, volume: 0.055, type: 'sawtooth', detune: -12 });

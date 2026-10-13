@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Math Marsh · Equation Change Review</title>
+	<link rel="stylesheet" href="./src/dev/asset-preview.css">
+	<style>
+		main { max-width: 1200px; padding: 20px; }
+		header { margin-bottom: 16px; }
+		#canvas-container { height: min(68vh, 680px); display: grid; place-items: center; }
+		canvas { max-width: 100%; }
+		.transport { align-items: center; margin-bottom: 12px; }
+		a { color: #a6e7b4; }
+	</style>
+</head>
+<body>
+	<main>
+		<header><p class="eyebrow">MATH MARSH / LOCAL DRAFT</p><h1>Equation change</h1><p>Replay an enemy blocking the last available answer. Review the board ripple, trail to the equation, and sound together.</p></header>
+		<div class="transport">
+			<button id="replay" class="primary" disabled>Replay blocked answer</button>
+			<label>Board<select id="difficulty"><option value="easy">Easy</option><option value="medium">Medium</option><option value="expert">Expert</option></select></label>
+			<button id="sound">Sound only</button>
+			<a href="/game">Play the game</a>
+		</div>
+		<p id="status" role="status">Loading…</p>
+		<div id="canvas-container"><canvas id="game-canvas" aria-label="Equation change gameplay preview"></canvas></div>
+	</main>
+	<script type="module" src="./src/dev/equation-change-preview.ts"></script>
+</body>
+</html>
