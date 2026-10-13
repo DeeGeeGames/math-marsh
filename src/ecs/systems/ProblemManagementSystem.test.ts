@@ -16,6 +16,9 @@ import type { MathProblemEntityWithRenderable } from '../queries';
 import { handleEquationProblemSelection } from '../equationSelection';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { selectableEquationProblems } from '../selectableEquationProblems';
+import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
+import { SYSTEM_PRIORITIES } from '../systemConfigs';
+import { startEnemyGridMovement } from './EnemySpriteSystem';
 
 let restoreSound: (() => void) | undefined;
 beforeEach(function(): void {
@@ -70,6 +73,74 @@ describe('board population', () => {
 });
 
 describe('equations with enemy-occupied answers', () => {
+	(['easy', 'medium', 'expert'] as const).forEach(difficulty => {
+		test(`${difficulty} keeps a single-result 15 while an enemy moves onto only one of two 15s`, async () => {
+			const world = ECSpresso.create<ConfigOf<GameEngine>>()
+				.withPlugin(createTweenPlugin({ priority: SYSTEM_PRIORITIES.ANIMATION }))
+				.build();
+			try {
+				world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
+				world.setResource('board', BOARD_SIZES[difficulty]);
+				world.setResource('enemySpawn', { index: 0, roster: ['lizard', 'lizard'] });
+				world.setResource('currentLevel', 1);
+				world.setResource('gameMode', ['add']);
+				world.setResource('mathDifficulty', difficulty);
+				const state = {
+					...createEquationModeState(1, difficulty, ['add']),
+					target: 15,
+					promptValues: [7, 8],
+				};
+				world.setResource('equationMode', state);
+				addProblemManagementSystemToEngine(world);
+				await world.initialize();
+				world.spawn({ ...playerComponents(0, 0), timers: {} });
+				[3, 15, 15].forEach((value, index) => {
+					const position = gridToPixel(index, 0);
+					world.spawn(mathProblemComponents(position.x, position.y, value, 1));
+				});
+				const enemy = world.spawn({ ...enemyComponents(0, 0, 'lizard', 'guard'), timers: {} });
+				const firstAnswerPosition = gridToPixel(1, 0);
+				const freeAnswerPosition = gridToPixel(2, 0);
+				expect(state.promptKind).toBe('selectResult');
+				expect(state.operandsRequired).toBe(1);
+				world.update(0);
+				expect(world.getResource('equationMode')).toBe(state);
+
+				startEnemyGridMovement(world, enemy.id, 'lizard', { x: 0, y: 0 }, { x: 1, y: 0 },
+					firstAnswerPosition.x, firstAnswerPosition.y);
+				// Exercise real movement interpolation and equation checks on every frame.
+				Array.from({ length: 100 }).forEach(() => {
+					world.update(0.01);
+					expect(world.getResource('equationMode')).toBe(state);
+				});
+				expect(world.getComponent(enemy.id, 'position')).toEqual(firstAnswerPosition);
+				const freeAnswers = selectableEquationProblems(
+					world.getEntitiesWithQuery(['mathProblem', 'position', 'collider', 'renderable'])
+						.map(function(problem) {
+							return { ...problem, components: { ...problem.components, answerConsumption: problem.components.answerConsumption } };
+						}),
+					world.getEntitiesWithQuery(['enemy', 'position']),
+				).filter(problem => problem.components.mathProblem.value === 15);
+				expect(freeAnswers).toHaveLength(1);
+				expect(freeAnswers[0]?.components.position).toEqual(freeAnswerPosition);
+				expect(state.changeNotice).toBeUndefined();
+				expect(audio.playSound).not.toHaveBeenCalled();
+
+				// Control: cycling should occur once both 15s really are occupied.
+				world.spawn({
+					...enemyComponents(freeAnswerPosition.x, freeAnswerPosition.y, 'lizard', 'guard'), timers: {},
+				});
+				world.update(0.01);
+				expect(world.getResource('equationMode').target).not.toBe(15);
+				expect(world.getResource('equationMode').changeNotice?.reason).toBe('answerBlocked');
+				expect(audio.playSound).toHaveBeenCalledTimes(1);
+				expect(audio.playSound).toHaveBeenCalledWith('equationChange');
+			} finally {
+				await world.dispose();
+			}
+		});
+	});
+
 	([
 		{ level: 1, difficulty: 'easy', target: 10, occupiedValue: 10, freeValues: [3] },
 		{ level: 2, difficulty: 'medium', target: 9, occupiedValue: 6, freeValues: [3, 3] },
