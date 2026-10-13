@@ -4,7 +4,8 @@ import type { SkitId } from '../../ecs/skitSequence';
 import type { SkitProgress } from '../../ecs/skitProgress';
 
 export type ScreenSpecActions = {
-  startGame: (mode: GameMode, difficulty: MathDifficulty) => void;
+  startGame: (mode: GameMode, difficulty: MathDifficulty, level?: number) => void;
+  isLevelSelectionUnlocked: () => boolean;
   startTutorial: () => void;
   skipTutorial: () => void;
   nextTutorialStep: () => void;

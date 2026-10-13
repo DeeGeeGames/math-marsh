@@ -1,3 +1,4 @@
+import { selectedStartingLevel } from '../ecs/levelSelectionCheat';
 import type { GameEngine } from '../ecs/Engine';
 import type {
   GameMode,
@@ -23,7 +24,6 @@ import {
 } from './labels';
 import {
   createScreenSpecs,
-  resetModeSelect,
 } from './screenSpecs';
 import {
   getAudioSettings,
@@ -105,9 +105,10 @@ const wireFullscreenButton = (button: HTMLButtonElement): void => {
   onFullscreenChange(() => syncFullscreenButton(button));
 };
 
-const startGame = (mode: GameMode, difficulty: MathDifficulty): void => {
+const startGame = function(mode: GameMode, difficulty: MathDifficulty, level = 1): void {
   const engine = requireEngine();
   playSound('uiSelect');
+  engine.setResource('startingLevel', selectedStartingLevel(level));
   engine.setResource('mathDifficulty', difficulty);
   engine.setResource('gameMode', mode);
   if (engine.getResource('gameplayOnboardingCompletion') === 'pending') {
@@ -194,6 +195,7 @@ const quitApplication = desktopQuit
 
 const SCREENS = createScreenSpecs({
   startGame,
+  isLevelSelectionUnlocked: function(): boolean { return requireEngine().getResource('levelSelectionUnlocked'); },
   startTutorial,
   skipTutorial,
   nextTutorialStep,
@@ -262,7 +264,6 @@ function audioSceneForScreen(screen: UIScreen): AudioScene {
 function presentScreen(screen: UIScreen, retainGameplay: boolean): HTMLElement {
   const root = screenRuntime.presentScreen(screen, retainGameplay);
   setAudioScene(audioSceneForScreen(screen));
-  if (screen === 'modeSelect') resetModeSelect(root);
   if (screen === 'playing') requestCanvasResize();
   return root;
 }
@@ -345,3 +346,12 @@ function wireAudioSettings(root: ParentNode): void {
   effects.addEventListener('change', updateSettings);
   music.addEventListener('change', updateSettings);
 }
+
+export const revealLevelSelection = function(): void {
+  const panel = document.querySelector<HTMLElement>('#starting-level-select');
+  if (!panel) return;
+  panel.classList.remove('hidden');
+  panel.querySelector<HTMLButtonElement>('[data-level-change="1"]')?.focus();
+  panel.scrollIntoView({ block: 'nearest' });
+  playSound('uiSelect');
+};

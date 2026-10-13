@@ -1,3 +1,4 @@
+import { selectedStartingLevel } from '../../ecs/levelSelectionCheat';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { html, nothing, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
@@ -65,7 +66,9 @@ function howToPlayStep(
   `;
 }
 
-export function resetModeSelect(root: HTMLElement): void {
+export function resetModeSelect(root: HTMLElement, levelSelectionUnlocked = false): void {
+  $(root, '#starting-level-select').classList.toggle('hidden', !levelSelectionUnlocked);
+  $<HTMLOutputElement>(root, '#starting-level-value').value = '1';
   root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
     card.setAttribute('aria-pressed', 'false');
   });
@@ -202,6 +205,13 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
           </button>
         </div>
 
+        <div id="starting-level-select" class="starting-level-panel hidden" role="group" aria-label="Starting level">
+          <span>Starting level</span>
+          <button type="button" class="btn-secondary" data-level-change="-1" aria-label="Previous starting level">−</button>
+          <output id="starting-level-value" aria-live="polite" aria-label="Starting level">1</output>
+          <button type="button" class="btn-secondary" data-level-change="1" aria-label="Next starting level">+</button>
+        </div>
+
         <div id="difficulty-select" class="difficulty-panel hidden mode-difficulty">
           <h2><span id="selected-mode-label">Addition</span> · Choose difficulty</h2>
           <div class="mode-difficulty-options">
@@ -232,11 +242,18 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
           const mode = selectedOperations(root);
           if (!mode) return;
           if (!isMathDifficulty(button.dataset.difficulty)) return;
-          actions.startGame(mode, button.dataset.difficulty);
+          actions.startGame(mode, button.dataset.difficulty, Number($<HTMLOutputElement>(root, '#starting-level-value').value));
+        });
+      });
+      root.querySelectorAll<HTMLButtonElement>('[data-level-change]').forEach(button => {
+        button.addEventListener('click', function(): void {
+          const output = $<HTMLOutputElement>(root, '#starting-level-value');
+          output.value = String(selectedStartingLevel(Number(output.value) + Number(button.dataset.levelChange)));
         });
       });
       $(root, '#back-to-main-btn').addEventListener('click', actions.goToMenu);
     },
+    onShow: function(root): void { resetModeSelect(root, actions.isLevelSelectionUnlocked()); },
     onCancel: actions.goToMenu,
   };
 }

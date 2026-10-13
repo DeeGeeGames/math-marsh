@@ -724,3 +724,29 @@
   padding-left: max(env(safe-area-inset-left, 0px), 0px);
   padding-right: max(env(safe-area-inset-right, 0px), 0px);
 }
+
+.starting-level-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+  font-size: clamp(20px, 2vw, 32px);
+}
+
+.starting-level-panel.hidden { display: none; }
+
+.starting-level-panel button {
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.starting-level-panel output {
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
