@@ -27,10 +27,11 @@ import {
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { Resources } from '../types';
 import { playSound } from '../../audio/audio';
+import { createPracticeEquationModeState } from '../practiceSteps';
 
 type ProblemResources = Readonly<Pick<
   Resources,
-  'gameMode' | 'currentLevel' | 'equationMode' | 'mathDifficulty'
+  'gameMode' | 'currentLevel' | 'equationMode' | 'mathDifficulty' | 'practiceSession'
 >>;
 
 /**
@@ -52,6 +53,7 @@ export function addProblemManagementSystemToEngine(
     .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn', 'gameplayClock'])
     .setProcess(({ queries, ecs, resources }) => {
       const player = queries.player;
+      const practiceSession = ecs.tryGetResource('practiceSession') ?? null;
       const activeProblems = queries.mathProblems.filter(
         problem => !problem.components.mathProblem.consumed
       );
@@ -80,7 +82,7 @@ export function addProblemManagementSystemToEngine(
           ? populatedEquationMode
           : equationStateFromBoard(
               selectableProblems,
-              resources,
+              { ...resources, practiceSession },
               populatedEquationMode,
             );
 
@@ -116,6 +118,7 @@ export function addProblemManagementSystemToEngine(
           nextEquationMode,
           resources.board,
           resources.enemySpawn.roster.length,
+          practiceSession,
         );
       }
       cleanupConsumedProblems(ecs, queries.mathProblems, resources.board);
@@ -194,12 +197,19 @@ function equationStateFromBoard(
     gameMode,
     currentLevel,
     mathDifficulty,
+    practiceSession,
   }: ProblemResources,
   currentState: Resources['equationMode'],
 ): Resources['equationMode'] {
   const state = currentState.level === currentLevel
     ? currentState
-    : createEquationModeState(currentLevel, mathDifficulty, gameMode);
+    : practiceSession
+      ? createPracticeEquationModeState(
+          practiceSession.step,
+          practiceSession.operation,
+          practiceSession.assessment.correctAnswers,
+        ) ?? currentState
+      : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
   if (state.feedback?.kind === 'correct') return currentState;
   if (state.target !== null && hasSelectableSolution(state, mathProblems)) return currentState;
@@ -210,6 +220,7 @@ function equationStateFromBoard(
       id: problem.id,
       value: problem.components.mathProblem.value,
     })),
+    { enforceOperandRanges: practiceSession !== null },
   );
 
   // Keep the level's cleared pads and progress. If the remaining free numbers
@@ -285,8 +296,13 @@ function checkEquationLevelCompletion(
   equationMode: Resources['equationMode'],
   board: Resources['board'],
   enemyCount: number,
+  practiceSession: Resources['practiceSession'],
 ): void {
   if (equationMode.feedback?.kind === 'correct') return;
+  if (
+    practiceSession
+    && practiceSession.assessment.correctAnswers >= GAME_CONFIG.PRACTICE_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS
+  ) return;
 
   const activeCount = activeEquationProblems(mathProblems).length;
   const noPromptAvailable = mathProblems.length > 0

@@ -1,5 +1,6 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { gameplayLevelLabel, updateGameplayUI } from '../../ui/UIManager';
+import { operationLabels } from '../../ui/labels';
 import { playerQuery } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { tutorialHudLabel } from '../../onboarding/gameplayOnboarding';
@@ -22,6 +23,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
       'remainingTimeSeconds',
       'gameplayOnboardingSession',
       'equationMode',
+      'practiceSession',
     ])
     .setProcess(({ queries, resources }) => {
       const player = queries.player;
@@ -34,9 +36,12 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         remainingTimeSeconds,
         gameplayOnboardingSession,
         equationMode,
+        practiceSession,
       } = resources;
       const level = tutorialHudLabel(gameplayOnboardingSession)
-        ?? gameplayLevelLabel(gameMode, mathDifficulty, currentLevel);
+        ?? (practiceSession
+          ? `Practice · ${operationLabels[practiceSession.operation]} · Step ${practiceSession.step}`
+          : gameplayLevelLabel(gameMode, mathDifficulty, currentLevel));
 
       updateGameplayUI(remainingTimeSeconds, level, pondThemeForPromptKind(equationMode.promptKind).phase);
       setGameMusicTime(remainingTimeSeconds);

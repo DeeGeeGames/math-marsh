@@ -10,7 +10,7 @@ const CHEAT_DIRECTIONS = [...new Set(LEVEL_SELECT_SEQUENCE)];
 // menus without bespoke event listeners per screen.
 export function addUINavigationSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('uiNavigationSystem')
-    .inScreens(['menu', 'skitGallery', 'modeSelect', 'howToPlay', 'tutorialOffer', 'paused', 'controllerRecovery', 'settings', 'gameOver'])
+    .inScreens(['menu', 'skitGallery', 'modeSelect', 'practiceSelect', 'practiceResult', 'howToPlay', 'tutorialOffer', 'paused', 'controllerRecovery', 'settings', 'gameOver'])
     .withResources(['inputState', 'controllerSelection', 'levelSelectionUnlocked'])
     .setProcess(({ ecs, dt, resources: { inputState, controllerSelection, levelSelectionUnlocked } }) => {
       const a = gameActions(inputState, controllerSelection);

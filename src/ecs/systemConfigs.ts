@@ -51,6 +51,7 @@ export const SYSTEM_PRIORITIES = {
   COLLISION: 70,                // Collision detection
   EQUATION_FEEDBACK: 60,        // Delayed equation transitions after answer feedback
   GAMEPLAY_TIME: 55,            // Run timer after gameplay state updates, before HUD
+  PRACTICE_PROGRESSION: 54,     // Practice assessment clock and completed-round progression
   UI: 50,                       // UI updates
   ENEMY_SPAWN: 40,              // Enemy spawning
   PROBLEM_MANAGEMENT: 30,       // Problem lifecycle

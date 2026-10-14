@@ -1,6 +1,7 @@
 import { selectedStartingLevel } from '../ecs/levelSelectionCheat';
 import type { GameEngine } from '../ecs/Engine';
 import type {
+	EquationOperation,
   GameMode,
   MathDifficulty,
   SettingsReturnScreen,
@@ -20,6 +21,7 @@ import { requestCanvasResize } from '../ecs/systems/render/context';
 import { updateGameplayHud } from './gameplayHud';
 import {
   gameplayLevelLabel,
+  operationLabels,
   settingsBackLabels,
 } from './labels';
 import {
@@ -49,6 +51,7 @@ import {
 } from '../onboarding/gameplayOnboardingUI';
 import { createScreenRuntime } from './screenRuntime';
 import { skitById, type SkitId } from '../ecs/skitSequence';
+import { createPracticeSession } from '../ecs/practiceMode';
 import type { SkitProgress } from '../ecs/skitProgress';
 import { playerQuery } from '../ecs/queries';
 import { boardPointGridCell, isPointOnLilyPad, isActiveLilyPadCell, activeLilyPadCellKeys } from '../ecs/lilyPads';
@@ -111,11 +114,32 @@ const startGame = function(mode: GameMode, difficulty: MathDifficulty, level = 1
   engine.setResource('startingLevel', selectedStartingLevel(level));
   engine.setResource('mathDifficulty', difficulty);
   engine.setResource('gameMode', mode);
+  engine.setResource('practiceSession', null);
+  engine.setResource('practiceRoundSummary', null);
   if (engine.getResource('gameplayOnboardingCompletion') === 'pending') {
     void engine.setScreen('tutorialOffer', {});
     return;
   }
   startNormalGame(engine);
+};
+
+const startPractice = function(operation: EquationOperation): void {
+	const engine = requireEngine();
+	playSound('uiSelect');
+	const previousOperation = engine.getResource('practiceLastOperation');
+	const accelerationStreak = previousOperation === operation
+		? engine.getResource('practiceAccelerationStreak')
+		: 0;
+	const track = engine.getResource('practiceProgress')[operation];
+	const singleOperationMode: GameMode = [operation];
+	engine.setResource('practiceLastOperation', operation);
+	engine.setResource('practiceAccelerationStreak', accelerationStreak);
+	engine.setResource('practiceSession', createPracticeSession(operation, track.currentStep, accelerationStreak));
+	engine.setResource('practiceRoundSummary', null);
+	engine.setResource('startingLevel', track.currentStep);
+	engine.setResource('mathDifficulty', 'easy');
+	engine.setResource('gameMode', singleOperationMode);
+	void engine.setScreen('playing', { level: track.currentStep, isFreshGame: true });
 };
 
 function startTutorial(): void {
@@ -141,12 +165,20 @@ function returnToPreviousScreen(): void {
 
 function goToMenu(): void {
   playSound('uiBack');
-  void requireEngine().setScreen('menu', {});
+  const engine = requireEngine();
+  engine.setResource('practiceSession', null);
+  engine.setResource('practiceRoundSummary', null);
+  void engine.setScreen('menu', {});
 }
 
 function openModeSelect(): void {
   playSound('uiSelect');
   void requireEngine().setScreen('modeSelect', {});
+}
+
+function openPracticeSelect(): void {
+	playSound('uiSelect');
+	void requireEngine().setScreen('practiceSelect', {});
 }
 
 function openHowToPlay(): void {
@@ -182,6 +214,11 @@ function pauseGame(): void {
 
 function replayGame(): void {
   const engine = requireEngine();
+  const practiceSession = engine.getResource('practiceSession');
+  if (practiceSession) {
+		startPractice(practiceSession.operation);
+		return;
+	}
   startGame(engine.getResource('gameMode'), engine.getResource('mathDifficulty'));
 }
 
@@ -204,6 +241,11 @@ const SCREENS = createScreenSpecs({
   returnToPreviousScreen,
   goToMenu,
   openModeSelect,
+  openPracticeSelect,
+  startPractice,
+  getPracticeProgress: function() { return requireEngine().getResource('practiceProgress'); },
+  getPracticeProgressPersistence: function() { return requireEngine().getResource('practiceProgressPersistence'); },
+  getPracticeRoundSummary: function() { return requireEngine().getResource('practiceRoundSummary'); },
   openHowToPlay,
   openSkitGallery: function(): void {
     playSound('uiSelect');
@@ -312,7 +354,11 @@ export const updateGameplayUI = updateGameplayHud;
 
 export const setRunResult = (level: number, equationsSolved: number): void => {
   const el = document.getElementById('run-result');
-  if (el) el.textContent = `Level ${level} · ${equationsSolved} equation${equationsSolved === 1 ? '' : 's'} solved`;
+  const practiceSession = uiEngine?.getResource('practiceSession');
+  const title = practiceSession
+    ? `Practice · ${operationLabels[practiceSession.operation]} · Step ${practiceSession.step}`
+    : `Level ${level}`;
+  if (el) el.textContent = `${title} · ${equationsSolved} equation${equationsSolved === 1 ? '' : 's'} solved`;
 };
 
 // UI-only shortcuts. Gameplay input (movement, eat, pause) lives in the ECS input plugin.

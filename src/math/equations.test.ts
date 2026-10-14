@@ -81,6 +81,23 @@ describe('equation generation', () => {
     expect(modes.every(validOperandSelection)).toBe(true);
   });
 
+  test('practice operand prompts ignore board values outside the configured ranges', () => {
+    const state = {
+      ...createEquationModeState(4, 'medium', ['add']),
+      operandRanges: {
+        left: { min: 1, max: 6 },
+        right: { min: 1, max: 6 },
+      },
+    };
+    const outOfRangeOperands = [{ id: 1, value: 8 }, { id: 2, value: 10 }] as const;
+
+    expect(chooseEquationCandidate(state, outOfRangeOperands)?.operandValues).toEqual([8, 10]);
+    expect(chooseEquationCandidate(state, outOfRangeOperands, { enforceOperandRanges: true })).toBeUndefined();
+
+    const mixedBoardValues = [...outOfRangeOperands, { id: 3, value: 2 }, { id: 4, value: 3 }];
+    expect(chooseEquationCandidate(state, mixedBoardValues, { enforceOperandRanges: true })?.operandValues).toEqual([2, 3]);
+  });
+
   test('subtraction and division operand prompts are ordered', () => {
     const subtraction = createEquationModeState(2, 'medium', ['subtract']);
     const subtractionCandidate = createRandomEquationCandidate(subtraction);
