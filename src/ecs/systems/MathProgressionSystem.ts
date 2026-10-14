@@ -1,7 +1,7 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { saveSkitProgress } from '../skitProgress';
 import { addMathAssessmentTime, createMathAssessment, mathAssessmentForEvaluation } from '../mathAssessment';
-import { MATH_FINAL_STEP, createMathEquationModeState } from '../mathSteps';
+import { MATH_FINAL_STEP } from '../mathSteps';
 import { mathSceneIdsForUnlockedSteps } from '../mathMode';
 import { evaluateMathProgressionRound } from '../mathProgression';
 import { saveMathProgress } from '../mathProgressStore';
@@ -58,6 +58,7 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
       const nextSession = {
         ...timedSession,
         tracks: { ...timedSession.tracks, [completedOperation]: {
+          ...completedTrack,
           step: outcome.progress.currentStep,
           accelerationStreak: outcome.progress.accelerationStreak,
           assessment: createMathAssessment(),
@@ -81,10 +82,5 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
         outcome,
         unlockedSceneIds,
       });
-      if (operation !== completedOperation) return;
-      const state = createMathEquationModeState(outcome.progress.currentStep, operation, 0,
-        resources.equationMode.clearedThisLevel);
-      if (!state) throw new Error('Progression produced an invalid math step');
-      ecs.setResource('equationMode', { ...state, level: resources.equationMode.level });
     });
 }

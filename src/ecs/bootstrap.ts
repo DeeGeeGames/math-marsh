@@ -40,7 +40,7 @@ import { skitById } from './skitSequence';
 import { saveSkitProgress, unlockSkitForCompletedLevel } from './skitProgress';
 import { STARTING_TIME_SECONDS } from './runTime';
 import { enemyRosterForLevel, arcadeEnemyRosterForLevel } from './enemyRosters';
-import { equationModeForMathSession } from './mathMode';
+import { equationModeForMathSession, mathSessionForBoard } from './mathMode';
 import type { GameEngine } from './Engine';
 import { addMathProgressionSystemToEngine } from './systems/MathProgressionSystem';
 
@@ -86,9 +86,11 @@ const enterPlayingScreen = (ecs: GameEngine, { level, isFreshGame }: PlayingScre
   ecs.setResource('currentLevel', level);
   const gameMode = ecs.getResource('gameMode');
   const mathDifficulty = ecs.getResource('mathDifficulty');
-  const mathSession = ecs.getResource('mathSession');
+  const session = ecs.getResource('mathSession');
+  const mathSession = session ? mathSessionForBoard(session) : null;
+  ecs.setResource('mathSession', mathSession);
   ecs.setResource('equationMode', mathSession
-    ? equationModeForMathSession(mathSession, gameMode, level)
+    ? equationModeForMathSession(mathSession, gameMode, level, 0, mathDifficulty)
     : createEquationModeState(level, mathDifficulty, gameMode));
   ecs.setResource('equationsSolvedThisBoard', 0);
   ecs.setResource('mathRoundCompletedThisBoard', false);

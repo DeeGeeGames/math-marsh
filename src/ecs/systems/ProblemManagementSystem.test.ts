@@ -19,7 +19,7 @@ import { selectableEquationProblems } from '../selectableEquationProblems';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { startEnemyGridMovement } from './EnemySpriteSystem';
-import { createMathSession } from '../mathMode';
+import { createMathSession, equationModeForMathSession } from '../mathMode';
 import { initialSavedMathProgress } from '../mathProgressStore';
 import { createMathEquationModeState } from '../mathSteps';
 
@@ -555,6 +555,7 @@ describe('math answer assessment tracking', () => {
 		const world = await createProgressionWorld(1, []);
 		try {
 			world.setResource('currentLevel', 4);
+			world.setResource('mathDifficulty', 'medium');
 			const session = createMathSession({ ...initialSavedMathProgress(), add: { currentStep: 4, highestUnlockedStep: 4 } });
 			world.setResource('mathSession', {
 				tracks: { ...session.tracks, add: { ...session.tracks.add, assessment: {
@@ -668,3 +669,68 @@ describe('math answer assessment tracking', () => {
 		}
 	});
 });
+
+for (const correct of [true, false]) {
+	test(`after assessment completion a ${correct ? 'correct' : 'wrong'} answer preserves the next sample and Easy format`, async () => {
+		const world = await createProgressionWorld(1, []);
+		try {
+			const player = world.getSingleton(['position', 'player', 'pathFollower', 'collider', 'timers']);
+			const initial = createMathSession(initialSavedMathProgress());
+			const session = { tracks: { ...initial.tracks, add: { ...initial.tracks.add, step: 7 } } };
+			world.setResource('mathSession', session);
+			world.setResource('mathRoundCompletedThisBoard', true);
+			world.setResource('equationsSolved', 0);
+			const mode = { ...equationModeForMathSession(session, ['add'], 1), target: 3, promptValues: [1, 2] };
+			world.setResource('equationMode', mode);
+			const problems = testMathProblems(world);
+			const answer = problems[0];
+			if (!answer) throw new Error('Missing answer pad');
+			world.mutateComponent(answer.id, 'mathProblem', data => { data.value = correct ? 3 : 4; });
+			handleEquationProblemSelection(world, player, answer, problems, {
+				equationMode: mode, gameMode: ['add'], mathDifficulty: 'easy', mathSession: session,
+			});
+			expect(world.getResource('mathSession')).toBe(session);
+			const nextMode = world.getResource('equationMode').feedback?.nextMode;
+			if (correct) {
+				expect(nextMode?.promptKind).toBe('selectResult');
+				expect(nextMode?.operandRanges).toEqual(mode.operandRanges);
+			}
+		} finally { await world.dispose(); }
+	});
+}
+
+for (const difficulty of ['easy', 'medium', 'expert'] as const) {
+	test(`${difficulty} spawns playable boards with advanced number ranges and its original level formats`, async () => {
+		for (const level of [1, 2, 3]) {
+			const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
+			try {
+				const session = createMathSession({ ...initialSavedMathProgress(), add: { currentStep: 11, highestUnlockedStep: 11 } });
+				const mode = equationModeForMathSession(session, ['add'], level, 0, difficulty);
+				const board = BOARD_SIZES[difficulty];
+				world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
+				world.setResource('board', board);
+				world.setResource('enemySpawn', { index: 0, roster: [] });
+				world.setResource('currentLevel', level);
+				world.setResource('gameMode', ['add']);
+				world.setResource('mathDifficulty', difficulty);
+				world.setResource('mathSession', session);
+				world.setResource('equationMode', mode);
+				addProblemManagementSystemToEngine(world);
+				await world.initialize();
+				const position = gridToPixel(1, 1);
+				world.spawn({ ...playerComponents(position.x, position.y), timers: {} });
+				world.update(0.01);
+				const problems = testMathProblems(world);
+				const state = world.getResource('equationMode');
+				expect(problems).toHaveLength(board.width * board.height);
+				expect(state.promptKind).toBe(equations.equationPromptKindForLevel(level, difficulty));
+				expect(state.operandRanges.left.max).toBe(20);
+				const solutions = state.operandsRequired === 1
+					? problems.map(problem => [problem.components.mathProblem.value])
+					: problems.flatMap(left => problems.filter(right => right.id !== left.id)
+						.map(right => [left.components.mathProblem.value, right.components.mathProblem.value]));
+				expect(solutions.some(values => evaluateEquationSelection(state, values))).toBe(true);
+			} finally { await world.dispose(); }
+		}
+	});
+}

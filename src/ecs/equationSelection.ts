@@ -128,6 +128,7 @@ export function handleEquationProblemSelection(
     equationMode,
     true,
     mathDifficulty,
+    ecs.tryGetResource('mathRoundCompletedThisBoard') === true,
   );
   if (mathSession) ecs.setResource('mathSession', mathSession);
   const consumptionStartedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
@@ -143,7 +144,7 @@ export function handleEquationProblemSelection(
 
   const clearedThisLevel = pendingMode.clearedThisLevel + selectedProblemIds.length;
   const nextMode = mathSession
-    ? equationModeForMathSession(mathSession, gameMode, pendingMode.level, clearedThisLevel)
+    ? equationModeForMathSession(mathSession, gameMode, pendingMode.level, clearedThisLevel, mathDifficulty)
     : createEquationModeState(pendingMode.level, mathDifficulty, gameMode, clearedThisLevel);
 
   const nextCandidate = chooseEquationCandidate(
@@ -173,7 +174,7 @@ function handleIncorrectEquationSelection(
   mathDifficulty: Resources['mathDifficulty'],
   mathSession: MathSession | null,
 ): void {
-  const updatedMathSession = addMathAnswer(mathSession, equationMode, false, mathDifficulty);
+  const updatedMathSession = addMathAnswer(mathSession, equationMode, false, mathDifficulty, ecs.tryGetResource('mathRoundCompletedThisBoard') === true);
   if (updatedMathSession) ecs.setResource('mathSession', updatedMathSession);
   const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   queueTimeAdjustment(
@@ -196,12 +197,13 @@ const addMathAnswer = function(
 	equationMode: EquationModeState,
 	correct: boolean,
 	difficulty: Resources['mathDifficulty'],
+	roundCompleted: boolean,
 ): MathSession | null {
-	if (!mathSession) return null;
+	if (!mathSession || roundCompleted) return mathSession;
 	const track = mathSession.tracks[equationMode.operation];
 	const expectedBudget = correct
 		? mathQuestionBudgetSeconds(
-			track.step,
+			track.boardStep,
 			equationMode.operation,
 			equationMode.promptKind,
 			difficulty,

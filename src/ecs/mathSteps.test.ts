@@ -79,6 +79,6 @@ describe('adaptive math steps', () => {
 		});
 		expect(mathQuestionBudgetSeconds(7, 'divide', 'selectOperandAndResult')).toBeGreaterThan(0);
 		expect(mathPromptForAnswer(12, 0)).toBeUndefined();
-		expect(mathQuestionBudgetSeconds(1, 'add', 'selectOperandAndResult')).toBeUndefined();
+		expect(mathQuestionBudgetSeconds(1, 'add', 'selectOperandAndResult')).toBeGreaterThan(0);
 	});
 });
