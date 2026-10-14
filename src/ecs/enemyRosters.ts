@@ -1,5 +1,6 @@
 import type { EnemyType } from '../types/shared';
 import type { MathDifficulty } from './types';
+import { GAME_CONFIG } from '../config';
 
 export type EnemyRoster = Readonly<Partial<Record<EnemyType, number>>>;
 
@@ -150,3 +151,14 @@ export function enemyRosterForLevel(
   );
   return Array.from({ length: count }, () => weightedEnemy(config.random.weights, random));
 }
+
+/** Keep roster variety while holding enemy count steady for each arcade difficulty. */
+export const arcadeEnemyRosterForLevel = function(level: number, difficulty: MathDifficulty): readonly EnemyType[] {
+  const roster = enemyRosterForLevel(level, difficulty);
+  if (roster.length === 0) throw new Error('Arcade enemy roster cannot be empty');
+  return Array.from({ length: GAME_CONFIG.MATH_PROGRESSION.ENEMY_COUNT[difficulty] }, function(_, index): EnemyType {
+    const enemy = roster[index % roster.length];
+    if (!enemy) throw new Error('Arcade enemy roster is missing an entry');
+    return enemy;
+  });
+};

@@ -1,5 +1,6 @@
 import type { GameEngine } from '../Engine';
 import type { MathDifficulty } from '../types';
+import { mathTutorialForMode } from '../mathMode';
 import {
   shouldStartOperandTutorial,
   shouldStartOperandAndResultTutorial,
@@ -13,7 +14,10 @@ export const goToNextLevel = function(
   operandOnboardingCompletion: GameplayOnboardingCompletion,
   operandAndResultOnboardingCompletion: GameplayOnboardingCompletion,
 ): void {
-  const tutorialKind = shouldStartOperandTutorial(nextLevel, mathDifficulty, operandOnboardingCompletion)
+  const mathSession = ecs.tryGetResource('mathSession');
+  const tutorialKind = mathSession
+    ? mathTutorialForMode(mathSession, ecs.getResource('gameMode'), operandOnboardingCompletion, operandAndResultOnboardingCompletion)
+    : shouldStartOperandTutorial(nextLevel, mathDifficulty, operandOnboardingCompletion)
     ? 'operands'
     : shouldStartOperandAndResultTutorial(nextLevel, mathDifficulty, operandAndResultOnboardingCompletion)
       ? 'operandAndResult'

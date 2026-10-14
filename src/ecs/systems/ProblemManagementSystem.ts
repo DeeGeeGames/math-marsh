@@ -27,11 +27,11 @@ import {
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { Resources } from '../types';
 import { playSound } from '../../audio/audio';
-import { createPracticeEquationModeState } from '../practiceSteps';
+import { equationModeForMathSession } from '../mathMode';
 
 type ProblemResources = Readonly<Pick<
   Resources,
-  'gameMode' | 'currentLevel' | 'equationMode' | 'mathDifficulty' | 'practiceSession'
+  'gameMode' | 'currentLevel' | 'equationMode' | 'mathDifficulty' | 'mathSession'
 >>;
 
 /**
@@ -53,7 +53,7 @@ export function addProblemManagementSystemToEngine(
     .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn', 'gameplayClock'])
     .setProcess(({ queries, ecs, resources }) => {
       const player = queries.player;
-      const practiceSession = ecs.tryGetResource('practiceSession') ?? null;
+      const mathSession = ecs.tryGetResource('mathSession') ?? null;
       const activeProblems = queries.mathProblems.filter(
         problem => !problem.components.mathProblem.consumed
       );
@@ -82,7 +82,7 @@ export function addProblemManagementSystemToEngine(
           ? populatedEquationMode
           : equationStateFromBoard(
               selectableProblems,
-              { ...resources, practiceSession },
+              { ...resources, mathSession },
               populatedEquationMode,
             );
 
@@ -118,7 +118,7 @@ export function addProblemManagementSystemToEngine(
           nextEquationMode,
           resources.board,
           resources.enemySpawn.roster.length,
-          practiceSession,
+          mathSession,
         );
       }
       cleanupConsumedProblems(ecs, queries.mathProblems, resources.board);
@@ -197,18 +197,14 @@ function equationStateFromBoard(
     gameMode,
     currentLevel,
     mathDifficulty,
-    practiceSession,
+    mathSession,
   }: ProblemResources,
   currentState: Resources['equationMode'],
 ): Resources['equationMode'] {
   const state = currentState.level === currentLevel
     ? currentState
-    : practiceSession
-      ? createPracticeEquationModeState(
-          practiceSession.step,
-          practiceSession.operation,
-          practiceSession.assessment.correctAnswers,
-        ) ?? currentState
+    : mathSession
+      ? equationModeForMathSession(mathSession, gameMode, currentLevel)
       : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
   if (state.feedback?.kind === 'correct') return currentState;
@@ -220,7 +216,7 @@ function equationStateFromBoard(
       id: problem.id,
       value: problem.components.mathProblem.value,
     })),
-    { enforceOperandRanges: practiceSession !== null },
+    { enforceOperandRanges: mathSession !== null },
   );
 
   // Keep the level's cleared pads and progress. If the remaining free numbers
@@ -296,13 +292,9 @@ function checkEquationLevelCompletion(
   equationMode: Resources['equationMode'],
   board: Resources['board'],
   enemyCount: number,
-  practiceSession: Resources['practiceSession'],
+  mathSession: Resources['mathSession'],
 ): void {
   if (equationMode.feedback?.kind === 'correct') return;
-  if (
-    practiceSession
-    && practiceSession.assessment.correctAnswers >= GAME_CONFIG.PRACTICE_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS
-  ) return;
 
   const activeCount = activeEquationProblems(mathProblems).length;
   const noPromptAvailable = mathProblems.length > 0
@@ -310,6 +302,9 @@ function checkEquationLevelCompletion(
     && equationMode.target === null;
   const clearTarget = levelClearTarget(board, enemyCount, equationMode.operandsRequired);
   const shouldAdvance = equationMode.clearedThisLevel >= clearTarget
+    || (mathSession && ecs.tryGetResource('mathRoundCompletedThisBoard') === true)
+    || (mathSession && ecs.getResource('gameMode').every(operation => mathSession.tracks[operation].step <= 3)
+      && (ecs.tryGetResource('equationsSolvedThisBoard') ?? 0) >= GAME_CONFIG.MATH_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS)
     || (mathProblems.length > 0 && activeCount < equationMode.operandsRequired)
     || noPromptAvailable;
 

@@ -179,115 +179,6 @@
   white-space: nowrap;
 }
 
-#practice-select-screen,
-#practice-result-screen {
-  justify-content: flex-start;
-  padding: max(env(safe-area-inset-top, 0px), 24px) max(env(safe-area-inset-right, 0px), 24px) max(env(safe-area-inset-bottom, 0px), 24px) max(env(safe-area-inset-left, 0px), 24px);
-}
-
-.practice-shell,
-.practice-result-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(16px, 2.5vh, 28px);
-  width: min(100%, 860px);
-  margin-block: auto;
-  text-align: center;
-}
-
-.practice-heading h1,
-.practice-result-panel h1 {
-  font-size: clamp(2rem, 5vw, 4rem);
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.practice-heading p,
-.practice-result-detail,
-.practice-scenes-unlocked,
-.practice-save-status {
-  font-size: clamp(1rem, 1.8vw, 1.45rem);
-  line-height: 1.45;
-}
-
-.practice-operation-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(12px, 2vw, 22px);
-  width: min(100%, 700px);
-}
-
-.practice-operation-card {
-  display: flex;
-  min-width: 0;
-  min-height: clamp(90px, 13vh, 136px);
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 18px;
-  border: 3px solid rgba(255, 247, 198, 0.7);
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(19, 104, 101, 0.96), rgba(12, 70, 83, 0.96));
-  box-shadow: 0 8px 20px rgba(5, 31, 36, 0.28), inset 0 1px 0 rgba(255, 247, 198, 0.18);
-  color: white;
-  text-align: center;
-  cursor: pointer;
-}
-
-.practice-operation-card:hover,
-.practice-operation-card:focus-visible {
-  outline: 4px solid #ffe28a;
-  outline-offset: 3px;
-  background: linear-gradient(135deg, rgba(27, 133, 120, 0.98), rgba(14, 83, 92, 0.98));
-}
-
-.practice-operation-name {
-  font-size: clamp(1.25rem, 2.3vw, 1.85rem);
-  font-weight: 800;
-}
-
-.practice-operation-progress {
-  font-size: clamp(0.95rem, 1.6vw, 1.25rem);
-}
-
-.practice-save-status {
-  margin: 0;
-  opacity: 0.88;
-}
-
-.practice-result-panel {
-  width: min(100%, 720px);
-  padding: clamp(20px, 4vw, 40px);
-  border: 2px solid var(--reed-border);
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(15, 79, 98, 0.94), rgba(8, 73, 82, 0.9));
-  box-shadow: 0 22px 48px rgba(5, 31, 36, 0.34), inset 0 1px 0 rgba(255, 247, 198, 0.2);
-}
-
-.practice-result-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-}
-
-.practice-shell .input-prompts-slot,
-.practice-result-panel .input-prompts-slot {
-  width: 100%;
-  justify-content: center;
-}
-
-@media (max-width: 540px) {
-  .practice-operation-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .practice-operation-card {
-    min-height: 72px;
-  }
-}
-
 /* Short landscape screens need a height-based layout, including phones below
  * the usual desktop column breakpoint. Keep touch targets at least 44px. */
 @media (max-height: 600px) and (min-width: 480px) {
@@ -858,4 +749,121 @@
   min-width: 2ch;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+/* Saved math ability is independent of arcade difficulty. */
+.mode-options .mode-progress {
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  padding-right: 36px;
+  font-size: clamp(15px, 1.25vw, 20px);
+  line-height: 1.35;
+}
+
+.math-progress-panel {
+  margin-top: 20px;
+  padding: clamp(16px, 2vw, 24px);
+  border: 2px solid var(--reed-border);
+  border-radius: 18px;
+  background: var(--panel-gradient);
+  box-shadow: var(--pond-shadow);
+}
+
+.math-progress-panel.hidden,
+.math-step-panel.hidden { display: none; }
+
+.math-progress-panel h2 {
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 700;
+}
+
+.math-progress-panel > p,
+.math-step-skill,
+.math-highest-unlock,
+.math-save-status {
+  margin-top: 10px;
+  font-size: clamp(16px, 1.5vw, 22px);
+  line-height: 1.4;
+}
+
+.math-step-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.math-step-panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--soft-cream-border);
+  border-radius: 14px;
+}
+
+.math-step-panel h3 {
+  font-size: clamp(19px, 1.8vw, 26px);
+  font-weight: 700;
+}
+
+.math-step-controls {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: clamp(16px, 1.4vw, 22px);
+}
+
+.math-step-controls button {
+  min-height: 52px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.math-step-controls button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.math-step-controls button:focus-visible,
+.difficulty-choice:focus-visible {
+  outline: 4px solid var(--cream);
+  outline-offset: 3px;
+}
+
+.math-milestones {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.math-milestone {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  border: 1px solid rgba(255, 247, 198, 0.5);
+  border-radius: 50% 45% 50% 40%;
+  font-size: clamp(14px, 1.2vw, 18px);
+  font-weight: 700;
+}
+
+.math-milestone[data-state="unlocked"] {
+  background: var(--success-gradient);
+}
+
+.math-milestone[data-state="current"] {
+  background: var(--reed);
+  border: 2px solid var(--cream);
+  color: var(--ink);
+}
+
+.math-milestone[data-state="locked"] { opacity: 0.4; }
+
+.math-save-status { text-align: center; }
+
+@media (max-width: 799px) {
+  .math-step-panels { grid-template-columns: 1fr; }
 }

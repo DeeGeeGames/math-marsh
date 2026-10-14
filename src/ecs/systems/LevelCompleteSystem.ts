@@ -9,20 +9,13 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
     .setPriority(SYSTEM_PRIORITIES.LEVEL_COMPLETE)
     .inScreens(['levelComplete'])
     .runWhenEmpty()
-    .withResources(['mathDifficulty', 'operandOnboardingCompletion', 'operandAndResultOnboardingCompletion', 'practiceSession'])
-    .setProcess(({ ecs, resources: { mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion, practiceSession } }) => {
+    .withResources(['mathDifficulty', 'operandOnboardingCompletion', 'operandAndResultOnboardingCompletion'])
+    .setProcess(({ ecs, resources: { mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion } }) => {
       const state = ecs.getScreenState('levelComplete');
       const elapsed = performance.now() - state.startedAt;
       if (elapsed < LEVEL_COMPLETE_DURATION_MS || state.transitionStarted) return;
 
       ecs.updateScreenState('levelComplete', { transitionStarted: true });
-      if (practiceSession) {
-        void ecs.setScreen('playing', {
-          level: practiceSession.step,
-          isFreshGame: false,
-        });
-        return;
-      }
       const skit = skitForCompletedLevel(state.completedLevel);
       if (skit) {
         void ecs.setScreen('skit', { nextLevel: state.nextLevel, skitId: skit.id });

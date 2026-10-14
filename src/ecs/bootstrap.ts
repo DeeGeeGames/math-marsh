@@ -39,11 +39,12 @@ import { updateSkitPresentation } from '../ui/screens/skitScreen';
 import { skitById } from './skitSequence';
 import { saveSkitProgress, unlockSkitForCompletedLevel } from './skitProgress';
 import { STARTING_TIME_SECONDS } from './runTime';
-import { enemyRosterForLevel } from './enemyRosters';
-import { createPracticeEquationModeState } from './practiceSteps';
-import { addPracticeProgressionSystemToEngine } from './systems/PracticeProgressionSystem';
+import { enemyRosterForLevel, arcadeEnemyRosterForLevel } from './enemyRosters';
+import { equationModeForMathSession } from './mathMode';
+import type { GameEngine } from './Engine';
+import { addMathProgressionSystemToEngine } from './systems/MathProgressionSystem';
 
-const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'skitGallery', 'modeSelect', 'practiceSelect', 'practiceResult', 'howToPlay', 'tutorialOffer'] as const;
+const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'skitGallery', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
 
 const setupCanvas = (): void => {
   const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
@@ -51,22 +52,22 @@ const setupCanvas = (): void => {
   initializeRenderSystem(canvas, () => gameEngine.getResource('board'));
 };
 
-const resetEnemySpawnSequence = (): void => {
-  const practiceSession = gameEngine.getResource('practiceSession');
-  gameEngine.setResource('enemySpawn', {
+const resetEnemySpawnSequence = (ecs: GameEngine): void => {
+  const mathSession = ecs.getResource('mathSession');
+  ecs.setResource('enemySpawn', {
     index: 0,
-    roster: practiceSession
-      ? ['lizard']
+    roster: mathSession
+      ? arcadeEnemyRosterForLevel(ecs.getResource('currentLevel'), ecs.getResource('mathDifficulty'))
       : enemyRosterForLevel(
-          gameEngine.getResource('currentLevel'),
-          gameEngine.getResource('mathDifficulty'),
+          ecs.getResource('currentLevel'),
+          ecs.getResource('mathDifficulty'),
         ),
   });
 
-  const player = gameEngine.tryGetSingleton(playerQuery.with);
+  const player = ecs.tryGetSingleton(playerQuery.with);
   if (!player) return;
 
-  gameEngine.mutateComponent(player.id, 'timers', timers => {
+  ecs.mutateComponent(player.id, 'timers', timers => {
     delete timers.enemySpawn;
   });
 };
@@ -78,43 +79,34 @@ const resetEnemySpawnSequence = (): void => {
  * and create a new one — the player is unscoped so it survives screen exits.
  * On level transition: leave the existing player so the run persists.
  */
-const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void => {
-  gameEngine.setResource('tapRequest', null);
-  gameEngine.setResource('tapEat', null);
-  gameEngine.setResource('tapFeedback', null);
-  gameEngine.setResource('currentLevel', level);
-  const gameMode = gameEngine.getResource('gameMode');
-  const mathDifficulty = gameEngine.getResource('mathDifficulty');
-  const practiceSession = gameEngine.getResource('practiceSession');
-  const practiceEquationMode = practiceSession
-    ? createPracticeEquationModeState(
-        practiceSession.step,
-        practiceSession.operation,
-        practiceSession.assessment.correctAnswers,
-      )
-    : undefined;
-  if (practiceSession && !practiceEquationMode) {
-    gameEngine.setResource('practiceSession', null);
-    gameEngine.setResource('practiceAccelerationStreak', 0);
-  }
-  gameEngine.setResource(
-    'equationMode',
-    practiceEquationMode ?? createEquationModeState(level, mathDifficulty, gameMode),
-  );
+const enterPlayingScreen = (ecs: GameEngine, { level, isFreshGame }: PlayingScreenConfig): void => {
+  ecs.setResource('tapRequest', null);
+  ecs.setResource('tapEat', null);
+  ecs.setResource('tapFeedback', null);
+  ecs.setResource('currentLevel', level);
+  const gameMode = ecs.getResource('gameMode');
+  const mathDifficulty = ecs.getResource('mathDifficulty');
+  const mathSession = ecs.getResource('mathSession');
+  ecs.setResource('equationMode', mathSession
+    ? equationModeForMathSession(mathSession, gameMode, level)
+    : createEquationModeState(level, mathDifficulty, gameMode));
+  ecs.setResource('equationsSolvedThisBoard', 0);
+  ecs.setResource('mathRoundCompletedThisBoard', false);
+  ecs.setResource('mathRoundSummary', null);
 
   if (isFreshGame) {
-    gameEngine.setResource('remainingTimeSeconds', STARTING_TIME_SECONDS);
-    gameEngine.setResource('equationsSolved', 0);
+    ecs.setResource('remainingTimeSeconds', STARTING_TIME_SECONDS);
+    ecs.setResource('equationsSolved', 0);
 
-    const existingPlayer = gameEngine.tryGetSingleton(playerQuery.with);
-    if (existingPlayer) gameEngine.removeEntity(existingPlayer.id);
+    const existingPlayer = ecs.tryGetSingleton(playerQuery.with);
+    if (existingPlayer) ecs.removeEntity(existingPlayer.id);
 
-    const board = gameEngine.getResource('board');
+    const board = ecs.getResource('board');
     const playerPixelPos = gridToPixel(Math.floor(board.width / 2), Math.floor(board.height / 2));
-    createPlayer(gameEngine, playerPixelPos.x, playerPixelPos.y);
+    createPlayer(ecs, playerPixelPos.x, playerPixelPos.y);
   }
 
-  resetEnemySpawnSequence();
+  resetEnemySpawnSequence(ecs);
 };
 
 /**
@@ -144,7 +136,6 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenResume('skit', showSkit);
 
   gameEngine.onScreenEnter('levelComplete', ({ config, ecs }) => {
-    if (ecs.getResource('practiceSession')) return;
     const progress = ecs.getResource('skitProgress');
     const unlocked = unlockSkitForCompletedLevel(progress, config.completedLevel);
     if (unlocked === progress) return;
@@ -161,15 +152,15 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenEnter('paused', showPausedScreen);
   gameEngine.onScreenResume('paused', showPausedScreen);
 
-  gameEngine.onScreenEnter('playing', ({ config }) => {
+  gameEngine.onScreenEnter('playing', ({ config, ecs }) => {
     gameEngine.setResource(
       'board',
-      boardForDifficulty(gameEngine.getResource('practiceSession') ? 'easy' : gameEngine.getResource('mathDifficulty')),
+      boardForDifficulty(ecs.getResource('mathDifficulty')),
     );
     showGameplayScreen('normal');
     setupCanvas();
     gameEngine.setResource('gameplayOnboardingSession', { active: false });
-    enterPlayingScreen(config);
+    enterPlayingScreen(ecs, config);
   });
 
   gameEngine.onScreenResume('playing', () => {
@@ -212,7 +203,7 @@ const registerSystems = async (): Promise<void> => {
   });
 
   registerGameplaySystems(gameplaySystems);
-  addPracticeProgressionSystemToEngine(gameplaySystems);
+  addMathProgressionSystemToEngine(gameplaySystems);
   registerGameplayOnboardingSystem(tutorialSystems);
   addFrogSpriteAnimationSystemToEngine(gameEngine.systemScope({
     inScreens: ['playing', 'tutorial'],

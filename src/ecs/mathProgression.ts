@@ -1,33 +1,33 @@
 import { GAME_CONFIG } from '../config';
 
-export type PracticeProgress = Readonly<{
+export type MathProgress = Readonly<{
   currentStep: number;
   highestUnlockedStep: number;
   accelerationStreak: number;
 }>;
 
-export type PracticeAssessment = Readonly<{
+export type MathAssessment = Readonly<{
   correctAnswers: number;
   incorrectAnswers: number;
   activeSeconds?: number;
   expectedSecondsPerCorrect?: number;
 }>;
 
-export type PracticeProgressionResult =
+export type MathProgressionResult =
   | Readonly<{
     kind: 'invalid';
     reason: 'configuration' | 'progress' | 'sample';
   }>
   | Readonly<{
     kind: 'insufficientSample';
-    progress: PracticeProgress;
+    progress: MathProgress;
     unlockedSteps: readonly number[];
   }>
   | Readonly<{
     kind: 'stayed';
     reason: 'lowAccuracy';
     accuracy: number;
-    progress: PracticeProgress;
+    progress: MathProgress;
     unlockedSteps: readonly number[];
   }>
   | Readonly<{
@@ -36,7 +36,7 @@ export type PracticeProgressionResult =
     accuracy: number;
     timeRatio: number | null;
     advanceBy: number;
-    progress: PracticeProgress;
+    progress: MathProgress;
     unlockedSteps: readonly number[];
   }>;
 
@@ -46,7 +46,7 @@ const isNonNegativeSafeInteger = (value: number): boolean =>
 const isPositiveSafeInteger = (value: number): boolean =>
   Number.isSafeInteger(value) && value > 0;
 
-const isValidProgress = (progress: PracticeProgress, finalStep: number): boolean =>
+const isValidProgress = (progress: MathProgress, finalStep: number): boolean =>
   isPositiveSafeInteger(finalStep)
   && isPositiveSafeInteger(progress.currentStep)
   && progress.currentStep <= progress.highestUnlockedStep
@@ -54,7 +54,7 @@ const isValidProgress = (progress: PracticeProgress, finalStep: number): boolean
   && isNonNegativeSafeInteger(progress.accelerationStreak);
 
 const hasValidConfiguration = (): boolean => {
-  const config = GAME_CONFIG.PRACTICE_PROGRESSION;
+  const config = GAME_CONFIG.MATH_PROGRESSION;
   return isPositiveSafeInteger(config.MINIMUM_COMPLETED_EQUATIONS)
     && Number.isFinite(config.MINIMUM_ACCURACY)
     && config.MINIMUM_ACCURACY >= 0
@@ -74,11 +74,11 @@ const unlockedBetween = (previousHighest: number, nextHighest: number): number[]
   );
 
 const progressAfterAdvance = (
-  progress: PracticeProgress,
+  progress: MathProgress,
   requestedAdvance: number,
   nextStreak: number,
   finalStep: number,
-): { progress: PracticeProgress; advanceBy: number; unlockedSteps: readonly number[] } => {
+): { progress: MathProgress; advanceBy: number; unlockedSteps: readonly number[] } => {
   const currentStep = Math.min(finalStep, progress.currentStep + requestedAdvance);
   const highestUnlockedStep = Math.max(progress.highestUnlockedStep, currentStep);
   return {
@@ -93,11 +93,11 @@ const progressAfterAdvance = (
 };
 
 /** Evaluates one complete assessment round without mutating its inputs. */
-export const evaluatePracticeProgressionRound = function(
-  progress: PracticeProgress,
-  assessment: PracticeAssessment,
+export const evaluateMathProgressionRound = function(
+  progress: MathProgress,
+  assessment: MathAssessment,
   finalStep: number,
-): PracticeProgressionResult {
+): MathProgressionResult {
   if (!hasValidConfiguration()) return { kind: 'invalid', reason: 'configuration' };
   if (!isValidProgress(progress, finalStep)) return { kind: 'invalid', reason: 'progress' };
 
@@ -108,13 +108,13 @@ export const evaluatePracticeProgressionRound = function(
     || !Number.isSafeInteger(correctAnswers + incorrectAnswers)
   ) return { kind: 'invalid', reason: 'sample' };
 
-  const minimumAnswers = GAME_CONFIG.PRACTICE_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS;
+  const minimumAnswers = GAME_CONFIG.MATH_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS;
   if (correctAnswers < minimumAnswers) {
     return { kind: 'insufficientSample', progress, unlockedSteps: [] };
   }
 
   const accuracy = correctAnswers / (correctAnswers + incorrectAnswers);
-  if (accuracy < GAME_CONFIG.PRACTICE_PROGRESSION.MINIMUM_ACCURACY) {
+  if (accuracy < GAME_CONFIG.MATH_PROGRESSION.MINIMUM_ACCURACY) {
     return {
       kind: 'stayed',
       reason: 'lowAccuracy',
@@ -135,17 +135,17 @@ export const evaluatePracticeProgressionRound = function(
     ? activeSeconds / (correctAnswers * expectedSecondsPerCorrect)
     : null;
   const hasValidTimeRatio = timeRatio !== null && Number.isFinite(timeRatio);
-  const accelerated = accuracy >= GAME_CONFIG.PRACTICE_PROGRESSION.ACCELERATED_ACCURACY
+  const accelerated = accuracy >= GAME_CONFIG.MATH_PROGRESSION.ACCELERATED_ACCURACY
     && hasValidTimeRatio
-    && timeRatio <= GAME_CONFIG.PRACTICE_PROGRESSION.MAX_TIME_RATIO;
+    && timeRatio <= GAME_CONFIG.MATH_PROGRESSION.MAX_TIME_RATIO;
 
   const nextStreak = accelerated ? progress.accelerationStreak + 1 : 0;
   if (!Number.isSafeInteger(nextStreak)) return { kind: 'invalid', reason: 'progress' };
 
   const requestedAdvance = accelerated
     ? Math.min(
-      GAME_CONFIG.PRACTICE_PROGRESSION.MAX_ADVANCE_STEPS,
-      2 ** Math.min(nextStreak, Math.ceil(Math.log2(GAME_CONFIG.PRACTICE_PROGRESSION.MAX_ADVANCE_STEPS))),
+      GAME_CONFIG.MATH_PROGRESSION.MAX_ADVANCE_STEPS,
+      2 ** Math.min(nextStreak, Math.ceil(Math.log2(GAME_CONFIG.MATH_PROGRESSION.MAX_ADVANCE_STEPS))),
     )
     : 1;
   const advancement = progressAfterAdvance(progress, requestedAdvance, nextStreak, finalStep);

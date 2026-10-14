@@ -1,6 +1,8 @@
 import { playSound } from '../audio/audio';
 import type { GameEngine } from '../ecs/Engine';
 import type { TutorialScreenConfig } from '../ecs/types';
+import { mathTutorialForMode } from '../ecs/mathMode';
+import { goToNextLevel } from '../ecs/systems/nextLevel';
 import {
   completedOnboardingCompletion,
   saveOnboardingCompletion,
@@ -38,6 +40,13 @@ function recordOnboardingCompletion(
 }
 
 export function startNormalGame(engine: GameEngine): void {
+  const session = engine.tryGetResource('mathSession');
+  const kind = session ? mathTutorialForMode(session, engine.getResource('gameMode'),
+    engine.getResource('operandOnboardingCompletion'), engine.getResource('operandAndResultOnboardingCompletion')) : undefined;
+  if (kind) {
+    void engine.setScreen('tutorial', { kind, isReplay: false, returnTo: { kind: 'newGame' } });
+    return;
+  }
   void engine.setScreen('playing', {
     level: engine.getResource('startingLevel'),
     isFreshGame: true,
@@ -110,10 +119,8 @@ function continueAfterTutorial(
   }
 
   restoreActivePlayer(engine, session);
-  void engine.setScreen('playing', {
-    level: session.returnTo.level,
-    isFreshGame: false,
-  });
+  goToNextLevel(engine, session.returnTo.level, engine.getResource('mathDifficulty'),
+    engine.getResource('operandOnboardingCompletion'), engine.getResource('operandAndResultOnboardingCompletion'));
 }
 
 export function skipGameplayOnboarding(engine: GameEngine): void {

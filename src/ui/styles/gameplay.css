@@ -173,3 +173,14 @@
 @media (orientation: landscape) and (max-width: 600px) {
   .gameplay-actions #pause-btn span { display: none; }
 }
+
+.math-progress-notice {
+  align-self: center;
+  margin: 0.25rem 1rem;
+  max-width: 90%;
+  color: var(--color-gold, #fff7c6);
+  font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+  font-weight: 700;
+  text-align: center;
+}
+.math-progress-notice[hidden] { display: none; }
