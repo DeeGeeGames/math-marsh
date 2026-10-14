@@ -367,10 +367,5 @@ function wireAudioSettings(root: ParentNode): void {
 }
 
 export const revealLevelSelection = function(): void {
-  const panel = document.querySelector<HTMLElement>('#starting-level-select');
-  if (!panel) return;
-  panel.classList.remove('hidden');
-  panel.querySelector<HTMLButtonElement>('[data-level-change="1"]')?.focus();
-  panel.scrollIntoView({ block: 'nearest' });
-  playSound('uiSelect');
+  if (screenRuntime.revealLevelSelection()) playSound('uiSelect');
 };

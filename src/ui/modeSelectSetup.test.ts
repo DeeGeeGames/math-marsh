@@ -7,6 +7,7 @@ import {
 	createModeSelectSetupState,
 	mathProgressCue,
 	modeSelectGameRequest,
+	revealModeSelectLevelSelection,
 	returnModeSelectToMath,
 	showModeSelectPanel,
 	toggleModeSelectOperation,
@@ -79,5 +80,20 @@ test('Play requests a run only with operations and a selected difficulty', () =>
 		mode: ['subtract'],
 		difficulty: 'medium',
 		startingLevel: 3,
+	});
+});
+
+test('revealing starting level opens Math steps from either setup step', () => {
+	const selected = toggleModeSelectOperation(createModeSelectSetupState(), 'multiply');
+	const pond = chooseModeSelectDifficulty(advanceModeSelectToPond(selected), 'medium');
+
+	expect(revealModeSelectLevelSelection(pond)).toEqual({
+		...pond,
+		step: 'math',
+		panel: 'math-steps',
+	});
+	expect(revealModeSelectLevelSelection(createModeSelectSetupState())).toMatchObject({
+		step: 'math',
+		panel: 'math-steps',
 	});
 });

@@ -24,6 +24,7 @@ import {
   createModeSelectSetupState,
   mathProgressCue,
   modeSelectGameRequest,
+  revealModeSelectLevelSelection,
   returnModeSelectToMath,
   showModeSelectPanel,
   toggleModeSelectOperation,
@@ -258,7 +259,8 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
     renderSetup(root);
     const trigger = panelTrigger;
     panelTrigger = undefined;
-    focusButton(trigger);
+    focusButton(trigger ?? root.querySelector<HTMLButtonElement>('.mode-card[aria-pressed="true"]')
+      ?? root.querySelector<HTMLButtonElement>('.mode-card'));
   };
 
   const handleBack = function(root: HTMLElement): void {
@@ -496,6 +498,15 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
       resetModeSelect(root, actions.isLevelSelectionUnlocked());
       refreshMathProgress(root, actions);
       renderSetup(root);
+    },
+    onLevelSelectionUnlocked: function(root): void {
+      setupState = revealModeSelectLevelSelection(setupState);
+      panelTrigger = undefined;
+      renderSetup(root);
+      const panel = $(root, '#starting-level-select');
+      panel.classList.remove('hidden');
+      panel.querySelector<HTMLButtonElement>('[data-level-change="1"]')?.focus();
+      panel.scrollIntoView({ block: 'nearest' });
     },
     onCancel: function(): void {
       if (activeRoot) handleBack(activeRoot);

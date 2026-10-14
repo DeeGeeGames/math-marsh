@@ -765,16 +765,36 @@
 }
 
 .mode-card[aria-pressed="true"] .mode-symbol {
-  opacity: 0;
+  color: currentColor;
+  font-size: clamp(36px, 4vw, 60px);
+  opacity: 0.72;
 }
 
 .mode-card[aria-pressed="true"]::after {
-  top: 8px;
-  right: 8px;
-  bottom: auto;
+  content: "✓";
+  position: absolute;
+  top: auto;
+  right: auto;
+  bottom: 8px;
+  left: 8px;
+  display: grid;
   width: 28px;
   height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--reed);
+  color: var(--ink);
   font-size: 19px;
+  font-weight: 800;
+}
+
+.mode-card[aria-pressed="true"] .mode-progress-copy {
+  padding-left: 36px;
+}
+
+.mode-card[aria-pressed="true"] .mode-progress-meter {
+  width: calc(min(100%, 320px) - 36px);
+  margin-left: 36px;
 }
 
 .mode-progress-copy {

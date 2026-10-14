@@ -80,6 +80,10 @@ export function closeModeSelectPanel(state: ModeSelectSetupState): ModeSelectSet
 	return state.panel === null ? state : { ...state, panel: null };
 }
 
+export function revealModeSelectLevelSelection(state: ModeSelectSetupState): ModeSelectSetupState {
+	return { ...state, step: 'math', panel: 'math-steps' };
+}
+
 export function chooseModeSelectDifficulty(
 	state: ModeSelectSetupState,
 	difficulty: MathDifficulty,

@@ -20,6 +20,7 @@ type ScreenRuntime = {
   activateFocus: () => void;
   navigateFocus: (direction: FocusDirection) => void;
   presentScreen: (screen: UIScreen, retainGameplay?: boolean) => HTMLElement;
+  revealLevelSelection: () => boolean;
   setPromptOverride: (screen: UIScreen, spec: PromptSpec | undefined) => void;
   triggerCancel: () => void;
   updateInputPromptPlatform: (platform: InputPromptPlatform) => void;
@@ -162,10 +163,20 @@ export function createScreenRuntime(
     screenSpecs[state.currentScreen].onCancel?.();
   }
 
+  function revealLevelSelection(): boolean {
+    if (state.currentScreen !== 'modeSelect') return false;
+    const root = screenElements.get(state.currentScreen);
+    const handler = screenSpecs[state.currentScreen].onLevelSelectionUnlocked;
+    if (!root || !handler) return false;
+    handler(root);
+    return true;
+  }
+
   return {
     activateFocus,
     navigateFocus,
     presentScreen,
+    revealLevelSelection,
     setPromptOverride,
     triggerCancel,
     updateInputPromptPlatform,
