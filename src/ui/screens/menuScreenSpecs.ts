@@ -1,21 +1,34 @@
 import { selectedStartingLevel } from '../../ecs/levelSelectionCheat';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
+import { GAME_CONFIG } from '../../config';
 import { html, nothing, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
 import flyMoveToward from '../../assets/sprites/fly/fly-move-toward.png';
 import frogHopToward from '../../assets/sprites/frog/frog-hop-toward.png';
 import lizardWalkToward from '../../assets/sprites/lizard/lizard-walk-toward.png';
 import spiderWalkToward from '../../assets/sprites/spider/spider-walk-toward.png';
-import type { EquationOperation, GameMode } from '../../ecs/types';
+import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { MATH_FINAL_STEP, mathStepLabel } from '../../ecs/mathSteps';
 import { $ } from '../dom';
 import {
+  difficultyLabels,
   isEquationOperation,
   isMathDifficulty,
   operationLabels,
-  selectedOperationsLabel,
 } from '../labels';
 import type { ScreenSpec } from '../screenTypes';
+import {
+  advanceModeSelectToPond,
+  chooseModeSelectDifficulty,
+  closeModeSelectPanel,
+  createModeSelectSetupState,
+  mathProgressCue,
+  modeSelectGameRequest,
+  returnModeSelectToMath,
+  showModeSelectPanel,
+  toggleModeSelectOperation,
+  type ModeSelectSetupState,
+} from '../modeSelectSetup';
 import {
   BTN_CHROME,
   BTN_SIZE,
@@ -25,6 +38,19 @@ import {
 } from './shared';
 
 const MATH_OPERATIONS: readonly EquationOperation[] = ['add', 'subtract', 'multiply', 'divide'];
+const MATH_DIFFICULTIES: readonly MathDifficulty[] = ['easy', 'medium', 'expert'];
+const OPERATION_CARD_LABELS: Record<EquationOperation, string> = {
+  add: 'Add',
+  subtract: 'Subtract',
+  multiply: 'Multiply',
+  divide: 'Divide',
+};
+const OPERATION_SYMBOLS: Record<EquationOperation, string> = {
+  add: '+',
+  subtract: '−',
+  multiply: '×',
+  divide: '÷',
+};
 
 const HOW_TO_PLAY_STEPS = [
   {
@@ -73,48 +99,24 @@ function howToPlayStep(
 export function resetModeSelect(root: HTMLElement, levelSelectionUnlocked = false): void {
   $(root, '#starting-level-select').classList.toggle('hidden', !levelSelectionUnlocked);
   $<HTMLOutputElement>(root, '#starting-level-value').value = '1';
-  root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
-    card.setAttribute('aria-pressed', 'false');
-  });
-  const difficultySelect = root.querySelector<HTMLElement>('#difficulty-select');
-  difficultySelect?.classList.add('hidden');
-  root.querySelector<HTMLElement>('#math-progress-select')?.classList.add('hidden');
-}
-
-function selectedOperations(root: HTMLElement): GameMode | undefined {
-  const [first, ...rest] = Array.from(root.querySelectorAll<HTMLElement>('.mode-card[aria-pressed="true"]'))
-    .map(card => card.dataset.operation)
-    .filter(isEquationOperation);
-  return first ? [first, ...rest] : undefined;
-}
-
-function syncOperationSelection(root: HTMLElement): void {
-  const mode = selectedOperations(root);
-  const difficultySelect = $<HTMLElement>(root, '#difficulty-select');
-  difficultySelect.classList.toggle('hidden', !mode);
-  $(root, '#math-progress-select').classList.toggle('hidden', !mode);
-  MATH_OPERATIONS.forEach(function(operation): void {
-    $(root, `[data-step-panel="${operation}"]`).classList.toggle('hidden', !mode?.includes(operation));
-  });
-  if (!mode) return;
-  $<HTMLElement>(root, '#selected-mode-label').textContent = selectedOperationsLabel(mode);
-}
-
-function setOperationSelected(card: HTMLElement, selected: boolean): void {
-  card.setAttribute('aria-pressed', String(selected));
 }
 
 const refreshMathProgress = function(root: HTMLElement, actions: ScreenSpecActions): void {
   const progress = actions.getMathProgress();
   MATH_OPERATIONS.forEach(function(operation): void {
     const track = progress[operation];
-    $(root, `[data-progress-for="${operation}"]`).textContent = `Step ${track.currentStep} · Unlocked through ${track.highestUnlockedStep}`;
+    const cue = mathProgressCue(track, MATH_FINAL_STEP);
+    $(root, `[data-progress-label="${operation}"]`).textContent = cue.caption;
+    const progressBar = $(root, `[data-progress-bar="${operation}"]`);
+    progressBar.setAttribute('aria-valuenow', String(cue.highestUnlockedStep));
+    progressBar.setAttribute('aria-valuetext', cue.valueText);
+    $(root, `[data-progress-fill="${operation}"]`).style.width = `${cue.percentage}%`;
     $(root, `[data-skill-for="${operation}"]`).textContent = mathStepLabel(track.currentStep, operation);
     $(root, `[data-step-for="${operation}"]`).textContent = `Step ${track.currentStep}`;
-    $(root, `[data-unlocked-for="${operation}"]`).textContent = `Unlocked through Step ${track.highestUnlockedStep} of ${MATH_FINAL_STEP}`;
+    $(root, `[data-unlocked-for="${operation}"]`).textContent = `Unlocked through Step ${cue.highestUnlockedStep} of ${MATH_FINAL_STEP}`;
     root.querySelectorAll<HTMLButtonElement>(`[data-step-operation="${operation}"]`).forEach(function(button): void {
       const nextStep = track.currentStep + Number(button.dataset.stepChange);
-      button.setAttribute('aria-disabled', String(nextStep < 1 || nextStep > track.highestUnlockedStep));
+      button.disabled = nextStep < 1 || nextStep > cue.highestUnlockedStep;
     });
     root.querySelectorAll<HTMLElement>(`[data-milestone-operation="${operation}"]`).forEach(function(milestone): void {
       const step = Number(milestone.dataset.milestoneStep);
@@ -204,89 +206,209 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
 }
 
 export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSpec {
+  let setupState: ModeSelectSetupState = createModeSelectSetupState();
+  let panelTrigger: HTMLButtonElement | undefined;
+  let activeRoot: HTMLElement | undefined;
+  let isStartingGame = false;
+
+  const focusButton = function(button: HTMLButtonElement | null | undefined): void {
+    if (!button || button.disabled) return;
+    button.focus();
+    button.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+
+  const renderSetup = function(root: HTMLElement): void {
+    root.dataset.setupStep = setupState.step;
+    root.dataset.setupPanel = setupState.panel ?? 'none';
+    root.querySelectorAll<HTMLElement>('[data-setup-view]').forEach(function(view): void {
+      const name = view.dataset.setupView;
+      const isMainStep = setupState.panel === null && name === setupState.step;
+      view.classList.toggle('hidden', !isMainStep && name !== setupState.panel);
+    });
+    root.querySelectorAll<HTMLButtonElement>('.mode-card').forEach(function(button): void {
+      const operation = button.dataset.operation;
+      if (!isEquationOperation(operation)) return;
+      button.setAttribute('aria-pressed', String(setupState.selectedOperations.includes(operation)));
+    });
+    const hasOperations = setupState.selectedOperations.length > 0;
+    $<HTMLButtonElement>(root, '[data-open-math-steps]').disabled = !hasOperations;
+    $<HTMLButtonElement>(root, '[data-next-to-pond]').disabled = !hasOperations;
+    root.querySelectorAll<HTMLButtonElement>('.pond-choice').forEach(function(button): void {
+      button.setAttribute('aria-pressed', String(button.dataset.difficulty === setupState.difficulty));
+    });
+    $<HTMLButtonElement>(root, '[data-play-selected]').disabled = setupState.difficulty === null;
+    root.querySelectorAll<HTMLElement>('[data-step-panel]').forEach(function(panel): void {
+      const operation = panel.dataset.stepPanel;
+      panel.classList.toggle('hidden', !isEquationOperation(operation) || !setupState.selectedOperations.includes(operation));
+    });
+    const [firstOperation, ...otherOperations] = setupState.selectedOperations;
+    $(root, '#math-step-summary').textContent = firstOperation
+      ? `${[firstOperation, ...otherOperations].map(operation => OPERATION_CARD_LABELS[operation]).join(', ')}: continue at your saved step or choose any unlocked step.`
+      : 'Choose math operations to see their unlocked steps.';
+  };
+
+  const focusFirstInView = function(root: HTMLElement, viewName: string): void {
+    const view = root.querySelector<HTMLElement>(`[data-setup-view="${viewName}"]`);
+    focusButton(view?.querySelector<HTMLButtonElement>('button:not(:disabled)'));
+  };
+
+  const closePanel = function(root: HTMLElement): void {
+    if (setupState.panel === null) return;
+    setupState = closeModeSelectPanel(setupState);
+    renderSetup(root);
+    const trigger = panelTrigger;
+    panelTrigger = undefined;
+    focusButton(trigger);
+  };
+
+  const handleBack = function(root: HTMLElement): void {
+    if (setupState.panel !== null) {
+      closePanel(root);
+      return;
+    }
+    if (setupState.step === 'pond') {
+      setupState = returnModeSelectToMath(setupState);
+      renderSetup(root);
+      focusButton(root.querySelector<HTMLButtonElement>('[data-next-to-pond]'));
+      return;
+    }
+    actions.goToMenu();
+  };
+
+  const openPanel = function(
+    root: HTMLElement,
+    trigger: HTMLButtonElement,
+    panel: Exclude<ModeSelectSetupState['panel'], null>,
+  ): void {
+    const nextState = showModeSelectPanel(setupState, panel);
+    if (nextState === setupState) return;
+    panelTrigger = trigger;
+    setupState = nextState;
+    renderSetup(root);
+    focusFirstInView(root, panel);
+  };
+
+  const operationCards = MATH_OPERATIONS.map(function(operation): string {
+    return `
+      <button type="button" data-operation="${operation}" data-focusable aria-pressed="false" class="mode-card">
+        <span class="mode-symbol" aria-hidden="true">${OPERATION_SYMBOLS[operation]}</span>
+        <span class="mode-name">${OPERATION_CARD_LABELS[operation]}</span>
+        <span class="mode-progress-copy" data-progress-label="${operation}">1 step unlocked</span>
+        <span class="mode-progress-meter" role="progressbar" aria-label="${operationLabels[operation]} progress" aria-valuemin="0" aria-valuemax="${MATH_FINAL_STEP}" aria-valuenow="1" aria-valuetext="1 of ${MATH_FINAL_STEP} steps unlocked" data-progress-bar="${operation}">
+          <span class="mode-progress-fill" data-progress-fill="${operation}"></span>
+        </span>
+      </button>
+    `;
+  }).join('');
+
+  const mathStepPanels = MATH_OPERATIONS.map(function(operation): string {
+    return `
+      <section class="math-step-panel hidden" data-step-panel="${operation}" aria-label="${operationLabels[operation]} progression">
+        <h3>${operationLabels[operation]}</h3>
+        <p class="math-step-skill" data-skill-for="${operation}"></p>
+        <div class="math-step-controls">
+          <button type="button" class="btn-secondary" data-step-operation="${operation}" data-step-change="-1" aria-label="Earlier ${operationLabels[operation]} step">← Earlier</button>
+          <output data-step-for="${operation}" aria-live="polite"></output>
+          <button type="button" class="btn-secondary" data-step-operation="${operation}" data-step-change="1" aria-label="Later ${operationLabels[operation]} step">Later →</button>
+        </div>
+        <div class="math-milestones" role="list" aria-label="${operationLabels[operation]} unlocks">
+          ${Array.from({ length: MATH_FINAL_STEP }, function(_, index): string {
+            return `<span role="listitem" class="math-milestone" data-milestone-operation="${operation}" data-milestone-step="${index + 1}">${index + 1}</span>`;
+          }).join('')}
+        </div>
+        <p class="math-highest-unlock" data-unlocked-for="${operation}"></p>
+      </section>
+    `;
+  }).join('');
+
+  const difficultyChoices = MATH_DIFFICULTIES.map(function(difficulty): string {
+    const pondPadCount = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 4 : 6;
+    const pads = Array.from({ length: pondPadCount }, function(_, index): string {
+      return `<span class="pond-lily pond-lily-${index + 1}"></span>`;
+    }).join('');
+    const pondSize = difficulty === 'easy' ? 'Small pond' : difficulty === 'medium' ? 'Bigger pond' : 'Biggest pond';
+    return `
+      <button type="button" class="difficulty-choice ${difficulty} pond-choice" data-difficulty="${difficulty}" aria-pressed="false">
+        <span class="pond-illustration pond-illustration-${difficulty}" aria-hidden="true"><span class="pond-water"></span>${pads}</span>
+        <span class="pond-choice-copy"><span class="pond-choice-name">${difficultyLabels[difficulty]}</span><span class="pond-choice-size">${pondSize}</span></span>
+      </button>
+    `;
+  }).join('');
+
+  const difficultyHelp = MATH_DIFFICULTIES.map(function(difficulty): string {
+    const board = BOARD_SIZES[difficulty];
+    const enemies = GAME_CONFIG.MATH_PROGRESSION.ENEMY_COUNT[difficulty];
+    return `<li class="setup-help-row"><strong>${difficultyLabels[difficulty]}</strong><span>${board.width} × ${board.height} spaces · ${enemies} ${enemies === 1 ? 'animal' : 'animals'}</span></li>`;
+  }).join('');
+
   return {
     id: 'mode-select-screen',
     className: `${OVERLAY_BASE} app-background`,
     html: `
       <div class="mode-select-shell">
-        <header class="mode-select-heading">
-          <h1 class="pond-title text-gold drop-shadow-lg">Choose Your Game</h1>
-          <p>Choose operations. Your math advances as you solve; difficulty sets the board and enemies.</p>
-        </header>
-
-        <div class="mode-options" role="group" aria-label="Math operations">
-          <button type="button" data-operation="add" data-focusable aria-pressed="false" class="mode-card">
-            <span class="mode-symbol" aria-hidden="true">+</span>
-            <span class="mode-name">Addition</span>
-            <span class="mode-example">2 + 3 = ?</span>
-            <span class="mode-progress" data-progress-for="add"></span>
-          </button>
-          <button type="button" data-operation="subtract" data-focusable aria-pressed="false" class="mode-card">
-            <span class="mode-symbol" aria-hidden="true">−</span>
-            <span class="mode-name">Subtraction</span>
-            <span class="mode-example">7 − 3 = ?</span>
-            <span class="mode-progress" data-progress-for="subtract"></span>
-          </button>
-          <button type="button" data-operation="multiply" data-focusable aria-pressed="false" class="mode-card">
-            <span class="mode-symbol" aria-hidden="true">×</span>
-            <span class="mode-name">Multiplication</span>
-            <span class="mode-example">3 × 4 = ?</span>
-            <span class="mode-progress" data-progress-for="multiply"></span>
-          </button>
-          <button type="button" data-operation="divide" data-focusable aria-pressed="false" class="mode-card">
-            <span class="mode-symbol" aria-hidden="true">÷</span>
-            <span class="mode-name">Division</span>
-            <span class="mode-example">12 ÷ 3 = ?</span>
-            <span class="mode-progress" data-progress-for="divide"></span>
-          </button>
-          <button id="back-to-main-btn" class="btn-secondary mode-menu-back">
-            ← Back to Menu
-          </button>
-        </div>
-
-        <section id="math-progress-select" class="math-progress-panel hidden" aria-labelledby="math-progress-heading">
-          <h2 id="math-progress-heading">Your math path</h2>
-          <p>Continue at your saved step, or revisit any unlocked step. Your unlocks stay yours.</p>
-          <div class="math-step-panels">
-            ${MATH_OPERATIONS.map(function(operation): string {
-              return `
-                <section class="math-step-panel hidden" data-step-panel="${operation}" aria-label="${operationLabels[operation]} progression">
-                  <h3>${operationLabels[operation]}</h3>
-                  <p class="math-step-skill" data-skill-for="${operation}"></p>
-                  <div class="math-step-controls">
-                    <button type="button" class="btn-secondary" data-step-operation="${operation}" data-step-change="-1" aria-label="Earlier ${operationLabels[operation]} step">← Earlier</button>
-                    <output data-step-for="${operation}" aria-live="polite"></output>
-                    <button type="button" class="btn-secondary" data-step-operation="${operation}" data-step-change="1" aria-label="Later ${operationLabels[operation]} step">Later →</button>
-                  </div>
-                  <div class="math-milestones" role="list" aria-label="${operationLabels[operation]} unlocks">
-                    ${Array.from({ length: MATH_FINAL_STEP }, function(_, index): string {
-                      return `<span role="listitem" class="math-milestone" data-milestone-operation="${operation}" data-milestone-step="${index + 1}">${index + 1}</span>`;
-                    }).join('')}
-                  </div>
-                  <p class="math-highest-unlock" data-unlocked-for="${operation}"></p>
-                </section>
-              `;
-            }).join('')}
+        <section class="setup-view" data-setup-view="math">
+          <header class="mode-select-heading">
+            <div class="setup-topline">
+              <button type="button" class="btn-secondary setup-back" data-setup-back>‹ Back</button>
+              <p class="setup-step-indicator" aria-label="Step 1 of 2">1 of 2 <span aria-hidden="true">● ○</span></p>
+            </div>
+            <h1 class="pond-title text-gold drop-shadow-lg">Pick your math</h1>
+            <p>Pick one or more.</p>
+          </header>
+          <div class="mode-options" role="group" aria-label="Math operations">
+            ${operationCards}
           </div>
-          <p class="math-milestone-key">Gold: current · Green: unlocked · Dim: locked</p>
+          <footer class="setup-actions">
+            <button type="button" class="btn-secondary setup-optional-action" data-open-math-steps disabled>Math steps</button>
+            <button type="button" class="btn-success setup-primary-action" data-next-to-pond disabled>Next <span aria-hidden="true">›</span></button>
+          </footer>
         </section>
-        <p id="math-save-status" class="math-save-status" aria-live="polite"></p>
 
-        <div id="starting-level-select" class="starting-level-panel hidden" role="group" aria-label="Starting level">
-          <span>Starting arcade level</span>
-          <button type="button" class="btn-secondary" data-level-change="-1" aria-label="Previous starting level">−</button>
-          <output id="starting-level-value" aria-live="polite" aria-label="Starting level">1</output>
-          <button type="button" class="btn-secondary" data-level-change="1" aria-label="Next starting level">+</button>
-        </div>
-
-        <div id="difficulty-select" class="difficulty-panel hidden mode-difficulty">
-          <h2><span id="selected-mode-label">Addition</span> · Choose arcade difficulty</h2>
-          <div class="mode-difficulty-options">
-            <button id="easy-difficulty" type="button" class="difficulty-choice easy" data-difficulty="easy">Easy · ${BOARD_SIZES.easy.width}×${BOARD_SIZES.easy.height}</button>
-            <button type="button" class="difficulty-choice medium" data-difficulty="medium">Medium · ${BOARD_SIZES.medium.width}×${BOARD_SIZES.medium.height}</button>
-            <button type="button" class="difficulty-choice expert" data-difficulty="expert">Expert · ${BOARD_SIZES.expert.width}×${BOARD_SIZES.expert.height}</button>
+        <section class="setup-view hidden" data-setup-view="pond">
+          <header class="mode-select-heading">
+            <div class="setup-topline">
+              <button type="button" class="btn-secondary setup-back" data-setup-back>‹ Back</button>
+              <p class="setup-step-indicator" aria-label="Step 2 of 2">2 of 2 <span aria-hidden="true">● ●</span></p>
+            </div>
+            <h1 class="pond-title text-gold drop-shadow-lg">Choose your pond</h1>
+            <p>Bigger ponds. More animals.</p>
+          </header>
+          <div class="pond-choices" role="group" aria-label="Pond difficulty">
+            ${difficultyChoices}
           </div>
-        </div>
+          <footer class="setup-actions pond-actions">
+            <button type="button" class="btn-secondary setup-optional-action" data-open-difficulty-help>What changes?</button>
+            <button type="button" class="btn-success setup-primary-action" data-play-selected disabled>Play</button>
+          </footer>
+        </section>
+
+        <section class="setup-secondary-panel hidden" data-setup-view="math-steps" aria-labelledby="math-progress-heading">
+          <header class="setup-secondary-heading">
+            <button type="button" class="btn-secondary setup-back" data-close-setup-panel>‹ Done</button>
+            <h1 class="pond-title text-gold drop-shadow-lg" id="math-progress-heading">Math steps</h1>
+            <p id="math-step-summary">Choose math operations to see their unlocked steps.</p>
+          </header>
+          <section id="math-progress-select" class="math-progress-panel">
+            <div class="math-step-panels">${mathStepPanels}</div>
+            <p class="math-milestone-key">Gold: current · Green: unlocked · Dim: locked</p>
+            <p id="math-save-status" class="math-save-status" aria-live="polite"></p>
+          </section>
+          <div id="starting-level-select" class="starting-level-panel hidden" role="group" aria-label="Starting level">
+            <span>Starting arcade level</span>
+            <button type="button" class="btn-secondary" data-level-change="-1" aria-label="Previous starting level">−</button>
+            <output id="starting-level-value" aria-live="polite" aria-label="Starting level">1</output>
+            <button type="button" class="btn-secondary" data-level-change="1" aria-label="Next starting level">+</button>
+          </div>
+        </section>
+
+        <section class="setup-secondary-panel hidden" data-setup-view="difficulty-help" aria-labelledby="difficulty-help-heading">
+          <header class="setup-secondary-heading">
+            <button type="button" class="btn-secondary setup-back" data-close-setup-panel>‹ Done</button>
+            <h1 class="pond-title text-gold drop-shadow-lg" id="difficulty-help-heading">What changes?</h1>
+            <p>Each pond has a different size and number of animals.</p>
+          </header>
+          <ul class="setup-help-list">${difficultyHelp}</ul>
+        </section>
 
         ${inputPromptsSlot()}
       </div>
@@ -297,12 +419,54 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
     ],
     promptPlacement: 'panel',
     wire: (root): void => {
-      root.querySelectorAll<HTMLElement>('.mode-card').forEach(card => {
-        card.addEventListener('click', () => {
-          if (!isEquationOperation(card.dataset.operation)) return;
-          setOperationSelected(card, card.getAttribute('aria-pressed') !== 'true');
-          syncOperationSelection(root);
+      activeRoot = root;
+      root.querySelectorAll<HTMLButtonElement>('.mode-card').forEach(function(button): void {
+        button.addEventListener('click', function(): void {
+          const operation = button.dataset.operation;
+          if (!isEquationOperation(operation)) return;
+          setupState = toggleModeSelectOperation(setupState, operation);
+          renderSetup(root);
         });
+      });
+      root.querySelectorAll<HTMLButtonElement>('[data-setup-back]').forEach(function(button): void {
+        button.addEventListener('click', function(): void { handleBack(root); });
+      });
+      root.querySelectorAll<HTMLButtonElement>('[data-close-setup-panel]').forEach(function(button): void {
+        button.addEventListener('click', function(): void { closePanel(root); });
+      });
+      $<HTMLButtonElement>(root, '[data-open-math-steps]').addEventListener('click', function(event): void {
+        if (!(event.currentTarget instanceof HTMLButtonElement)) return;
+        openPanel(root, event.currentTarget, 'math-steps');
+      });
+      $<HTMLButtonElement>(root, '[data-open-difficulty-help]').addEventListener('click', function(event): void {
+        if (!(event.currentTarget instanceof HTMLButtonElement)) return;
+        openPanel(root, event.currentTarget, 'difficulty-help');
+      });
+      $<HTMLButtonElement>(root, '[data-next-to-pond]').addEventListener('click', function(): void {
+        setupState = advanceModeSelectToPond(setupState);
+        renderSetup(root);
+        focusButton(root.querySelector<HTMLButtonElement>('.pond-choice'));
+      });
+      root.querySelectorAll<HTMLButtonElement>('.pond-choice').forEach(function(button): void {
+        button.addEventListener('click', function(): void {
+          const difficulty = button.dataset.difficulty;
+          if (!isMathDifficulty(difficulty)) return;
+          setupState = chooseModeSelectDifficulty(setupState, difficulty);
+          renderSetup(root);
+          focusButton(button);
+        });
+      });
+      const playButton = $<HTMLButtonElement>(root, '[data-play-selected]');
+      playButton.addEventListener('click', function(): void {
+        if (isStartingGame) return;
+        const request = modeSelectGameRequest(
+          setupState,
+          selectedStartingLevel(Number($<HTMLOutputElement>(root, '#starting-level-value').value)),
+        );
+        if (!request) return;
+        isStartingGame = true;
+        playButton.disabled = true;
+        actions.startGame(request.mode, request.difficulty, request.startingLevel);
       });
       root.querySelectorAll<HTMLButtonElement>('[data-step-change]').forEach(function(button): void {
         button.addEventListener('click', function(): void {
@@ -317,27 +481,26 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
           refreshMathProgress(root, actions);
         });
       });
-      root.querySelectorAll<HTMLButtonElement>('.difficulty-choice').forEach(button => {
-        button.addEventListener('click', () => {
-          const mode = selectedOperations(root);
-          if (!mode) return;
-          if (!isMathDifficulty(button.dataset.difficulty)) return;
-          actions.startGame(mode, button.dataset.difficulty, Number($<HTMLOutputElement>(root, '#starting-level-value').value));
-        });
-      });
       root.querySelectorAll<HTMLButtonElement>('[data-level-change]').forEach(button => {
         button.addEventListener('click', function(): void {
           const output = $<HTMLOutputElement>(root, '#starting-level-value');
           output.value = String(selectedStartingLevel(Number(output.value) + Number(button.dataset.levelChange)));
         });
       });
-      $(root, '#back-to-main-btn').addEventListener('click', actions.goToMenu);
+      renderSetup(root);
     },
     onShow: function(root): void {
+      setupState = createModeSelectSetupState();
+      panelTrigger = undefined;
+      isStartingGame = false;
       resetModeSelect(root, actions.isLevelSelectionUnlocked());
       refreshMathProgress(root, actions);
+      renderSetup(root);
     },
-    onCancel: actions.goToMenu,
+    onCancel: function(): void {
+      if (activeRoot) handleBack(activeRoot);
+      else actions.goToMenu();
+    },
   };
 }
 
