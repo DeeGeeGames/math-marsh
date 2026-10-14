@@ -38,7 +38,7 @@ const createWorld = async function(): Promise<Fixture> {
 	};
 	world.setResource('mathSession', mathSession);
 	world.setResource('mathProgress', progress);
-	world.setResource('mathDifficulty', 'easy');
+	world.setResource('mathDifficulty', 'expert');
 	world.setResource('gameMode', ['add']);
 	world.setResource('remainingTimeSeconds', 42);
 	world.setResource('operandOnboardingCompletion', 'pending');
@@ -58,18 +58,18 @@ const createWorld = async function(): Promise<Fixture> {
 
 describe('adaptive level tutorial transitions', () => {
 	for (const action of ['completed', 'skipped'] as const) {
-		test(`${action} operands lesson chains into mixed lesson before resuming the same run`, async () => {
+		test(`${action} operands lesson resumes the same run before the later mixed lesson`, async () => {
 			const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
 			const { world, player, mathSession, progress } = await createWorld();
 			try {
 				const position = { ...player.components.position };
 				const path = { ...player.components.pathFollower, breadcrumbs: [...player.components.pathFollower.breadcrumbs] };
-				goToNextLevel(world, 3, 'easy', 'pending', 'pending');
+				goToNextLevel(world, 2, 'expert', 'pending', 'pending');
 				await new Promise<void>(resolve => setTimeout(resolve, 0));
 				const operands = world.getResource('gameplayOnboardingSession');
 				if (!operands.active) throw new Error('Expected active operands lesson');
 				expect(operands.kind).toBe('operands');
-				expect(operands.returnTo).toEqual({ kind: 'level', level: 3 });
+				expect(operands.returnTo).toEqual({ kind: 'level', level: 2 });
 				world.mutateComponent(player.id, 'position', state => { state.x = 900; });
 				world.mutateComponent(player.id, 'pathFollower', state => { state.breadcrumbs = []; });
 				world.setResource('remainingTimeSeconds', 999);
@@ -79,6 +79,10 @@ describe('adaptive level tutorial transitions', () => {
 				} else {
 					skipGameplayOnboarding(world);
 				}
+				await new Promise<void>(resolve => setTimeout(resolve, 0));
+				expect(world.getCurrentScreen()).toBe('playing');
+				expect(player.components.position).toEqual(position);
+				goToNextLevel(world, 3, 'expert', action, 'pending');
 				await new Promise<void>(resolve => setTimeout(resolve, 0));
 				const mixed = world.getResource('gameplayOnboardingSession');
 				if (!mixed.active) throw new Error('Expected active mixed lesson');

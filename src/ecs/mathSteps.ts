@@ -130,7 +130,7 @@ export const mathQuestionBudgetSeconds = function(
 	const ranges = mathOperandRanges(step, operation);
 	const base = GAME_CONFIG.MATH_PROGRESSION.BASE_SECONDS_PER_CORRECT[operation][promptKind];
 	const perOperandStep = GAME_CONFIG.MATH_PROGRESSION.SECONDS_PER_OPERAND_ABOVE_THREE;
-	if (!definition?.assessmentFormats.includes(promptKind)
+	if (!definition
 		|| !ranges
 		|| !Number.isFinite(base)
 		|| base <= 0
@@ -148,10 +148,7 @@ export const mathStepLabel = function(step: number, operation: EquationOperation
   if (!definition) return 'Math skill unavailable';
   const name = { add: 'Addition', subtract: 'Subtraction', multiply: 'Multiplication', divide: 'Division' }[operation];
   const maximum = definition.operandMaxima[operation];
-  const format = definition.assessmentFormats.includes('selectOperandAndResult')
-    ? 'mixed blanks'
-    : definition.assessmentFormats.includes('selectOperands') ? 'answer and number pairs' : 'find the answer';
   const range = operation === 'multiply' ? `factors 1–${maximum}`
     : operation === 'divide' ? `dividends up to ${maximum}` : `numbers 1–${maximum}`;
-  return `${name} · ${range} · ${format}`;
+  return `${name} · ${range}`;
 };

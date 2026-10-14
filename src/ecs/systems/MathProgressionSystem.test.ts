@@ -153,16 +153,20 @@ describe('math progression system', () => {
 		} finally { await world.dispose(); }
 	});
 
-	test('routes a completed assessment through the existing board intermission', async () => {
+	test('keeps the current equation and board when an assessment advances', async () => {
 		const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
 		const world = await createWorld(true);
 		try {
 			setAssessment(world, 'add', fastAssessment());
+			const mode = world.getResource('equationMode');
 			world.update(0);
 			await Promise.resolve();
 			expect(world.getResource('mathProgress').add.currentStep).toBe(3);
 			expect(world.getResource('mathRoundCompletedThisBoard')).toBe(true);
-			expect(world.getCurrentScreen()).toBe('levelComplete');
+			expect(world.getCurrentScreen()).toBe('playing');
+			expect(world.getResource('equationMode').operandRanges).toEqual(mode.operandRanges);
+			expect(world.getResource('equationMode').promptKind).toBe(mode.promptKind);
+			expect(world.getResource('mathSession')?.tracks.add.boardStep).toBe(1);
 			const summary = world.getResource('mathRoundSummary');
 			world.update(5);
 			expect(world.getResource('mathRoundSummary')).toBe(summary);

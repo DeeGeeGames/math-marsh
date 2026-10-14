@@ -43,13 +43,13 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
       } = resources;
       const level = tutorialHudLabel(gameplayOnboardingSession)
         ?? (mathSession
-          ? `Level ${currentLevel} · ${mathDifficulty} - ${mathStepLabel(mathSession.tracks[equationMode.operation].step, equationMode.operation)}`
+          ? `Level ${currentLevel} · ${mathDifficulty} - ${mathStepLabel(mathSession.tracks[equationMode.operation].boardStep, equationMode.operation)}`
           : gameplayLevelLabel(gameMode, mathDifficulty, currentLevel));
       const outcome = mathRoundSummary?.outcome;
       const notice = !gameplayOnboardingSession.active && mathRoundSummary && outcome
         ? outcome.kind === 'advanced'
           ? `${operationLabels[mathRoundSummary.operation]}: ${outcome.accelerated ? 'fast and accurate! ' : ''}${outcome.advanceBy > 0
-            ? `Advanced ${outcome.advanceBy} step${outcome.advanceBy === 1 ? '' : 's'} to ${outcome.progress.currentStep}.`
+            ? `Advanced ${outcome.advanceBy} step${outcome.advanceBy === 1 ? '' : 's'} to ${outcome.progress.currentStep}; applies next board.`
             : 'Final step reached.'}${mathRoundSummary.unlockedSceneIds.length > 0 ? ' New scene unlocked!' : ''}`
           : outcome.kind === 'stayed' ? `${operationLabels[mathRoundSummary.operation]}: keep practicing this step. Your unlocks are kept.` : ''
         : '';

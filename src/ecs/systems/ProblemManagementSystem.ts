@@ -118,7 +118,6 @@ export function addProblemManagementSystemToEngine(
           nextEquationMode,
           resources.board,
           resources.enemySpawn.roster.length,
-          mathSession,
         );
       }
       cleanupConsumedProblems(ecs, queries.mathProblems, resources.board);
@@ -204,7 +203,7 @@ function equationStateFromBoard(
   const state = currentState.level === currentLevel
     ? currentState
     : mathSession
-      ? equationModeForMathSession(mathSession, gameMode, currentLevel)
+      ? equationModeForMathSession(mathSession, gameMode, currentLevel, 0, mathDifficulty)
       : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
   if (state.feedback?.kind === 'correct') return currentState;
@@ -292,7 +291,6 @@ function checkEquationLevelCompletion(
   equationMode: Resources['equationMode'],
   board: Resources['board'],
   enemyCount: number,
-  mathSession: Resources['mathSession'],
 ): void {
   if (equationMode.feedback?.kind === 'correct') return;
 
@@ -302,9 +300,6 @@ function checkEquationLevelCompletion(
     && equationMode.target === null;
   const clearTarget = levelClearTarget(board, enemyCount, equationMode.operandsRequired);
   const shouldAdvance = equationMode.clearedThisLevel >= clearTarget
-    || (mathSession && ecs.tryGetResource('mathRoundCompletedThisBoard') === true)
-    || (mathSession && ecs.getResource('gameMode').every(operation => mathSession.tracks[operation].step <= 3)
-      && (ecs.tryGetResource('equationsSolvedThisBoard') ?? 0) >= GAME_CONFIG.MATH_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS)
     || (mathProblems.length > 0 && activeCount < equationMode.operandsRequired)
     || noPromptAvailable;
 

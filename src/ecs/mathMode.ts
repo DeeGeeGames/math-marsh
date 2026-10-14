@@ -1,17 +1,17 @@
-import type { EquationModeState, EquationOperation, GameMode } from './types';
+import type { EquationModeState, EquationOperation, GameMode, MathDifficulty } from './types';
 import { createMathAssessment, type MathAssessmentState } from './mathAssessment';
 import type { MathAssessment, MathProgressionResult } from './mathProgression';
 import { SKITS, type SkitId } from './skitSequence';
 import type { SavedMathProgress } from './mathProgressStore';
-import { createMathEquationModeState } from './mathSteps';
-import { mathStepForNumber } from './mathSteps';
-import { operationForMode } from '../math/equations';
-import type { GameplayOnboardingCompletion, GameplayOnboardingKind } from '../onboarding/gameplayOnboarding';
+import { mathOperandRanges } from './mathSteps';
+import { createEquationModeState } from '../math/equations';
+import { shouldStartOperandTutorial, shouldStartOperandAndResultTutorial, type GameplayOnboardingCompletion, type GameplayOnboardingKind } from '../onboarding/gameplayOnboarding';
 
 export const MATH_SCENE_UNLOCK_STEPS = [3, 6, 9, 11] as const;
 
 export type MathTrackSession = Readonly<{
   step: number;
+  boardStep: number;
   accelerationStreak: number;
   assessment: MathAssessmentState;
 }>;
@@ -34,6 +34,7 @@ export const createMathSession = function(
   const track = function(operation: EquationOperation): MathTrackSession {
     return {
       step: progress[operation].currentStep,
+      boardStep: progress[operation].currentStep,
       accelerationStreak: 0,
       assessment: createMathAssessment(),
     };
@@ -43,17 +44,25 @@ export const createMathSession = function(
   };
 };
 
+/** Snapshot every operation's number range once when a board spawns. */
+export const mathSessionForBoard = function(session: MathSession): MathSession {
+  const track = function(operation: EquationOperation): MathTrackSession {
+    return { ...session.tracks[operation], boardStep: session.tracks[operation].step };
+  };
+  return { tracks: { add: track('add'), subtract: track('subtract'), multiply: track('multiply'), divide: track('divide') } };
+};
+
 export const equationModeForMathSession = function(
   session: MathSession,
   mode: GameMode,
   level: number,
   clearedThisLevel = 0,
+  difficulty: MathDifficulty = 'easy',
 ): EquationModeState {
-  const operation = operationForMode(mode);
-  const track = session.tracks[operation];
-  const state = createMathEquationModeState(track.step, operation, track.assessment.correctAnswers, clearedThisLevel);
-  if (!state) throw new Error('Cannot generate an equation for an invalid math step');
-  return { ...state, level };
+  const state = createEquationModeState(level, difficulty, mode, clearedThisLevel);
+  const operandRanges = mathOperandRanges(session.tracks[state.operation].boardStep, state.operation);
+  if (!operandRanges) throw new Error('Cannot generate an equation for an invalid math step');
+  return { ...state, operandRanges };
 };
 
 export const mathSceneIdsForUnlockedSteps = function(
@@ -65,14 +74,13 @@ export const mathSceneIdsForUnlockedSteps = function(
 	});
 };
 
-export const mathTutorialForMode = function(
-  session: MathSession,
-  mode: GameMode,
+export const mathTutorialForLevel = function(
+  level: number,
+  difficulty: MathDifficulty,
   operands: GameplayOnboardingCompletion,
   mixed: GameplayOnboardingCompletion,
 ): GameplayOnboardingKind | undefined {
-  const formats = mode.flatMap(operation => mathStepForNumber(session.tracks[operation].step)?.assessmentFormats ?? []);
-  if (operands === 'pending' && formats.includes('selectOperands')) return 'operands';
-  if (mixed === 'pending' && formats.includes('selectOperandAndResult')) return 'operandAndResult';
+  if (shouldStartOperandTutorial(level, difficulty, operands)) return 'operands';
+  if (shouldStartOperandAndResultTutorial(level, difficulty, mixed)) return 'operandAndResult';
   return undefined;
 };
