@@ -721,17 +721,22 @@
 }
 
 .mode-options {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(10px, 1.2vw, 18px);
 }
 
 .mode-options .mode-card {
+  display: flex;
+  flex-direction: column;
   justify-content: flex-start;
+  min-width: 0;
   min-height: clamp(112px, 16vh, 166px);
   padding: clamp(12px, 1.5vw, 22px);
   border: 2px solid var(--reed-border);
   border-radius: 20px;
   text-align: left;
+  cursor: pointer;
   filter: none;
 }
 
