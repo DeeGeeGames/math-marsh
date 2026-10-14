@@ -2,8 +2,7 @@ import type { EquationOperation, GameMode, MathDifficulty } from '../../ecs/type
 import type { BoardPoint } from '../../ecs/lilyPads';
 import type { SkitId } from '../../ecs/skitSequence';
 import type { SkitProgress } from '../../ecs/skitProgress';
-import type { PracticeRoundSummary } from '../../ecs/practiceMode';
-import type { PracticeProgressPersistence, SavedPracticeProgress } from '../../ecs/practiceProgressStore';
+import type { MathProgressPersistence, SavedMathProgress } from '../../ecs/mathProgressStore';
 
 export type ScreenSpecActions = {
   startGame: (mode: GameMode, difficulty: MathDifficulty, level?: number) => void;
@@ -16,11 +15,9 @@ export type ScreenSpecActions = {
   returnToPreviousScreen: () => void;
   goToMenu: () => void;
   openModeSelect: () => void;
-  openPracticeSelect: () => void;
-  startPractice: (operation: EquationOperation) => void;
-  getPracticeProgress: () => SavedPracticeProgress;
-  getPracticeProgressPersistence: () => PracticeProgressPersistence;
-  getPracticeRoundSummary: () => PracticeRoundSummary | null;
+  selectMathStep: (operation: EquationOperation, step: number) => void;
+  getMathProgress: () => SavedMathProgress;
+  getMathProgressPersistence: () => MathProgressPersistence;
   openHowToPlay: () => void;
   openSkitGallery: () => void;
   replaySkit: (id: SkitId) => void;

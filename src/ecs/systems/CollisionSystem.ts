@@ -59,7 +59,7 @@ export function addCollisionSystemToEngine(systems: GameSystemRegistrar): void {
     .addQuery('enemies', enemyWithColliderQuery)
     .addQuery('spiderWebs', spiderWebWithRenderableQuery)
     .addQuery('frogTongues', frogTongueQuery)
-    .withResources(['inputState', 'controllerSelection', 'equationMode', 'gameMode', 'mathDifficulty', 'practiceSession', 'tapEat', 'gameplayClock', 'equationsSolved'])
+    .withResources(['inputState', 'controllerSelection', 'equationMode', 'gameMode', 'mathDifficulty', 'mathSession', 'tapEat', 'gameplayClock', 'equationsSolved'])
     .setProcess(({ queries, ecs, resources }) => {
       const tapEat = resources.tapEat;
       if (tapEat) ecs.setResource('tapEat', null);

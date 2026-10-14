@@ -81,7 +81,7 @@ describe('equation generation', () => {
     expect(modes.every(validOperandSelection)).toBe(true);
   });
 
-  test('practice operand prompts ignore board values outside the configured ranges', () => {
+  test('math operand prompts ignore board values outside the configured ranges', () => {
     const state = {
       ...createEquationModeState(4, 'medium', ['add']),
       operandRanges: {

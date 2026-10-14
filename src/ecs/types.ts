@@ -10,8 +10,8 @@ import type {
   GameplayOnboardingReturn,
   GameplayOnboardingSession,
 } from '../onboarding/gameplayOnboarding';
-import type { PracticeRoundSummary, PracticeSession } from './practiceMode';
-import type { PracticeProgressPersistence, SavedPracticeProgress } from './practiceProgressStore';
+import type { MathRoundSummary, MathSession } from './mathMode';
+import type { MathProgressPersistence, SavedMathProgress } from './mathProgressStore';
 
 export type GameAction = 'up' | 'down' | 'left' | 'right' | 'eat' | 'back' | 'skip' | 'pause';
 
@@ -171,8 +171,6 @@ export type LevelCompleteScreenState = LevelCompleteScreenConfig & {
 export type SettingsReturnScreen =
 	| 'menu'
 	| 'modeSelect'
-	| 'practiceSelect'
-	| 'practiceResult'
 	| 'howToPlay'
 	| 'playing'
 	| 'tutorial'
@@ -228,12 +226,12 @@ export interface EquationModeState extends BaseEquationModeState {
 
 export interface Resources {
   skitProgress: import('./skitProgress').SkitProgress;
-  practiceProgress: SavedPracticeProgress;
-  practiceProgressPersistence: PracticeProgressPersistence;
-  practiceSession: PracticeSession | null;
-  practiceRoundSummary: PracticeRoundSummary | null;
-  practiceAccelerationStreak: number;
-  practiceLastOperation: EquationOperation | null;
+  mathProgress: SavedMathProgress;
+  mathProgressPersistence: MathProgressPersistence;
+  mathSession: MathSession | null;
+  mathRoundSummary: MathRoundSummary | null;
+  equationsSolvedThisBoard: number;
+  mathRoundCompletedThisBoard: boolean;
   controllerSelection: import('./controllerSelection').ControllerSelection;
   gameMode: GameMode;
   mathDifficulty: MathDifficulty;

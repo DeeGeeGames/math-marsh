@@ -2,11 +2,24 @@ import { describe, expect, test } from 'bun:test';
 import {
   ENEMY_ROSTER_CONFIG,
   enemyRosterForLevel,
+  arcadeEnemyRosterForLevel,
   validateEnemyRosterConfig,
   type RandomEnemyRosterConfig,
 } from './enemyRosters';
 
 describe('enemy rosters', () => {
+  test('arcade difficulty keeps enemy pressure bounded without losing roster variety', () => {
+    expect([1, 2, 3].map(level => arcadeEnemyRosterForLevel(level, 'easy')))
+      .toEqual([['lizard'], ['spider'], ['frog']]);
+    (['easy', 'medium', 'expert'] as const).forEach(difficulty => {
+      const expectedCount = { easy: 1, medium: 3, expert: 4 }[difficulty];
+      [1, 4, 7, 11, 50].forEach(level => {
+        expect(arcadeEnemyRosterForLevel(level, difficulty)).toHaveLength(expectedCount);
+      });
+    });
+    expect(arcadeEnemyRosterForLevel(6, 'medium')).toEqual(['lizard', 'spider', 'frog']);
+    expect(arcadeEnemyRosterForLevel(6, 'expert')).toEqual(['lizard', 'spider', 'spider', 'frog']);
+  });
   test('Easy repeats a single lizard, spider, frog across all levels', () => {
     expect(Array.from({ length: 9 }, (_, index) => enemyRosterForLevel(index + 1, 'easy'))).toEqual([
       ['lizard'], ['spider'], ['frog'], ['lizard'], ['spider'], ['frog'], ['lizard'], ['spider'], ['frog'],

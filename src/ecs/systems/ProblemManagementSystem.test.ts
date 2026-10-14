@@ -19,8 +19,9 @@ import { selectableEquationProblems } from '../selectableEquationProblems';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { startEnemyGridMovement } from './EnemySpriteSystem';
-import { createPracticeSession } from '../practiceMode';
-import { createPracticeEquationModeState } from '../practiceSteps';
+import { createMathSession } from '../mathMode';
+import { initialSavedMathProgress } from '../mathProgressStore';
+import { createMathEquationModeState } from '../mathSteps';
 
 let restoreSound: (() => void) | undefined;
 beforeEach(function(): void {
@@ -519,19 +520,46 @@ describe('premature completion regressions', () => {
 	});
 });
 
-describe('practice answer assessment tracking', () => {
-	test('repairs prior result pads before an in-range practice operand prompt', async () => {
+describe('math answer assessment tracking', () => {
+	test('credits only the answered operation in a mixed-operation game', async () => {
+		const world = await createProgressionWorld(1, []);
+		world.setResource('equationsSolved', 0);
+		world.setResource('equationsSolvedThisBoard', 0);
+		try {
+			const player = world.getSingleton(['position', 'player', 'pathFollower', 'collider', 'timers']);
+			const session = createMathSession(initialSavedMathProgress());
+			world.setResource('mathSession', {
+				tracks: { ...session.tracks, add: { ...session.tracks.add, assessment: {
+					correctAnswers: 3, incorrectAnswers: 1, activeSeconds: 25, expectedSecondsTotal: 30,
+				} } },
+			});
+			const baseMode = createMathEquationModeState(1, 'multiply', 0);
+			if (!baseMode) throw new Error('Missing multiplication mode');
+			const mode = { ...baseMode, target: 3, promptValues: [1, 3] };
+			world.setResource('equationMode', mode);
+			const problems = testMathProblems(world);
+			const answer = problems.find(problem => problem.components.mathProblem.value === 3);
+			if (!answer) throw new Error('Missing multiplication answer');
+			handleEquationProblemSelection(world, player, answer, problems, {
+				equationMode: mode, gameMode: ['add', 'multiply'], mathDifficulty: 'expert',
+				mathSession: world.getResource('mathSession'),
+			});
+			expect(world.getResource('mathSession')?.tracks.multiply.assessment.correctAnswers).toBe(1);
+			expect(world.getResource('mathSession')?.tracks.multiply.assessment.expectedSecondsTotal).toBeGreaterThan(0);
+			expect(world.getResource('mathSession')?.tracks.add.assessment).toEqual({
+				correctAnswers: 3, incorrectAnswers: 1, activeSeconds: 25, expectedSecondsTotal: 30,
+			});
+		} finally { await world.dispose(); }
+	});
+	test('repairs prior result pads before an in-range math operand prompt', async () => {
 		const world = await createProgressionWorld(1, []);
 		try {
 			world.setResource('currentLevel', 4);
-			world.setResource('practiceSession', {
-				...createPracticeSession('add', 4),
-				assessment: {
-					correctAnswers: 3,
-					incorrectAnswers: 0,
-					activeSeconds: 12,
-					expectedSecondsTotal: 30,
-				},
+			const session = createMathSession({ ...initialSavedMathProgress(), add: { currentStep: 4, highestUnlockedStep: 4 } });
+			world.setResource('mathSession', {
+				tracks: { ...session.tracks, add: { ...session.tracks.add, assessment: {
+					correctAnswers: 3, incorrectAnswers: 0, activeSeconds: 12, expectedSecondsTotal: 30,
+				} } },
 			});
 			world.getEntitiesWithQuery(['mathProblem']).forEach((problem, index) => {
 				world.mutateComponent(problem.id, 'mathProblem', value => { value.value = index % 2 === 0 ? 8 : 10; });
@@ -552,8 +580,8 @@ describe('practice answer assessment tracking', () => {
 		const world = await createProgressionWorld(7, []);
 		try {
 			const player = world.getSingleton(['position', 'player', 'pathFollower', 'collider', 'timers']);
-			const session = createPracticeSession('add', 7);
-			world.setResource('practiceSession', session);
+			const session = createMathSession({ ...initialSavedMathProgress(), add: { currentStep: 7, highestUnlockedStep: 7 } });
+			world.setResource('mathSession', session);
 			world.setResource('gameMode', ['add']);
 			world.setResource('mathDifficulty', 'easy');
 			world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
@@ -562,51 +590,51 @@ describe('practice answer assessment tracking', () => {
 			const values = [3, 4, 5];
 			problems.slice(0, values.length).forEach((problem, index) => {
 				const value = values[index];
-				if (value === undefined) throw new Error('Missing practice answer value');
+				if (value === undefined) throw new Error('Missing math answer value');
 				world.mutateComponent(problem.id, 'mathProblem', data => { data.value = value; });
 			});
 
-			const resultMode = createPracticeEquationModeState(7, 'add', 0);
-			if (!resultMode) throw new Error('Missing practice result prompt');
+			const resultMode = createMathEquationModeState(7, 'add', 0);
+			if (!resultMode) throw new Error('Missing math result prompt');
 			const firstAnswer = problems.find(problem => problem.components.mathProblem.value === 3);
-			if (!firstAnswer) throw new Error('Missing first practice answer');
+			if (!firstAnswer) throw new Error('Missing first math answer');
 			const resultState = { ...resultMode, target: 3, promptValues: [1, 2] };
 			world.setResource('equationMode', resultState);
 			handleEquationProblemSelection(world, player, firstAnswer, problems, {
 				equationMode: resultState,
 				gameMode: ['add'],
 				mathDifficulty: 'easy',
-				practiceSession: session,
+				mathSession: session,
 			});
-			expect(world.getResource('practiceSession')?.assessment.correctAnswers).toBe(1);
+			expect(world.getResource('mathSession')?.tracks.add.assessment.correctAnswers).toBe(1);
 
-			const updatedSession = world.getResource('practiceSession');
-			if (!updatedSession) throw new Error('Missing updated practice assessment');
-			const operandsMode = createPracticeEquationModeState(7, 'add', 1);
-			if (!operandsMode) throw new Error('Missing practice operands prompt');
+			const updatedSession = world.getResource('mathSession');
+			if (!updatedSession) throw new Error('Missing updated math assessment');
+			const operandsMode = createMathEquationModeState(7, 'add', 1);
+			if (!operandsMode) throw new Error('Missing math operands prompt');
 			const operandProblems = problems.filter(problem => problem.components.mathProblem.value === 4 || problem.components.mathProblem.value === 5);
 			const stateForOperands = { ...operandsMode, target: 9, promptValues: [4, 5] };
 			world.setResource('equationMode', stateForOperands);
 			const [left, right] = operandProblems;
-			if (!left || !right) throw new Error('Missing two-pad practice answer');
+			if (!left || !right) throw new Error('Missing two-pad math answer');
 			handleEquationProblemSelection(world, player, left, problems, {
 				equationMode: stateForOperands,
 				gameMode: ['add'],
 				mathDifficulty: 'easy',
-				practiceSession: updatedSession,
+				mathSession: updatedSession,
 			});
 			const partialSelection = world.getResource('equationMode');
-			expect(world.getResource('practiceSession')?.assessment.correctAnswers).toBe(1);
+			expect(world.getResource('mathSession')?.tracks.add.assessment.correctAnswers).toBe(1);
 			handleEquationProblemSelection(world, player, right, problems, {
 				equationMode: partialSelection,
 				gameMode: ['add'],
 				mathDifficulty: 'easy',
-				practiceSession: world.getResource('practiceSession'),
+				mathSession: world.getResource('mathSession'),
 			});
-			expect(world.getResource('practiceSession')?.assessment.correctAnswers).toBe(2);
+			expect(world.getResource('mathSession')?.tracks.add.assessment.correctAnswers).toBe(2);
 
-			const wrongModeBase = createPracticeEquationModeState(7, 'add', 2);
-			if (!wrongModeBase) throw new Error('Missing practice mixed prompt');
+			const wrongModeBase = createMathEquationModeState(7, 'add', 2);
+			if (!wrongModeBase) throw new Error('Missing math mixed prompt');
 			const wrongMode = {
 				...wrongModeBase,
 				promptKind: 'selectOperandAndResult' as const,
@@ -616,22 +644,22 @@ describe('practice answer assessment tracking', () => {
 			};
 			const wrongProblems = problems.filter(problem => !problem.components.mathProblem.consumed);
 			const [wrongLeft, wrongRight] = wrongProblems;
-			if (!wrongLeft || !wrongRight) throw new Error('Missing incorrect practice pair');
+			if (!wrongLeft || !wrongRight) throw new Error('Missing incorrect math pair');
 			world.setResource('equationMode', wrongMode);
 			handleEquationProblemSelection(world, player, wrongLeft, wrongProblems, {
 				equationMode: wrongMode,
 				gameMode: ['add'],
 				mathDifficulty: 'easy',
-				practiceSession: world.getResource('practiceSession'),
+				mathSession: world.getResource('mathSession'),
 			});
-			expect(world.getResource('practiceSession')?.assessment.incorrectAnswers).toBe(0);
+			expect(world.getResource('mathSession')?.tracks.add.assessment.incorrectAnswers).toBe(0);
 			handleEquationProblemSelection(world, player, wrongRight, wrongProblems, {
 				equationMode: world.getResource('equationMode'),
 				gameMode: ['add'],
 				mathDifficulty: 'easy',
-				practiceSession: world.getResource('practiceSession'),
+				mathSession: world.getResource('mathSession'),
 			});
-			expect(world.getResource('practiceSession')?.assessment).toMatchObject({
+			expect(world.getResource('mathSession')?.tracks.add.assessment).toMatchObject({
 				correctAnswers: 2,
 				incorrectAnswers: 1,
 			});

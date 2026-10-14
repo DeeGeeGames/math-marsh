@@ -1,5 +1,10 @@
 import { GAME_CONFIG } from '../config';
 import { AI_CONFIG } from './systemConfigs';
+import type { MathDifficulty } from './types';
+
+export const enemyChallengeLevelForDifficulty = function(difficulty: MathDifficulty): number {
+  return GAME_CONFIG.MATH_PROGRESSION.ENEMY_CHALLENGE_LEVEL[difficulty];
+};
 
 const SPAWN_INTERVAL_REDUCTION_PER_LEVEL_MS = 150;
 const MOVE_INTERVAL_REDUCTION_PER_LEVEL_MS = 170;

@@ -6,11 +6,13 @@ import flyMoveToward from '../../assets/sprites/fly/fly-move-toward.png';
 import frogHopToward from '../../assets/sprites/frog/frog-hop-toward.png';
 import lizardWalkToward from '../../assets/sprites/lizard/lizard-walk-toward.png';
 import spiderWalkToward from '../../assets/sprites/spider/spider-walk-toward.png';
-import type { GameMode } from '../../ecs/types';
+import type { EquationOperation, GameMode } from '../../ecs/types';
+import { MATH_FINAL_STEP, mathStepLabel } from '../../ecs/mathSteps';
 import { $ } from '../dom';
 import {
   isEquationOperation,
   isMathDifficulty,
+  operationLabels,
   selectedOperationsLabel,
 } from '../labels';
 import type { ScreenSpec } from '../screenTypes';
@@ -21,6 +23,8 @@ import {
   OVERLAY_BASE,
   type ScreenSpecActions,
 } from './shared';
+
+const MATH_OPERATIONS: readonly EquationOperation[] = ['add', 'subtract', 'multiply', 'divide'];
 
 const HOW_TO_PLAY_STEPS = [
   {
@@ -74,6 +78,7 @@ export function resetModeSelect(root: HTMLElement, levelSelectionUnlocked = fals
   });
   const difficultySelect = root.querySelector<HTMLElement>('#difficulty-select');
   difficultySelect?.classList.add('hidden');
+  root.querySelector<HTMLElement>('#math-progress-select')?.classList.add('hidden');
 }
 
 function selectedOperations(root: HTMLElement): GameMode | undefined {
@@ -87,6 +92,10 @@ function syncOperationSelection(root: HTMLElement): void {
   const mode = selectedOperations(root);
   const difficultySelect = $<HTMLElement>(root, '#difficulty-select');
   difficultySelect.classList.toggle('hidden', !mode);
+  $(root, '#math-progress-select').classList.toggle('hidden', !mode);
+  MATH_OPERATIONS.forEach(function(operation): void {
+    $(root, `[data-step-panel="${operation}"]`).classList.toggle('hidden', !mode?.includes(operation));
+  });
   if (!mode) return;
   $<HTMLElement>(root, '#selected-mode-label').textContent = selectedOperationsLabel(mode);
 }
@@ -94,6 +103,32 @@ function syncOperationSelection(root: HTMLElement): void {
 function setOperationSelected(card: HTMLElement, selected: boolean): void {
   card.setAttribute('aria-pressed', String(selected));
 }
+
+const refreshMathProgress = function(root: HTMLElement, actions: ScreenSpecActions): void {
+  const progress = actions.getMathProgress();
+  MATH_OPERATIONS.forEach(function(operation): void {
+    const track = progress[operation];
+    $(root, `[data-progress-for="${operation}"]`).textContent = `Step ${track.currentStep} · Unlocked through ${track.highestUnlockedStep}`;
+    $(root, `[data-skill-for="${operation}"]`).textContent = mathStepLabel(track.currentStep, operation);
+    $(root, `[data-step-for="${operation}"]`).textContent = `Step ${track.currentStep}`;
+    $(root, `[data-unlocked-for="${operation}"]`).textContent = `Unlocked through Step ${track.highestUnlockedStep} of ${MATH_FINAL_STEP}`;
+    root.querySelectorAll<HTMLButtonElement>(`[data-step-operation="${operation}"]`).forEach(function(button): void {
+      const nextStep = track.currentStep + Number(button.dataset.stepChange);
+      button.setAttribute('aria-disabled', String(nextStep < 1 || nextStep > track.highestUnlockedStep));
+    });
+    root.querySelectorAll<HTMLElement>(`[data-milestone-operation="${operation}"]`).forEach(function(milestone): void {
+      const step = Number(milestone.dataset.milestoneStep);
+      const state = step === track.currentStep ? 'current' : step <= track.highestUnlockedStep ? 'unlocked' : 'locked';
+      milestone.dataset.state = state;
+      milestone.setAttribute('aria-label', `Step ${step}: ${state}`);
+      if (state === 'current') milestone.setAttribute('aria-current', 'step');
+      else milestone.removeAttribute('aria-current');
+    });
+  });
+  $(root, '#math-save-status').textContent = actions.getMathProgressPersistence() === 'persistent'
+    ? 'Math progress is saved on this device.'
+    : 'Math progress lasts for this session only. Device saving is unavailable.';
+};
 
 export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
   return {
@@ -109,9 +144,6 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
           <div class="menu-actions mt-5 sm:mt-7">
             <button @click=${actions.openModeSelect} class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
               Start Game
-            </button>
-            <button @click=${actions.openPracticeSelect} class="btn-primary menu-primary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
-              Practice
             </button>
             <div class="menu-secondary-actions">
               <button @click=${actions.openSkitGallery} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
@@ -178,8 +210,8 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
     html: `
       <div class="mode-select-shell">
         <header class="mode-select-heading">
-          <h1 class="pond-title text-gold drop-shadow-lg">Select Math Mode</h1>
-          <p>Choose one or more operations, then a difficulty to start.</p>
+          <h1 class="pond-title text-gold drop-shadow-lg">Choose Your Game</h1>
+          <p>Choose operations. Your math advances as you solve; difficulty sets the board and enemies.</p>
         </header>
 
         <div class="mode-options" role="group" aria-label="Math operations">
@@ -187,36 +219,68 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
             <span class="mode-symbol" aria-hidden="true">+</span>
             <span class="mode-name">Addition</span>
             <span class="mode-example">2 + 3 = ?</span>
+            <span class="mode-progress" data-progress-for="add"></span>
           </button>
           <button type="button" data-operation="subtract" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">−</span>
             <span class="mode-name">Subtraction</span>
             <span class="mode-example">7 − 3 = ?</span>
+            <span class="mode-progress" data-progress-for="subtract"></span>
           </button>
           <button type="button" data-operation="multiply" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">×</span>
             <span class="mode-name">Multiplication</span>
             <span class="mode-example">3 × 4 = ?</span>
+            <span class="mode-progress" data-progress-for="multiply"></span>
           </button>
           <button type="button" data-operation="divide" data-focusable aria-pressed="false" class="mode-card">
             <span class="mode-symbol" aria-hidden="true">÷</span>
             <span class="mode-name">Division</span>
             <span class="mode-example">12 ÷ 3 = ?</span>
+            <span class="mode-progress" data-progress-for="divide"></span>
           </button>
           <button id="back-to-main-btn" class="btn-secondary mode-menu-back">
             ← Back to Menu
           </button>
         </div>
 
+        <section id="math-progress-select" class="math-progress-panel hidden" aria-labelledby="math-progress-heading">
+          <h2 id="math-progress-heading">Your math path</h2>
+          <p>Continue at your saved step, or revisit any unlocked step. Your unlocks stay yours.</p>
+          <div class="math-step-panels">
+            ${MATH_OPERATIONS.map(function(operation): string {
+              return `
+                <section class="math-step-panel hidden" data-step-panel="${operation}" aria-label="${operationLabels[operation]} progression">
+                  <h3>${operationLabels[operation]}</h3>
+                  <p class="math-step-skill" data-skill-for="${operation}"></p>
+                  <div class="math-step-controls">
+                    <button type="button" class="btn-secondary" data-step-operation="${operation}" data-step-change="-1" aria-label="Earlier ${operationLabels[operation]} step">← Earlier</button>
+                    <output data-step-for="${operation}" aria-live="polite"></output>
+                    <button type="button" class="btn-secondary" data-step-operation="${operation}" data-step-change="1" aria-label="Later ${operationLabels[operation]} step">Later →</button>
+                  </div>
+                  <div class="math-milestones" role="list" aria-label="${operationLabels[operation]} unlocks">
+                    ${Array.from({ length: MATH_FINAL_STEP }, function(_, index): string {
+                      return `<span role="listitem" class="math-milestone" data-milestone-operation="${operation}" data-milestone-step="${index + 1}">${index + 1}</span>`;
+                    }).join('')}
+                  </div>
+                  <p class="math-highest-unlock" data-unlocked-for="${operation}"></p>
+                </section>
+              `;
+            }).join('')}
+          </div>
+          <p class="math-milestone-key">Gold: current · Green: unlocked · Dim: locked</p>
+        </section>
+        <p id="math-save-status" class="math-save-status" aria-live="polite"></p>
+
         <div id="starting-level-select" class="starting-level-panel hidden" role="group" aria-label="Starting level">
-          <span>Starting level</span>
+          <span>Starting arcade level</span>
           <button type="button" class="btn-secondary" data-level-change="-1" aria-label="Previous starting level">−</button>
           <output id="starting-level-value" aria-live="polite" aria-label="Starting level">1</output>
           <button type="button" class="btn-secondary" data-level-change="1" aria-label="Next starting level">+</button>
         </div>
 
         <div id="difficulty-select" class="difficulty-panel hidden mode-difficulty">
-          <h2><span id="selected-mode-label">Addition</span> · Choose difficulty</h2>
+          <h2><span id="selected-mode-label">Addition</span> · Choose arcade difficulty</h2>
           <div class="mode-difficulty-options">
             <button id="easy-difficulty" type="button" class="difficulty-choice easy" data-difficulty="easy">Easy · ${BOARD_SIZES.easy.width}×${BOARD_SIZES.easy.height}</button>
             <button type="button" class="difficulty-choice medium" data-difficulty="medium">Medium · ${BOARD_SIZES.medium.width}×${BOARD_SIZES.medium.height}</button>
@@ -240,6 +304,19 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
           syncOperationSelection(root);
         });
       });
+      root.querySelectorAll<HTMLButtonElement>('[data-step-change]').forEach(function(button): void {
+        button.addEventListener('click', function(): void {
+          const operation = button.dataset.stepOperation;
+          if (!isEquationOperation(operation)) return;
+          const track = actions.getMathProgress()[operation];
+          const change = Number(button.dataset.stepChange);
+          if (change !== -1 && change !== 1) return;
+          const step = track.currentStep + change;
+          if (step < 1 || step > track.highestUnlockedStep) return;
+          actions.selectMathStep(operation, step);
+          refreshMathProgress(root, actions);
+        });
+      });
       root.querySelectorAll<HTMLButtonElement>('.difficulty-choice').forEach(button => {
         button.addEventListener('click', () => {
           const mode = selectedOperations(root);
@@ -256,7 +333,10 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
       });
       $(root, '#back-to-main-btn').addEventListener('click', actions.goToMenu);
     },
-    onShow: function(root): void { resetModeSelect(root, actions.isLevelSelectionUnlocked()); },
+    onShow: function(root): void {
+      resetModeSelect(root, actions.isLevelSelectionUnlocked());
+      refreshMathProgress(root, actions);
+    },
     onCancel: actions.goToMenu,
   };
 }

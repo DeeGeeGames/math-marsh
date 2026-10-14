@@ -1,14 +1,14 @@
 import { GAME_CONFIG } from '../config';
-import type { PracticeAssessment } from './practiceProgression';
+import type { MathAssessment } from './mathProgression';
 
-export type PracticeAssessmentState = Readonly<{
+export type MathAssessmentState = Readonly<{
   correctAnswers: number;
   incorrectAnswers: number;
   activeSeconds: number | null;
   expectedSecondsTotal: number | null;
 }>;
 
-export const createPracticeAssessment = function(): PracticeAssessmentState {
+export const createMathAssessment = function(): MathAssessmentState {
   return {
     correctAnswers: 0,
     incorrectAnswers: 0,
@@ -17,7 +17,7 @@ export const createPracticeAssessment = function(): PracticeAssessmentState {
   };
 };
 
-const isValidAssessment = (assessment: PracticeAssessmentState): boolean =>
+const isValidAssessment = (assessment: MathAssessmentState): boolean =>
   Number.isSafeInteger(assessment.correctAnswers)
   && assessment.correctAnswers >= 0
   && Number.isSafeInteger(assessment.incorrectAnswers)
@@ -27,10 +27,10 @@ const isValidAssessment = (assessment: PracticeAssessmentState): boolean =>
   && (assessment.expectedSecondsTotal === null
     || (Number.isFinite(assessment.expectedSecondsTotal) && assessment.expectedSecondsTotal >= 0));
 
-export const addPracticeAssessmentTime = function(
-  assessment: PracticeAssessmentState,
+export const addMathAssessmentTime = function(
+  assessment: MathAssessmentState,
   deltaSeconds: number,
-): PracticeAssessmentState | undefined {
+): MathAssessmentState | undefined {
   if (!isValidAssessment(assessment)) return undefined;
   if (assessment.activeSeconds === null) return assessment;
   if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0) {
@@ -43,13 +43,13 @@ export const addPracticeAssessmentTime = function(
     : { ...assessment, activeSeconds: null };
 };
 
-export const recordPracticeAssessmentAnswer = function(
-  assessment: PracticeAssessmentState,
+export const recordMathAssessmentAnswer = function(
+  assessment: MathAssessmentState,
   correct: boolean,
   expectedSecondsPerCorrect?: number,
-): PracticeAssessmentState | undefined {
+): MathAssessmentState | undefined {
   if (!isValidAssessment(assessment)) return undefined;
-  if (assessment.correctAnswers >= GAME_CONFIG.PRACTICE_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS) {
+  if (assessment.correctAnswers >= GAME_CONFIG.MATH_PROGRESSION.MINIMUM_COMPLETED_EQUATIONS) {
     return assessment;
   }
 
@@ -75,9 +75,9 @@ export const recordPracticeAssessmentAnswer = function(
   };
 };
 
-export const practiceAssessmentForEvaluation = function(
-  assessment: PracticeAssessmentState,
-): PracticeAssessment | undefined {
+export const mathAssessmentForEvaluation = function(
+  assessment: MathAssessmentState,
+): MathAssessment | undefined {
   if (!isValidAssessment(assessment)) return undefined;
   const expectedSecondsPerCorrect = assessment.expectedSecondsTotal !== null
     && assessment.correctAnswers > 0

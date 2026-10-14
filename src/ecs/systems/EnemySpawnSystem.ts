@@ -19,7 +19,7 @@ import {
 } from '../queries';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { EnemyType } from '../../types/shared';
-import { enemySpawnIntervalForLevel } from '../enemyDifficulty';
+import { enemySpawnIntervalForLevel, enemyChallengeLevelForDifficulty } from '../enemyDifficulty';
 
 export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('enemySpawnSystem')
@@ -58,7 +58,8 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
       const nextIndex = index + 1;
       ecs.setResource('enemySpawn', { index: nextIndex, roster });
 
-      player.components.timers.enemySpawn = createTimer(enemySpawnIntervalForLevel(currentLevel) / 1000);
+      player.components.timers.enemySpawn = createTimer(enemySpawnIntervalForLevel(ecs.tryGetResource('mathSession')
+        ? enemyChallengeLevelForDifficulty(ecs.getResource('mathDifficulty')) : currentLevel) / 1000);
     });
 }
 

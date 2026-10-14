@@ -1,27 +1,27 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  evaluatePracticeProgressionRound,
-  type PracticeAssessment,
-  type PracticeProgress,
-} from './practiceProgression';
+  evaluateMathProgressionRound,
+  type MathAssessment,
+  type MathProgress,
+} from './mathProgression';
 
-const initialProgress: PracticeProgress = {
+const initialProgress: MathProgress = {
   currentStep: 1,
   highestUnlockedStep: 1,
   accelerationStreak: 0,
 };
 
-const qualifyingAssessment: PracticeAssessment = {
+const qualifyingAssessment: MathAssessment = {
   correctAnswers: 6,
   incorrectAnswers: 0,
   activeSeconds: 48,
   expectedSecondsPerCorrect: 10,
 };
 
-describe('adaptive practice progression', () => {
+describe('adaptive math progression', () => {
   test('requires six correct equations and leaves the acceleration streak unchanged below that minimum', () => {
     const progress = { ...initialProgress, accelerationStreak: 2 };
-    const result = evaluatePracticeProgressionRound(
+    const result = evaluateMathProgressionRound(
       progress,
       { ...qualifyingAssessment, correctAnswers: 5 },
       11,
@@ -35,7 +35,7 @@ describe('adaptive practice progression', () => {
   });
 
   test('advances one step at exactly 0.80 accuracy and resets acceleration', () => {
-    const result = evaluatePracticeProgressionRound(
+    const result = evaluateMathProgressionRound(
       { ...initialProgress, accelerationStreak: 2 },
       { ...qualifyingAssessment, correctAnswers: 8, incorrectAnswers: 2, activeSeconds: 100 },
       11,
@@ -52,7 +52,7 @@ describe('adaptive practice progression', () => {
   });
 
   test('accelerates at exactly 0.90 accuracy and a time ratio of 0.80', () => {
-    const result = evaluatePracticeProgressionRound(
+    const result = evaluateMathProgressionRound(
       initialProgress,
       {
         correctAnswers: 9,
@@ -75,11 +75,11 @@ describe('adaptive practice progression', () => {
   });
 
   test('advances 1 to 3 to 7 to 11 over three qualifying rounds', () => {
-    const first = evaluatePracticeProgressionRound(initialProgress, qualifyingAssessment, 11);
+    const first = evaluateMathProgressionRound(initialProgress, qualifyingAssessment, 11);
     if (first.kind !== 'advanced') throw new Error('Expected the first assessment to advance');
-    const second = evaluatePracticeProgressionRound(first.progress, qualifyingAssessment, 11);
+    const second = evaluateMathProgressionRound(first.progress, qualifyingAssessment, 11);
     if (second.kind !== 'advanced') throw new Error('Expected the second assessment to advance');
-    const third = evaluatePracticeProgressionRound(second.progress, qualifyingAssessment, 11);
+    const third = evaluateMathProgressionRound(second.progress, qualifyingAssessment, 11);
 
     expect([first.progress.currentStep, second.progress.currentStep, third.kind === 'advanced' ? third.progress.currentStep : null])
       .toEqual([3, 7, 11]);
@@ -88,12 +88,12 @@ describe('adaptive practice progression', () => {
   });
 
   test('resets acceleration after low accuracy or slower accurate play', () => {
-    const lowAccuracy = evaluatePracticeProgressionRound(
+    const lowAccuracy = evaluateMathProgressionRound(
       { ...initialProgress, accelerationStreak: 2 },
       { ...qualifyingAssessment, incorrectAnswers: 2 },
       11,
     );
-    const slowAccurate = evaluatePracticeProgressionRound(
+    const slowAccurate = evaluateMathProgressionRound(
       { ...initialProgress, accelerationStreak: 2 },
       { ...qualifyingAssessment, activeSeconds: 75 },
       11,
@@ -114,15 +114,15 @@ describe('adaptive practice progression', () => {
   });
 
   test('never accelerates with missing, zero, or invalid timing', () => {
-    const missingTime = evaluatePracticeProgressionRound(initialProgress, {
+    const missingTime = evaluateMathProgressionRound(initialProgress, {
       correctAnswers: 6,
       incorrectAnswers: 0,
     }, 11);
-    const zeroTime = evaluatePracticeProgressionRound(initialProgress, {
+    const zeroTime = evaluateMathProgressionRound(initialProgress, {
       ...qualifyingAssessment,
       activeSeconds: 0,
     }, 11);
-    const invalidBudget = evaluatePracticeProgressionRound(initialProgress, {
+    const invalidBudget = evaluateMathProgressionRound(initialProgress, {
       ...qualifyingAssessment,
       expectedSecondsPerCorrect: Number.NaN,
     }, 11);
@@ -139,12 +139,12 @@ describe('adaptive practice progression', () => {
   });
 
   test('clamps at the final step and preserves higher unlocks when revisiting an earlier step', () => {
-    const finalStep = evaluatePracticeProgressionRound(
+    const finalStep = evaluateMathProgressionRound(
       { currentStep: 10, highestUnlockedStep: 10, accelerationStreak: 1 },
       qualifyingAssessment,
       11,
     );
-    const revisit = evaluatePracticeProgressionRound(
+    const revisit = evaluateMathProgressionRound(
       { currentStep: 4, highestUnlockedStep: 7, accelerationStreak: 0 },
       { ...qualifyingAssessment, activeSeconds: 75 },
       11,
@@ -164,13 +164,13 @@ describe('adaptive practice progression', () => {
   });
 
   test('handles zero-count and invalid count samples explicitly', () => {
-    const empty = evaluatePracticeProgressionRound(initialProgress, {
+    const empty = evaluateMathProgressionRound(initialProgress, {
       correctAnswers: 0,
       incorrectAnswers: 0,
       activeSeconds: 1,
       expectedSecondsPerCorrect: 10,
     }, 11);
-    const negative = evaluatePracticeProgressionRound(initialProgress, {
+    const negative = evaluateMathProgressionRound(initialProgress, {
       ...qualifyingAssessment,
       incorrectAnswers: -1,
     }, 11);

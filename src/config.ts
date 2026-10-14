@@ -30,7 +30,10 @@ export const GAME_CONFIG = {
     STARTING_LEVEL: 2,
   },
 
-  PRACTICE_PROGRESSION: {
+  MATH_PROGRESSION: {
+    BOARD_TIME_MULTIPLIER: { easy: 1, medium: 1.5, expert: 1.8 },
+    ENEMY_CHALLENGE_LEVEL: { easy: 1, medium: 4, expert: 6 },
+    ENEMY_COUNT: { easy: 1, medium: 3, expert: 4 },
     MINIMUM_COMPLETED_EQUATIONS: 6,
     MINIMUM_ACCURACY: 0.8,
     ACCELERATED_ACCURACY: 0.9,

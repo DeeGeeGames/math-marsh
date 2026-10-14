@@ -23,7 +23,7 @@ import { createSpiderWeb } from './SpiderWebSystem';
 import { isFrogAttacking } from './FrogTongueSystem';
 import { startFrogGridMovement, startFrogGridTurn } from './FrogSpriteSystem';
 import { startEnemyGridMovement, startEnemyGridTurn } from './EnemySpriteSystem';
-import { enemyMoveBaseIntervalForLevel } from '../enemyDifficulty';
+import { enemyMoveBaseIntervalForLevel, enemyChallengeLevelForDifficulty } from '../enemyDifficulty';
 
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
 
@@ -128,7 +128,8 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
               ...(plannedMove ? [navGrid.cellFromXY(plannedMove.x, plannedMove.y)] : []),
             ];
           }));
-        processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, currentLevel, navGrid);
+        processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, ecs.tryGetResource('mathSession')
+          ? enemyChallengeLevelForDifficulty(ecs.getResource('mathDifficulty')) : currentLevel, navGrid);
       });
     });
 }
