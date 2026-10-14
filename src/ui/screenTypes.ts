@@ -15,6 +15,7 @@ export type ScreenSpec = {
   promptPlacement: InputPromptPlacement;
   wire?: (root: HTMLElement) => void;
   onShow?: (root: HTMLElement) => void;
+  onLevelSelectionUnlocked?: (root: HTMLElement) => void;
   focusSelector?: string;
   onCancel?: () => void;
 };
