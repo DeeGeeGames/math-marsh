@@ -20,11 +20,14 @@ import { GAME_CONFIG } from '../config';
 import { queueTimeAdjustment } from './timeAdjustments';
 import { correctAnswerBonusSeconds } from './runTime';
 import { startPlayerEatingAnimation } from './systems/PlayerSpriteSystem';
+import { recordPracticeAssessmentAnswer } from './practiceAssessment';
+import { practiceQuestionBudgetSeconds, createPracticeEquationModeState } from './practiceSteps';
+import type { PracticeSession } from './practiceMode';
 
 type EquationSelectionResources = Readonly<Pick<
   Resources,
   'equationMode' | 'gameMode' | 'mathDifficulty'
->>;
+> & Partial<Pick<Resources, 'practiceSession'>>>;
 
 const createEquationFeedback = (
   startedAt: number,
@@ -112,13 +115,19 @@ export function handleEquationProblemSelection(
 
   if (!isCorrect) {
     playSound('incorrect');
-    handleIncorrectEquationSelection(ecs, player, problem, pendingMode, mathDifficulty);
+    handleIncorrectEquationSelection(ecs, player, problem, pendingMode, mathDifficulty, resources.practiceSession ?? null);
     return;
   }
 
   playSound('correct');
   startPlayerEatingAnimation(ecs, player.id);
   ecs.setResource('equationsSolved', ecs.getResource('equationsSolved') + 1);
+  const practiceSession = addPracticeAnswer(
+    resources.practiceSession ?? null,
+    equationMode,
+    true,
+  );
+  if (practiceSession) ecs.setResource('practiceSession', practiceSession);
   const consumptionStartedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   queueTimeAdjustment(
     ecs,
@@ -130,16 +139,20 @@ export function handleEquationProblemSelection(
     beginAnswerConsumption(ecs, selectedProblem, consumptionStartedAt);
   });
 
-  const nextMode = createEquationModeState(
-    pendingMode.level,
-    mathDifficulty,
-    gameMode,
-    pendingMode.clearedThisLevel + selectedProblemIds.length,
-  );
+  const clearedThisLevel = pendingMode.clearedThisLevel + selectedProblemIds.length;
+  const nextMode = practiceSession
+    ? createPracticeEquationModeState(
+        practiceSession.step,
+        practiceSession.operation,
+        practiceSession.assessment.correctAnswers,
+        clearedThisLevel,
+      ) ?? createEquationModeState(pendingMode.level, mathDifficulty, gameMode, clearedThisLevel)
+    : createEquationModeState(pendingMode.level, mathDifficulty, gameMode, clearedThisLevel);
 
   const nextCandidate = chooseEquationCandidate(
     nextMode,
     activeEquationOperands(mathProblems),
+    { enforceOperandRanges: practiceSession !== null },
   );
   const nextEquationMode = nextCandidate
     ? { ...nextMode, target: nextCandidate.target, promptValues: nextCandidate.operandValues }
@@ -161,7 +174,10 @@ function handleIncorrectEquationSelection(
   problem: MathProblemEntityWithRenderable,
   equationMode: EquationModeState,
   mathDifficulty: Resources['mathDifficulty'],
+  practiceSession: PracticeSession | null,
 ): void {
+  const updatedPracticeSession = addPracticeAnswer(practiceSession, equationMode, false);
+  if (updatedPracticeSession) ecs.setResource('practiceSession', updatedPracticeSession);
   const startedAt = gameplayTimeMs(ecs.getResource('gameplayClock'));
   queueTimeAdjustment(
     ecs,
@@ -177,3 +193,24 @@ function handleIncorrectEquationSelection(
     feedback: createEquationFeedback(startedAt, 'incorrect'),
   });
 }
+
+const addPracticeAnswer = function(
+	practiceSession: PracticeSession | null,
+	equationMode: EquationModeState,
+	correct: boolean,
+): PracticeSession | null {
+	if (!practiceSession) return null;
+	const expectedBudget = correct
+		? practiceQuestionBudgetSeconds(
+			practiceSession.step,
+			equationMode.operation,
+			equationMode.promptKind,
+		)
+		: undefined;
+	const assessment = recordPracticeAssessmentAnswer(
+		practiceSession.assessment,
+		correct,
+		expectedBudget,
+	);
+	return assessment ? { ...practiceSession, assessment } : practiceSession;
+};

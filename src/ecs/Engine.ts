@@ -9,6 +9,7 @@ import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { controllerActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { initialSplashState } from './splashSequence';
 import { loadSkitProgress } from './skitProgress';
+import { loadPracticeProgress } from './practiceProgressStore';
 import type { SkitScreenConfig } from './skitSequence';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
@@ -39,6 +40,11 @@ const coroutinePlugin = createCoroutinePlugin({
   phase: 'preUpdate',
 });
 
+const loadedPracticeProgress = loadPracticeProgress();
+const noPracticeSession: Resources['practiceSession'] = null;
+const noPracticeRoundSummary: Resources['practiceRoundSummary'] = null;
+const noPracticeOperation: Resources['practiceLastOperation'] = null;
+
 const inputPlugin = createInputPlugin<GameAction>({
   actions: controllerActionMap(initialControllerSelection()),
   players: { keyboard: keyboardActionMap() },
@@ -66,6 +72,12 @@ export const gameEngine = ECSpresso.create()
   .withResource('equationMode', createEquationModeState(1, 'easy', ['add']))
   .withResource('controllerSelection', initialControllerSelection())
   .withResource('skitProgress', loadSkitProgress())
+  .withResource('practiceProgress', loadedPracticeProgress.progress)
+  .withResource('practiceProgressPersistence', loadedPracticeProgress.persistence)
+  .withResource('practiceSession', noPracticeSession)
+  .withResource('practiceRoundSummary', noPracticeRoundSummary)
+  .withResource('practiceAccelerationStreak', 0)
+  .withResource('practiceLastOperation', noPracticeOperation)
   .withResource('inputPrompt', { platform: 'keyboard', gamepadAxesActive: [] })
   .withResource('gameplayOnboardingCompletion', loadOnboardingCompletion('basics'))
   .withResource('operandOnboardingCompletion', loadOnboardingCompletion('operands'))
@@ -83,6 +95,8 @@ export const gameEngine = ECSpresso.create()
     .add('menu', { initialState: () => ({}) })
     .add('skitGallery', { initialState: () => ({}) })
     .add('modeSelect', { initialState: initialLevelSelectSequence })
+    .add('practiceSelect', { initialState: () => ({}) })
+    .add('practiceResult', { initialState: () => ({}) })
     .add('howToPlay', { initialState: () => ({}) })
     .add('tutorialOffer', { initialState: () => ({}) })
     .add('tutorial', { initialState: (config: TutorialScreenConfig) => ({ ...config }) })

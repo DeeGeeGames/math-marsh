@@ -16,6 +16,7 @@ import {
   resetModeSelect,
 } from './screens/menuScreenSpecs';
 import { createSettingsScreenSpec } from './screens/settingsScreen';
+import { createPracticeResultScreenSpec, createPracticeSelectScreenSpec } from './screens/practiceScreenSpecs';
 import type { ScreenSpecActions } from './screens/shared';
 
 export { resetModeSelect };
@@ -30,6 +31,8 @@ export function createScreenSpecs(
     skitGallery: createSkitGalleryScreenSpec(actions),
     menu: createMenuScreenSpec(actions),
     modeSelect: createModeSelectScreenSpec(actions),
+    practiceSelect: createPracticeSelectScreenSpec(actions),
+    practiceResult: createPracticeResultScreenSpec(actions),
     howToPlay: createHowToPlayScreenSpec(actions),
     tutorialOffer: createTutorialOfferScreenSpec(actions),
     playing: createPlayingScreenSpec(actions),

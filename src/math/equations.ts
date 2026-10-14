@@ -344,6 +344,7 @@ const mixedCandidates = (
 export const chooseEquationCandidate = (
   state: EquationModeState,
   operands: readonly EquationOperandCandidate[],
+  options: { enforceOperandRanges?: boolean } = {},
 ): EquationCandidate | undefined => {
   if (state.promptKind === 'selectOperandAndResult') {
     const candidates = mixedCandidates(state, operands);
@@ -353,7 +354,18 @@ export const chooseEquationCandidate = (
   const candidates = state.promptKind === 'selectResult'
     ? operation.resultCandidates(operands, state.operandRanges)
     : operation.operandCandidates(operands, state.difficulty);
-  return candidates[randomIndex(candidates.length)];
+  const validCandidates = state.promptKind === 'selectOperands' && options.enforceOperandRanges
+    ? candidates.filter(candidate => {
+      const [left, right] = candidate.operandValues;
+      return left !== undefined
+        && right !== undefined
+        && left >= state.operandRanges.left.min
+        && left <= state.operandRanges.left.max
+        && right >= state.operandRanges.right.min
+        && right <= state.operandRanges.right.max;
+    })
+    : candidates;
+  return validCandidates[randomIndex(validCandidates.length)];
 };
 
 export const equationProblemValuesForCandidate = (

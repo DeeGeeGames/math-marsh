@@ -40,8 +40,10 @@ import { skitById } from './skitSequence';
 import { saveSkitProgress, unlockSkitForCompletedLevel } from './skitProgress';
 import { STARTING_TIME_SECONDS } from './runTime';
 import { enemyRosterForLevel } from './enemyRosters';
+import { createPracticeEquationModeState } from './practiceSteps';
+import { addPracticeProgressionSystemToEngine } from './systems/PracticeProgressionSystem';
 
-const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'skitGallery', 'modeSelect', 'howToPlay', 'tutorialOffer'] as const;
+const INACTIVE_SCREENS = ['studioSplash', 'engineSplash', 'menu', 'skitGallery', 'modeSelect', 'practiceSelect', 'practiceResult', 'howToPlay', 'tutorialOffer'] as const;
 
 const setupCanvas = (): void => {
   const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
@@ -50,12 +52,15 @@ const setupCanvas = (): void => {
 };
 
 const resetEnemySpawnSequence = (): void => {
+  const practiceSession = gameEngine.getResource('practiceSession');
   gameEngine.setResource('enemySpawn', {
     index: 0,
-    roster: enemyRosterForLevel(
-      gameEngine.getResource('currentLevel'),
-      gameEngine.getResource('mathDifficulty'),
-    ),
+    roster: practiceSession
+      ? ['lizard']
+      : enemyRosterForLevel(
+          gameEngine.getResource('currentLevel'),
+          gameEngine.getResource('mathDifficulty'),
+        ),
   });
 
   const player = gameEngine.tryGetSingleton(playerQuery.with);
@@ -80,9 +85,21 @@ const enterPlayingScreen = ({ level, isFreshGame }: PlayingScreenConfig): void =
   gameEngine.setResource('currentLevel', level);
   const gameMode = gameEngine.getResource('gameMode');
   const mathDifficulty = gameEngine.getResource('mathDifficulty');
+  const practiceSession = gameEngine.getResource('practiceSession');
+  const practiceEquationMode = practiceSession
+    ? createPracticeEquationModeState(
+        practiceSession.step,
+        practiceSession.operation,
+        practiceSession.assessment.correctAnswers,
+      )
+    : undefined;
+  if (practiceSession && !practiceEquationMode) {
+    gameEngine.setResource('practiceSession', null);
+    gameEngine.setResource('practiceAccelerationStreak', 0);
+  }
   gameEngine.setResource(
     'equationMode',
-    createEquationModeState(level, mathDifficulty, gameMode),
+    practiceEquationMode ?? createEquationModeState(level, mathDifficulty, gameMode),
   );
 
   if (isFreshGame) {
@@ -127,6 +144,7 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenResume('skit', showSkit);
 
   gameEngine.onScreenEnter('levelComplete', ({ config, ecs }) => {
+    if (ecs.getResource('practiceSession')) return;
     const progress = ecs.getResource('skitProgress');
     const unlocked = unlockSkitForCompletedLevel(progress, config.completedLevel);
     if (unlocked === progress) return;
@@ -144,7 +162,10 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenResume('paused', showPausedScreen);
 
   gameEngine.onScreenEnter('playing', ({ config }) => {
-    gameEngine.setResource('board', boardForDifficulty(gameEngine.getResource('mathDifficulty')));
+    gameEngine.setResource(
+      'board',
+      boardForDifficulty(gameEngine.getResource('practiceSession') ? 'easy' : gameEngine.getResource('mathDifficulty')),
+    );
     showGameplayScreen('normal');
     setupCanvas();
     gameEngine.setResource('gameplayOnboardingSession', { active: false });
@@ -191,6 +212,7 @@ const registerSystems = async (): Promise<void> => {
   });
 
   registerGameplaySystems(gameplaySystems);
+  addPracticeProgressionSystemToEngine(gameplaySystems);
   registerGameplayOnboardingSystem(tutorialSystems);
   addFrogSpriteAnimationSystemToEngine(gameEngine.systemScope({
     inScreens: ['playing', 'tutorial'],

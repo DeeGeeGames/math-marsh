@@ -26,6 +26,8 @@ export const difficultyLabels: Record<MathDifficulty, string> = {
 export const settingsBackLabels: Record<SettingsReturnScreen, string> = {
   menu: '← Back to Menu',
   modeSelect: '← Back to Mode Selection',
+  practiceSelect: '← Back to Practice',
+  practiceResult: '← Back to Practice Results',
   howToPlay: '← Back to How to Play',
   playing: '← Back to Game',
   tutorial: '← Back to Tutorial',

@@ -30,6 +30,21 @@ export const GAME_CONFIG = {
     STARTING_LEVEL: 2,
   },
 
+  PRACTICE_PROGRESSION: {
+    MINIMUM_COMPLETED_EQUATIONS: 6,
+    MINIMUM_ACCURACY: 0.8,
+    ACCELERATED_ACCURACY: 0.9,
+    MAX_TIME_RATIO: 0.8,
+    MAX_ADVANCE_STEPS: 4,
+    BASE_SECONDS_PER_CORRECT: {
+      add: { selectResult: 8, selectOperands: 12, selectOperandAndResult: 16 },
+      subtract: { selectResult: 8, selectOperands: 12, selectOperandAndResult: 16 },
+      multiply: { selectResult: 10, selectOperands: 15, selectOperandAndResult: 20 },
+      divide: { selectResult: 11, selectOperands: 16, selectOperandAndResult: 21 },
+    },
+    SECONDS_PER_OPERAND_ABOVE_THREE: 0.5,
+  },
+
   TIMING: {
     INVULNERABILITY: 2000,
     BASE_SPAWN_INTERVAL: 3000,
