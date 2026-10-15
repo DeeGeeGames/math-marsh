@@ -16,7 +16,10 @@ export type SpritePreview = {
 export const SPRITES: readonly SpritePreview[] = CHARACTERS.flatMap(function(character) {
 	const prefix = character.toLowerCase();
 	return IMAGE_ASSET_KEYS.filter(function(key) { return key.startsWith(prefix); }).map(function(key) {
-		const frameCount = key.endsWith('Image') ? 1 : key.includes('MouthOpen') ? 4 : 8;
+		const frameCount = key.endsWith('Image') ? 1
+			: key.includes('MouthOpen') ? 4
+			: key === 'spiderWalkSide' ? 7
+			: 8;
 		const duration = key.includes('Turn') ? 0.18
 			: key.includes('MouthOpen') ? 0.16
 			: key.includes('Eat') ? ANSWER_CONSUMPTION_DURATION_MS / 1000

@@ -21,16 +21,19 @@ type SpriteStep = AllComponents['spriteAnimation']['steps'][number];
 type SpriteEnemyType = Exclude<EnemyType, 'frog'>;
 type GridPoint = { x: number; y: number };
 type PositionTarget = { component: 'position'; field: 'x' | 'y'; to: number };
-type SpriteStepOptions = Pick<SpriteStep, 'flipX' | 'reverse'>;
+type SpriteStepOptions = Pick<SpriteStep, 'flipX' | 'reverse'>
+  & Partial<Pick<SpriteStep, 'frameCount'>>;
 type SpriteSheets = {
   walkAway: string;
   walkSide: string;
+  walkSideFrameCount: number;
   walkToward: string;
   turnSideAway: string;
   turnTowardSide: string;
 };
 
 const FRAME_COUNT = 8;
+const SPIDER_WALK_SIDE_FRAME_COUNT = 7;
 const TURN_DURATION_S = 0.18;
 const MOVE_DURATION_S = ANIMATION_CONFIG.MOVEMENT_DURATION / 1000;
 
@@ -40,6 +43,7 @@ const SPRITE_SHEETS: Record<SpriteEnemyType, SpriteSheets> = {
   lizard: {
     walkAway: lizardWalkAway,
     walkSide: lizardWalkSide,
+    walkSideFrameCount: FRAME_COUNT,
     walkToward: lizardWalkToward,
     turnSideAway: lizardTurnSideAway,
     turnTowardSide: lizardTurnTowardSide,
@@ -47,6 +51,7 @@ const SPRITE_SHEETS: Record<SpriteEnemyType, SpriteSheets> = {
   spider: {
     walkAway: spiderWalkAway,
     walkSide: spiderWalkSide,
+    walkSideFrameCount: SPIDER_WALK_SIDE_FRAME_COUNT,
     walkToward: spiderWalkToward,
     turnSideAway: spiderTurnSideAway,
     turnTowardSide: spiderTurnTowardSide,
@@ -105,7 +110,7 @@ const spriteStep = (
   options: SpriteStepOptions = {},
 ): SpriteStep => ({
   imageSrc,
-  frameCount: FRAME_COUNT,
+  frameCount: options.frameCount ?? FRAME_COUNT,
   duration,
   ...options,
 });
@@ -118,7 +123,10 @@ const walkStepForFacing = (
   const sheets = SPRITE_SHEETS[enemyType];
   if (facing === 'toward') return spriteStep(sheets.walkToward, duration);
   if (facing === 'away') return spriteStep(sheets.walkAway, duration);
-  return spriteStep(sheets.walkSide, duration, { flipX: sideFlip(facing) });
+  return spriteStep(sheets.walkSide, duration, {
+    frameCount: sheets.walkSideFrameCount,
+    flipX: sideFlip(facing),
+  });
 };
 
 function turnThrough(
@@ -268,6 +276,6 @@ export function startEnemyGridTurn(
   setEnemyFacing(ecs, entityId, targetFacing);
   startSpriteAnimation(ecs, entityId, [
     ...turnSteps,
-    { ...idleStep, staticFrameIndex: FRAME_COUNT - 1 },
+    { ...idleStep, staticFrameIndex: idleStep.frameCount - 1 },
   ]);
 }

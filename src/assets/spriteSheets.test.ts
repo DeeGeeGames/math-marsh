@@ -29,10 +29,13 @@ const EIGHT_FRAME_SHEETS = [
 	'sprites/lizard/lizard-turn-side-away.png',
 	'sprites/lizard/lizard-turn-toward-side.png',
 	'sprites/spider/spider-walk-away.png',
-	'sprites/spider/spider-walk-side.png',
 	'sprites/spider/spider-walk-toward.png',
 	'sprites/spider/spider-turn-side-away.png',
 	'sprites/spider/spider-turn-toward-side.png',
+] as const;
+
+const SEVEN_FRAME_SHEETS = [
+	'sprites/spider/spider-walk-side.png',
 ] as const;
 
 const FOUR_FRAME_SHEETS = [
@@ -43,6 +46,7 @@ const FOUR_FRAME_SHEETS = [
 
 const spriteSheetSpecs = [
 	...EIGHT_FRAME_SHEETS.map(path => ({ path: new URL(path, import.meta.url), frameCount: 8 })),
+	...SEVEN_FRAME_SHEETS.map(path => ({ path: new URL(path, import.meta.url), frameCount: 7 })),
 	...FOUR_FRAME_SHEETS.map(path => ({ path: new URL(path, import.meta.url), frameCount: 4 })),
 ] as const satisfies readonly SpriteSheetSpec[];
 
