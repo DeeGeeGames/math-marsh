@@ -180,7 +180,11 @@ const setFrogFacing = (
 const totalStepDuration = (steps: readonly SpriteStep[]): number =>
   steps.reduce((sum, step) => sum + step.duration, 0);
 
-const lastStep = (steps: readonly SpriteStep[]): SpriteStep => steps[steps.length - 1];
+const lastStep = (steps: readonly SpriteStep[]): SpriteStep => {
+  const step = steps.at(-1);
+  if (!step) throw new Error('Sprite animation steps cannot be empty');
+  return step;
+};
 
 const findCurrentStep = (
   steps: readonly SpriteStep[],
@@ -190,16 +194,18 @@ const findCurrentStep = (
 
   for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
     const step = steps[stepIndex];
+    if (!step) throw new Error('Sprite animation steps cannot contain empty entries');
     if (elapsed < elapsedBeforeStep + step.duration) {
       return { step, stepIndex, elapsedBeforeStep };
     }
     elapsedBeforeStep += step.duration;
   }
 
+  const finalStep = lastStep(steps);
   return {
-    step: lastStep(steps),
+    step: finalStep,
     stepIndex: steps.length - 1,
-    elapsedBeforeStep: totalStepDuration(steps) - lastStep(steps).duration,
+    elapsedBeforeStep: totalStepDuration(steps) - finalStep.duration,
   };
 };
 

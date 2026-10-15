@@ -28,7 +28,9 @@ export function sameGridPosition(
 export const sameGridCell = (cellA: GridCell, cellB: GridCell): boolean =>
   cellA.x === cellB.x && cellA.y === cellB.y;
 
-export const activePlayerGridCell = (player: PlayerEntity): GridCell => {
+export const activePlayerGridCell = (
+  player: { components: Pick<PlayerEntity['components'], 'pathFollower'> },
+): GridCell => {
   const { anchorGridX, anchorGridY, breadcrumbs } = player.components.pathFollower;
   const head = breadcrumbs[0];
   return head ? { x: head.x, y: head.y } : { x: anchorGridX, y: anchorGridY };

@@ -195,6 +195,7 @@ describe('equation generation', () => {
     Math.random = function random(): number {
       const value = sequence[state.index % sequence.length];
       state.index += 1;
+      if (value === undefined) throw new Error('Random sequence cannot be empty');
       return value;
     };
 

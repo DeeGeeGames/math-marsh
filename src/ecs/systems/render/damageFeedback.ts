@@ -1,7 +1,7 @@
 import type { BoardSize } from '../../boardGeometry';
 import { GAME_CONFIG } from '../../../config';
 import { cellCenter } from '../../gameUtils';
-import type { PlayerEntity } from '../../queries';
+import type { PlayerPresentationEntity } from '../../queries';
 
 
 const easeOutCubic = (progress: number): number =>
@@ -9,7 +9,7 @@ const easeOutCubic = (progress: number): number =>
 
 export function drawDamageFeedback(
   ctx: CanvasRenderingContext2D,
-  player: PlayerEntity,
+  player: PlayerPresentationEntity,
   reducedMotion: boolean,
   board: BoardSize,
 ): void {

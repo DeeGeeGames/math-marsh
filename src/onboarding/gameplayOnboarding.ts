@@ -97,7 +97,7 @@ export type GameplayOnboardingReturn =
 export type GameplayOnboardingPlayerSnapshot = {
   position: { x: number; y: number; rotation?: number };
   remainingTimeSeconds: number;
-  gameOverPending?: boolean;
+  gameOverPending?: boolean | undefined;
   pathFollower: {
     anchorGridX: number;
     anchorGridY: number;
@@ -114,7 +114,7 @@ export type GameplayOnboardingSession =
       isReplay: boolean;
       stepIndex: number;
       returnTo: GameplayOnboardingReturn;
-      playerSnapshot?: GameplayOnboardingPlayerSnapshot;
+      playerSnapshot?: GameplayOnboardingPlayerSnapshot | undefined;
     };
 
 const STORAGE_KEYS = {

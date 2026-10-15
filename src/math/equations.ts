@@ -14,14 +14,14 @@ export interface EquationOperandCandidate {
 }
 
 export interface EquationCandidate {
-  operandValues: number[];
+  operandValues: [number, number];
   target: number;
 }
 
 interface EquationOperationDefinition {
   symbol: string;
   operandCount: 2;
-  evaluate: (operands: readonly number[]) => number;
+  evaluate: (operands: readonly [number, number]) => number;
   resultRange: (ranges: EquationOperandRanges) => EquationValueRange;
   randomCandidate: (ranges: EquationOperandRanges) => EquationCandidate;
   operandCandidates: (
@@ -130,7 +130,7 @@ const multiplyOperandCandidates = (operands: readonly EquationOperandCandidate[]
 
 const orderedOperandCandidates = (
   operands: readonly EquationOperandCandidate[],
-  evaluate: (operands: readonly number[]) => number,
+  evaluate: (operands: readonly [number, number]) => number,
 ): EquationCandidate[] =>
   operands.flatMap(left =>
     operands
@@ -210,7 +210,7 @@ const divideResultCandidates = (
   );
 
 const randomAddCandidate = (ranges: EquationOperandRanges): EquationCandidate => {
-  const operandValues = [randomValue(ranges.left), randomValue(ranges.right)];
+  const operandValues: [number, number] = [randomValue(ranges.left), randomValue(ranges.right)];
   return { operandValues, target: operandValues[0] + operandValues[1] };
 };
 
@@ -221,7 +221,7 @@ const randomSubtractCandidate = (ranges: EquationOperandRanges): EquationCandida
 };
 
 const randomMultiplyCandidate = (ranges: EquationOperandRanges): EquationCandidate => {
-  const operandValues = [randomValue(ranges.left), randomValue(ranges.right)];
+  const operandValues: [number, number] = [randomValue(ranges.left), randomValue(ranges.right)];
   return { operandValues, target: operandValues[0] * operandValues[1] };
 };
 
@@ -327,7 +327,7 @@ const mixedCandidates = (
   problems.flatMap(operand =>
     problems
       .filter(result => result.id !== operand.id)
-      .map(result => ({
+      .map((result): EquationCandidate => ({
         operandValues: [fixedOperandForMixedSelection[state.operation](operand.value, result.value), operand.value],
         target: result.value,
       }))
@@ -420,10 +420,14 @@ export const evaluateEquationSelection = (
 ): boolean => {
   if (state.target === null || selectedValues.length !== state.operandsRequired) return false;
   if (state.promptKind === 'selectOperandAndResult') {
-    return Number.isInteger(selectedValues[1])
-      && operations[state.operation].evaluate([state.promptValues[0], selectedValues[0]]) === selectedValues[1];
+    const [selectedOperand, selectedResult] = selectedValues;
+    const [promptOperand] = state.promptValues;
+    if (selectedOperand === undefined || selectedResult === undefined || promptOperand === undefined) return false;
+    return Number.isInteger(selectedResult)
+      && operations[state.operation].evaluate([promptOperand, selectedOperand]) === selectedResult;
   }
-  return state.promptKind === 'selectResult'
-    ? selectedValues[0] === state.target
-    : operations[state.operation].evaluate(selectedValues) === state.target;
+  if (state.promptKind === 'selectResult') return selectedValues[0] === state.target;
+  const [left, right] = selectedValues;
+  if (left === undefined || right === undefined) return false;
+  return operations[state.operation].evaluate([left, right]) === state.target;
 };

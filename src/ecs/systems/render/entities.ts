@@ -56,8 +56,8 @@ interface ShapeArgs {
   rotation: number;
   renderable: Renderable;
   deathScale: number;
-  image?: HTMLImageElement;
-  baselineY?: number;
+  image?: HTMLImageElement | undefined;
+  baselineY?: number | undefined;
 }
 
 const drawImageShape = ({
@@ -150,7 +150,7 @@ const SHAPE_RENDERERS: Record<Renderable['shape'], (args: ShapeArgs) => void> = 
 export interface DrawEntityArgs {
   position: { x: number; y: number; rotation?: number };
   renderable: Renderable;
-  image?: HTMLImageElement;
+  image?: HTMLImageElement | undefined;
   isInvulnerable: boolean;
   deathScale: number;
   shakeOffsetX: number;

@@ -39,7 +39,9 @@ describe('math sessions and scene unlock thresholds', () => {
 				expect(equationModeForMathSession(session, ['add'], level, 0, 'medium').promptKind)
 					.toBe(level % 2 === 1 ? 'selectResult' : 'selectOperands');
 				const formats = ['selectResult', 'selectOperands', 'selectOperandAndResult'] as const;
-				expect(equationModeForMathSession(session, ['add'], level, 0, 'expert').promptKind).toBe(formats[(level - 1) % 3]);
+				const expectedFormat = formats[(level - 1) % formats.length];
+				if (!expectedFormat) throw new Error('Expected a known equation prompt format');
+				expect(equationModeForMathSession(session, ['add'], level, 0, 'expert').promptKind).toBe(expectedFormat);
 			}
 		}
 	});
