@@ -2,7 +2,7 @@ import { GAME_CONFIG } from '../../../config';
 import { ANSWER_CONSUMPTION_DURATION_MS, SELECTION_DISRUPTION_DURATION_MS } from '../../systemConfigs';
 import { activePlayerGridCell, cellCenter, positionInGridCell } from '../../gameUtils';
 import { gridCellKey, positionedEntityGridCellKey } from '../../lilyPads';
-import type { MathProblemEntity, PlayerEntity } from '../../queries';
+import type { MathProblemEntity, PlayerPresentationEntity } from '../../queries';
 import type { Resources } from '../../types';
 import type { RenderMargins } from '../../boardGeometry';
 import type { EquationValueTarget } from './objective';
@@ -341,7 +341,7 @@ export function drawAnswerConsumptionEffects(
 }
 
 const activeProblemAtPlayer = (
-  player: PlayerEntity,
+  player: PlayerPresentationEntity,
   mathProblems: MathProblemEntity[],
   blockedCells: ReadonlySet<string>,
 ): MathProblemEntity | undefined => {
@@ -355,7 +355,7 @@ const activeProblemAtPlayer = (
 
 export const drawPlayerHighlight = (
   ctx: CanvasRenderingContext2D,
-  player: PlayerEntity | undefined,
+  player: PlayerPresentationEntity | undefined,
   mathProblems: MathProblemEntity[],
   blockedCells: ReadonlySet<string>,
   currentTime: number,
@@ -381,7 +381,7 @@ export const drawPlayerHighlight = (
 export function drawTapTargetFeedback(
   ctx: CanvasRenderingContext2D,
   feedback: Resources['tapFeedback'],
-  player: PlayerEntity | undefined,
+  player: PlayerPresentationEntity | undefined,
   currentTime: number,
   reducedMotion: boolean,
 ): void {

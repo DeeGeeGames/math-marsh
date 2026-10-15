@@ -75,7 +75,8 @@ function spawnEnemyOnLilyPad(
 
   const pixelPos = gridToPixel(spawnCell.x, spawnCell.y);
   const behaviors = GAME_CONFIG.ENEMY_TYPES[enemyType].AI_BEHAVIORS;
-  const behavior = behaviors[Math.floor(Math.random() * behaviors.length)];
+  const behavior = randomEntry(behaviors);
+  if (behavior === undefined) return false;
 
   createEnemy(ecs.commands, pixelPos.x, pixelPos.y, enemyType, behavior);
   return true;

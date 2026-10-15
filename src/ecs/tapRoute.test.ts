@@ -13,7 +13,11 @@ describe('tap route', () => {
     expect(route).toHaveLength(9);
     expect(route.at(-1)).toEqual(goal);
     expect(points.slice(1).every((point, index) =>
-      Math.abs(point.x - points[index].x) + Math.abs(point.y - points[index].y) === 1,
+      {
+        const previous = points[index];
+        return previous !== undefined
+          && Math.abs(point.x - previous.x) + Math.abs(point.y - previous.y) === 1;
+      },
     )).toBe(true);
   });
 
@@ -45,7 +49,11 @@ describe('tap route', () => {
         && (route.at(-1)?.x ?? start.x) === goal.x
         && (route.at(-1)?.y ?? start.y) === goal.y
         && points.slice(1).every((point, index) =>
-          Math.abs(point.x - points[index].x) + Math.abs(point.y - points[index].y) === 1,
+          {
+            const previous = points[index];
+            return previous !== undefined
+              && Math.abs(point.x - previous.x) + Math.abs(point.y - previous.y) === 1;
+          },
         );
     })).toBe(true);
   });

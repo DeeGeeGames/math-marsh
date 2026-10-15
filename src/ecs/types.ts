@@ -50,14 +50,14 @@ export interface Components {
     color: string;
     size: number;
     layer: number;
-    imageSrc?: string;
+    imageSrc?: string | undefined;
     imageWidth?: number;
     imageHeight?: number;
     spriteSheet?: {
       frameCount: number;
       frameIndex: number;
-      flipX?: boolean;
-    };
+      flipX?: boolean | undefined;
+    } | undefined;
   };
   spriteAnimation: {
     elapsed: number;
@@ -83,7 +83,7 @@ export interface Components {
     elapsed: number;
   };
   player: {
-    gameOverPending?: boolean;
+    gameOverPending?: boolean | undefined;
     deathScale: number;
   };
   enemy: {
@@ -216,7 +216,7 @@ export interface BaseEquationModeState {
 }
 
 export interface EquationModeState extends BaseEquationModeState {
-  feedback?: EquationFeedback;
+  feedback?: EquationFeedback | undefined;
   changeNotice?: {
     startedAt: number;
     origin: Readonly<{ x: number; y: number }>;

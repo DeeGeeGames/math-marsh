@@ -68,6 +68,9 @@ export const frogTongueQuery = {
  */
 
 export type PlayerEntity = QueryResultEntity<AllComponents, typeof playerQuery>;
+export type PlayerPresentationEntity = {
+  components: Pick<AllComponents, 'position' | 'player' | 'pathFollower' | 'timers'>;
+};
 export type PlayerCollisionEntity = QueryResultEntity<AllComponents, typeof playerCollisionQuery>;
 export type MathProblemEntity = QueryResultEntity<AllComponents, typeof mathProblemQuery>;
 export type MathProblemEntityWithRenderable = QueryResultEntity<AllComponents, typeof mathProblemWithRenderableQuery>;

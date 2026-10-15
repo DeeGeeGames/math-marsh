@@ -183,7 +183,7 @@ function placePlayer(
   player: {
     components: {
       position: { x: number; y: number };
-      player: { gameOverPending?: boolean };
+      player: { gameOverPending?: boolean | undefined };
       pathFollower: {
         anchorGridX: number;
         anchorGridY: number;

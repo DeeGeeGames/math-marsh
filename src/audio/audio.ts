@@ -88,6 +88,12 @@ const CUTSCENE_MELODY = [
   16, 14, 11, null, 7, null, 14, 11,
 ] as const;
 
+const musicSequenceValue = <T>(sequence: readonly T[], step: number): T => {
+  const value = sequence[step % sequence.length];
+  if (value === undefined) throw new Error('Music sequence cannot be empty');
+  return value;
+};
+
 const audioState: AudioState = {
   unlocked: false,
   settings: loadSettings(),
@@ -235,8 +241,8 @@ function stopMusic(): void {
 function scheduleTitleMusic(master: GainNode, step: number): void {
   const context = getContext();
   const now = context.currentTime + 0.02;
-  const note = TITLE_NOTES[step % TITLE_NOTES.length];
-  const harmony = TITLE_NOTES[(step + 2) % TITLE_NOTES.length];
+  const note = musicSequenceValue(TITLE_NOTES, step);
+  const harmony = musicSequenceValue(TITLE_NOTES, step + 2);
   playTone(master, {
     frequency: frequency(note),
     start: now,
@@ -257,8 +263,8 @@ function scheduleGameMusic(master: GainNode, step: number): void {
   const context = getContext();
   const now = context.currentTime + 0.02;
   const durationScale = gameMusicIntervalMs() / GAME_NORMAL_INTERVAL_MS;
-  const bass = GAME_BASS_NOTES[Math.floor(step / 2) % GAME_BASS_NOTES.length];
-  const melody = GAME_MELODY_NOTES[step % GAME_MELODY_NOTES.length];
+  const bass = musicSequenceValue(GAME_BASS_NOTES, Math.floor(step / 2));
+  const melody = musicSequenceValue(GAME_MELODY_NOTES, step);
   playTone(master, {
     frequency: frequency(bass),
     start: now,
@@ -287,7 +293,7 @@ function scheduleGameMusic(master: GainNode, step: number): void {
 const scheduleCutsceneMusic = function(master: GainNode, step: number): void {
   const now = getContext().currentTime + 0.02;
   const phraseStep = step % 16;
-  const chord = CUTSCENE_CHORDS[Math.floor(step / 16) % CUTSCENE_CHORDS.length];
+  const chord = musicSequenceValue(CUTSCENE_CHORDS, Math.floor(step / 16));
 
   if (phraseStep % 4 === 0) {
     playTone(master, {
@@ -310,7 +316,7 @@ const scheduleCutsceneMusic = function(master: GainNode, step: number): void {
     });
   }
 
-  const melody = CUTSCENE_MELODY[step % CUTSCENE_MELODY.length];
+  const melody = musicSequenceValue(CUTSCENE_MELODY, step);
   if (melody === null) return;
   playTone(master, {
     frequency: frequency(melody),

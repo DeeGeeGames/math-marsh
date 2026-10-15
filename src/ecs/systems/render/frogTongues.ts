@@ -237,8 +237,8 @@ export const drawEnhancedFrogTongues = (
     for (const { x, y } of segmentCenters) ctx.lineTo(x, y);
     ctx.stroke();
 
-    const { x: tipX, y: tipY } = segmentCenters[segmentCenters.length - 1];
-    drawTongueTip(ctx, tipX, tipY, baseOpacity);
+    const tip = segmentCenters.at(-1);
+    if (tip) drawTongueTip(ctx, tip.x, tip.y, baseOpacity);
 
     ctx.restore();
   }

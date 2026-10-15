@@ -1,4 +1,5 @@
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
+import type { QueryResultEntity } from 'ecspresso';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import { createNavGrid, findPath, type NavGrid } from 'ecspresso/plugins/ai/pathfinding';
 import { pixelToGrid, gridToPixel } from '../gameUtils';
@@ -8,7 +9,6 @@ import {
   enemyQuery,
   mathProblemQuery,
   playerQuery,
-  type EnemyEntity,
   type PlayerEntity
 } from '../queries';
 import {
@@ -24,6 +24,7 @@ import { isFrogAttacking } from './FrogTongueSystem';
 import { startFrogGridMovement, startFrogGridTurn } from './FrogSpriteSystem';
 import { startEnemyGridMovement, startEnemyGridTurn } from './EnemySpriteSystem';
 import { enemyMoveBaseIntervalForLevel, enemyChallengeLevelForDifficulty } from '../enemyDifficulty';
+import type { AllComponents } from '../types';
 
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
 
@@ -53,6 +54,9 @@ const MOVE_DURATION_S = ANIMATION_CONFIG.MOVEMENT_DURATION / 1000;
 // Leave enough time for a two-part turn (0.36s) in the second half of the pause.
 const MIN_IDLE_DURATION_S = 0.8;
 
+const aiEnemyQuery = { ...enemyQuery, optional: ['frogTongue'], mutates: ['enemy', 'timers'] } as const;
+type AIEnemyEntity = QueryResultEntity<AllComponents, typeof aiEnemyQuery>;
+
 const cellOf = (entity: { components: { position: { x: number; y: number } } }, navGrid: NavGrid): number => {
   const { x, y } = pixelToGrid(entity.components.position.x, entity.components.position.y);
   return navGrid.cellFromXY(x, y);
@@ -71,12 +75,13 @@ function nextStepTowards(
   if (startCell === goalCell) return navGrid.cellToXY(startCell);
   const path = findPath(navGrid, startCell, goalCell, { blockedCells: blocked });
   if (!path || path.length < 2) return undefined;
-  return navGrid.cellToXY(path[1]);
+  const nextCell = path[1];
+  return nextCell === undefined ? undefined : navGrid.cellToXY(nextCell);
 }
 
 interface AIContext {
   navGrid: NavGrid;
-  enemy: EnemyEntity;
+  enemy: AIEnemyEntity;
   player: PlayerEntity;
   currentGrid: GridCell;
   startCell: number;
@@ -96,7 +101,7 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
     .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.AI)
     .inPhase('preUpdate')
-    .addQuery('enemies', { ...enemyQuery, optional: ['frogTongue'], mutates: ['enemy', 'timers'] } as const)
+    .addQuery('enemies', aiEnemyQuery)
     .addQuery('mathProblems', mathProblemQuery)
     .addSingleton('player', playerQuery)
     .withResources(['currentLevel', 'board'])
@@ -136,7 +141,7 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
 
 function processEnemyAI(
   ecs: GameEngine,
-  enemy: EnemyEntity,
+  enemy: AIEnemyEntity,
   player: PlayerEntity,
   blocked: Set<number>,
   activeLilyPadCells: ReadonlySet<string>,
@@ -289,11 +294,16 @@ function processPatrolAI(ctx: AIContext): GridCell {
   // announcing the current cell and spending a whole idle cycle there.
   const nextWaypoint = waypoints
     .map((_, offset) => (waypointIndex + offset) % waypoints.length)
-    .find(index => waypoints[index].x !== currentGrid.x || waypoints[index].y !== currentGrid.y);
+    .find(index => {
+      const waypoint = waypoints[index];
+      return waypoint !== undefined
+        && (waypoint.x !== currentGrid.x || waypoint.y !== currentGrid.y);
+    });
   if (nextWaypoint === undefined) return processRandomAI(ctx);
 
   enemyData.currentWaypoint = nextWaypoint;
   const target = waypoints[nextWaypoint];
+  if (!target) return processRandomAI(ctx);
 
   if (!isActiveLilyPadCell(target, activeLilyPadCells)) return processRandomAI(ctx);
 

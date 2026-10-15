@@ -1,6 +1,6 @@
 import { GAME_CONFIG } from '../../../config';
 import { cellCenter, timerProgress } from '../../gameUtils';
-import type { PlayerEntity } from '../../queries';
+import type { PlayerPresentationEntity } from '../../queries';
 
 const drawIceCrystal = (
   ctx: CanvasRenderingContext2D,
@@ -34,7 +34,7 @@ const drawIceCrystal = (
 
 export const drawFrozenPlayerEffect = (
   ctx: CanvasRenderingContext2D,
-  player: PlayerEntity,
+  player: PlayerPresentationEntity,
   currentTime: number,
 ): void => {
   const freeze = player.components.timers.freeze;
