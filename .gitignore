@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 desktop-dist
+/output/music-options/
+/test-results/
 *.local
 *.local.*
 

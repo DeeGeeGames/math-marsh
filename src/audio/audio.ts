@@ -1,4 +1,5 @@
 import { LOW_TIME_SECONDS } from '../ecs/runTime';
+import { gameMusicEvents, GAME_NORMAL_INTERVAL_MS } from './musicScore';
 
 export type AudioScene = 'title' | 'game' | 'cutscene' | 'silent';
 
@@ -57,7 +58,6 @@ type AudioState = {
 const AUDIO_SETTINGS_KEY = 'math-marsh-audio-settings';
 const NOTE_C4 = 261.63;
 const MOVE_SOUND_SPACING_MS = 90;
-const GAME_NORMAL_INTERVAL_MS = 430;
 const GAME_URGENT_INTERVAL_MS = GAME_NORMAL_INTERVAL_MS / 1.2;
 const LOW_TIME_BRIDGE_MS = 650;
 const LOW_TIME_WARNING_NOTES = [7, 7, 6, 6, 0] as const;
@@ -68,8 +68,6 @@ const DEFAULT_SETTINGS: AudioSettings = {
 } as const;
 
 const TITLE_NOTES = [0, 4, 7, 12, 9, 7, 4, 2] as const;
-const GAME_BASS_NOTES = [-12, -7, -5, -10] as const;
-const GAME_MELODY_NOTES = [0, 3, 5, 7, 10, 7, 5, 3] as const;
 // Bright C, F, C, G phrases with a bouncing bass and offbeat chords.
 const CUTSCENE_CHORDS = [
   [-24, 0, 4, 7],
@@ -263,31 +261,24 @@ function scheduleGameMusic(master: GainNode, step: number): void {
   const context = getContext();
   const now = context.currentTime + 0.02;
   const durationScale = gameMusicIntervalMs() / GAME_NORMAL_INTERVAL_MS;
-  const bass = musicSequenceValue(GAME_BASS_NOTES, Math.floor(step / 2));
-  const melody = musicSequenceValue(GAME_MELODY_NOTES, step);
-  playTone(master, {
-    frequency: frequency(bass),
-    start: now,
-    duration: 0.46 * durationScale,
-    volume: 0.03,
-    type: 'sine',
-  });
-  playTone(master, {
-    frequency: frequency(melody + 12),
-    start: now + 0.08 * durationScale,
-    duration: 0.16 * durationScale,
-    volume: 0.018,
-    type: 'triangle',
-  });
-  if (step % 2 === 0) {
+  gameMusicEvents(step).forEach(function(event): void {
+    const start = now + (event.step - step) * gameMusicIntervalMs() / 1_000;
+    if (event.kind === 'tone') {
+      playTone(master, {
+        frequency: frequency(event.note), start,
+        duration: event.duration * durationScale,
+        volume: event.volume, type: event.type,
+      });
+      return;
+    }
     playNoise(master, {
-      start: now,
-      duration: 0.055,
-      volume: 0.012,
-      filterFrequency: 900,
-      filterType: 'bandpass',
+      start,
+      // Preserve the original percussion's fixed length during urgent music.
+      duration: event.duration * (event.layer === 'original' ? 1 : durationScale),
+      volume: event.volume,
+      filterFrequency: event.filterFrequency, filterType: event.filterType,
     });
-  }
+  });
 }
 
 const scheduleCutsceneMusic = function(master: GainNode, step: number): void {

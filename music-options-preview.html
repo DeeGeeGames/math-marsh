@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Math Marsh · Music mixer</title>
+	<style>
+		:root { color-scheme: light dark; font-family: var(--font-sans, system-ui, sans-serif); color: var(--foreground, #e7ebe5); --line: var(--border, #415047); --surface: var(--card, #1d2822); --soft: var(--muted-foreground, #b2c1b7); --green: #88cda1; }
+		* { box-sizing: border-box; }
+		body { margin: 0; background: transparent; }
+		html[data-standalone] { background: #111a15; color-scheme: dark; }
+		main { max-width: 1100px; margin: auto; min-width: 0; }
+		#back-to-assets { display: inline-block; color: inherit; margin-bottom: 12px; padding-block: 10px; }
+		#back-to-assets[hidden] { display: none; }
+		p { margin: 0 0 12px; line-height: 1.5; }
+		.intro { font-size: 15px; }
+		.hint { font-size: 13px; color: var(--soft); }
+		button, select, input, textarea { font: inherit; color: inherit; }
+		button, select { min-height: 44px; border: 1px solid var(--line); border-radius: 7px; padding: 8px 12px; background: var(--secondary, #29362e); font-size: 14px; cursor: pointer; }
+		button.primary { background: var(--primary, #b2df92); color: var(--primary-foreground, #142019); border-color: transparent; font-weight: 650; }
+		button:hover:not(:disabled) { filter: brightness(1.12); }
+		button:disabled { opacity: .4; cursor: default; }
+		:focus-visible { outline: 3px solid var(--ring, #b2df92); outline-offset: 3px; }
+		input:not([type=range]), textarea { background: var(--code-background, #131c17); border: 1px solid var(--line); border-radius: 6px; padding: 10px; min-height: 44px; max-width: 100%; }
+		label { font-size: 13px; color: var(--soft); display: flex; align-items: center; gap: 8px; }
+		.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+		.toolbar label.grow { flex: 1 1 240px; white-space: nowrap; }
+		#mix-name { width: 100%; min-width: 0; }
+		.transport, .share { background: var(--surface); padding: 16px; border: 1px solid var(--line); border-radius: var(--radius, 10px); margin: 14px 0; }
+		.readout { display: flex; justify-content: space-between; align-items: start; gap: 12px; font-size: 14px; min-height: 22px; }
+		#clock { font-variant-numeric: tabular-nums; color: var(--soft); }
+		progress { width: 100%; height: 8px; accent-color: var(--green); margin: 10px 0 0; }
+		#volume { width: 95px; min-height: 44px; accent-color: var(--green); }
+		#duration { color: var(--soft); font-variant-numeric: tabular-nums; font-size: 13px; margin-bottom: 0; }
+		.timeline-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 9px; scrollbar-color: var(--line) transparent; }
+		table { border-spacing: 0; min-width: 100%; width: max-content; font-size: 13px; text-align: left; }
+		th, td { border-bottom: 1px solid var(--line); padding: 4px; text-align: center; }
+		th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); text-align: left; padding: 9px 10px; width: 148px; max-width: 148px; min-width: 148px; font-weight: 500; }
+		thead th { padding-top: 9px; }
+		thead button { width: 100%; font-weight: 700; }
+		thead small { display: block; padding: 5px 0 3px; color: var(--soft); font-weight: 400; }
+		td select { width: 86px; padding-inline: 6px; font-size: 12px; border-color: transparent; background: var(--muted, #202b24); }
+		td select[data-on=true] { background: color-mix(in srgb, var(--green) 17%, var(--surface)); border-color: color-mix(in srgb, var(--green) 42%, var(--line)); }
+		td input[type=number] { width: 65px; padding: 7px; font-size: 13px; }
+		td button { width: 44px; padding: 6px; }
+		th.group-title { position: static; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--soft); padding: 9px 10px; background: var(--muted, #202b24); }
+		.baseline { color: var(--green); font-size: 11px; letter-spacing: .08em; }
+		[data-playing] { box-shadow: inset 0 0 0 2px var(--green); }
+		h2 { margin: 0 0 8px; font-size: 19px; }
+		.share label { display: block; margin: 10px 0 5px; }
+		.share textarea { display: block; width: 100%; resize: vertical; }
+		#notes { font-size: 14px; min-height: 62px; }
+		#mix-text { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; white-space: pre; min-height: 156px; }
+		#share-status { font-size: 13px; color: var(--soft); margin: 10px 0 0; }
+		.footnote { font-size: 12px; color: var(--soft); margin-top: 12px; }
+		@media(max-width: 480px) { button, select { font-size: 13px; padding-inline: 9px; } th:first-child { width: 128px; min-width: 128px; max-width: 128px; } .transport, .share { padding: 16px; } .toolbar { gap: 6px; } }
+	</style>
+</head>
+<body>
+<main>
+	<a id="back-to-assets" href="/asset-preview.html" hidden>← Back to asset preview</a>
+	<p class="intro"><strong>Build your own arrangement.</strong> The original music stays on throughout. After its two-cycle opening, choose which layers play in each section. The last section loops back to the first.</p>
+	<div class="toolbar">
+		<label class="grow">Mix name <input id="mix-name" maxlength="80" value="Gentle bloom"></label>
+		<label>Tempo <select id="tempo"><option value="normal">Normal</option><option value="faster">1.2× faster</option></select></label>
+	</div>
+	<div class="transport">
+		<div class="readout"><span id="status" role="status" aria-live="polite">Choose layers, then play. Nothing starts automatically.</span><span id="clock">0:00</span></div>
+		<progress id="progress" value="0" max="34.4" aria-label="Playback position"></progress>
+		<div class="toolbar">
+			<button class="primary" type="button" id="play">Play mix</button>
+			<button type="button" id="entrance">Hear build-up</button>
+			<button type="button" id="seam">Check loop seam</button>
+			<button type="button" id="stop">Stop</button>
+			<label>Volume <input id="volume" aria-label="Listening volume" type="range" min="0" max="4" step="0.1" value="2"></label>
+		</div>
+		<p id="duration"></p>
+	</div>
+	<div class="toolbar">
+		<label>Start from <select id="preset"><option value="saved">Saved mix · 5 sections</option><option value="bloom">Gentle bloom · original option</option><option value="groove">Pond groove</option><option value="conversation">Call &amp; response</option><option value="original">Background only</option></select></label>
+		<button type="button" id="load-preset">Load preset</button>
+	</div>
+	<p class="hint">Each column is two cycles (6.88s at normal tempo). Choose a pattern or Off; letters distinguish variations from the original previews. ▶ hears one layer with the background. Tap a column number to play from there.</p>
+	<div class="timeline-wrap" tabindex="0" role="region" aria-label="Layer timeline; scroll horizontally for more sections">
+		<table id="timeline" aria-label="Layer patterns by timeline section"></table>
+	</div>
+	<div class="toolbar">
+		<label>Edit <select id="section-picker" aria-label="Section to edit"></select></label>
+		<button type="button" id="earlier" aria-label="Move section earlier">← Earlier</button>
+		<button type="button" id="later" aria-label="Move section later">Later →</button>
+		<button type="button" id="duplicate">Copy previous</button>
+		<button type="button" id="clear-section">Clear section</button>
+		<button type="button" id="add">+ Section</button>
+		<button type="button" id="remove">− Last section</button>
+	</div>
+	<p class="hint">Layer levels are percentages; 0 mutes a layer. Changes stop playback so the next play uses your exact draft. The opening plays once; every repeat keeps the original background running.</p>
+	<section class="share" aria-label="Share your arrangement">
+		<h2>Keep this mix</h2>
+		<p class="hint">Copy the plain text below and paste it here in our conversation. It captures every pattern, level, section order, and tempo. No file is needed. You can paste it back into this box to restore the same arrangement.</p>
+		<label for="notes">Notes for the final version</label>
+		<textarea id="notes" rows="2" maxlength="1000" placeholder="For example: keep this build-up, but make the final melody quieter."></textarea>
+		<div class="toolbar"><button class="primary" type="button" id="copy">Copy arrangement</button><button type="button" id="restore">Load pasted arrangement</button></div>
+		<textarea id="mix-text" rows="7" aria-label="Copyable arrangement text" spellcheck="false"></textarea>
+		<p id="share-status" role="status" aria-live="polite"></p>
+	</section>
+	<p class="footnote">Drafts save in this browser when storage is available. Tab / arrow keys work with the controls; Escape stops. With a controller, Up/Down moves focus, Left/Right adjusts patterns or levels, A activates, B stops. Saved mix matches gameplay; edits affect this preview only.</p>
+</main>
+<script type="module" src="./src/dev/music-options/preview.ts"></script>
+</body>
+</html>
