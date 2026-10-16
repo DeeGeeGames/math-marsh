@@ -114,6 +114,34 @@ test('Enter submits first-use naming without activating the next screen', async 
   await expect(page.getByRole('heading', { name: 'Pick your math' })).toHaveCount(0);
 });
 
+test('Enter on Cancel leaves add and rename forms without saving', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.clear());
+  await page.goto('/');
+  await skipSplash(page);
+  await submitPlayerName(page, 'Player');
+
+  await openRoster(page);
+  await page.getByRole('button', { name: /Add player/ }).click();
+  const addDialog = page.getByRole('dialog', { name: 'Add a player' });
+  await addDialog.getByLabel('Player name').fill('Player 2');
+  const addCancel = addDialog.getByRole('button', { name: 'Cancel' });
+  await addCancel.focus();
+  await pressActionKey(page, 'Enter');
+  await expect(page.getByRole('dialog', { name: 'Player profiles' })).toBeVisible();
+  await expect(page.locator('[data-player-row]')).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Manage players' }).click();
+  const rename = page.locator('.player-management-row').getByRole('button', { name: 'Rename' });
+  await rename.click();
+  const renameDialog = page.getByRole('dialog', { name: 'Rename player' });
+  await renameDialog.getByLabel('Player name').fill('Renamed');
+  const renameCancel = renameDialog.getByRole('button', { name: 'Cancel' });
+  await renameCancel.focus();
+  await pressActionKey(page, 'Enter');
+  await expect(page.getByRole('dialog', { name: 'Manage players' })).toContainText('Player');
+  await expect(page.getByRole('dialog', { name: 'Manage players' })).not.toContainText('Renamed');
+});
+
 test('profiles enforce capacity and keep management actions attached to stable players', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.clear());
   await page.goto('/');
