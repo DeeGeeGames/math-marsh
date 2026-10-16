@@ -1,4 +1,5 @@
 import preview from '../asset-preview.html';
+import musicMixer from '../music-options-preview.html';
 
 const server = Bun.serve({
 	hostname: '0.0.0.0',
@@ -7,6 +8,7 @@ const server = Bun.serve({
 	routes: {
 		'/': preview,
 		'/asset-preview.html': preview,
+		'/music-options.html': musicMixer,
 	},
 });
 

@@ -12,6 +12,8 @@ p { color: #b5cbc4; line-height: 1.5; }
 .panel { background: #172b2a; border: 1px solid #37514b; border-radius: 16px; padding: 24px; min-width: 0; }
 button, select { font: inherit; font-size: 16px; color: inherit; background: #243f39; border: 1px solid #5a776a; border-radius: 8px; min-height: 48px; padding: 10px 14px; cursor: pointer; }
 button:hover { background: #35584c; }
+.music-mixer-link { display: flex; align-items: center; min-height: 48px; padding: 10px 14px; color: #a6e7b4; border: 1px solid #5a776a; border-radius: 8px; text-decoration: none; }
+.music-mixer-link:hover { background: #35584c; }
 button[aria-pressed=true], .primary { background: #a6e7b4; color: #10291d; border-color: #a6e7b4; font-weight: 650; }
 :focus-visible { outline: 3px solid #ffe3a1; outline-offset: 4px; }
 .characters, .transport, .options { display: flex; flex-wrap: wrap; gap: 12px; }

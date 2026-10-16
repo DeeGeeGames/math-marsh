@@ -96,6 +96,8 @@ const draw = function(): void {
 			</section>
 			<aside class="panel audio" aria-labelledby="audio-title">
 				<h2 id="audio-title">Audio audition</h2><p>Uses the same synthesized music and effects as the game.</p>
+				<a class="music-mixer-link" href="/music-options.html">Open music timeline mixer</a>
+				<p class="hint">Explore layered arrangements, load the saved five-section mix, and copy your choices as text.</p>
 				<h3>Music</h3><div class="audio-list">${MUSIC.map(function(track) {
 					return html`<button @click=${function(): void { audio.playMusic(track.scene, track.lowTime); state.audioLabel = track.label; draw(); }}>${track.label}</button>`;
 				})}</div>
