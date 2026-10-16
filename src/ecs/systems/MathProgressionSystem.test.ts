@@ -57,10 +57,10 @@ const createWorld = async function(includeProblems = false): Promise<MathTestWor
 	world.setResource('mathSession', session);
 	world.setResource('equationMode', equationModeForMathSession(session, ['add'], 1));
 	world.setResource('gameplayOnboardingSession', { active: false });
+	world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
 	world.spawn({ ...playerComponents(0, 0), timers: {} });
 	addMathProgressionSystemToEngine(world);
 	if (includeProblems) {
-		world.setResource('gameplayClock', createTimer(Number.POSITIVE_INFINITY));
 		world.setResource('board', BOARD_SIZES.easy);
 		world.setResource('enemySpawn', { index: 0, roster: [] });
 		world.setResource('currentLevel', 1);

@@ -7,6 +7,8 @@ import { tutorialHudLabel } from '../../onboarding/gameplayOnboarding';
 import { pondThemeForPromptKind } from '../pondTheme';
 import { setGameMusicTime } from '../../audio/audio';
 import { mathStepLabel } from '../mathSteps';
+import { gameplayTimeMs } from '../gameplayClock';
+import { MATH_PROGRESS_NOTICE_DURATION_MS } from '../mathMode';
 
 /**
  * UI System
@@ -26,6 +28,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
       'equationMode',
       'mathSession',
       'mathRoundSummary',
+      'gameplayClock',
     ])
     .setProcess(({ queries, resources }) => {
       const player = queries.player;
@@ -40,6 +43,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         equationMode,
         mathSession,
         mathRoundSummary,
+        gameplayClock,
       } = resources;
       const level = tutorialHudLabel(gameplayOnboardingSession)
         ?? (mathSession
@@ -47,6 +51,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
           : gameplayLevelLabel(gameMode, mathDifficulty, currentLevel));
       const outcome = mathRoundSummary?.outcome;
       const notice = !gameplayOnboardingSession.active && mathRoundSummary && outcome
+        && gameplayTimeMs(gameplayClock) - mathRoundSummary.startedAt < MATH_PROGRESS_NOTICE_DURATION_MS
         ? outcome.kind === 'advanced'
           ? `${operationLabels[mathRoundSummary.operation]}: ${outcome.accelerated ? 'fast and accurate! ' : ''}${outcome.advanceBy > 0
             ? `Advanced ${outcome.advanceBy} step${outcome.advanceBy === 1 ? '' : 's'} to ${outcome.progress.currentStep}; applies next board.`

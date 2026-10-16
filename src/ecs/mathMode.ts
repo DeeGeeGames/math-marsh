@@ -8,6 +8,7 @@ import { createEquationModeState } from '../math/equations';
 import { shouldStartOperandTutorial, shouldStartOperandAndResultTutorial, type GameplayOnboardingCompletion, type GameplayOnboardingKind } from '../onboarding/gameplayOnboarding';
 
 export const MATH_SCENE_UNLOCK_STEPS = [3, 6, 9, 11] as const;
+export const MATH_PROGRESS_NOTICE_DURATION_MS = 8000;
 
 export type MathTrackSession = Readonly<{
   step: number;
@@ -21,6 +22,7 @@ export type MathSession = Readonly<{
 }>;
 
 export type MathRoundSummary = Readonly<{
+  startedAt: number;
   operation: EquationOperation;
   assessedStep: number;
   assessment: MathAssessment;

@@ -7,6 +7,7 @@ import { activePlayerProfile, updateActivePlayerProfile } from '../playerProfile
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { GAME_CONFIG } from '../../config';
 import { playerQuery } from '../queries';
+import { gameplayTimeMs } from '../gameplayClock';
 
 /** Assess arithmetic during normal play, independently for each selected operation. */
 export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): void {
@@ -16,7 +17,7 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
     .setPriority(SYSTEM_PRIORITIES.MATH_PROGRESSION)
     .runWhenEmpty()
     .addQuery('players', playerQuery)
-    .withResources(['mathSession', 'playerProfiles', 'equationMode', 'gameplayOnboardingSession'])
+    .withResources(['mathSession', 'playerProfiles', 'equationMode', 'gameplayOnboardingSession', 'gameplayClock'])
     .setProcess(({ ecs, dt, queries, resources }) => {
       const session = resources.mathSession;
       if (!session || ecs.getCurrentScreen() !== 'playing' || resources.gameplayOnboardingSession.active) return;
@@ -77,6 +78,7 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
       }));
       ecs.setResource('playerProfiles', playerProfiles);
       ecs.setResource('mathRoundSummary', {
+        startedAt: gameplayTimeMs(resources.gameplayClock),
         operation: completedOperation,
         assessedStep: completedTrack.step,
         assessment,
