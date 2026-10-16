@@ -74,7 +74,7 @@ test('progress toasts preserve the board, pause their lifetime, expire, and allo
 	await page.waitForTimeout(8500);
 	await page.getByRole('button', { name: 'Resume Game' }).click();
 	await expect(notice).toBeVisible();
-	await expect(notice).toBeHidden({ timeout: 10_000 });
+	await expect(notice).toBeHidden({ timeout: 4_000 });
 	expect(await board.boundingBox()).toEqual(before);
 	await completeAssessment(page, false);
 	await expect(notice).toContainText('keep practicing');
