@@ -43,13 +43,14 @@
     var(--secondary-gradient);
 }
 
-/* Keyboard / gamepad focus indicator. Visible on any button or opt-in
- * focusable (e.g. mode cards). Uses focus-visible so mouse clicks don't
- * leave a lingering outline on the last-clicked button. */
+/* Keyboard / controller focus indicator. Gamepad-driven focus can move
+ * programmatically while the browser is in pointer mode, so navigation sets
+ * this attribute explicitly. Pointer input clears it to avoid click outlines. */
 button:focus-visible,
 [type="checkbox"]:focus-visible,
 [type="radio"]:focus-visible,
-[data-focusable]:focus-visible {
+[data-focusable]:focus-visible,
+:where([data-focus-navigation="true"]) :is(button, input:not([type="hidden"]), select, textarea, [data-focusable], [contenteditable="true"]):focus {
   outline: 3px solid var(--reed);
   outline-offset: 4px;
   box-shadow: 0 0 0 6px rgba(244, 210, 122, 0.28);
