@@ -12,13 +12,13 @@ describe('enemy rosters', () => {
     expect([1, 2, 3].map(level => arcadeEnemyRosterForLevel(level, 'easy')))
       .toEqual([['lizard'], ['spider'], ['frog']]);
     (['easy', 'medium', 'expert'] as const).forEach(difficulty => {
-      const expectedCount = { easy: 1, medium: 3, expert: 4 }[difficulty];
+      const expectedCount = { easy: 1, medium: 2, expert: 3 }[difficulty];
       [1, 4, 7, 11, 50].forEach(level => {
         expect(arcadeEnemyRosterForLevel(level, difficulty)).toHaveLength(expectedCount);
       });
     });
-    expect(arcadeEnemyRosterForLevel(6, 'medium')).toEqual(['lizard', 'spider', 'frog']);
-    expect(arcadeEnemyRosterForLevel(6, 'expert')).toEqual(['lizard', 'spider', 'spider', 'frog']);
+    expect(arcadeEnemyRosterForLevel(6, 'medium')).toEqual(['lizard', 'spider']);
+    expect(arcadeEnemyRosterForLevel(6, 'expert')).toEqual(['lizard', 'spider', 'spider']);
   });
   test('Easy repeats a single lizard, spider, frog across all levels', () => {
     expect(Array.from({ length: 9 }, (_, index) => enemyRosterForLevel(index + 1, 'easy'))).toEqual([
