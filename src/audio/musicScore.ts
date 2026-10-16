@@ -55,12 +55,15 @@ const at = function<T>(values: readonly T[], index: number): T {
 	return value;
 };
 
+// Lift the accompaniment by 6 dB while preserving the original opening and bed.
+const ACCOMPANIMENT_GAIN = 2;
+
 const tone = function(layer: Layer, step: number, note: number, duration: number, volume: number, type: OscillatorType = 'triangle'): Tone {
-	return { kind: 'tone', layer, step, note, duration, volume, type };
+	return { kind: 'tone', layer, step, note, duration, volume: volume * (layer === 'original' ? 1 : ACCOMPANIMENT_GAIN), type };
 };
 
 const noise = function(layer: Layer, step: number, duration: number, volume: number, filterFrequency: number, filterType: BiquadFilterType): Noise {
-	return { kind: 'noise', layer, step, duration, volume, filterFrequency, filterType };
+	return { kind: 'noise', layer, step, duration, volume: volume * (layer === 'original' ? 1 : ACCOMPANIMENT_GAIN), filterFrequency, filterType };
 };
 
 // Matches scheduleGameMusic in src/audio/audio.ts, including the 80 ms melody offset.
