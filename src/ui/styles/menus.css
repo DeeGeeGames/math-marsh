@@ -657,6 +657,7 @@
   gap: clamp(10px, 1.6vh, 20px);
   width: min(100%, 1120px);
   margin-block: auto;
+  margin-inline: auto;
 }
 
 .setup-view,
