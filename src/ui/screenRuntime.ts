@@ -38,8 +38,15 @@ function createGameContainer(): HTMLElement {
   container.id = 'game-container';
   container.className = 'w-screen h-dvh relative overflow-hidden flex flex-col items-center justify-center font-sans app-background';
   document.body.appendChild(container);
+  container.addEventListener('pointerdown', () => {
+    delete document.documentElement.dataset.focusNavigation;
+  }, { capture: true });
   return container;
 }
+
+const enableNavigationFocus = function(): void {
+  document.documentElement.dataset.focusNavigation = 'true';
+};
 
 function spatialRect(element: HTMLElement): SpatialRect {
   const { left, right, top, bottom } = element.getBoundingClientRect();
@@ -155,6 +162,7 @@ export function createScreenRuntime(
   function navigateFocus(direction: FocusDirection): void {
     const focusables = getFocusables(state.currentScreen);
     if (focusables.length === 0) return;
+    enableNavigationFocus();
     const current = focusedIndex(focusables);
     if (current < 0) {
       focusElement(focusables[0]);
@@ -169,6 +177,7 @@ export function createScreenRuntime(
     const focusables = getFocusables(state.currentScreen);
     const current = focusedIndex(focusables);
     const target = current >= 0 ? focusables[current] : focusables[0];
+    if (target) enableNavigationFocus();
     target?.click();
   }
 
@@ -181,7 +190,10 @@ export function createScreenRuntime(
   }
 
   function triggerCancel(): void {
-    screenSpecs[state.currentScreen].onCancel?.();
+    const onCancel = screenSpecs[state.currentScreen].onCancel;
+    if (!onCancel) return;
+    enableNavigationFocus();
+    onCancel();
   }
 
   function revealLevelSelection(): boolean {
