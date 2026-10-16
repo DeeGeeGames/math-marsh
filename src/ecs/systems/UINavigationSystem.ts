@@ -1,19 +1,43 @@
 import { advanceLevelSelectSequence, LEVEL_SELECT_SEQUENCE } from '../levelSelectionCheat';
-import { gameActions } from '../controllerSelection';
+import { uiActions } from '../controllerSelection';
 import type { GameSystemRegistrar } from '../Engine';
 import { navigateFocus, activateFocus, triggerCancel, revealLevelSelection } from '../../ui/UIManager';
 
 const CHEAT_DIRECTIONS = [...new Set(LEVEL_SELECT_SEQUENCE)];
+
+const isEditingText = function(): boolean {
+  const active = document.activeElement;
+  return active instanceof HTMLInputElement
+    || active instanceof HTMLTextAreaElement
+    || active instanceof HTMLSelectElement
+    || (active instanceof HTMLElement && active.isContentEditable);
+};
 
 // Drives DOM focus on non-gameplay screens from the unified input state, so
 // keyboard arrows, d-pad, left stick, A button, and Start/B all work in
 // menus without bespoke event listeners per screen.
 export function addUINavigationSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('uiNavigationSystem')
-    .inScreens(['menu', 'skitGallery', 'modeSelect', 'howToPlay', 'tutorialOffer', 'paused', 'controllerRecovery', 'settings', 'gameOver'])
+    .inScreens([
+      'menu',
+      'playerSetup',
+      'playerRoster',
+      'playerAdd',
+      'playerManagement',
+      'playerRename',
+      'playerDelete',
+      'skitGallery',
+      'modeSelect',
+      'howToPlay',
+      'tutorialOffer',
+      'paused',
+      'controllerRecovery',
+      'settings',
+      'gameOver',
+    ])
     .withResources(['inputState', 'controllerSelection', 'levelSelectionUnlocked'])
     .setProcess(({ ecs, dt, resources: { inputState, controllerSelection, levelSelectionUnlocked } }) => {
-      const a = gameActions(inputState, controllerSelection);
+      const a = uiActions(inputState, controllerSelection, isEditingText());
       if (ecs.getCurrentScreen() === 'modeSelect' && !levelSelectionUnlocked) {
         const directions = CHEAT_DIRECTIONS.filter(direction => a.justActivated(direction));
         const next = advanceLevelSelectSequence(ecs.getScreenState('modeSelect'), directions, dt,

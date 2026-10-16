@@ -3,7 +3,19 @@ import type { SettingsReturnScreen } from '../ecs/types';
 import type { TemplateResult } from 'lit-html';
 import type { InputPromptItem } from './inputPrompts';
 
-export type UIScreen = Exclude<SettingsReturnScreen, 'tutorial'> | 'settings' | 'tutorialOffer' | 'controllerRecovery' | SplashScreen | 'skit' | 'skitGallery';
+export type UIScreen = Exclude<SettingsReturnScreen, 'tutorial'>
+	| 'settings'
+	| 'tutorialOffer'
+	| 'controllerRecovery'
+	| SplashScreen
+	| 'skit'
+	| 'skitGallery'
+	| 'playerSetup'
+	| 'playerRoster'
+	| 'playerAdd'
+	| 'playerManagement'
+	| 'playerRename'
+	| 'playerDelete';
 
 export type InputPromptPlacement = 'viewport' | 'panel' | 'hud';
 
@@ -17,6 +29,7 @@ export type ScreenSpec = {
   onShow?: (root: HTMLElement) => void;
   onLevelSelectionUnlocked?: (root: HTMLElement) => void;
   focusSelector?: string;
+  initialFocusSelector?: string;
   onCancel?: () => void;
 };
 

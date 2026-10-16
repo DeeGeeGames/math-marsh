@@ -18,13 +18,20 @@ type PromptSpec = Pick<ScreenSpec, 'prompts' | 'promptPlacement'>;
 
 type ScreenRuntime = {
   activateFocus: () => void;
+  focus: (selector: string) => boolean;
   navigateFocus: (direction: FocusDirection) => void;
-  presentScreen: (screen: UIScreen, retainGameplay?: boolean) => HTMLElement;
+  presentScreen: (screen: UIScreen, options?: ScreenPresentationOptions) => HTMLElement;
   revealLevelSelection: () => boolean;
   setPromptOverride: (screen: UIScreen, spec: PromptSpec | undefined) => void;
   triggerCancel: () => void;
   updateInputPromptPlatform: (platform: InputPromptPlatform) => void;
 };
+
+export type ScreenPresentationOptions = Readonly<{
+  retainGameplay?: boolean;
+  retainMenu?: boolean;
+  initialFocusSelector?: string;
+}>;
 
 function createGameContainer(): HTMLElement {
   const container = document.createElement('div');
@@ -90,28 +97,34 @@ export function createScreenRuntime(
     element.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
-  function focusFirstOn(screen: UIScreen): void {
-    const [first] = getFocusables(screen);
-    focusElement(first);
+  function focusFirstOn(screen: UIScreen, preferredSelector?: string): void {
+    const focusables = getFocusables(screen);
+    const initialFocusSelector = preferredSelector ?? screenSpecs[screen].initialFocusSelector;
+    const preferred = initialFocusSelector
+      ? focusables.find(element => element.matches(initialFocusSelector))
+      : undefined;
+    focusElement(preferred ?? focusables[0]);
   }
 
   function presentScreen(
     screen: UIScreen,
-    retainGameplay = false,
+    options: ScreenPresentationOptions = {},
   ): HTMLElement {
     const root = screenElements.get(screen) ?? createScreen(screen);
     screenSpecs[screen].onShow?.(root);
+    renderPromptSlot(root, promptSpecForScreen(screen));
     screenElements.forEach((element, candidate) => {
-      const retained = retainGameplay && candidate === 'playing';
+      const retained = Boolean((options.retainGameplay && candidate === 'playing')
+        || (options.retainMenu && candidate === 'menu'));
       element.style.display = candidate === screen || retained
         ? 'flex'
         : 'none';
       element.inert = retained;
     });
     state.currentScreen = screen;
-    if (screen !== 'playing' && !retainGameplay) delete container.dataset.pondPhase;
+    if (screen !== 'playing' && !options.retainGameplay) delete container.dataset.pondPhase;
     if (screen !== 'playing') {
-      focusFirstOn(screen);
+      focusFirstOn(screen, options.initialFocusSelector);
       return root;
     }
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
@@ -159,6 +172,14 @@ export function createScreenRuntime(
     target?.click();
   }
 
+  function focus(selector: string): boolean {
+    const root = screenElements.get(state.currentScreen);
+    const element = root?.querySelector<HTMLElement>(selector);
+    if (!element || element.getClientRects().length === 0) return false;
+    focusElement(element);
+    return true;
+  }
+
   function triggerCancel(): void {
     screenSpecs[state.currentScreen].onCancel?.();
   }
@@ -174,6 +195,7 @@ export function createScreenRuntime(
 
   return {
     activateFocus,
+    focus,
     navigateFocus,
     presentScreen,
     revealLevelSelection,

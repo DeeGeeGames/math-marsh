@@ -6,11 +6,10 @@ import { createInputPlugin } from 'ecspresso/plugins/input/input';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
-import { controllerActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
+import { controllerActionMap, controllerOnlyActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { initialSplashState } from './splashSequence';
-import { loadSkitProgress } from './skitProgress';
-import { loadMathProgress } from './mathProgressStore';
 import type { SkitScreenConfig } from './skitSequence';
+import { loadPlayerProfiles } from './playerProfiles';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
 import { configureImageAssets } from './assets';
@@ -26,10 +25,8 @@ import type {
   LevelCompleteScreenState,
   SettingsScreenConfig,
   TutorialScreenConfig,
+  PlayerProfileActionScreenConfig,
 } from './types';
-import {
-  loadOnboardingCompletion,
-} from '../onboarding/gameplayOnboarding';
 
 const timerPlugin = createTimerPlugin<TimerSlot>({ priority: SYSTEM_PRIORITIES.TIMERS });
 // Priority slots tween between movement and render so render reads the
@@ -40,14 +37,26 @@ const coroutinePlugin = createCoroutinePlugin({
   phase: 'preUpdate',
 });
 
-const loadedMathProgress = loadMathProgress();
 const noMathSession: Resources['mathSession'] = null;
 const noMathRoundSummary: Resources['mathRoundSummary'] = null;
 
+const PREVENT_DEFAULT_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'Tab']);
+
+const isEditableTarget = function(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable
+    || target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') !== null;
+};
+
 const inputPlugin = createInputPlugin<GameAction>({
   actions: controllerActionMap(initialControllerSelection()),
-  players: { keyboard: keyboardActionMap() },
-  preventDefaultKeys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'Tab'],
+  players: {
+    keyboard: keyboardActionMap(),
+    controller: controllerOnlyActionMap(initialControllerSelection()),
+  },
+  shouldPreventDefault: event => 'key' in event
+    && PREVENT_DEFAULT_KEYS.has(event.key)
+    && !isEditableTarget(event.target),
 });
 
 export const gameEngine = ECSpresso.create()
@@ -70,17 +79,12 @@ export const gameEngine = ECSpresso.create()
   .withResource('enemySpawn', { index: 0, roster: [] })
   .withResource('equationMode', createEquationModeState(1, 'easy', ['add']))
   .withResource('controllerSelection', initialControllerSelection())
-  .withResource('skitProgress', loadSkitProgress())
-  .withResource('mathProgress', loadedMathProgress.progress)
-  .withResource('mathProgressPersistence', loadedMathProgress.persistence)
+  .withResource('playerProfiles', loadPlayerProfiles())
   .withResource('mathSession', noMathSession)
   .withResource('mathRoundSummary', noMathRoundSummary)
   .withResource('equationsSolvedThisBoard', 0)
   .withResource('mathRoundCompletedThisBoard', false)
   .withResource('inputPrompt', { platform: 'keyboard', gamepadAxesActive: [] })
-  .withResource('gameplayOnboardingCompletion', loadOnboardingCompletion('basics'))
-  .withResource('operandOnboardingCompletion', loadOnboardingCompletion('operands'))
-  .withResource('operandAndResultOnboardingCompletion', loadOnboardingCompletion('operandAndResult'))
   .withResource('gameplayOnboardingSession', { active: false })
   .withResource('tapRequest', null as Resources['tapRequest'])
   .withResource('tapEat', null as Resources['tapEat'])
@@ -92,6 +96,12 @@ export const gameEngine = ECSpresso.create()
     .add('studioSplash', { initialState: initialSplashState })
     .add('engineSplash', { initialState: initialSplashState })
     .add('menu', { initialState: () => ({}) })
+    .add('playerSetup', { initialState: () => ({}) })
+    .add('playerRoster', { initialState: () => ({}) })
+    .add('playerAdd', { initialState: () => ({}) })
+    .add('playerManagement', { initialState: () => ({}) })
+    .add('playerRename', { initialState: (config: PlayerProfileActionScreenConfig) => ({ ...config }) })
+    .add('playerDelete', { initialState: (config: PlayerProfileActionScreenConfig) => ({ ...config }) })
     .add('skitGallery', { initialState: () => ({}) })
     .add('modeSelect', { initialState: initialLevelSelectSequence })
     .add('howToPlay', { initialState: () => ({}) })

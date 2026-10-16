@@ -49,6 +49,29 @@ export const controllerActionMap = function (
   };
 };
 
+export const controllerOnlyActionMap = function (
+  selection: Readonly<ControllerSelection>,
+): ActionMap<GameAction> {
+  const configured = controllerActionMap(selection);
+  const withoutKeyboard = (action: GameAction): ActionMap<GameAction>[GameAction] => {
+    const { gamepadButtons, gamepadAxes } = configured[action];
+    return {
+      ...(gamepadButtons ? { gamepadButtons } : {}),
+      ...(gamepadAxes ? { gamepadAxes } : {}),
+    };
+  };
+  return {
+    up: withoutKeyboard('up'),
+    down: withoutKeyboard('down'),
+    left: withoutKeyboard('left'),
+    right: withoutKeyboard('right'),
+    eat: withoutKeyboard('eat'),
+    back: withoutKeyboard('back'),
+    skip: withoutKeyboard('skip'),
+    pause: withoutKeyboard('pause'),
+  };
+};
+
 const STANDARD_BUTTONS = Array.from({ length: 17 }, (_, index) => index);
 
 /** Ownership is slot + observed ID, never ID alone. Unobservable replacements
@@ -97,4 +120,25 @@ export const gameActions = function (
   const keyboard = input.player('keyboard');
   if (!keyboard) throw new Error('Keyboard input action map is missing');
   return keyboard.actions;
+};
+
+export const uiActions = function (
+  input: InputState<GameAction>,
+  selection: Readonly<ControllerSelection>,
+  editingText: boolean,
+): ActionState<GameAction> {
+  if (!editingText) return gameActions(input, selection);
+  const controller = input.player('controller');
+  if (!controller) throw new Error('Controller input action map is missing');
+  const keyboard = input.player('keyboard');
+  if (!keyboard) throw new Error('Keyboard input action map is missing');
+  const keyboardBackAction = (action: GameAction): boolean => action === 'back' || action === 'pause';
+  return {
+    isActive: action => (!selection.blockFrame && controller.actions.isActive(action))
+      || (keyboardBackAction(action) && keyboard.actions.isActive(action)),
+    justActivated: action => (!selection.blockFrame && controller.actions.justActivated(action))
+      || (keyboardBackAction(action) && keyboard.actions.justActivated(action)),
+    justDeactivated: action => (!selection.blockFrame && controller.actions.justDeactivated(action))
+      || (keyboardBackAction(action) && keyboard.actions.justDeactivated(action)),
+  };
 };

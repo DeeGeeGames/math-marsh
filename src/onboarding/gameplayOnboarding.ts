@@ -117,7 +117,7 @@ export type GameplayOnboardingSession =
       playerSnapshot?: GameplayOnboardingPlayerSnapshot | undefined;
     };
 
-const STORAGE_KEYS = {
+export const ONBOARDING_STORAGE_KEYS = {
   basics: 'math-marsh.gameplayOnboarding',
   operands: 'math-marsh.operandOnboarding',
   operandAndResult: 'math-marsh.operandAndResultOnboarding',
@@ -134,7 +134,7 @@ export function loadOnboardingCompletion(
 ): GameplayOnboardingCompletion {
   try {
     if (typeof localStorage === 'undefined') return 'pending';
-    return onboardingCompletionFromStoredValue(localStorage.getItem(STORAGE_KEYS[kind]));
+    return onboardingCompletionFromStoredValue(localStorage.getItem(ONBOARDING_STORAGE_KEYS[kind]));
   } catch {
     return 'pending';
   }
@@ -145,7 +145,7 @@ export function saveOnboardingCompletion(
   completion: Exclude<GameplayOnboardingCompletion, 'pending'>,
 ): void {
   try {
-    localStorage.setItem(STORAGE_KEYS[kind], completion);
+    localStorage.setItem(ONBOARDING_STORAGE_KEYS[kind], completion);
   } catch {
     // Storage can be unavailable in private browsing or locked-down shells.
     // The ECS resource still preserves the choice for the current session.

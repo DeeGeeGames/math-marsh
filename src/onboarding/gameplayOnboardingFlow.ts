@@ -3,9 +3,9 @@ import type { GameEngine } from '../ecs/Engine';
 import type { TutorialScreenConfig } from '../ecs/types';
 import { mathTutorialForLevel } from '../ecs/mathMode';
 import { goToNextLevel } from '../ecs/systems/nextLevel';
+import { activePlayerProfile, updateActivePlayerProfile } from '../ecs/playerProfiles';
 import {
   completedOnboardingCompletion,
-  saveOnboardingCompletion,
   skippedOnboardingCompletion,
   tutorialStepIndex,
   tutorialSteps,
@@ -13,12 +13,6 @@ import {
   type GameplayOnboardingKind,
   type GameplayOnboardingSession,
 } from './gameplayOnboarding';
-
-const ONBOARDING_COMPLETION_RESOURCES = {
-  basics: 'gameplayOnboardingCompletion',
-  operands: 'operandOnboardingCompletion',
-  operandAndResult: 'operandAndResultOnboardingCompletion',
-} as const;
 
 const ONBOARDING_COMPLETION_TRANSITIONS = {
   completed: completedOnboardingCompletion,
@@ -30,18 +24,23 @@ function recordOnboardingCompletion(
   kind: GameplayOnboardingKind,
   requested: Exclude<GameplayOnboardingCompletion, 'pending'>,
 ): void {
-  const resource = ONBOARDING_COMPLETION_RESOURCES[kind];
-  const current = engine.getResource(resource);
+  const profiles = engine.getResource('playerProfiles');
+  const profile = activePlayerProfile(profiles);
+  if (!profile) return;
+  const current = profile.onboarding[kind];
   const next = ONBOARDING_COMPLETION_TRANSITIONS[requested](current);
-  engine.setResource(resource, next);
-  if (next === requested && current !== requested) {
-    saveOnboardingCompletion(kind, requested);
-  }
+  if (next === current) return;
+  engine.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    ...active,
+    onboarding: { ...active.onboarding, [kind]: next },
+  })));
 }
 
 export function startNormalGame(engine: GameEngine): void {
+  const profile = activePlayerProfile(engine.getResource('playerProfiles'));
+  if (!profile) return;
   const kind = mathTutorialForLevel(engine.getResource('startingLevel'), engine.getResource('mathDifficulty'),
-    engine.getResource('operandOnboardingCompletion'), engine.getResource('operandAndResultOnboardingCompletion'));
+    profile.onboarding.operands, profile.onboarding.operandAndResult);
   if (kind) {
     void engine.setScreen('tutorial', { kind, isReplay: false, returnTo: { kind: 'newGame' } });
     return;
@@ -54,9 +53,11 @@ export function startNormalGame(engine: GameEngine): void {
 
 export function startGameplayOnboarding(engine: GameEngine): void {
   const isFirstRun = engine.getCurrentScreen() === 'tutorialOffer';
+  const profile = activePlayerProfile(engine.getResource('playerProfiles'));
+  if (!profile) return;
   const config: TutorialScreenConfig = {
     kind: 'basics',
-    isReplay: engine.getResource('gameplayOnboardingCompletion') !== 'pending',
+    isReplay: profile.onboarding.basics !== 'pending',
     returnTo: isFirstRun
       ? { kind: 'newGame' }
       : { kind: 'nextTutorial' },
@@ -117,9 +118,11 @@ function continueAfterTutorial(
     return;
   }
 
+  const profile = activePlayerProfile(engine.getResource('playerProfiles'));
+  if (!profile) return;
   restoreActivePlayer(engine, session);
   goToNextLevel(engine, session.returnTo.level, engine.getResource('mathDifficulty'),
-    engine.getResource('operandOnboardingCompletion'), engine.getResource('operandAndResultOnboardingCompletion'));
+    profile.onboarding.operands, profile.onboarding.operandAndResult);
 }
 
 export function skipGameplayOnboarding(engine: GameEngine): void {

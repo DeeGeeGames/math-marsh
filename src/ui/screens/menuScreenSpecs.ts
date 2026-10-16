@@ -1,7 +1,7 @@
 import { selectedStartingLevel } from '../../ecs/levelSelectionCheat';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { GAME_CONFIG } from '../../config';
-import { html, nothing, type TemplateResult } from 'lit-html';
+import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
 import flyMoveToward from '../../assets/sprites/fly/fly-move-toward.png';
 import frogHopToward from '../../assets/sprites/frog/frog-hop-toward.png';
@@ -37,6 +37,7 @@ import {
   OVERLAY_BASE,
   type ScreenSpecActions,
 } from './shared';
+import { playerBadgeTemplate } from './playerProfileScreens';
 
 const MATH_OPERATIONS: readonly EquationOperation[] = ['add', 'subtract', 'multiply', 'divide'];
 const MATH_DIFFICULTIES: readonly MathDifficulty[] = ['easy', 'medium', 'expert'];
@@ -138,6 +139,7 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
     id: 'main-menu',
     className: `${OVERLAY_BASE} app-background`,
     html: html`
+      <div class="player-profile-badge-slot" data-player-profile-badge></div>
       <div class="menu-shell w-[min(92vw,980px)] px-5 sm:px-7 md:px-9 py-5 sm:py-7 md:py-8 grid gap-5 sm:gap-7 md:gap-9 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)] items-center">
         <div class="menu-copy text-center md:text-left">
           <h1 class="menu-title text-gold drop-shadow-lg">
@@ -203,6 +205,11 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       { action: 'select', label: 'Select' },
     ],
     promptPlacement: 'panel',
+    initialFocusSelector: '.menu-primary-action',
+		onShow: (root): void => {
+      const badgeSlot = root.querySelector<HTMLElement>('[data-player-profile-badge]');
+      if (badgeSlot) render(playerBadgeTemplate(actions), badgeSlot);
+    },
   };
 }
 

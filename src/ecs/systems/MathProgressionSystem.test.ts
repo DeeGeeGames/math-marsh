@@ -4,6 +4,7 @@ import type { GameEngine } from '../Engine';
 import type { EquationOperation, LevelCompleteScreenConfig, PlayingScreenConfig } from '../types';
 import { createMathSession, equationModeForMathSession } from '../mathMode';
 import { initialSavedMathProgress } from '../mathProgressStore';
+import { activePlayerProfile, initialPlayerLearnerData, type PlayerProfile, type PlayerProfilesState } from '../playerProfiles';
 import { createMathAssessment, type MathAssessmentState } from '../mathAssessment';
 import * as audio from '../../audio/audio';
 import { gridCells } from '../lilyPads';
@@ -19,6 +20,28 @@ type TestConfig = Omit<ConfigOf<GameEngine>, 'resources'> & {
 };
 type MathTestWorld = ReturnType<ReturnType<typeof ECSpresso.create<TestConfig>>['build']>;
 
+const profilesFor = function(progress = initialSavedMathProgress()): PlayerProfilesState {
+	return {
+		profiles: [{
+			id: 'test-player',
+			name: 'Player',
+			mathProgress: progress,
+			onboarding: { basics: 'pending', operands: 'pending', operandAndResult: 'pending' },
+			skitProgress: [],
+		}],
+		activeProfileId: 'test-player',
+		initialLearnerData: initialPlayerLearnerData(),
+		persistence: 'persistent',
+		canPersist: false,
+	};
+};
+
+const activeProfileFor = function(world: MathTestWorld): PlayerProfile {
+	const profile = activePlayerProfile(world.getResource('playerProfiles'));
+	if (!profile) throw new Error('Missing active player profile');
+	return profile;
+};
+
 const createWorld = async function(includeProblems = false): Promise<MathTestWorld> {
 	const world = ECSpresso.create<TestConfig>()
 		.withScreens(screens => screens
@@ -28,14 +51,12 @@ const createWorld = async function(includeProblems = false): Promise<MathTestWor
 		.build();
 	const progress = initialSavedMathProgress();
 	const session = createMathSession(progress);
-	world.setResource('mathProgress', progress);
-	world.setResource('mathProgressPersistence', 'persistent');
+	world.setResource('playerProfiles', profilesFor(progress));
 	world.setResource('mathRoundSummary', null);
 	world.setResource('mathRoundCompletedThisBoard', false);
 	world.setResource('mathSession', session);
 	world.setResource('equationMode', equationModeForMathSession(session, ['add'], 1));
 	world.setResource('gameplayOnboardingSession', { active: false });
-	world.setResource('skitProgress', []);
 	world.spawn({ ...playerComponents(0, 0), timers: {} });
 	addMathProgressionSystemToEngine(world);
 	if (includeProblems) {
@@ -88,7 +109,7 @@ describe('math progression system', () => {
 			expect(world.getResource('mathSession')?.tracks.multiply.assessment.activeSeconds).toBe(2.5);
 			expect(world.getResource('mathSession')?.tracks.add.assessment.correctAnswers).toBe(3);
 			expect(world.getResource('mathRoundSummary')).toBeNull();
-			expect(world.getResource('mathProgress').add.currentStep).toBe(1);
+			expect(activeProfileFor(world).mathProgress.add.currentStep).toBe(1);
 		} finally { await world.dispose(); }
 	});
 
@@ -99,17 +120,17 @@ describe('math progression system', () => {
 				world.setResource('mathRoundCompletedThisBoard', false);
 				setAssessment(world, 'add', fastAssessment());
 				world.update(0);
-				expect(world.getResource('mathProgress').add).toEqual({ currentStep: step, highestUnlockedStep: step });
+				expect(activeProfileFor(world).mathProgress.add).toEqual({ currentStep: step, highestUnlockedStep: step });
 				expect(world.getResource('mathSession')?.tracks.add.assessment.correctAnswers).toBe(0);
 				expect(world.getResource('equationMode').level).toBe(1);
 				expect(world.getCurrentScreen()).toBe('playing');
 				const summary = world.getResource('mathRoundSummary');
 				world.update(0);
 				expect(world.getResource('mathRoundSummary')).toBe(summary);
-				expect(world.getResource('mathProgress').add.currentStep).toBe(step);
+				expect(activeProfileFor(world).mathProgress.add.currentStep).toBe(step);
 			}
 			expect(world.getResource('mathSession')?.tracks.add.accelerationStreak).toBe(3);
-			expect(world.getResource('skitProgress')).toEqual(['snack-break', 'the-big-jump', 'the-web-guitar', 'the-big-plan']);
+			expect(activeProfileFor(world).skitProgress).toEqual(['snack-break', 'the-big-jump', 'the-web-guitar', 'the-big-plan']);
 		} finally { await world.dispose(); }
 	});
 
@@ -123,8 +144,8 @@ describe('math progression system', () => {
 			world.setResource('equationMode', equationModeForMathSession(session, ['multiply'], 3, 2));
 			const mode = world.getResource('equationMode');
 			world.update(1);
-			expect(world.getResource('mathProgress').add.currentStep).toBe(3);
-			expect(world.getResource('mathProgress').multiply.currentStep).toBe(1);
+			expect(activeProfileFor(world).mathProgress.add.currentStep).toBe(3);
+			expect(activeProfileFor(world).mathProgress.multiply.currentStep).toBe(1);
 			expect(world.getResource('mathSession')?.tracks.add.assessment).toEqual(createMathAssessment());
 			expect(world.getResource('mathSession')?.tracks.multiply.assessment).toEqual({
 				correctAnswers: 2, incorrectAnswers: 1, activeSeconds: 21, expectedSecondsTotal: 24,
@@ -138,18 +159,18 @@ describe('math progression system', () => {
 		const world = await createWorld();
 		try {
 			const progress = { ...initialSavedMathProgress(), add: { currentStep: 3, highestUnlockedStep: 11 } };
-			world.setResource('mathProgress', progress);
+			world.setResource('playerProfiles', profilesFor(progress));
 			world.setResource('mathSession', createMathSession(progress));
 			setAssessment(world, 'add', { ...fastAssessment(), activeSeconds: 90 });
 			world.update(0);
-			expect(world.getResource('mathProgress').add).toEqual({ currentStep: 4, highestUnlockedStep: 11 });
+			expect(activeProfileFor(world).mathProgress.add).toEqual({ currentStep: 4, highestUnlockedStep: 11 });
 			expect(world.getResource('mathSession')?.tracks.add.accelerationStreak).toBe(0);
 			world.setResource('mathRoundCompletedThisBoard', false);
 			setAssessment(world, 'add', { ...fastAssessment(), incorrectAnswers: 2 });
 			world.update(0);
-			expect(world.getResource('mathProgress').add).toEqual({ currentStep: 4, highestUnlockedStep: 11 });
+			expect(activeProfileFor(world).mathProgress.add).toEqual({ currentStep: 4, highestUnlockedStep: 11 });
 			expect(world.getResource('mathSession')?.tracks.add.assessment.correctAnswers).toBe(0);
-			expect(world.getResource('skitProgress')).toEqual([]);
+			expect(activeProfileFor(world).skitProgress).toEqual([]);
 		} finally { await world.dispose(); }
 	});
 
@@ -161,7 +182,7 @@ describe('math progression system', () => {
 			const mode = world.getResource('equationMode');
 			world.update(0);
 			await Promise.resolve();
-			expect(world.getResource('mathProgress').add.currentStep).toBe(3);
+			expect(activeProfileFor(world).mathProgress.add.currentStep).toBe(3);
 			expect(world.getResource('mathRoundCompletedThisBoard')).toBe(true);
 			expect(world.getCurrentScreen()).toBe('playing');
 			expect(world.getResource('equationMode').operandRanges).toEqual(mode.operandRanges);

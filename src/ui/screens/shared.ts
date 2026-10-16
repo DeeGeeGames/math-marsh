@@ -3,6 +3,11 @@ import type { BoardPoint } from '../../ecs/lilyPads';
 import type { SkitId } from '../../ecs/skitSequence';
 import type { SkitProgress } from '../../ecs/skitProgress';
 import type { MathProgressPersistence, SavedMathProgress } from '../../ecs/mathProgressStore';
+import type {
+	PlayerProfile,
+	PlayerProfilesError,
+	PlayerProfilesState,
+} from '../../ecs/playerProfiles';
 
 export type ScreenSpecActions = {
   startGame: (mode: GameMode, difficulty: MathDifficulty, level?: number) => void;
@@ -19,6 +24,19 @@ export type ScreenSpecActions = {
   getMathProgress: () => SavedMathProgress;
   getMathProgressPersistence: () => MathProgressPersistence;
   openHowToPlay: () => void;
+  getPlayerProfiles: () => PlayerProfilesState;
+  getPlayerActionProfile: () => PlayerProfile | undefined;
+  getNextPlayerName: () => string;
+  openPlayerRoster: () => void;
+  closePlayerScreen: (focusSelector: string) => void;
+  openPlayerAdd: () => void;
+  openPlayerManagement: () => void;
+  openPlayerRename: (profileId: string) => void;
+  openPlayerDelete: (profileId: string) => void;
+  createPlayer: (name: string) => PlayerProfilesError | undefined;
+  switchPlayer: (profileId: string) => void;
+  renamePlayer: (profileId: string, name: string) => PlayerProfilesError | undefined;
+  deletePlayer: (profileId: string) => PlayerProfilesError | undefined;
   openSkitGallery: () => void;
   replaySkit: (id: SkitId) => void;
   getSkitProgress: () => SkitProgress;
