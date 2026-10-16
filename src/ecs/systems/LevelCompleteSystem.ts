@@ -1,6 +1,7 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { LEVEL_COMPLETE_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 import { skitForCompletedLevel } from '../skitSequence';
+import { activePlayerProfile } from '../playerProfiles';
 import { goToNextLevel } from './nextLevel';
 
 export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): void {
@@ -9,8 +10,8 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
     .setPriority(SYSTEM_PRIORITIES.LEVEL_COMPLETE)
     .inScreens(['levelComplete'])
     .runWhenEmpty()
-    .withResources(['mathDifficulty', 'operandOnboardingCompletion', 'operandAndResultOnboardingCompletion'])
-    .setProcess(({ ecs, resources: { mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion } }) => {
+    .withResources(['mathDifficulty', 'playerProfiles'])
+    .setProcess(({ ecs, resources: { mathDifficulty, playerProfiles } }) => {
       const state = ecs.getScreenState('levelComplete');
       const elapsed = performance.now() - state.startedAt;
       if (elapsed < LEVEL_COMPLETE_DURATION_MS || state.transitionStarted) return;
@@ -21,6 +22,8 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
         void ecs.setScreen('skit', { nextLevel: state.nextLevel, skitId: skit.id });
         return;
       }
-      goToNextLevel(ecs, state.nextLevel, mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion);
+      const profile = activePlayerProfile(playerProfiles);
+      if (!profile) return;
+      goToNextLevel(ecs, state.nextLevel, mathDifficulty, profile.onboarding.operands, profile.onboarding.operandAndResult);
     });
 }

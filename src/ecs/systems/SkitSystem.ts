@@ -1,5 +1,6 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { gameActions } from '../controllerSelection';
+import { activePlayerProfile } from '../playerProfiles';
 import { skitById } from '../skitSequence';
 import { updateSkitPresentation } from '../../ui/screens/skitScreen';
 import { goToNextLevel } from './nextLevel';
@@ -7,7 +8,7 @@ import { goToNextLevel } from './nextLevel';
 export const addSkitSystemToEngine = function(systems: GameSystemRegistrar): void {
 	systems.addSystem('skitSystem')
 		.inScreens(['skit'])
-		.withResources(['inputState', 'controllerSelection', 'mathDifficulty', 'operandOnboardingCompletion', 'operandAndResultOnboardingCompletion'])
+		.withResources(['inputState', 'controllerSelection', 'mathDifficulty', 'playerProfiles'])
 		.setProcess(({ ecs, dt, resources }) => {
 			const state = ecs.getScreenState('skit');
 			if (state.transitionStarted) return;
@@ -23,6 +24,8 @@ export const addSkitSystemToEngine = function(systems: GameSystemRegistrar): voi
 				void ecs.setScreen('skitGallery', {});
 				return;
 			}
-			goToNextLevel(ecs, state.nextLevel, resources.mathDifficulty, resources.operandOnboardingCompletion, resources.operandAndResultOnboardingCompletion);
+			const profile = activePlayerProfile(resources.playerProfiles);
+			if (!profile) return;
+			goToNextLevel(ecs, state.nextLevel, resources.mathDifficulty, profile.onboarding.operands, profile.onboarding.operandAndResult);
 		});
 };

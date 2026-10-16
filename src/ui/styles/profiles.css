@@ -1,0 +1,626 @@
+#main-menu .player-profile-badge-slot {
+  position: absolute;
+  z-index: 20;
+  top: max(env(safe-area-inset-top, 0px), 16px);
+  left: max(env(safe-area-inset-left, 0px), 16px);
+}
+
+.player-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(290px, calc(100vw - 104px));
+  min-height: 64px;
+  padding: 8px 14px 8px 9px;
+  border: 2px solid rgba(255, 247, 198, 0.68);
+  border-radius: 18px;
+  color: var(--cream);
+  background: linear-gradient(135deg, rgba(7, 53, 64, 0.96), rgba(19, 101, 101, 0.94));
+  box-shadow: 0 8px 20px rgba(5, 31, 36, 0.34), inset 0 1px 0 rgba(255, 247, 198, 0.22);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.player-profile-orb {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 2px solid rgba(255, 247, 198, 0.85);
+  border-radius: 50%;
+  color: #fff7c6;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.45), transparent 34%),
+    linear-gradient(145deg, #66b65b, #257441 76%);
+  box-shadow: inset 0 -4px 0 rgba(17, 72, 36, 0.22), 0 3px 8px rgba(5, 31, 36, 0.26);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.player-profile-badge-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.player-profile-badge-copy strong {
+  overflow: hidden;
+  max-width: 16ch;
+  font-size: 1.05rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-profile-badge-copy span {
+  color: rgba(255, 247, 198, 0.8);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.player-profile-menu-icon {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2.5;
+}
+
+.player-profile-overlay {
+  background: rgba(4, 29, 35, 0.68);
+}
+
+#player-roster-screen {
+  background: transparent;
+}
+
+.player-overlay-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: rgba(4, 29, 35, 0.68);
+}
+
+.player-roster-drawer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 0 1 min(900px, 64vw);
+  flex-direction: column;
+  width: min(900px, 64vw);
+  min-width: 560px;
+  max-width: 100vw;
+  height: 100%;
+  padding: clamp(18px, 2.5vw, 36px);
+  border-left: 3px solid var(--reed-border);
+  border-radius: 24px 0 0 24px;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at 88% 8%, rgba(155, 212, 94, 0.14), transparent 32%),
+    linear-gradient(155deg, rgba(15, 79, 98, 0.99), rgba(8, 55, 66, 0.99));
+  box-shadow: -18px 0 46px rgba(5, 31, 36, 0.32), inset 1px 0 0 rgba(255, 247, 198, 0.18);
+}
+
+.player-roster-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.player-dialog-kicker {
+  margin: 0 0 5px;
+  color: #a8d9b2;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+}
+
+.player-roster-heading h1,
+.player-dialog-heading h1 {
+  margin: 0;
+  color: #fff7c6;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 900;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.player-roster-heading p:last-child,
+.player-dialog-heading p:last-child {
+  margin: 8px 0 0;
+  color: rgba(255, 247, 198, 0.86);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+}
+
+.player-close-button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid rgba(255, 247, 198, 0.5);
+  border-radius: 14px;
+  color: var(--cream);
+  background: rgba(5, 41, 49, 0.68);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.player-roster-list,
+.player-management-list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  margin: 0;
+  padding: 4px 6px 8px 4px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(255, 247, 198, 0.68) rgba(4, 40, 49, 0.7);
+  scrollbar-width: thin;
+}
+
+.player-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 92px;
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 247, 198, 0.24);
+  border-radius: 18px;
+  color: var(--cream);
+  background: linear-gradient(115deg, rgba(30, 105, 104, 0.94), rgba(17, 77, 86, 0.94));
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.player-roster-row[aria-current="true"] {
+  border-color: rgba(255, 247, 198, 0.8);
+  background: linear-gradient(115deg, rgba(54, 126, 92, 0.98), rgba(20, 86, 82, 0.98));
+}
+
+.player-roster-details {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+}
+
+.player-roster-name {
+  overflow-wrap: anywhere;
+  color: #fff7c6;
+  font-size: clamp(1.08rem, 1.6vw, 1.35rem);
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.player-active-label {
+  color: #d4edb5;
+  font-size: 0.86rem;
+  font-weight: 750;
+  line-height: 1.1;
+}
+
+.player-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+  width: 100%;
+}
+
+.player-progress-item {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 22px minmax(30px, 1fr) 24px;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 247, 198, 0.94);
+}
+
+.player-progress-symbol,
+.player-progress-number {
+  font-size: 0.96rem;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+}
+
+.player-progress-bar {
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 247, 198, 0.32);
+  border-radius: 999px;
+  background: rgba(4, 39, 48, 0.82);
+}
+
+.player-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a6d970, #fff0a1);
+}
+
+.player-roster-actions {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.player-roster-actions button,
+.player-dialog-actions button,
+.player-management-row button {
+  min-height: 52px;
+  touch-action: manipulation;
+}
+
+.player-limit-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #fff0a1;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.player-roster-drawer .input-prompts-slot--panel {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.player-profile-modal {
+  padding: max(env(safe-area-inset-top, 16px), 20px) max(env(safe-area-inset-right, 16px), 20px) max(env(safe-area-inset-bottom, 16px), 20px) max(env(safe-area-inset-left, 16px), 20px);
+}
+
+.player-name-card,
+.player-management-card {
+  width: min(760px, 94vw);
+  max-height: min(90dvh, 880px);
+  padding: clamp(22px, 4vw, 44px);
+  overflow-y: auto;
+  border: 2px solid var(--reed-border);
+  border-radius: 24px;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at 90% 8%, rgba(155, 212, 94, 0.14), transparent 34%),
+    linear-gradient(150deg, rgba(15, 79, 98, 0.99), rgba(8, 55, 66, 0.99));
+  box-shadow: 0 22px 48px rgba(5, 31, 36, 0.42), inset 0 1px 0 rgba(255, 247, 198, 0.18);
+}
+
+.player-name-card {
+  flex: 0 0 auto;
+}
+
+.player-dialog-heading {
+  margin-bottom: 24px;
+}
+
+.player-name-card form {
+  display: grid;
+  gap: 10px;
+}
+
+.player-name-card label {
+  color: #fff7c6;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.player-name-card input {
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 14px;
+  border: 2px solid rgba(255, 247, 198, 0.68);
+  border-radius: 14px;
+  color: #102f35;
+  background: #fff7c6;
+  font: inherit;
+  font-size: 1.2rem;
+}
+
+.player-name-card input:focus-visible {
+  outline: 4px solid var(--cream);
+  outline-offset: 3px;
+}
+
+.player-form-error {
+  min-height: 1.4em;
+  margin: 0;
+  color: #ffe19a;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.player-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.player-local-note {
+  margin: 20px 0 0;
+  color: rgba(255, 247, 198, 0.76);
+  font-size: 0.95rem;
+}
+
+.player-name-card .input-prompts-slot--panel,
+.player-management-card .input-prompts-slot--panel {
+  justify-content: flex-start;
+  margin-top: 18px;
+}
+
+.player-management-card {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+}
+
+.player-management-list {
+  flex: 0 1 auto;
+  max-height: 52dvh;
+}
+
+.player-management-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 247, 198, 0.24);
+  border-radius: 16px;
+  background: rgba(30, 105, 104, 0.65);
+}
+
+.player-management-row strong {
+  overflow-wrap: anywhere;
+  color: #fff7c6;
+  font-size: 1.08rem;
+}
+
+.player-management-row button {
+  min-width: 88px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.player-delete-warning {
+  margin: 0 0 12px;
+  color: #ffe19a;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.player-profile-badge:focus-visible,
+.player-roster-row:focus-visible,
+.player-close-button:focus-visible,
+.player-management-row button:focus-visible,
+.player-roster-actions button:focus-visible,
+.player-dialog-actions button:focus-visible {
+  outline: 4px solid var(--cream);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(244, 210, 122, 0.38), 0 8px 20px rgba(5, 31, 36, 0.42);
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  #main-menu .menu-shell {
+    margin-top: 92px;
+    margin-bottom: auto;
+  }
+
+  .player-profile-badge {
+    width: min(250px, calc(100vw - 104px));
+    min-height: 58px;
+  }
+
+  .player-profile-orb {
+    width: 44px;
+    height: 44px;
+  }
+
+  #player-roster-screen {
+    justify-content: stretch;
+  }
+
+  .player-roster-drawer {
+    flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
+    height: 100dvh;
+    padding: max(env(safe-area-inset-top, 12px), 16px) max(env(safe-area-inset-right, 12px), 16px) max(env(safe-area-inset-bottom, 12px), 16px) max(env(safe-area-inset-left, 12px), 16px);
+    border: 0;
+    border-radius: 0;
+  }
+
+  .player-roster-heading {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .player-roster-row {
+    min-height: 86px;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .player-progress-grid {
+    column-gap: 8px;
+  }
+
+  .player-progress-item {
+    grid-template-columns: 18px minmax(20px, 1fr) 22px;
+    gap: 4px;
+  }
+
+  .player-management-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px 10px;
+  }
+
+  .player-management-row .player-profile-orb {
+    width: 40px;
+    height: 40px;
+    grid-row: 1;
+  }
+
+  .player-management-row strong {
+    grid-row: 1;
+  }
+
+  .player-management-row button {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 10px;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 390px) {
+  .player-dialog-kicker {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+
+  .player-roster-heading h1,
+  .player-dialog-heading h1 {
+    font-size: 1.65rem;
+  }
+
+  .player-progress-symbol,
+  .player-progress-number {
+    font-size: 0.85rem;
+  }
+
+  .player-roster-actions {
+    gap: 8px;
+  }
+
+  .player-roster-actions button {
+    padding-inline: 10px;
+    font-size: 0.94rem;
+  }
+}
+
+@media (max-height: 400px) and (min-width: 480px) {
+  .player-roster-drawer {
+    padding: 8px 16px;
+    border-radius: 16px 0 0 16px;
+  }
+
+  .player-roster-heading {
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .player-dialog-kicker {
+    margin-bottom: 2px;
+    font-size: 0.68rem;
+  }
+
+  .player-roster-heading h1 {
+    font-size: 1.45rem;
+  }
+
+  .player-roster-heading p:last-child {
+    margin-top: 3px;
+    font-size: 0.85rem;
+  }
+
+  .player-close-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .player-roster-list {
+    gap: 6px;
+    padding: 2px 4px 4px 2px;
+  }
+
+  .player-roster-row {
+    min-height: 68px;
+    gap: 8px;
+    padding: 5px 9px;
+  }
+
+  .player-roster-row .player-profile-orb {
+    width: 38px;
+    height: 38px;
+  }
+
+  .player-roster-name {
+    font-size: 1rem;
+  }
+
+  .player-active-label {
+    font-size: 0.72rem;
+  }
+
+  .player-progress-item {
+    grid-template-columns: 18px minmax(24px, 1fr) 20px;
+    gap: 4px;
+  }
+
+  .player-progress-symbol,
+  .player-progress-number {
+    font-size: 0.78rem;
+  }
+
+  .player-progress-bar {
+    height: 8px;
+  }
+
+  .player-roster-actions {
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .player-roster-actions button {
+    min-height: 44px;
+    padding-block: 7px;
+  }
+
+  .player-limit-note {
+    font-size: 0.82rem;
+  }
+
+  .player-roster-drawer .input-prompts-slot--panel {
+    margin-top: 4px;
+  }
+
+  .player-roster-drawer .input-prompts-slot--panel .input-prompts-bar {
+    --input-prompt-min-height: 36px;
+    --input-prompt-font-size: 0.88rem;
+    --input-prompt-glyph-size: 34px;
+    --input-prompt-keycap-min-width: 34px;
+    --input-prompt-keycap-height: 30px;
+    --input-prompt-keycap-padding: 0 6px;
+    --input-prompt-keycap-font-size: 0.78rem;
+
+    gap: 6px 10px;
+    padding: 6px 8px;
+  }
+}

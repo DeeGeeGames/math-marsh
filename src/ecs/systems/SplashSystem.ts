@@ -6,8 +6,8 @@ import { updateSplashOpacity } from '../../ui/screens/splashScreen';
 export function addSplashSystemToEngine(systems: GameSystemRegistrar): void {
   systems.addSystem('splashSystem')
     .inScreens([...SPLASH_SCREENS])
-    .withResources(['inputState', 'controllerSelection'])
-    .setProcess(({ ecs, dt, resources: { inputState, controllerSelection } }) => {
+    .withResources(['inputState', 'controllerSelection', 'playerProfiles'])
+    .setProcess(({ ecs, dt, resources: { inputState, controllerSelection, playerProfiles } }) => {
       const screen = ecs.getCurrentScreen();
       if (screen !== 'studioSplash' && screen !== 'engineSplash') return;
       const state = ecs.getScreenState(screen);
@@ -19,6 +19,9 @@ export function addSplashSystemToEngine(systems: GameSystemRegistrar): void {
       updateSplashOpacity(screen, splashOpacity(next));
       if (!splashFinished(next)) return;
       ecs.updateScreenState(screen, { transitionStarted: true });
-      void ecs.setScreen(screen === 'studioSplash' ? 'engineSplash' : 'menu', {});
+      const nextScreen = screen === 'studioSplash'
+        ? 'engineSplash'
+        : playerProfiles.profiles.length === 0 ? 'playerSetup' : 'menu';
+      void ecs.setScreen(nextScreen, {});
     });
 }

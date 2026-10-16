@@ -1,10 +1,9 @@
 import type { GameSystemRegistrar } from '../Engine';
-import { saveSkitProgress } from '../skitProgress';
 import { addMathAssessmentTime, createMathAssessment, mathAssessmentForEvaluation } from '../mathAssessment';
 import { MATH_FINAL_STEP } from '../mathSteps';
 import { mathSceneIdsForUnlockedSteps } from '../mathMode';
 import { evaluateMathProgressionRound } from '../mathProgression';
-import { saveMathProgress } from '../mathProgressStore';
+import { activePlayerProfile, updateActivePlayerProfile } from '../playerProfiles';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { GAME_CONFIG } from '../../config';
 import { playerQuery } from '../queries';
@@ -17,10 +16,12 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
     .setPriority(SYSTEM_PRIORITIES.MATH_PROGRESSION)
     .runWhenEmpty()
     .addQuery('players', playerQuery)
-    .withResources(['mathSession', 'mathProgress', 'equationMode', 'gameplayOnboardingSession', 'skitProgress'])
+    .withResources(['mathSession', 'playerProfiles', 'equationMode', 'gameplayOnboardingSession'])
     .setProcess(({ ecs, dt, queries, resources }) => {
       const session = resources.mathSession;
       if (!session || ecs.getCurrentScreen() !== 'playing' || resources.gameplayOnboardingSession.active) return;
+      const profile = activePlayerProfile(resources.playerProfiles);
+      if (!profile) return;
       if (ecs.tryGetResource('mathRoundCompletedThisBoard')) return;
       if (queries.players.some(player => player.components.player.gameOverPending)) return;
       const operation = resources.equationMode.operation;
@@ -40,7 +41,7 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
       const completedTrack = timedSession.tracks[completedOperation];
       const assessment = mathAssessmentForEvaluation(completedTrack.assessment);
       if (!assessment) return;
-      const saved = resources.mathProgress[completedOperation];
+      const saved = profile.mathProgress[completedOperation];
       const outcome = evaluateMathProgressionRound({
         currentStep: completedTrack.step,
         highestUnlockedStep: saved.highestUnlockedStep,
@@ -48,8 +49,8 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
       }, assessment, MATH_FINAL_STEP);
       if (outcome.kind === 'invalid' || outcome.kind === 'insufficientSample') return;
 
-      const progress = {
-        ...resources.mathProgress,
+      const mathProgress = {
+        ...profile.mathProgress,
         [completedOperation]: {
           currentStep: outcome.progress.currentStep,
           highestUnlockedStep: outcome.progress.highestUnlockedStep,
@@ -64,17 +65,17 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
           assessment: createMathAssessment(),
         } },
       };
-      ecs.setResource('mathProgress', progress);
       ecs.setResource('mathRoundCompletedThisBoard', true);
       ecs.setResource('mathSession', nextSession);
-      ecs.setResource('mathProgressPersistence', saveMathProgress(progress) ? 'persistent' : 'session-only');
       const unlockedSceneIds = mathSceneIdsForUnlockedSteps(outcome.unlockedSteps)
-        .filter(id => !resources.skitProgress.includes(id));
-      if (unlockedSceneIds.length > 0) {
-        const scenes = [...resources.skitProgress, ...unlockedSceneIds];
-        ecs.setResource('skitProgress', scenes);
-        saveSkitProgress(scenes);
-      }
+        .filter(id => !profile.skitProgress.includes(id));
+      const skitProgress = [...profile.skitProgress, ...unlockedSceneIds];
+      const playerProfiles = updateActivePlayerProfile(resources.playerProfiles, active => ({
+        ...active,
+        mathProgress,
+        skitProgress,
+      }));
+      ecs.setResource('playerProfiles', playerProfiles);
       ecs.setResource('mathRoundSummary', {
         operation: completedOperation,
         assessedStep: completedTrack.step,

@@ -37,6 +37,7 @@ import {
 import { getDesktopFullscreenController, getDesktopQuitHandler } from '../platform/desktop';
 import type { FocusDirection } from './spatialNavigation';
 import type { UIScreen } from './screenTypes';
+import type { ScreenPresentationOptions } from './screenRuntime';
 import {
   nextGameplayOnboardingStep,
   previousGameplayOnboardingStep,
@@ -51,8 +52,20 @@ import {
 import { createScreenRuntime } from './screenRuntime';
 import { skitById, type SkitId } from '../ecs/skitSequence';
 import { createMathSession } from '../ecs/mathMode';
-import { selectUnlockedMathStep, saveMathProgress } from '../ecs/mathProgressStore';
-import type { SkitProgress } from '../ecs/skitProgress';
+import { initialSavedMathProgress, selectUnlockedMathStep } from '../ecs/mathProgressStore';
+import {
+	activePlayerProfile,
+	createPlayerProfile as addPlayerProfileRecord,
+	createPlayerProfileId,
+	deletePlayerProfile as deletePlayerProfileRecord,
+	nextDefaultPlayerName,
+	renamePlayerProfile as renamePlayerProfileRecord,
+	switchActivePlayerProfile,
+	updateActivePlayerProfile,
+	type PlayerProfilesError,
+	type PlayerProfile,
+	type PlayerProfilesState,
+} from '../ecs/playerProfiles';
 import { playerQuery } from '../ecs/queries';
 import { boardPointGridCell, isPointOnLilyPad, isActiveLilyPadCell, activeLilyPadCellKeys } from '../ecs/lilyPads';
 
@@ -110,13 +123,15 @@ const wireFullscreenButton = (button: HTMLButtonElement): void => {
 
 const startGame = function(mode: GameMode, difficulty: MathDifficulty, level = 1): void {
   const engine = requireEngine();
+  const profile = activePlayerProfile(engine.getResource('playerProfiles'));
+  if (!profile) return;
   playSound('uiSelect');
   engine.setResource('startingLevel', selectedStartingLevel(level));
   engine.setResource('mathDifficulty', difficulty);
   engine.setResource('gameMode', mode);
-  engine.setResource('mathSession', createMathSession(engine.getResource('mathProgress')));
+  engine.setResource('mathSession', createMathSession(profile.mathProgress));
   engine.setResource('mathRoundSummary', null);
-  if (engine.getResource('gameplayOnboardingCompletion') === 'pending') {
+  if (profile.onboarding.basics === 'pending') {
     void engine.setScreen('tutorialOffer', {});
     return;
   }
@@ -125,10 +140,15 @@ const startGame = function(mode: GameMode, difficulty: MathDifficulty, level = 1
 
 const selectMathStep = function(operation: EquationOperation, step: number): void {
   const engine = requireEngine();
-  const progress = selectUnlockedMathStep(engine.getResource('mathProgress'), operation, step);
+  const profiles = engine.getResource('playerProfiles');
+  const profile = activePlayerProfile(profiles);
+  if (!profile) return;
+  const progress = selectUnlockedMathStep(profile.mathProgress, operation, step);
   if (!progress) return;
-  engine.setResource('mathProgress', progress);
-  engine.setResource('mathProgressPersistence', saveMathProgress(progress) ? 'persistent' : 'session-only');
+  engine.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    ...active,
+    mathProgress: progress,
+  })));
 };
 
 function startTutorial(): void {
@@ -170,6 +190,103 @@ function openHowToPlay(): void {
   void requireEngine().setScreen('howToPlay', {});
 }
 
+function clearPlayerRun(): void {
+  const engine = requireEngine();
+  engine.setResource('mathSession', null);
+  engine.setResource('mathRoundSummary', null);
+  engine.setResource('mathRoundCompletedThisBoard', false);
+}
+
+function openPlayerRoster(): void {
+  const engine = requireEngine();
+  if (engine.getCurrentScreen() !== 'menu') return;
+  playSound('uiSelect');
+  void engine.pushScreen('playerRoster', {});
+}
+
+function closePlayerScreen(focusSelector: string): void {
+  void requireEngine().popScreen().then(() => screenRuntime.focus(focusSelector));
+}
+
+function openPlayerAdd(): void {
+  const engine = requireEngine();
+  if (engine.getCurrentScreen() !== 'playerRoster') return;
+  playSound('uiSelect');
+  void engine.pushScreen('playerAdd', {});
+}
+
+function openPlayerManagement(): void {
+  const engine = requireEngine();
+  if (engine.getCurrentScreen() !== 'playerRoster') return;
+  playSound('uiSelect');
+  void engine.pushScreen('playerManagement', {});
+}
+
+function openPlayerRename(profileId: string): void {
+  const engine = requireEngine();
+  if (engine.getCurrentScreen() !== 'playerManagement') return;
+  playSound('uiSelect');
+  void engine.pushScreen('playerRename', { profileId });
+}
+
+function openPlayerDelete(profileId: string): void {
+  const engine = requireEngine();
+  if (engine.getCurrentScreen() !== 'playerManagement') return;
+  playSound('uiSelect');
+  void engine.pushScreen('playerDelete', { profileId });
+}
+
+function createPlayer(name: string): PlayerProfilesError | undefined {
+  const engine = requireEngine();
+  const result = addPlayerProfileRecord(
+    engine.getResource('playerProfiles'),
+    name,
+    createPlayerProfileId(),
+  );
+  if (result.error) return result.error;
+  engine.setResource('playerProfiles', result.state);
+  clearPlayerRun();
+  void engine.setScreen('menu', {});
+  return undefined;
+}
+
+function switchPlayer(profileId: string): void {
+  const engine = requireEngine();
+  if (engine.getCurrentScreen() !== 'playerRoster') return;
+  const profiles = engine.getResource('playerProfiles');
+  if (profiles.activeProfileId === profileId) {
+    void engine.setScreen('menu', {});
+    return;
+  }
+  const result = switchActivePlayerProfile(profiles, profileId);
+  if (result.error) return;
+  engine.setResource('playerProfiles', result.state);
+  clearPlayerRun();
+  playSound('uiSelect');
+  void engine.setScreen('menu', {});
+}
+
+function renamePlayer(profileId: string, name: string): PlayerProfilesError | undefined {
+  const engine = requireEngine();
+  const profiles = engine.getResource('playerProfiles');
+  const result = renamePlayerProfileRecord(profiles, profileId, name);
+  if (result.error) return result.error;
+  engine.setResource('playerProfiles', result.state);
+  void engine.popScreen().then(() => screenRuntime.focus(`[data-rename-profile="${CSS.escape(profileId)}"]`));
+  return undefined;
+}
+
+function deletePlayer(profileId: string): PlayerProfilesError | undefined {
+  const engine = requireEngine();
+  const profiles = engine.getResource('playerProfiles');
+  const result = deletePlayerProfileRecord(profiles, profileId);
+  if (result.state !== profiles) engine.setResource('playerProfiles', result.state);
+  if (result.error) return result.error;
+  clearPlayerRun();
+  void engine.setScreen('menu', {});
+  return undefined;
+}
+
 function openSettings(): void {
   const engine = requireEngine();
   const returnTo = engine.getCurrentScreen();
@@ -183,6 +300,12 @@ function openSettings(): void {
     || returnTo === 'skit'
     || returnTo === 'skitGallery'
     || returnTo === 'tutorialOffer'
+    || returnTo === 'playerSetup'
+    || returnTo === 'playerRoster'
+    || returnTo === 'playerAdd'
+    || returnTo === 'playerManagement'
+    || returnTo === 'playerRename'
+    || returnTo === 'playerDelete'
   ) return;
   playSound('uiSelect');
   void engine.pushScreen('settings', { returnTo });
@@ -220,18 +343,49 @@ const SCREENS = createScreenSpecs({
   returnToPreviousScreen,
   goToMenu,
   openModeSelect,
-  getMathProgress: function() { return requireEngine().getResource('mathProgress'); },
-  getMathProgressPersistence: function() { return requireEngine().getResource('mathProgressPersistence'); },
+  getMathProgress: function() {
+    const profile = activePlayerProfile(requireEngine().getResource('playerProfiles'));
+    return profile?.mathProgress ?? initialSavedMathProgress();
+  },
+  getMathProgressPersistence: function(): 'persistent' | 'session-only' {
+    return requireEngine().getResource('playerProfiles').persistence;
+  },
   selectMathStep,
   openHowToPlay,
+  getPlayerProfiles: function(): PlayerProfilesState { return requireEngine().getResource('playerProfiles'); },
+  getPlayerActionProfile: function(): PlayerProfile | undefined {
+    const engine = requireEngine();
+    const screen = engine.getCurrentScreen();
+    const profileId = screen === 'playerRename'
+      ? engine.getScreenState('playerRename').profileId
+      : screen === 'playerDelete' ? engine.getScreenState('playerDelete').profileId : undefined;
+    return engine.getResource('playerProfiles').profiles.find(profile => profile.id === profileId);
+  },
+  getNextPlayerName: function(): string {
+    return nextDefaultPlayerName(requireEngine().getResource('playerProfiles').profiles);
+  },
+  openPlayerRoster,
+  closePlayerScreen,
+  openPlayerAdd,
+  openPlayerManagement,
+  openPlayerRename,
+  openPlayerDelete,
+  createPlayer,
+  switchPlayer,
+  renamePlayer,
+  deletePlayer,
   openSkitGallery: function(): void {
     playSound('uiSelect');
     void requireEngine().setScreen('skitGallery', {});
   },
-  getSkitProgress: function(): SkitProgress { return requireEngine().getResource('skitProgress'); },
+  getSkitProgress: function() {
+    const profile = activePlayerProfile(requireEngine().getResource('playerProfiles'));
+    return profile?.skitProgress ?? [];
+  },
   replaySkit: function(id: SkitId): void {
     const engine = requireEngine();
-    if (engine.getCurrentScreen() !== 'skitGallery' || !engine.getResource('skitProgress').includes(id)) return;
+    const profile = activePlayerProfile(engine.getResource('playerProfiles'));
+    if (engine.getCurrentScreen() !== 'skitGallery' || !profile?.skitProgress.includes(id)) return;
     playSound('uiSelect');
     void engine.setScreen('skit', { replay: true, skitId: id });
   },
@@ -280,15 +434,15 @@ function audioSceneForScreen(screen: UIScreen): AudioScene {
   return screen === 'playing' ? 'game' : 'title';
 }
 
-function presentScreen(screen: UIScreen, retainGameplay: boolean): HTMLElement {
-  const root = screenRuntime.presentScreen(screen, retainGameplay);
+function presentScreen(screen: UIScreen, options: ScreenPresentationOptions = {}): HTMLElement {
+  const root = screenRuntime.presentScreen(screen, options);
   setAudioScene(audioSceneForScreen(screen));
   if (screen === 'playing') requestCanvasResize();
   return root;
 }
 
-export function showScreen(screen: UIScreen): void {
-  presentScreen(screen, false);
+export function showScreen(screen: UIScreen, options: ScreenPresentationOptions = {}): void {
+  presentScreen(screen, options);
 }
 
 export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
@@ -300,16 +454,16 @@ export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
 }
 
 export function showControllerRecoveryScreen(): void {
-  presentScreen('controllerRecovery', true);
+  presentScreen('controllerRecovery', { retainGameplay: true });
 }
 
 export function showPauseScreen(): void {
-  presentScreen('paused', true);
+  presentScreen('paused', { retainGameplay: true });
 }
 
 export function showSettingsScreen(returnTo: SettingsReturnScreen): void {
   const retainsGameplay = returnTo === 'paused';
-  const root = presentScreen('settings', retainsGameplay);
+  const root = presentScreen('settings', { retainGameplay: retainsGameplay });
   root.classList.toggle('app-background', !retainsGameplay);
   root.classList.toggle('contextual-gameplay-overlay', retainsGameplay);
   const backButton = document.getElementById('back-to-menu-btn');

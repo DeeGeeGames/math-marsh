@@ -5,13 +5,12 @@ import type { CoroutineComponentTypes } from 'ecspresso/plugins/scripting/corout
 import type { AIBehavior, EnemyType } from '../types/shared';
 import type { BoardPoint } from './lilyPads';
 import type {
-  GameplayOnboardingCompletion,
   GameplayOnboardingKind,
   GameplayOnboardingReturn,
   GameplayOnboardingSession,
 } from '../onboarding/gameplayOnboarding';
 import type { MathRoundSummary, MathSession } from './mathMode';
-import type { MathProgressPersistence, SavedMathProgress } from './mathProgressStore';
+import type { PlayerProfilesState } from './playerProfiles';
 
 export type GameAction = 'up' | 'down' | 'left' | 'right' | 'eat' | 'back' | 'skip' | 'pause';
 
@@ -177,6 +176,7 @@ export type SettingsReturnScreen =
 	| 'paused'
 	| 'gameOver';
 export type SettingsScreenConfig = { returnTo: SettingsReturnScreen };
+export type PlayerProfileActionScreenConfig = { profileId: string };
 
 export type MathDifficulty = 'easy' | 'medium' | 'expert';
 export type EquationOperation = 'add' | 'subtract' | 'multiply' | 'divide';
@@ -225,9 +225,7 @@ export interface EquationModeState extends BaseEquationModeState {
 }
 
 export interface Resources {
-  skitProgress: import('./skitProgress').SkitProgress;
-  mathProgress: SavedMathProgress;
-  mathProgressPersistence: MathProgressPersistence;
+  playerProfiles: PlayerProfilesState;
   mathSession: MathSession | null;
   mathRoundSummary: MathRoundSummary | null;
   equationsSolvedThisBoard: number;
@@ -244,9 +242,6 @@ export interface Resources {
   enemySpawn: { index: number; roster: readonly EnemyType[] };
   equationMode: EquationModeState;
   inputPrompt: import('../ui/inputPrompts').InputPromptState;
-  gameplayOnboardingCompletion: GameplayOnboardingCompletion;
-  operandOnboardingCompletion: GameplayOnboardingCompletion;
-  operandAndResultOnboardingCompletion: GameplayOnboardingCompletion;
   gameplayOnboardingSession: GameplayOnboardingSession;
   tapRequest: BoardPoint | null;
   tapEat: { x: number; y: number } | null;
