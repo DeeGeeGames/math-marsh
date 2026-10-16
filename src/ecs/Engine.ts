@@ -6,7 +6,7 @@ import { createInputPlugin } from 'ecspresso/plugins/input/input';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
-import { controllerActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
+import { controllerActionMap, controllerOnlyActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { initialSplashState } from './splashSequence';
 import type { SkitScreenConfig } from './skitSequence';
 import { loadPlayerProfiles } from './playerProfiles';
@@ -40,10 +40,23 @@ const coroutinePlugin = createCoroutinePlugin({
 const noMathSession: Resources['mathSession'] = null;
 const noMathRoundSummary: Resources['mathRoundSummary'] = null;
 
+const PREVENT_DEFAULT_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'Tab']);
+
+const isEditableTarget = function(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable
+    || target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') !== null;
+};
+
 const inputPlugin = createInputPlugin<GameAction>({
   actions: controllerActionMap(initialControllerSelection()),
-  players: { keyboard: keyboardActionMap() },
-  preventDefaultKeys: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'Tab'],
+  players: {
+    keyboard: keyboardActionMap(),
+    controller: controllerOnlyActionMap(initialControllerSelection()),
+  },
+  shouldPreventDefault: event => 'key' in event
+    && PREVENT_DEFAULT_KEYS.has(event.key)
+    && !isEditableTarget(event.target),
 });
 
 export const gameEngine = ECSpresso.create()

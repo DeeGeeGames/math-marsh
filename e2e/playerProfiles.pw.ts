@@ -85,6 +85,21 @@ test('first-use naming and roster return keep controller-friendly focus', async 
   await expect(badge).toBeFocused();
 });
 
+test('player name fields retain ordinary keyboard text editing', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.clear());
+  await page.goto('/');
+  await skipSplash(page);
+
+  const nameInput = page.getByRole('dialog', { name: 'Who’s playing?' }).getByLabel('Player name');
+  await nameInput.fill('');
+  await nameInput.pressSequentially('sam d');
+  await expect(nameInput).toHaveValue('sam d');
+  await expect(nameInput).toBeFocused();
+  await nameInput.press('ArrowLeft');
+  await nameInput.press('x');
+  await expect(nameInput).toHaveValue('sam xd');
+});
+
 test('profiles enforce capacity and keep management actions attached to stable players', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.clear());
   await page.goto('/');
@@ -203,6 +218,14 @@ test('gamepad select and back use the active profile screens and restore focus',
   await page.waitForTimeout(200);
   await setGamepadButton(page, 0, false);
   await page.waitForTimeout(200);
+
+  const nameInput = page.getByRole('dialog', { name: 'Who’s playing?' }).getByLabel('Player name');
+  await nameInput.focus();
+  await setGamepadButton(page, 13, true);
+  await page.waitForTimeout(200);
+  await setGamepadButton(page, 13, false);
+  await expect(continueButton).toBeFocused();
+
   await setGamepadButton(page, 0, true);
   await page.getByRole('button', { name: 'Start Game' }).waitFor();
   await expect(page.getByRole('button', { name: 'Start Game' })).toBeFocused();

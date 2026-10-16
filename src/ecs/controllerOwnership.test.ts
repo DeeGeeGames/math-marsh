@@ -3,7 +3,7 @@ import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createInputPlugin, type GamepadLike } from 'ecspresso/plugins/input/input';
 import type { GameEngine } from './Engine';
 import type { GameAction } from './types';
-import { controllerActionMap, gameActions, initialControllerSelection, keyboardActionMap } from './controllerSelection';
+import { controllerActionMap, controllerOnlyActionMap, gameActions, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { addControllerSelectionSystemToEngine } from './systems/ControllerSelectionSystem';
 import { splashAdvancePressed } from './splashInput';
 
@@ -20,7 +20,10 @@ const fixture = async function () {
   const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
   world.installPlugin(createInputPlugin<GameAction>({
     actions: controllerActionMap(initialControllerSelection()),
-    players: { keyboard: keyboardActionMap() },
+    players: {
+      keyboard: keyboardActionMap(),
+      controller: controllerOnlyActionMap(initialControllerSelection()),
+    },
     target, gamepad: { poll: () => pads },
   }));
   world.addResource('controllerSelection', initialControllerSelection());
