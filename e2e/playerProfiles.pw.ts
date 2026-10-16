@@ -100,6 +100,20 @@ test('player name fields retain ordinary keyboard text editing', async ({ page }
   await expect(nameInput).toHaveValue('sam xd');
 });
 
+test('Enter submits first-use naming without activating the next screen', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.clear());
+  await page.goto('/');
+  await skipSplash(page);
+
+  const nameInput = page.getByRole('dialog', { name: 'Who’s playing?' }).getByLabel('Player name');
+  await nameInput.fill('Sam D');
+  await nameInput.press('Enter');
+
+  const startGame = page.getByRole('button', { name: 'Start Game' });
+  await expect(startGame).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Pick your math' })).toHaveCount(0);
+});
+
 test('profiles enforce capacity and keep management actions attached to stable players', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.clear());
   await page.goto('/');

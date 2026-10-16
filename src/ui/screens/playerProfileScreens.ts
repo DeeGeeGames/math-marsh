@@ -135,6 +135,12 @@ function wireProfileNameForm(
   const form = root.querySelector<HTMLFormElement>('[data-profile-name-form]');
   const input = root.querySelector<HTMLInputElement>('[data-profile-name-input]');
   if (!form || !input) return;
+  form.addEventListener('keydown', (event): void => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    event.stopPropagation();
+    form.requestSubmit();
+  });
   form.addEventListener('submit', (event): void => {
     event.preventDefault();
     writeError(root, complete(input.value));
