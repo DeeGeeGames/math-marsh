@@ -39,7 +39,9 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
         </div>
       </header>
 
-      <p id="math-progress-notice" class="math-progress-notice" aria-live="polite" hidden></p>
+      <div class="gameplay-toast-region">
+        <p id="math-progress-notice" class="gameplay-toast" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+      </div>
 
       <div id="canvas-container" class="flex-1 min-h-0 min-w-0 flex items-center justify-center mb-16 md:mb-20 px-2 md:px-4">
         <canvas id="game-canvas" class="rounded-lg max-w-full max-h-full"></canvas>

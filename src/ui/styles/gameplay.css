@@ -174,13 +174,43 @@
   .gameplay-actions #pause-btn span { display: none; }
 }
 
-.math-progress-notice {
-  align-self: center;
-  margin: 0.25rem 1rem;
-  max-width: 90%;
-  color: var(--color-gold, #fff7c6);
-  font-size: clamp(0.9rem, 1.5vw, 1.3rem);
-  font-weight: 700;
-  text-align: center;
+.gameplay-toast-region {
+  position: absolute;
+  inset: auto 0 max(env(safe-area-inset-bottom, 0px), 5rem);
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  padding-inline: max(env(safe-area-inset-left, 0px), 16px)
+    max(env(safe-area-inset-right, 0px), 16px);
+  pointer-events: none;
 }
-.math-progress-notice[hidden] { display: none; }
+
+.gameplay-toast {
+  margin: 0;
+  max-width: min(100%, 48rem);
+  padding: 0.8em 1.2em;
+  border: 2px solid var(--reed);
+  border-radius: 1.25rem 1.25rem 1.25rem 0.4rem;
+  background: var(--leaf-glint), var(--pond-deep);
+  box-shadow: var(--pond-shadow);
+  color: var(--cream);
+  font-size: clamp(1rem, 1.6vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.gameplay-toast[hidden] { display: none; }
+
+@media (orientation: portrait) {
+  .gameplay-toast-region {
+    padding-inline: max(env(safe-area-inset-left, 0px), 12px)
+      max(env(safe-area-inset-right, 0px), 12px);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .gameplay-toast-region { bottom: max(env(safe-area-inset-bottom, 0px), 12px); }
+  .gameplay-toast { padding: 0.5em 0.8em; }
+}
