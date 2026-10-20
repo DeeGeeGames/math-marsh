@@ -151,5 +151,10 @@ export const ANIMATION_CONFIG = {
     SPIN_ROTATIONS: 3,
     SCALE_START: 1.0,
     SCALE_END: 0.0
+  },
+  ENEMY_DEATH: {
+    BOUNCE_HEIGHT: 16,
+    BOUNCE_HALF_DURATION: 150,
+    FREEZE_DURATION: 1500,
   }
 } as const;

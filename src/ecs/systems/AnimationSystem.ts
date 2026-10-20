@@ -65,7 +65,23 @@ export const startEnemyDeathAnimation = (
   entityId: number,
   currentRotation: number,
 ): void => {
-  startSpinShrinkDeathAnimation(ecs, entityId, currentRotation, 'enemyElimination');
+  const position = ecs.getComponent(entityId, 'position');
+  if (!position) return;
+
+  const { BOUNCE_HEIGHT, BOUNCE_HALF_DURATION, FREEZE_DURATION } = ANIMATION_CONFIG.ENEMY_DEATH;
+  startSpinShrinkDeathAnimation(ecs, entityId, currentRotation, 'enemyElimination', [
+    {
+      targets: [{ component: 'position', field: 'y', from: position.y, to: position.y - BOUNCE_HEIGHT }],
+      duration: BOUNCE_HALF_DURATION / 1000,
+      easing: easeOutQuad,
+    },
+    {
+      targets: [{ component: 'position', field: 'y', from: position.y - BOUNCE_HEIGHT, to: position.y }],
+      duration: BOUNCE_HALF_DURATION / 1000,
+      easing: function(t: number): number { return t * t; },
+    },
+    { targets: [], duration: FREEZE_DURATION / 1000 },
+  ]);
 };
 
 const startSpinShrinkDeathAnimation = (
@@ -73,12 +89,14 @@ const startSpinShrinkDeathAnimation = (
   entityId: number,
   currentRotation: number,
   scaleComponent: 'player' | 'enemyElimination',
+  introSteps: readonly TweenSequenceStepInput[] = [],
 ): void => {
   ecs.mutateComponent(entityId, 'position', position => {
     if (position.rotation === undefined) position.rotation = currentRotation;
   });
   const spinTo = currentRotation + ANIMATION_CONFIG.DEATH.SPIN_ROTATIONS * 360;
   queueTween(ecs, entityId, [
+    ...introSteps,
     {
       targets: [
         { component: scaleComponent, field: 'deathScale', to: ANIMATION_CONFIG.DEATH.SCALE_END },

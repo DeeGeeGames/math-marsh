@@ -103,7 +103,7 @@ const consumeNeighborPads = function(world: GameEngine, problemIds: readonly num
 
 describe('trapped enemy elimination', () => {
 	(['lizard', 'frog', 'spider'] as const).forEach(enemyType => {
-		test(`${enemyType} is removed from active queries and gets its surprised spin-shrink`, async () => {
+		test(`${enemyType} leaves active queries, bounces, freezes, then spins and shrinks`, async () => {
 			const { world, enemyId, neighborProblemIds } = await createScenario(enemyType);
 			const activeQuerySamples: { active: number[]; collidable: number[]; tongue: number[] }[] = [];
 			world.addSystem('enemy-elimination-query-probe')
@@ -131,7 +131,7 @@ describe('trapped enemy elimination', () => {
 				expect(elimination?.deathScale).toBe(ANIMATION_CONFIG.DEATH.SCALE_START);
 				expect(renderable?.imageSrc).toBe(ENEMY_IMAGE[enemyType]);
 				expect(renderable?.spriteSheet).toBeUndefined();
-				expect(tween?.steps[0]?.targets).toEqual(expect.arrayContaining([
+				expect(tween?.steps.at(-1)?.targets).toEqual(expect.arrayContaining([
 					expect.objectContaining({ component: 'enemyElimination', path: ['deathScale'], to: 0 }),
 					expect.objectContaining({ component: 'position', path: ['rotation'], to: 1080 }),
 				]));
@@ -141,7 +141,25 @@ describe('trapped enemy elimination', () => {
 				expect(world.getComponent(enemyId, 'timers')?.enemyMove).toBeUndefined();
 				expect(world.getComponent(enemyId, 'timers')?.enemySpawnTelegraph).toBeUndefined();
 
-				world.update(0.25);
+				const originalY = gridToPixel(1, 1).y;
+				world.update(0.075);
+				expect(world.getComponent(enemyId, 'position')?.y).toBeLessThan(originalY);
+				expect(world.getComponent(enemyId, 'position')?.rotation).toBe(0);
+				expect(world.getComponent(enemyId, 'enemyElimination')?.deathScale).toBe(1);
+				world.update(0.075);
+				expect(world.getComponent(enemyId, 'position')?.y)
+					.toBeCloseTo(originalY - ANIMATION_CONFIG.ENEMY_DEATH.BOUNCE_HEIGHT);
+				world.update(0.075);
+				const fallingY = world.getComponent(enemyId, 'position')?.y;
+				expect(fallingY).toBeGreaterThan(originalY - ANIMATION_CONFIG.ENEMY_DEATH.BOUNCE_HEIGHT);
+				expect(fallingY).toBeLessThan(originalY);
+				world.update(0.075);
+				expect(world.getComponent(enemyId, 'position')?.y).toBeCloseTo(originalY);
+				world.update(1.49);
+				expect(world.getComponent(enemyId, 'position')?.y).toBeCloseTo(originalY);
+				expect(world.getComponent(enemyId, 'position')?.rotation).toBe(0);
+				expect(world.getComponent(enemyId, 'enemyElimination')?.deathScale).toBe(1);
+				world.update(0.26);
 				const middlePosition = world.getComponent(enemyId, 'position');
 				const middleElimination = world.getComponent(enemyId, 'enemyElimination');
 				expect(middlePosition?.rotation).toBeFinite();
