@@ -1,12 +1,12 @@
+import { partialSelectionPresentation } from '../../partialSelection';
 import { GAME_CONFIG } from '../../../config';
 import { ANSWER_CONSUMPTION_DURATION_MS, SELECTION_DISRUPTION_DURATION_MS } from '../../systemConfigs';
 import { activePlayerGridCell, cellCenter, positionInGridCell } from '../../gameUtils';
 import { gridCellKey, positionedEntityGridCellKey } from '../../lilyPads';
 import type { MathProblemEntity, PlayerPresentationEntity } from '../../queries';
-import type { Resources } from '../../types';
+import type { Components, EquationModeState, Resources } from '../../types';
 import type { RenderMargins } from '../../boardGeometry';
 import type { EquationValueTarget } from './objective';
-import type { Components } from '../../types';
 
 const cell = GAME_CONFIG.GRID.CELL_SIZE;
 const lilyPadRadius = cell * 0.38;
@@ -76,7 +76,7 @@ type LilyPadMotion = {
   rotation: number;
 };
 
-function lilyPadMotion(problem: MathProblemEntity, currentTime: number): LilyPadMotion {
+function lilyPadMotion(problem: MathProblemEntity, currentTime: number, dip = 0): LilyPadMotion {
   const center = cellCenter(problem.components.position);
   const phase = problem.id * 0.73
     + problem.components.position.x * 0.013
@@ -84,7 +84,7 @@ function lilyPadMotion(problem: MathProblemEntity, currentTime: number): LilyPad
 
   return {
     centerX: center.x,
-    centerY: center.y + Math.sin(currentTime * 0.0011 + phase) * 1.8,
+    centerY: center.y + Math.sin(currentTime * 0.0011 + phase) * 1.8 + dip * 8,
     rotation: -0.18 + Math.sin(currentTime * 0.0007 + phase) * 0.025,
   };
 }
@@ -432,6 +432,8 @@ export const drawEquationSelectionHighlights = (
   selectedProblemIds: readonly number[],
   blockedCells: ReadonlySet<string>,
   currentTime: number,
+  equationMode?: EquationModeState,
+  reducedMotion = false,
 ): void => {
   if (selectedProblemIds.length === 0) return;
 
@@ -441,7 +443,10 @@ export const drawEquationSelectionHighlights = (
     if (!problem || problem.components.mathProblem.consumed) return;
     if (blockedCells.has(positionedEntityGridCellKey(problem))) return;
 
-    const { centerX, centerY, rotation } = lilyPadMotion(problem, currentTime);
+    const response = equationMode
+      ? partialSelectionPresentation(equationMode, problem.id, currentTime, reducedMotion)
+      : { dip: 0, scale: 1, emphasis: 0 };
+    const { centerX, centerY, rotation } = lilyPadMotion(problem, reducedMotion ? 0 : currentTime, response.dip);
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.95)';
     ctx.lineWidth = 6;
     ctx.beginPath();
@@ -476,11 +481,21 @@ export const drawMathProblemLilyPads = (
   ctx: CanvasRenderingContext2D,
   mathProblems: MathProblemEntity[],
   currentTime: number,
+  equationMode?: EquationModeState,
+  reducedMotion = false,
 ): void => {
   ctx.save();
   forEachVisibleMathProblem(mathProblems, problem => {
-    const motion = lilyPadMotion(problem, currentTime);
+    const response = equationMode
+      ? partialSelectionPresentation(equationMode, problem.id, currentTime, reducedMotion)
+      : { dip: 0, scale: 1, emphasis: 0 };
+    const motion = lilyPadMotion(problem, reducedMotion ? 0 : currentTime, response.dip);
+    ctx.save();
+    ctx.translate(motion.centerX, motion.centerY);
+    ctx.scale(1 + response.dip * 0.035, 1 - response.dip * 0.12);
+    ctx.translate(-motion.centerX, -motion.centerY);
     drawLilyPad(ctx, motion.centerX, motion.centerY, motion.rotation);
+    ctx.restore();
   });
   ctx.restore();
 };
@@ -489,6 +504,8 @@ export const drawMathProblemNumbers = (
   ctx: CanvasRenderingContext2D,
   mathProblems: MathProblemEntity[],
   currentTime: number,
+  equationMode?: EquationModeState,
+  reducedMotion = false,
 ): void => {
   ctx.save();
   ctx.font = 'bold 32px Arial';
@@ -496,14 +513,17 @@ export const drawMathProblemNumbers = (
   ctx.textBaseline = 'middle';
 
   forEachVisibleMathProblem(mathProblems, problem => {
-    const motion = lilyPadMotion(problem, currentTime);
+    const response = equationMode
+      ? partialSelectionPresentation(equationMode, problem.id, currentTime, reducedMotion)
+      : { dip: 0, scale: 1, emphasis: 0 };
+    const motion = lilyPadMotion(problem, reducedMotion ? 0 : currentTime, response.dip);
     const text = problem.components.mathProblem.value.toString();
 
     ctx.strokeStyle = 'rgba(12, 54, 28, 0.9)';
     ctx.lineWidth = 7;
     ctx.strokeText(text, motion.centerX, motion.centerY);
 
-    ctx.fillStyle = '#fff7c6';
+    ctx.fillStyle = response.emphasis > 0 ? '#e0f2fe' : '#fff7c6';
     ctx.fillText(text, motion.centerX, motion.centerY);
   });
 

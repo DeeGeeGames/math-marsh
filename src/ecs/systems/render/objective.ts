@@ -1,3 +1,4 @@
+import { partialSelectionPresentation } from '../../partialSelection';
 import { equationSelectionText } from '../../../math/equations';
 import {
   ANSWER_CONSUMPTION_DURATION_MS,
@@ -203,17 +204,63 @@ function drawEquationAwaitingValues(
     .forEach(item => drawOutlinedText(ctx, item.text, item.x));
 }
 
+const drawPartialEquationValues = function(
+  ctx: CanvasRenderingContext2D,
+  layout: SelectedEquationLayout,
+  mode: EquationModeState,
+  currentTime: number,
+  reducedMotion: boolean,
+): void {
+  let cursor = 0;
+  layout.values.forEach(value => {
+    const response = partialSelectionPresentation(mode, value.id, currentTime, reducedMotion);
+    const before = layout.text.slice(0, value.start);
+    const number = layout.text.slice(value.start, value.end);
+    const numberWidth = ctx.measureText(number).width;
+    drawOutlinedText(ctx, layout.text.slice(cursor, value.start), ctx.measureText(layout.text.slice(0, cursor)).width);
+    ctx.save();
+    ctx.translate(ctx.measureText(before).width + numberWidth / 2, 0);
+    ctx.scale(response.scale, response.scale);
+    ctx.textAlign = 'center';
+    // The value is provisional until the complete answer is evaluated. Keep
+    // this styling after the brief pop expires, without changing slot geometry.
+    ctx.globalAlpha = 0.62 + response.emphasis * 0.16;
+    if (response.emphasis > 0) {
+      ctx.fillStyle = '#e0f2fe';
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = 12 * response.emphasis;
+    }
+    drawOutlinedText(ctx, number, 0);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#e0f2fe';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([1, 5]);
+    ctx.beginPath();
+    ctx.moveTo(-numberWidth / 2, 17);
+    ctx.lineTo(numberWidth / 2, 17);
+    ctx.stroke();
+    ctx.restore();
+    cursor = value.end;
+  });
+  drawOutlinedText(ctx, layout.text.slice(cursor), ctx.measureText(layout.text.slice(0, cursor)).width);
+};
+
 export const drawBoardObjective = (
   ctx: CanvasRenderingContext2D,
   equationMode: EquationModeState,
   mathProblems: readonly MathProblemEntity[],
   margin: number,
   currentTime: number,
+  reducedMotion = false,
 ): ReadonlyMap<number, EquationValueTarget> => {
   const feedbackState = activeFeedback(equationMode.feedback, currentTime);
   const awaitingAnimatedValues = feedbackState?.feedback.kind === 'correct'
     && feedbackState.elapsed < ANSWER_CONSUMPTION_DURATION_MS;
-  const selectedLayout = awaitingAnimatedValues
+  const partialSelection = !feedbackState
+    && equationMode.selectedProblemIds.length > 0
+    && equationMode.selectedProblemIds.length < equationMode.operandsRequired;
+  const selectedLayout = awaitingAnimatedValues || partialSelection
     ? selectedEquationLayout(ctx, equationMode, mathProblems, margin)
     : undefined;
   const answerTargets = new Map(
@@ -254,6 +301,8 @@ export const drawBoardObjective = (
   ctx.fillStyle = feedbackStyle?.color ?? textColor;
   if (awaitingAnimatedValues && selectedLayout) {
     drawEquationAwaitingValues(ctx, selectedLayout);
+  } else if (selectedLayout && partialSelection) {
+    drawPartialEquationValues(ctx, selectedLayout, equationMode, currentTime, reducedMotion);
   } else {
     drawOutlinedText(ctx, normalizedText, 0);
   }

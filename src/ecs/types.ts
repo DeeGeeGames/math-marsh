@@ -228,6 +228,7 @@ export interface BaseEquationModeState {
 }
 
 export interface EquationModeState extends BaseEquationModeState {
+  partialSelection?: { problemId: number; startedAt: number } | undefined;
   feedback?: EquationFeedback | undefined;
   changeNotice?: {
     startedAt: number;

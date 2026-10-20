@@ -35,6 +35,7 @@ export function handleEnemySelectionDisruption(
   const disruptedIds = new Set(disruptedProblems.map(problem => problem.id));
   const nextMode = {
     ...equationMode,
+    partialSelection: undefined,
     selectedProblemIds: equationMode.selectedProblemIds.filter(id => !disruptedIds.has(id)),
   };
   ecs.setResource('equationMode', nextMode);

@@ -1,3 +1,4 @@
+import { PARTIAL_SELECTION_DURATION_MS } from '../partialSelection';
 import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
 import { EQUATION_FEEDBACK_DURATION_MS, SELECTION_DISRUPTION_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
@@ -26,6 +27,10 @@ export function addEquationFeedbackSystemToEngine(systems: GameSystemRegistrar):
       queries.disruptions
         .filter(effect => currentTime - effect.components.selectionDisruption.startedAt >= SELECTION_DISRUPTION_DURATION_MS)
         .forEach(effect => ecs.commands.removeEntity(effect.id));
+      if (equationMode.partialSelection
+        && currentTime - equationMode.partialSelection.startedAt >= PARTIAL_SELECTION_DURATION_MS) {
+        ecs.setResource('equationMode', { ...equationMode, partialSelection: undefined });
+      }
       const feedback = equationMode.feedback;
       if (!feedback) return;
 

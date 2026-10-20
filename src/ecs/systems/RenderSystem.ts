@@ -87,6 +87,7 @@ export const addRenderSystemToEngine = (
         queries.mathProblems,
         margins.top,
         currentTime,
+        reducedMotion,
       );
       const timeTarget = drawBoardTime(ctx, remainingTimeSeconds, margins.top);
       ctx.save();
@@ -144,17 +145,19 @@ export const addRenderSystemToEngine = (
         drawRenderableEntity(entity);
       }
 
-      drawMathProblemLilyPads(ctx, queries.mathProblems, ambientTime);
+      drawMathProblemLilyPads(ctx, queries.mathProblems, currentTime, equationMode, reducedMotion);
       drawEnemySpawnTelegraphs(ctx, queries.enemies, currentTime, reducedMotion);
       drawPlayerHighlight(ctx, queries.player, queries.mathProblems, enemyOccupiedCells, ambientTime);
       drawEnhancedSpiderWebs(ctx, queries.spiderWebs, currentTime, reducedMotion);
-      drawMathProblemNumbers(ctx, queries.mathProblems, ambientTime);
+      drawMathProblemNumbers(ctx, queries.mathProblems, currentTime, equationMode, reducedMotion);
       drawEquationSelectionHighlights(
         ctx,
         queries.mathProblems,
         equationMode.selectedProblemIds,
         enemyOccupiedCells,
-        ambientTime,
+        currentTime,
+        equationMode,
+        reducedMotion,
       );
       drawTapTargetFeedback(ctx, tapFeedback, queries.player, currentTime, reducedMotion);
       drawFrogAttackTelegraphs(
