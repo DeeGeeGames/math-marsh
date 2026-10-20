@@ -8,7 +8,6 @@ import {
   activeLilyPadGridCells,
   collectGridCellKeys,
   gridCellKey,
-  isEdgeGridCell,
   type GridCell,
 } from '../lilyPads';
 import {
@@ -117,9 +116,22 @@ function getRandomAvailableLilyPad(
   lilyPadCells: readonly GridCell[],
   board: BoardSize,
 ): GridCell | undefined {
-  const available = lilyPadCells
-    .filter(position => !occupiedCells.has(gridCellKey(position)));
-  const edge = available.filter(cell => isEdgeGridCell(cell, board));
+  const activeCells = new Set(lilyPadCells.map(gridCellKey));
+  // Match the AI's stranding rule: temporary occupants do not remove pads.
+  const available = lilyPadCells.filter(cell =>
+    !occupiedCells.has(gridCellKey(cell)) && [
+      { x: cell.x - 1, y: cell.y },
+      { x: cell.x + 1, y: cell.y },
+      { x: cell.x, y: cell.y - 1 },
+      { x: cell.x, y: cell.y + 1 },
+    ].some(neighbor => activeCells.has(gridCellKey(neighbor))),
+  );
+  if (available.length === 0) return undefined;
 
-  return randomEntry(edge.length > 0 ? edge : available);
+  const ringDepth = function({ x, y }: GridCell): number {
+    return Math.min(x, y, board.width - 1 - x, board.height - 1 - y);
+  };
+  const outermostDepth = Math.min(...available.map(ringDepth));
+
+  return randomEntry(available.filter(cell => ringDepth(cell) === outermostDepth));
 }
