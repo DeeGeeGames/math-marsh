@@ -138,8 +138,9 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
 
         const currentGrid = pixelToGrid(enemy.components.position.x, enemy.components.position.y);
         const hasAnnouncedMove = enemy.components.enemy.plannedMove !== undefined;
-        const hasLegalMove = adjacentLilyPadMoves(currentGrid, activeLilyPadCells, blocked, navGrid).length > 0;
-        if (!hasAnnouncedMove && !hasLegalMove) {
+        // Occupants and reserved destinations can clear; only missing pads strand an enemy.
+        const hasAdjacentPad = adjacentLilyPadCells(currentGrid, activeLilyPadCells, navGrid).length > 0;
+        if (!hasAnnouncedMove && !hasAdjacentPad) {
           beginEnemyElimination(ecs, enemy, mathDifficulty);
           eliminatingEnemyIds.add(enemy.id);
           return;
@@ -256,16 +257,24 @@ const pathBlockedCells = (
     ...occupiedCells,
   ]);
 
+const adjacentLilyPadCells = function(
+  currentGrid: GridCell,
+  activeLilyPadCells: ReadonlySet<string>,
+  navGrid: NavGrid,
+): GridCell[] {
+  return DIRECTIONS
+    .map(({ x, y }) => ({ x: currentGrid.x + x, y: currentGrid.y + y }))
+    .filter(({ x, y }) => x >= 0 && x < navGrid.width && y >= 0 && y < navGrid.height)
+    .filter(cell => isActiveLilyPadCell(cell, activeLilyPadCells));
+};
+
 const adjacentLilyPadMoves = (
   currentGrid: GridCell,
   activeLilyPadCells: ReadonlySet<string>,
   blocked: ReadonlySet<number>,
   navGrid: NavGrid,
 ): GridCell[] =>
-  DIRECTIONS
-    .map(({ x, y }) => ({ x: currentGrid.x + x, y: currentGrid.y + y }))
-    .filter(({ x, y }) => x >= 0 && x < navGrid.width && y >= 0 && y < navGrid.height)
-    .filter(cell => isActiveLilyPadCell(cell, activeLilyPadCells))
+  adjacentLilyPadCells(currentGrid, activeLilyPadCells, navGrid)
     .filter(cell => !blocked.has(cellIndex(cell, navGrid)));
 
 const nextLilyPadStepTowards = (
