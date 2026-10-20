@@ -398,8 +398,8 @@ describe('stranded enemy elimination', () => {
 			});
 
 			const playerOccupiedPad = gridToPixel(0, 0);
-			const enemyOccupiedPad = gridToPixel(2, 2);
-			const webOccupiedPad = gridToPixel(0, 2);
+			const enemyOccupiedPad = gridToPixel(1, 0);
+			const webOccupiedPad = gridToPixel(2, 0);
 			world.getEntitiesWithQuery(['position', 'mathProblem']).forEach(problem => {
 				const position = problem.components.position;
 				const isOccupied = [playerOccupiedPad, enemyOccupiedPad, webOccupiedPad]
