@@ -120,12 +120,14 @@ describe('trapped enemy elimination', () => {
 				});
 
 			try {
+				expect(world.getComponent(enemyId, 'position')?.rotation).toBeUndefined();
 				consumeNeighborPads(world, neighborProblemIds);
 				world.update(0);
 
 				const elimination = world.getComponent(enemyId, 'enemyElimination');
 				const renderable = world.getComponent(enemyId, 'renderable');
 				const tween = world.getComponent(enemyId, 'tween');
+				expect(world.getComponent(enemyId, 'position')?.rotation).toBe(0);
 				expect(elimination?.deathScale).toBe(ANIMATION_CONFIG.DEATH.SCALE_START);
 				expect(renderable?.imageSrc).toBe(ENEMY_IMAGE[enemyType]);
 				expect(renderable?.spriteSheet).toBeUndefined();
@@ -138,6 +140,18 @@ describe('trapped enemy elimination', () => {
 					.toBe(GAME_CONFIG.ENEMY_ELIMINATION.RESPAWN_SECONDS.easy);
 				expect(world.getComponent(enemyId, 'timers')?.enemyMove).toBeUndefined();
 				expect(world.getComponent(enemyId, 'timers')?.enemySpawnTelegraph).toBeUndefined();
+
+				world.update(0.25);
+				const middlePosition = world.getComponent(enemyId, 'position');
+				const middleElimination = world.getComponent(enemyId, 'enemyElimination');
+				expect(middlePosition?.rotation).toBeFinite();
+				expect(middlePosition?.rotation).toBeGreaterThan(0);
+				expect(middleElimination?.deathScale).toBeGreaterThan(0);
+				expect(middleElimination?.deathScale).toBeLessThan(1);
+				world.update(ANIMATION_CONFIG.DEATH.DURATION / 1000 - 0.25);
+				expect(world.getComponent(enemyId, 'position')?.rotation).toBe(1080);
+				expect(world.getComponent(enemyId, 'enemyElimination')?.deathScale).toBe(0);
+
 				if (enemyType === 'frog') {
 					expect(world.getComponent(enemyId, 'frogTongue')).toBeUndefined();
 					expect(world.getComponent(enemyId, 'coroutine')).toBeUndefined();
@@ -420,6 +434,12 @@ describe('trapped enemy elimination', () => {
 				expect.objectContaining({ component: 'position', path: ['rotation'], to: 1095 }),
 			]));
 			expect(world.getComponent(player.id, 'player')?.deathScale).toBe(1);
+			world.update(0.25);
+			expect(world.getComponent(player.id, 'position')?.rotation).toBeGreaterThan(15);
+			expect(world.getComponent(player.id, 'player')?.deathScale).toBeLessThan(1);
+			world.update(ANIMATION_CONFIG.DEATH.DURATION / 1000 - 0.25);
+			expect(world.getComponent(player.id, 'position')?.rotation).toBe(1095);
+			expect(world.getComponent(player.id, 'player')?.deathScale).toBe(0);
 		} finally {
 			await world.dispose();
 		}

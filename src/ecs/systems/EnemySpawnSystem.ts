@@ -41,6 +41,10 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
         ...queries.enemies,
         ...queries.spiderWebs,
       ]);
+      queries.enemies.forEach(enemy => {
+        const plannedMove = enemy.components.enemy.plannedMove;
+        if (plannedMove) occupiedCells.add(gridCellKey(plannedMove));
+      });
       const lilyPadCells = activeLilyPadGridCells(queries.mathProblems);
 
       queries.eliminatingEnemies.forEach(enemy => {

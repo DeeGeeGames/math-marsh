@@ -74,6 +74,9 @@ const startSpinShrinkDeathAnimation = (
   currentRotation: number,
   scaleComponent: 'player' | 'enemyElimination',
 ): void => {
+  ecs.mutateComponent(entityId, 'position', position => {
+    if (position.rotation === undefined) position.rotation = currentRotation;
+  });
   const spinTo = currentRotation + ANIMATION_CONFIG.DEATH.SPIN_ROTATIONS * 360;
   queueTween(ecs, entityId, [
     {
