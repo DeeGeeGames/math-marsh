@@ -112,6 +112,14 @@ export const GAME_CONFIG = {
       AI_BEHAVIORS: ['chase', 'random'] as const,
     },
   },
+
+  ENEMY_ELIMINATION: {
+    RESPAWN_SECONDS: {
+      easy: 15,
+      medium: 15,
+      expert: 10,
+    },
+  },
 } as const;
 
 

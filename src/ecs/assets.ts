@@ -13,11 +13,13 @@ import lizardWalkSide from '../assets/sprites/lizard/lizard-walk-side.png';
 import lizardWalkToward from '../assets/sprites/lizard/lizard-walk-toward.png';
 import lizardTurnSideAway from '../assets/sprites/lizard/lizard-turn-side-away.png';
 import lizardTurnTowardSide from '../assets/sprites/lizard/lizard-turn-toward-side.png';
+import lizardEliminated from '../assets/sprites/lizard/lizard-eliminated.png';
 import spiderWalkAway from '../assets/sprites/spider/spider-walk-away.png';
 import spiderWalkSide from '../assets/sprites/spider/spider-walk-side.png';
 import spiderWalkToward from '../assets/sprites/spider/spider-walk-toward.png';
 import spiderTurnSideAway from '../assets/sprites/spider/spider-turn-side-away.png';
 import spiderTurnTowardSide from '../assets/sprites/spider/spider-turn-toward-side.png';
+import spiderEliminated from '../assets/sprites/spider/spider-eliminated.png';
 import frogHopAway from '../assets/sprites/frog/frog-hop-away.png';
 import frogHopSide from '../assets/sprites/frog/frog-hop-side.png';
 import frogHopToward from '../assets/sprites/frog/frog-hop-toward.png';
@@ -26,6 +28,7 @@ import frogMouthOpenSide from '../assets/sprites/frog/frog-open-mouth-side.png';
 import frogMouthOpenToward from '../assets/sprites/frog/frog-mouth-open-front.png';
 import frogTurnFrontSide from '../assets/sprites/frog/frog-turn-front-side.png';
 import frogTurnSideAway from '../assets/sprites/frog/frog-turn-side-away.png';
+import frogEliminated from '../assets/sprites/frog/frog-eliminated.png';
 
 // Away eating reuses the flight frames; the animation supplies speed and shake.
 const flyEatAway = flyMoveAway;
@@ -46,11 +49,13 @@ export {
   lizardWalkToward,
   lizardTurnSideAway,
   lizardTurnTowardSide,
+  lizardEliminated,
   spiderWalkAway,
   spiderWalkSide,
   spiderWalkToward,
   spiderTurnSideAway,
   spiderTurnTowardSide,
+  spiderEliminated,
   frogHopAway,
   frogHopSide,
   frogHopToward,
@@ -59,6 +64,7 @@ export {
   frogMouthOpenToward,
   frogTurnFrontSide,
   frogTurnSideAway,
+  frogEliminated,
 };
 
 const ENTITY_IMAGE_GROUP = 'entityImages';
@@ -79,11 +85,13 @@ const IMAGE_ASSETS = {
   lizardWalkToward,
   lizardTurnSideAway,
   lizardTurnTowardSide,
+  lizardEliminated,
   spiderWalkAway,
   spiderWalkSide,
   spiderWalkToward,
   spiderTurnSideAway,
   spiderTurnTowardSide,
+  spiderEliminated,
   frogHopAway,
   frogHopSide,
   frogHopToward,
@@ -92,6 +100,7 @@ const IMAGE_ASSETS = {
   frogMouthOpenToward,
   frogTurnFrontSide,
   frogTurnSideAway,
+  frogEliminated,
 } as const;
 
 export type ImageAssetKey = keyof typeof IMAGE_ASSETS;
@@ -140,11 +149,13 @@ export const configureImageAssets: ImageAssetConfigurator = function configureIm
     .addWithConfig('lizardWalkToward', imageAsset(lizardWalkToward))
     .addWithConfig('lizardTurnSideAway', imageAsset(lizardTurnSideAway))
     .addWithConfig('lizardTurnTowardSide', imageAsset(lizardTurnTowardSide))
+    .addWithConfig('lizardEliminated', imageAsset(lizardEliminated))
     .addWithConfig('spiderWalkAway', imageAsset(spiderWalkAway))
     .addWithConfig('spiderWalkSide', imageAsset(spiderWalkSide))
     .addWithConfig('spiderWalkToward', imageAsset(spiderWalkToward))
     .addWithConfig('spiderTurnSideAway', imageAsset(spiderTurnSideAway))
     .addWithConfig('spiderTurnTowardSide', imageAsset(spiderTurnTowardSide))
+    .addWithConfig('spiderEliminated', imageAsset(spiderEliminated))
     .addWithConfig('frogHopAway', imageAsset(frogHopAway))
     .addWithConfig('frogHopSide', imageAsset(frogHopSide))
     .addWithConfig('frogHopToward', imageAsset(frogHopToward))
@@ -152,5 +163,6 @@ export const configureImageAssets: ImageAssetConfigurator = function configureIm
     .addWithConfig('frogMouthOpenSide', imageAsset(frogMouthOpenSide))
     .addWithConfig('frogMouthOpenToward', imageAsset(frogMouthOpenToward))
     .addWithConfig('frogTurnFrontSide', imageAsset(frogTurnFrontSide))
-    .addWithConfig('frogTurnSideAway', imageAsset(frogTurnSideAway));
+    .addWithConfig('frogTurnSideAway', imageAsset(frogTurnSideAway))
+    .addWithConfig('frogEliminated', imageAsset(frogEliminated));
 };

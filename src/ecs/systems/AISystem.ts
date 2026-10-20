@@ -25,6 +25,7 @@ import { startFrogGridMovement, startFrogGridTurn } from './FrogSpriteSystem';
 import { startEnemyGridMovement, startEnemyGridTurn } from './EnemySpriteSystem';
 import { enemyMoveBaseIntervalForLevel, enemyChallengeLevelForDifficulty } from '../enemyDifficulty';
 import type { AllComponents } from '../types';
+import { beginEnemyElimination } from '../enemyElimination';
 
 const SPIDER_CONFIG = GAME_CONFIG.ENEMY_TYPES.spider;
 
@@ -104,13 +105,14 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
     .addQuery('enemies', aiEnemyQuery)
     .addQuery('mathProblems', mathProblemQuery)
     .addSingleton('player', playerQuery)
-    .withResources(['currentLevel', 'board'])
-    .setProcess(({ queries, ecs, resources: { currentLevel, board } }) => {
+    .withResources(['currentLevel', 'board', 'mathDifficulty'])
+    .setProcess(({ queries, ecs, resources: { currentLevel, board, mathDifficulty } }) => {
       const navGrid = createNavGrid({ ...board, cellSize: GAME_CONFIG.GRID.CELL_SIZE });
       const { enemies, player } = queries;
       if (!player) return;
 
       const activeLilyPadCells = activeLilyPadCellKeys(queries.mathProblems);
+      const eliminatingEnemyIds = new Set<number>();
 
       enemies.forEach(enemy => {
         if (enemy.components.timers.enemySpawnTelegraph?.active) return;
@@ -125,7 +127,7 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
         // Reserve announced destinations until landing, including plans made
         // by earlier enemies this frame. An enemy never blocks its own plan.
         const blocked = new Set(enemies
-          .filter(other => other.id !== enemy.id)
+          .filter(other => other.id !== enemy.id && !eliminatingEnemyIds.has(other.id))
           .flatMap(other => {
             const plannedMove = other.components.enemy.plannedMove;
             return [
@@ -133,6 +135,16 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
               ...(plannedMove ? [navGrid.cellFromXY(plannedMove.x, plannedMove.y)] : []),
             ];
           }));
+
+        const currentGrid = pixelToGrid(enemy.components.position.x, enemy.components.position.y);
+        const hasAnnouncedMove = enemy.components.enemy.plannedMove !== undefined;
+        const hasLegalMove = adjacentLilyPadMoves(currentGrid, activeLilyPadCells, blocked, navGrid).length > 0;
+        if (!hasAnnouncedMove && !hasLegalMove) {
+          beginEnemyElimination(ecs, enemy, mathDifficulty);
+          eliminatingEnemyIds.add(enemy.id);
+          return;
+        }
+
         processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, ecs.tryGetResource('mathSession')
           ? enemyChallengeLevelForDifficulty(ecs.getResource('mathDifficulty')) : currentLevel, navGrid);
       });

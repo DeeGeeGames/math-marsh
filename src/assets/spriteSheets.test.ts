@@ -44,6 +44,12 @@ const FOUR_FRAME_SHEETS = [
 	'sprites/frog/frog-mouth-open-front.png',
 ] as const;
 
+const ELIMINATION_SPRITES = [
+	'sprites/frog/frog-eliminated.png',
+	'sprites/lizard/lizard-eliminated.png',
+	'sprites/spider/spider-eliminated.png',
+] as const;
+
 const spriteSheetSpecs = [
 	...EIGHT_FRAME_SHEETS.map(path => ({ path: new URL(path, import.meta.url), frameCount: 8 })),
 	...SEVEN_FRAME_SHEETS.map(path => ({ path: new URL(path, import.meta.url), frameCount: 7 })),
@@ -68,6 +74,17 @@ const readPngDimensions = async function readPngDimensions(path: URL): Promise<P
 };
 
 describe('sprite sheets', () => {
+	test('use one normalized 272px frame for each surprised elimination sprite', async () => {
+		const dimensions = await Promise.all(ELIMINATION_SPRITES.map(async path => ({
+			path,
+			dimensions: await readPngDimensions(new URL(path, import.meta.url)),
+		})));
+
+		expect(dimensions.map(({ path, dimensions: { width, height } }) => ({ path, width, height }))).toEqual(
+			ELIMINATION_SPRITES.map(path => ({ path, width: 272, height: 272 })),
+		);
+	});
+
 	test('use square horizontal frame slots matching runtime frame counts', async () => {
 		const dimensions = await Promise.all(
 			spriteSheetSpecs.map(async spec => ({

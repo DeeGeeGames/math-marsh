@@ -4,6 +4,7 @@ import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import type { GameEngine } from '../Engine';
 import type { TimerSlot } from '../types';
+import { configureGameScreens } from '../screenConfiguration';
 import type { EnemyType } from '../../types/shared';
 import { enemyRosterForLevel } from '../enemyRosters';
 import { mathProblemComponents, playerComponents } from '../entities';
@@ -11,15 +12,22 @@ import { gridToPixel } from '../gameUtils';
 import { gridCells } from '../lilyPads';
 import { addEnemySpawnSystemToEngine } from './EnemySpawnSystem';
 
+type TestConfig = Omit<ConfigOf<GameEngine>, 'screens' | 'resources'> & {
+  screens: {};
+  resources: Omit<ConfigOf<GameEngine>['resources'], '$screen'>;
+};
+
 async function createSpawnWorld(level: number, roster: readonly EnemyType[], board: BoardSize): Promise<GameEngine> {
-  const world = ECSpresso.create<ConfigOf<GameEngine>>()
+  const world = ECSpresso.create<TestConfig>()
     .withPlugin(createTimerPlugin<TimerSlot>())
+    .withScreens(configureGameScreens)
     .build();
   world.setResource('currentLevel', level);
   world.setResource('board', board);
   world.setResource('enemySpawn', { index: 0, roster });
-  addEnemySpawnSystemToEngine(world);
+  addEnemySpawnSystemToEngine(world.systemScope({ inScreens: ['playing'] }));
   await world.initialize();
+  await world.setScreen('playing', { level, isFreshGame: false });
   const playerPosition = gridToPixel(Math.floor(board.width / 2), Math.floor(board.height / 2));
   world.spawn({ ...playerComponents(playerPosition.x, playerPosition.y), timers: {} });
   gridCells(board).forEach(cell => {

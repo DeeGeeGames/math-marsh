@@ -1,4 +1,3 @@
-import { initialLevelSelectSequence } from './levelSelectionCheat';
 import { boardForDifficulty } from './boardGeometry';
 import { frameDeltaSeconds } from './frameTime';
 import ECSpresso, { type SystemRegistrarOf } from 'ecspresso';
@@ -7,8 +6,7 @@ import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { controllerActionMap, controllerOnlyActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
-import { initialSplashState } from './splashSequence';
-import type { SkitScreenConfig } from './skitSequence';
+import { configureGameScreens } from './screenConfiguration';
 import { loadPlayerProfiles } from './playerProfiles';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
@@ -20,12 +18,6 @@ import type {
   Resources,
   GameAction,
   TimerSlot,
-  PlayingScreenConfig,
-  LevelCompleteScreenConfig,
-  LevelCompleteScreenState,
-  SettingsScreenConfig,
-  TutorialScreenConfig,
-  PlayerProfileActionScreenConfig,
 } from './types';
 
 const timerPlugin = createTimerPlugin<TimerSlot>({ priority: SYSTEM_PRIORITIES.TIMERS });
@@ -92,35 +84,7 @@ export const gameEngine = ECSpresso.create()
   .withRequired('player', 'timers', () => ({}))
   .withRequired('enemy', 'timers', () => ({}))
   .withRequired('enemy', 'health', () => ({ current: 1, max: 1 }))
-  .withScreens(screens => screens
-    .add('studioSplash', { initialState: initialSplashState })
-    .add('engineSplash', { initialState: initialSplashState })
-    .add('menu', { initialState: () => ({}) })
-    .add('playerSetup', { initialState: () => ({}) })
-    .add('playerRoster', { initialState: () => ({}) })
-    .add('playerAdd', { initialState: () => ({}) })
-    .add('playerManagement', { initialState: () => ({}) })
-    .add('playerRename', { initialState: (config: PlayerProfileActionScreenConfig) => ({ ...config }) })
-    .add('playerDelete', { initialState: (config: PlayerProfileActionScreenConfig) => ({ ...config }) })
-    .add('skitGallery', { initialState: () => ({}) })
-    .add('modeSelect', { initialState: initialLevelSelectSequence })
-    .add('howToPlay', { initialState: () => ({}) })
-    .add('tutorialOffer', { initialState: () => ({}) })
-    .add('tutorial', { initialState: (config: TutorialScreenConfig) => ({ ...config }) })
-    .add('playing', { initialState: (config: PlayingScreenConfig) => ({ ...config }) })
-    .add('levelComplete', {
-      initialState: (config: LevelCompleteScreenConfig): LevelCompleteScreenState => ({
-        ...config,
-        transitionStarted: false,
-      }),
-    })
-    .add('skit', {
-      initialState: (config: SkitScreenConfig) => ({ ...config, elapsed: 0, transitionStarted: false }),
-    })
-    .add('controllerRecovery', { initialState: () => ({ startedAt: performance.now() }) })
-    .add('paused', { initialState: () => ({}) })
-    .add('settings', { initialState: (config: SettingsScreenConfig) => ({ ...config }) })
-    .add('gameOver', { initialState: () => ({}) }))
+  .withScreens(configureGameScreens)
   .build();
 
 export type GameEngine = typeof gameEngine;
