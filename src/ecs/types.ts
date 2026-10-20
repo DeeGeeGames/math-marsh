@@ -103,6 +103,14 @@ export interface Components {
   };
   enemyElimination: {
     deathScale: number;
+    impact?: {
+      x: number;
+      y: number;
+      rotation: number;
+      landed: number;
+      played: boolean;
+      age: number;
+    };
   };
   mathProblem: {
     value: number;

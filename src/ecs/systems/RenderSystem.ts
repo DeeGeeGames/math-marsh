@@ -39,6 +39,7 @@ import {
   enemyEmergencePresentation,
 } from './render/enemyTelegraphs';
 import { drawDamageFeedback } from './render/damageFeedback';
+import { drawEnemyEliminationBursts } from './render/enemyElimination';
 import { drawEquationChange } from './render/equationChange';
 
 export { initializeRenderSystem } from './render/context';
@@ -65,6 +66,7 @@ export const addRenderSystemToEngine = (
     .addQuery('timeAdjustments', timeAdjustmentQuery)
     .addQuery('disruptions', { with: ['position', 'selectionDisruption'], mutates: [] } as const)
     .addQuery('enemies', enemyQuery)
+    .addQuery('eliminations', { with: ['enemyElimination'], mutates: [] } as const)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
     .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds', 'gameplayClock', 'board'])
@@ -122,14 +124,16 @@ export const addRenderSystemToEngine = (
         const emergence = enemyEmergencePresentation(timers?.enemySpawnTelegraph);
 
         drawEntity(ctx, {
-          position: entity.components.position,
+          position: reducedMotion && enemyElimination?.impact
+            ? { x: enemyElimination.impact.x, y: enemyElimination.impact.y, rotation: enemyElimination.impact.rotation }
+            : entity.components.position,
           renderable,
           image,
           isInvulnerable: timers?.invulnerability?.active === true,
-          deathScale: playerComp?.deathScale ?? enemyElimination?.deathScale ?? 1.0,
+          deathScale: reducedMotion && enemyElimination ? 1 : playerComp?.deathScale ?? enemyElimination?.deathScale ?? 1.0,
           shakeOffsetX: shake?.offsetX ?? 0,
           shakeOffsetY: shake?.offsetY ?? 0,
-          opacity: emergence.opacity,
+          opacity: emergence.opacity * (reducedMotion && enemyElimination ? enemyElimination.deathScale : 1),
           visualScale: emergence.scale,
         });
       };
@@ -175,6 +179,7 @@ export const addRenderSystemToEngine = (
         drawRenderableEntity(entity);
       }
 
+      drawEnemyEliminationBursts(ctx, queries.eliminations, reducedMotion);
       drawEnhancedFrogTongues(ctx, queries.frogTongues, currentTime, 'aboveFrog');
       drawSelectionDisruptionEffects(ctx, queries.disruptions, currentTime, reducedMotion);
       if (queries.player) {

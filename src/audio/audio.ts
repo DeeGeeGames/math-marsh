@@ -12,6 +12,7 @@ export type SoundEffect =
   | 'equationChange'
   | 'correct'
   | 'incorrect'
+  | 'enemyPop'
   | 'damage'
   | 'web'
   | 'frogTongue'
@@ -52,6 +53,7 @@ type AudioState = {
   scene: AudioScene;
   music?: MusicLoop;
   lastMoveSoundAt: number;
+  lastEnemyPopAt: number;
   lowTime: boolean;
 };
 
@@ -97,6 +99,7 @@ const audioState: AudioState = {
   settings: loadSettings(),
   scene: 'silent',
   lastMoveSoundAt: 0,
+  lastEnemyPopAt: -Infinity,
   lowTime: false,
 };
 
@@ -439,6 +442,19 @@ function playEffectBody(effect: SoundEffect, context: AudioContext): void {
       playTone(master, { frequency: frequency(-5), start: now, duration: 0.22, volume: 0.055, type: 'sawtooth', detune: -12 });
       playTone(master, { frequency: frequency(-6), start: now, duration: 0.2, volume: 0.035, type: 'square', detune: 18 });
     },
+    enemyPop: function(): void {
+      // A short hollow pitch drop with a soft click, distinct from success/damage.
+      const oscillator = context.createOscillator();
+      const gain = createGain(context, 0.0001, master);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(620, now);
+      oscillator.frequency.exponentialRampToValueAtTime(125, now + 0.085);
+      oscillator.connect(gain);
+      envelope(gain, now, { attack: 0.004, decay: 0.09, peak: 0.085 });
+      oscillator.start(now);
+      oscillator.stop(now + 0.12);
+      playNoise(master, { start: now, duration: 0.035, volume: 0.025, filterFrequency: 1800 });
+    },
     damage: () => {
       playNoise(master, { start: now, duration: 0.2, volume: 0.09, filterFrequency: 520 });
       playTone(master, { frequency: frequency(-12), start: now, duration: 0.22, volume: 0.06, type: 'sawtooth' });
@@ -497,6 +513,11 @@ export function unlockAudio(): void {
 
 export function playSound(effect: SoundEffect): void {
   if (!audioState.settings.soundEffects) return;
+  if (effect === 'enemyPop') {
+    const now = performance.now();
+    if (now - audioState.lastEnemyPopAt < 80) return;
+    audioState.lastEnemyPopAt = now;
+  }
   if (effect === 'move') {
     const now = performance.now();
     if (now - audioState.lastMoveSoundAt < MOVE_SOUND_SPACING_MS) return;
@@ -513,6 +534,7 @@ export function playSound(effect: SoundEffect): void {
 export const createAudioPreview = function(): {
   playMusic: (scene: AudioScene, lowTime: boolean) => void;
   playEffect: (effect: SoundEffect) => void;
+  setSoundEffects: (enabled: boolean) => void;
   stop: () => void;
   dispose: () => void;
 } {
@@ -532,6 +554,9 @@ export const createAudioPreview = function(): {
       if (lowTime) setGameMusicTime(LOW_TIME_SECONDS);
     },
     playEffect: function(effect): void { playSound(effect); },
+    setSoundEffects: function(enabled): void {
+      audioState.settings = { ...audioState.settings, soundEffects: enabled };
+    },
     stop,
     dispose: stop,
   };
