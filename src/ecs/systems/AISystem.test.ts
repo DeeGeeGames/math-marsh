@@ -16,7 +16,13 @@ import { registerFrogTongueInit } from './FrogTongueSystem';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { AIBehavior, EnemyType } from '../../types/shared';
 import type { GameTimer, TimerSlot } from '../types';
+import { configureGameScreens } from '../screenConfiguration';
 import type { EnemyEntity } from '../queries';
+
+type TestConfig = Omit<ConfigOf<GameEngine>, 'screens' | 'resources'> & {
+	screens: {};
+	resources: Omit<ConfigOf<GameEngine>['resources'], '$screen'>;
+};
 
 async function createTelegraphWorld(enemyType: EnemyType = 'lizard', level = 1, {
 	board = BOARD_SIZES.easy,
@@ -29,17 +35,20 @@ async function createTelegraphWorld(enemyType: EnemyType = 'lizard', level = 1, 
 	timer: GameTimer;
 	position: { x: number; y: number };
 }> {
-	const world = ECSpresso.create<ConfigOf<GameEngine>>()
+	const world = ECSpresso.create<TestConfig>()
 		.withPlugin(createTimerPlugin<TimerSlot>({ priority: SYSTEM_PRIORITIES.TIMERS }))
 		.withPlugin(createTweenPlugin({ priority: SYSTEM_PRIORITIES.ANIMATION }))
 		.withPlugin(createCoroutinePlugin({ priority: SYSTEM_PRIORITIES.FROG_TONGUE, phase: 'preUpdate' }))
+		.withScreens(configureGameScreens)
 		.build();
 	world.setResource('board', board);
 	world.setResource('currentLevel', level);
-	addAISystemToEngine(world);
+	world.setResource('mathDifficulty', 'easy');
+	addAISystemToEngine(world.systemScope({ inScreens: ['playing'] }));
 	addFrogSpriteAnimationSystemToEngine(world);
 	registerFrogTongueInit(world);
 	await world.initialize();
+	await world.setScreen('playing', { level, isFreshGame: false });
 	const playerPosition = gridToPixel(2, 1);
 	const player = world.spawn({ ...playerComponents(playerPosition.x, playerPosition.y), timers: {} });
 	gridCells(board).forEach(cell => {
@@ -286,15 +295,18 @@ describe('AI board bounds', () => {
 	Object.entries(BOARD_SIZES).forEach(([difficulty, board]) => {
 		test(`${difficulty} keeps all AI behaviors and patrol waypoints inside the active board`, async () => {
 			await Promise.all((['chase', 'patrol', 'random', 'guard'] as const).map(async behavior => {
-				const world = ECSpresso.create<ConfigOf<GameEngine>>()
+				const world = ECSpresso.create<TestConfig>()
 					.withPlugin(createTimerPlugin<TimerSlot>({ priority: SYSTEM_PRIORITIES.TIMERS }))
 					.withPlugin(createTweenPlugin({ priority: SYSTEM_PRIORITIES.ANIMATION }))
+					.withScreens(configureGameScreens)
 					.build();
 				world.setResource('board', board);
 				world.setResource('currentLevel', 1);
-				addAISystemToEngine(world);
+				world.setResource('mathDifficulty', 'easy');
+				addAISystemToEngine(world.systemScope({ inScreens: ['playing'] }));
 				addFrogSpriteAnimationSystemToEngine(world);
 				await world.initialize();
+				await world.setScreen('playing', { level: 1, isFreshGame: false });
 				const playerPosition = gridToPixel(0, 0);
 				world.spawn({ ...playerComponents(playerPosition.x, playerPosition.y), timers: {} });
 				gridCells(board).forEach(cell => {

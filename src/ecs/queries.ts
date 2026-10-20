@@ -36,10 +36,16 @@ export const mathProblemWithRenderableQuery = {
 
 export const enemyQuery = {
   with: ['position', 'enemy', 'timers'],
+  without: ['enemyElimination'],
 } as const;
 
 export const enemyWithColliderQuery = {
   with: ['position', 'enemy', 'collider', 'timers'],
+  without: ['enemyElimination'],
+} as const;
+
+export const eliminatingEnemyQuery = {
+  with: ['position', 'enemy', 'enemyElimination', 'timers'],
 } as const;
 
 export const renderableEntityQuery = {
@@ -48,6 +54,7 @@ export const renderableEntityQuery = {
 
 export const positionEntityQuery = {
   with: ['position'],
+  without: ['enemyElimination'],
 } as const;
 
 export const spiderWebQuery = {
@@ -60,6 +67,7 @@ export const spiderWebWithRenderableQuery = {
 
 export const frogTongueQuery = {
   with: ['position', 'enemy', 'frogTongue', 'timers'],
+  without: ['enemyElimination'],
 } as const;
 
 /**

@@ -16,7 +16,7 @@ export type SpritePreview = {
 export const SPRITES: readonly SpritePreview[] = CHARACTERS.flatMap(function(character) {
 	const prefix = character.toLowerCase();
 	return IMAGE_ASSET_KEYS.filter(function(key) { return key.startsWith(prefix); }).map(function(key) {
-		const frameCount = key.endsWith('Image') ? 1
+		const frameCount = key.endsWith('Image') || key.endsWith('Eliminated') ? 1
 			: key.includes('MouthOpen') ? 4
 			: key === 'spiderWalkSide' ? 7
 			: 8;
@@ -27,7 +27,7 @@ export const SPRITES: readonly SpritePreview[] = CHARACTERS.flatMap(function(cha
 		return {
 			key, character, frameCount,
 			label: key.slice(prefix.length).replace(/([A-Z])/g, ' $1').trim(),
-			fps: key === 'flyEatAway' ? 12 : frameCount / duration,
+			fps: key.endsWith('Eliminated') ? 0 : key === 'flyEatAway' ? 12 : frameCount / duration,
 		};
 	});
 });

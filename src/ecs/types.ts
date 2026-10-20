@@ -25,6 +25,7 @@ export type TimerSlot =
   | 'invulnerability'
   | 'deathDelay'
   | 'enemyMove'
+  | 'enemyRespawn'
   | 'enemySpawn'
   | 'problemSpawn';
 
@@ -99,6 +100,9 @@ export interface Components {
     waypoints?: Array<{ x: number, y: number }>;
     currentWaypoint?: number;
     guardPosition?: { x: number, y: number };
+  };
+  enemyElimination: {
+    deathScale: number;
   };
   mathProblem: {
     value: number;

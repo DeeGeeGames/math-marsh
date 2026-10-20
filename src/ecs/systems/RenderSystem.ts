@@ -56,7 +56,10 @@ export const addRenderSystemToEngine = (
     .setPriority(SYSTEM_PRIORITIES.RENDER)
     .inScreens(['playing', 'tutorial', 'levelComplete'])
     .requiresAssets(IMAGE_ASSET_KEYS)
-    .addQuery('renderableEntities', { ...renderableEntityQuery, optional: ['shake'] } as const)
+    .addQuery('renderableEntities', {
+      ...renderableEntityQuery,
+      optional: ['shake', 'player', 'enemyElimination', 'timers'],
+    } as const)
     .addSingleton('player', { ...playerQuery, optional: ['shake'] } as const)
     .addQuery('mathProblems', mathProblemQuery)
     .addQuery('timeAdjustments', timeAdjustmentQuery)
@@ -108,6 +111,9 @@ export const addRenderSystemToEngine = (
       const drawRenderableEntity = (entity: (typeof sortedEntities)[number]): void => {
         const timers = 'timers' in entity.components ? entity.components.timers : undefined;
         const playerComp = 'player' in entity.components ? entity.components.player : undefined;
+        const enemyElimination = 'enemyElimination' in entity.components
+          ? entity.components.enemyElimination
+          : undefined;
         const renderable = entity.components.renderable;
         const shake = entity.components.shake;
         const image = renderable.imageSrc
@@ -120,7 +126,7 @@ export const addRenderSystemToEngine = (
           renderable,
           image,
           isInvulnerable: timers?.invulnerability?.active === true,
-          deathScale: playerComp?.deathScale ?? 1.0,
+          deathScale: playerComp?.deathScale ?? enemyElimination?.deathScale ?? 1.0,
           shakeOffsetX: shake?.offsetX ?? 0,
           shakeOffsetY: shake?.offsetY ?? 0,
           opacity: emergence.opacity,

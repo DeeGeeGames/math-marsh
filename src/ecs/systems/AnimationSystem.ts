@@ -57,11 +57,31 @@ export const startDeathAnimation = (
   entityId: number,
   currentRotation: number,
 ): void => {
+  startSpinShrinkDeathAnimation(ecs, entityId, currentRotation, 'player');
+};
+
+export const startEnemyDeathAnimation = (
+  ecs: GameEngine,
+  entityId: number,
+  currentRotation: number,
+): void => {
+  startSpinShrinkDeathAnimation(ecs, entityId, currentRotation, 'enemyElimination');
+};
+
+const startSpinShrinkDeathAnimation = (
+  ecs: GameEngine,
+  entityId: number,
+  currentRotation: number,
+  scaleComponent: 'player' | 'enemyElimination',
+): void => {
+  ecs.mutateComponent(entityId, 'position', position => {
+    if (position.rotation === undefined) position.rotation = currentRotation;
+  });
   const spinTo = currentRotation + ANIMATION_CONFIG.DEATH.SPIN_ROTATIONS * 360;
   queueTween(ecs, entityId, [
     {
       targets: [
-        { component: 'player', field: 'deathScale', to: ANIMATION_CONFIG.DEATH.SCALE_END },
+        { component: scaleComponent, field: 'deathScale', to: ANIMATION_CONFIG.DEATH.SCALE_END },
         { component: 'position', field: 'rotation', to: spinTo },
       ],
       duration: DEATH_DURATION_S,

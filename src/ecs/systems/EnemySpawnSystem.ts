@@ -13,6 +13,7 @@ import {
 } from '../lilyPads';
 import {
   enemyQuery,
+  eliminatingEnemyQuery,
   mathProblemQuery,
   playerQuery,
   spiderWebQuery
@@ -26,6 +27,7 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
     .inGroup('gameplay')
     .setPriority(SYSTEM_PRIORITIES.ENEMY_SPAWN)
     .addQuery('enemies', enemyQuery)
+    .addQuery('eliminatingEnemies', { ...eliminatingEnemyQuery, mutates: ['timers'] } as const)
     .addQuery('mathProblems', mathProblemQuery)
     .addQuery('spiderWebs', spiderWebQuery)
     .addSingleton('player', { ...playerQuery, mutates: ['timers'] } as const)
@@ -34,6 +36,36 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
       const player = queries.player;
       if (!player || player.components.player.gameOverPending) return;
 
+      const occupiedCells = collectGridCellKeys([
+        player,
+        ...queries.enemies,
+        ...queries.spiderWebs,
+      ]);
+      queries.enemies.forEach(enemy => {
+        const plannedMove = enemy.components.enemy.plannedMove;
+        if (plannedMove) occupiedCells.add(gridCellKey(plannedMove));
+      });
+      const lilyPadCells = activeLilyPadGridCells(queries.mathProblems);
+
+      queries.eliminatingEnemies.forEach(enemy => {
+        if (enemy.components.timers.enemyRespawn?.active) return;
+
+        const spawnCell = spawnEnemyOnLilyPad(
+          ecs,
+          enemy.components.enemy.enemyType,
+          occupiedCells,
+          lilyPadCells,
+          board,
+        );
+        if (!spawnCell) {
+          enemy.components.timers.enemyRespawn = createTimer(GAME_CONFIG.TIMING.SHORT_DELAY / 1000);
+          return;
+        }
+
+        occupiedCells.add(gridCellKey(spawnCell));
+        ecs.commands.removeEntity(enemy.id);
+      });
+
       const { index, roster } = enemySpawn;
       if (index >= roster.length) return;
       if (player.components.timers.enemySpawn?.active) return;
@@ -41,12 +73,6 @@ export function addEnemySpawnSystemToEngine(systems: GameSystemRegistrar): void 
       const nextEnemyType = roster[index];
       if (!nextEnemyType) return;
 
-      const occupiedCells = collectGridCellKeys([
-        player,
-        ...queries.enemies,
-        ...queries.spiderWebs,
-      ]);
-      const lilyPadCells = activeLilyPadGridCells(queries.mathProblems);
       const spawned = spawnEnemyOnLilyPad(ecs, nextEnemyType, occupiedCells, lilyPadCells, board);
       if (!spawned) {
         player.components.timers.enemySpawn = createTimer(GAME_CONFIG.TIMING.SHORT_DELAY / 1000);
@@ -69,17 +95,17 @@ function spawnEnemyOnLilyPad(
   occupiedCells: ReadonlySet<string>,
   lilyPadCells: readonly GridCell[],
   board: BoardSize,
-): boolean {
+): GridCell | undefined {
   const spawnCell = getRandomAvailableLilyPad(occupiedCells, lilyPadCells, board);
-  if (!spawnCell) return false;
+  if (!spawnCell) return undefined;
 
   const pixelPos = gridToPixel(spawnCell.x, spawnCell.y);
   const behaviors = GAME_CONFIG.ENEMY_TYPES[enemyType].AI_BEHAVIORS;
   const behavior = randomEntry(behaviors);
-  if (behavior === undefined) return false;
+  if (behavior === undefined) return undefined;
 
   createEnemy(ecs.commands, pixelPos.x, pixelPos.y, enemyType, behavior);
-  return true;
+  return spawnCell;
 }
 
 function randomEntry<T>(entries: readonly T[]): T | undefined {

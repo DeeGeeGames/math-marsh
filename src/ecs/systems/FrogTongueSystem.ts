@@ -153,7 +153,7 @@ function updateTongueSegments(
 function collectEnemyBlockedCells(ecs: GameEngine, frogId: number): Set<string> {
   return new Set(
     ecs.getEntitiesWithQuery(['enemy', 'position'])
-      .filter(enemy => enemy.id !== frogId)
+      .filter(enemy => enemy.id !== frogId && !ecs.hasComponent(enemy.id, 'enemyElimination'))
       .map(enemy => {
         const grid = pixelToGrid(enemy.components.position.x, enemy.components.position.y);
         return `${grid.x},${grid.y}`;
@@ -187,6 +187,7 @@ export const isFrogAttacking = (tongue: AllComponents['frogTongue'] | undefined)
 export function registerFrogTongueInit(ecs: GameEngine): void {
   ecs.addReactiveQuery('frog-init', {
     with: ['enemy'],
+    without: ['enemyElimination'],
     onEnter: ({ entity, ecs }) => {
       if (entity.components.enemy.enemyType !== 'frog') return;
       queueFrogTongueInit(ecs, entity.id);

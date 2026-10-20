@@ -354,6 +354,29 @@ describe('level completion with enemies', () => {
 });
 
 describe('population with occupied pads', () => {
+	test('eliminating enemies do not keep their old pad out of a repopulated board', async () => {
+		const world = await createProgressionWorld(1, []);
+		try {
+			world.getEntitiesWithQuery(['mathProblem']).forEach(problem => world.removeEntity(problem.id));
+			const enemyPosition = gridToPixel(2, 2);
+			const enemy = world.spawn({
+				...enemyComponents(enemyPosition.x, enemyPosition.y, 'spider', 'guard'),
+				timers: {},
+				enemyElimination: { deathScale: 0 },
+			});
+
+			world.update(0.01);
+
+			const problemOnEliminatedPad = world.getEntitiesWithQuery(['position', 'mathProblem'])
+				.find(problem => problem.components.position.x === enemyPosition.x
+					&& problem.components.position.y === enemyPosition.y);
+			expect(problemOnEliminatedPad).toBeDefined();
+			expect(world.hasComponent(enemy.id, 'enemyElimination')).toBe(true);
+		} finally {
+			await world.dispose();
+		}
+	});
+
 	[1, 2].forEach(availableCount => {
 		test(`uses exactly ${availableCount} available pads without truncating answers`, async () => {
 			const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
