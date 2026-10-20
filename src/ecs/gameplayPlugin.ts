@@ -1,3 +1,4 @@
+import { addEnemyEliminationFeedbackSystem } from './systems/EnemyEliminationFeedbackSystem';
 import { addAISystemToEngine } from './systems/AISystem';
 import { addEnemySpawnSystemToEngine } from './systems/EnemySpawnSystem';
 import { addProblemManagementSystemToEngine } from './systems/ProblemManagementSystem';
@@ -19,6 +20,7 @@ export function registerGameplaySystems(
   addPlayerSpriteSystemToEngine(systems);
   addCollisionSystemToEngine(systems);
   addAISystemToEngine(systems);
+  addEnemyEliminationFeedbackSystem(systems);
   addEnemySpawnSystemToEngine(systems);
   addProblemManagementSystemToEngine(systems);
   addGameplayTimeSystemToEngine(systems);

@@ -48,6 +48,7 @@ export const beginEnemyElimination = function(
 	});
 	ecs.commands.addComponent(enemyId, 'enemyElimination', {
 		deathScale: ANIMATION_CONFIG.DEATH.SCALE_START,
+		impact: { x: position.x, y: position.y, rotation: position.rotation ?? 0, landed: 0, played: false, age: 0 },
 	});
 	startEnemyDeathAnimation(ecs, enemyId, position.rotation ?? 0);
 };

@@ -76,7 +76,10 @@ export const startEnemyDeathAnimation = (
       easing: easeOutQuad,
     },
     {
-      targets: [{ component: 'position', field: 'y', from: position.y - BOUNCE_HEIGHT, to: position.y }],
+      targets: [
+        { component: 'position', field: 'y', from: position.y - BOUNCE_HEIGHT, to: position.y },
+        { component: 'enemyElimination', field: 'impact.landed', from: 0, to: 1 },
+      ],
       duration: BOUNCE_HALF_DURATION / 1000,
       easing: function(t: number): number { return t * t; },
     },

@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test, spyOn, beforeEach, afterEach, mock } from 'bun:test';
+import * as audio from '../audio/audio';
+import { addEnemyEliminationFeedbackSystem } from './systems/EnemyEliminationFeedbackSystem';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { createTimer, createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
@@ -67,6 +69,7 @@ const createScenario = async function(
 	const gameplaySystems = world.systemScope({ inScreens: ['playing'] });
 	if (includeAI) addAISystemToEngine(gameplaySystems);
 	addEnemySpawnSystemToEngine(gameplaySystems);
+	addEnemyEliminationFeedbackSystem(gameplaySystems);
 	registerFrogTongueInit(world);
 	registerGameplayClockLifecycle(world);
 	await world.initialize();
@@ -102,6 +105,9 @@ const consumeNeighborPads = function(world: GameEngine, problemIds: readonly num
 };
 
 describe('stranded enemy elimination', () => {
+	beforeEach(() => { spyOn(audio, 'playSound').mockImplementation(() => {}); });
+	afterEach(() => { mock.restore(); });
+
 	(['lizard', 'frog', 'spider'] as const).forEach(enemyType => {
 		(['occupied', 'reserved'] as const).forEach(blockage => {
 			test(`${enemyType} survives when its only adjacent pad is ${blockage} by another enemy`, async () => {
@@ -216,6 +222,80 @@ describe('stranded enemy elimination', () => {
 				await world.dispose();
 			}
 		});
+	});
+
+	(['lizard', 'frog', 'spider'] as const).forEach(enemyType => {
+		test(`${enemyType} pops once at landing, pauses its burst, and expires`, async () => {
+			const { world, enemyId, neighborProblemIds } = await createScenario(enemyType);
+			const sound = spyOn(audio, 'playSound');
+			const renderedImpacts: boolean[] = [];
+			world.addSystem('render-impact-probe').setPriority(10).setProcess(({ ecs }) => {
+				renderedImpacts.push(ecs.getComponent(enemyId, 'enemyElimination')?.impact?.played === true);
+			});
+			try {
+				consumeNeighborPads(world, neighborProblemIds);
+				world.update(0);
+				world.update(0.15);
+				expect(sound).not.toHaveBeenCalled();
+				await world.pushScreen('paused', {});
+				world.update(5);
+				expect(sound).not.toHaveBeenCalled();
+				await world.popScreen();
+				world.update(0.15);
+				const impact = world.getComponent(enemyId, 'enemyElimination')?.impact;
+				expect(impact).toMatchObject({ ...gridToPixel(1, 1), landed: 1, played: true, age: 0 });
+				expect(sound.mock.calls).toEqual([['enemyPop']]);
+				expect(renderedImpacts.at(-1)).toBe(true);
+				world.update(0.1);
+				expect(impact?.age).toBeCloseTo(0.1);
+				await world.pushScreen('paused', {});
+				world.update(5);
+				expect(impact?.age).toBeCloseTo(0.1);
+				await world.popScreen();
+				world.update(0.2);
+				expect(impact?.age).toBe(0.28);
+				world.update(2);
+				expect(sound).toHaveBeenCalledTimes(1);
+			} finally { await world.dispose(); }
+		});
+	});
+
+	test('simultaneous landings share one sound and keep separate origins, including a long frame', async () => {
+		const { world } = await createScenario();
+		const sound = spyOn(audio, 'playSound');
+		try {
+			for (const [index, enemyType] of (['frog', 'spider'] as const).entries()) {
+				const position = gridToPixel(index + 2, 2);
+				world.spawn({ ...enemyComponents(position.x, position.y, enemyType, 'guard'), timers: {} }, { scope: 'playing' });
+			}
+			world.update(0);
+			world.getEntitiesWithQuery(['mathProblem']).forEach(entity => { entity.components.mathProblem.consumed = true; });
+			world.update(0);
+			world.update(0.5);
+			const impacts = world.getEntitiesWithQuery(['enemyElimination']).map(entity => entity.components.enemyElimination.impact);
+			expect(impacts).toHaveLength(3);
+			expect(impacts.every(impact => impact?.played && impact.age === 0)).toBe(true);
+			expect(new Set(impacts.map(impact => `${impact?.x},${impact?.y}`)).size).toBe(3);
+			expect(sound.mock.calls).toEqual([['enemyPop']]);
+			world.update(0.1);
+			expect(sound).toHaveBeenCalledTimes(1);
+		} finally { await world.dispose(); }
+	});
+
+	test('leaving before landing cancels the pending pop and burst', async () => {
+		const { world, neighborProblemIds } = await createScenario();
+		const sound = spyOn(audio, 'playSound');
+		try {
+			consumeNeighborPads(world, neighborProblemIds);
+			world.update(0);
+			world.update(0.1);
+			await world.setScreen('menu', {});
+			world.update(10);
+			await world.setScreen('playing', { level: 1, isFreshGame: true });
+			world.update(1);
+			expect(sound).not.toHaveBeenCalled();
+			expect(world.getEntitiesWithQuery(['enemyElimination'])).toHaveLength(0);
+		} finally { await world.dispose(); }
 	});
 
 	test('checks legal escape space independently of a guard AI idle decision', async () => {

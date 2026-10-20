@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Math Marsh · Elimination Review</title>
+<link rel="stylesheet" href="./src/dev/asset-preview.css">
+<style>main{max-width:1200px;padding:20px}header{margin-bottom:16px}#canvas-container{height:min(68vh,680px);display:grid;place-items:center}canvas{max-width:100%}.transport{align-items:center;margin-bottom:12px}a{color:#a6e7b4}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fff1b5;outline-offset:4px}</style></head>
+<body><main><header><p class="eyebrow">MATH MARSH / LOCAL DRAFT</p><h1>Enemy elimination</h1><p>Pop and local burst at the bounce landing, then the existing freeze and spin. Reduced motion follows your device preference.</p></header>
+<div class="transport"><label>Scenario <select id="scenario"><option value="lizard">Lizard</option><option value="frog">Frog</option><option value="spider">Spider</option><option value="all">All three together</option></select></label><button id="replay" class="primary" disabled>Replay elimination</button><label><input type="checkbox" id="muted"> Mute effects</label><button id="pause">Pause</button><a href="/game">Play game</a></div>
+<p id="status" role="status">Loading…</p><div id="canvas-container"><canvas id="game-canvas" aria-label="Enemy elimination gameplay preview"></canvas></div></main><script type="module" src="./src/dev/enemy-elimination-preview.ts"></script></body></html>
