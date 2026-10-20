@@ -101,11 +101,20 @@ export function handleEquationProblemSelection(
     ...equationMode,
     selectedProblemIds,
     feedback: undefined,
+    partialSelection: undefined,
   };
 
   if (selectedProblemIds.length < equationMode.operandsRequired) {
+    const addedOperand = !currentSelectedProblemIds.includes(problem.id)
+      && selectedProblemIds.includes(problem.id)
+      && equationMode.promptKind !== 'selectResult';
     playSound('answerSelect');
-    ecs.setResource('equationMode', pendingMode);
+    ecs.setResource('equationMode', {
+      ...pendingMode,
+      partialSelection: addedOperand
+        ? { problemId: problem.id, startedAt: gameplayTimeMs(ecs.getResource('gameplayClock')) }
+        : undefined,
+    });
     return;
   }
 

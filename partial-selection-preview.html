@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Math Marsh · Partial Selection Review</title>
+	<link rel="stylesheet" href="./src/dev/asset-preview.css">
+	<style>
+		main { max-width: 1200px; padding: 16px; }
+		header { margin-bottom: 12px; }
+		#canvas-container { height: min(65vh, 650px); display: grid; place-items: center; }
+		canvas { max-width: 100%; touch-action: none; }
+		.transport { align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+		button:focus-visible, select:focus-visible, input:focus-visible { outline: 4px solid #7dd3fc; outline-offset: 4px; }
+		#status { min-height: 3em; }
+	</style>
+</head>
+<body>
+	<main>
+		<header><p class="eyebrow">MATH MARSH / ISSUE 81 / LOCAL PREVIEW</p><h1>Partial selection</h1>
+		<p>Tap a pad to move; once the fly arrives, tap it again to select, or use arrows/WASD and Space/Enter (gamepad: D-pad and A). Tap/select it again to deselect. Uses the gameplay input, selection, and renderer. Honors your system’s reduced-motion preference.</p>
+		<p>Operands: 8 then 3 is correct; 8 then 8 is incorrect. Operand + result: fixed 8 − …; select 3 then 5 for correct, 3 then 8 for incorrect. Reset to repeat. Select an operand, then block it to review disruption.</p></header>
+		<div class="transport">
+			<label>Prompt <select id="mode"><option value="selectOperands">Operands: … − … = 5</option><option value="selectOperandAndResult">Operand + result: 8 − … = …</option><option value="selectResult">Result: 8 − 3 = …</option></select></label>
+			<button id="reset" disabled>Reset board</button>
+			<button id="disrupt" disabled>Enemy blocks selection</button>
+			<button id="pause" disabled>Pause</button>
+			<label><input type="checkbox" id="slow"> Slow motion</label>
+			<label><input type="checkbox" id="sound" checked> Sound effects</label>
+		</div>
+		<p id="status" role="status">Loading…</p>
+		<div id="canvas-container"><canvas id="game-canvas" tabindex="0" aria-label="Playable selection preview. Top row: 8, 3, 5. Second row: 8, 3, 9. Bottom row: 2, 4, 6."></canvas></div>
+	</main>
+	<script type="module" src="./src/dev/partial-selection-preview.ts"></script>
+</body>
+</html>
