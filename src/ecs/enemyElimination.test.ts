@@ -101,7 +101,45 @@ const consumeNeighborPads = function(world: GameEngine, problemIds: readonly num
 	});
 };
 
-describe('trapped enemy elimination', () => {
+describe('stranded enemy elimination', () => {
+	(['lizard', 'frog', 'spider'] as const).forEach(enemyType => {
+		(['occupied', 'reserved'] as const).forEach(blockage => {
+			test(`${enemyType} survives when its only adjacent pad is ${blockage} by another enemy`, async () => {
+				const { world, enemyId, neighborProblemIds } = await createScenario(enemyType);
+				try {
+					consumeNeighborPads(world, neighborProblemIds.slice(1));
+					const remainingPadId = neighborProblemIds[0];
+					const remainingPad = remainingPadId === undefined ? undefined : world.getComponent(remainingPadId, 'position');
+					if (!remainingPad) throw new Error('Missing remaining pad');
+					const blockerPosition = blockage === 'occupied' ? remainingPad : gridToPixel(3, 3);
+					const blocker = world.spawn({
+						...enemyComponents(blockerPosition.x, blockerPosition.y, 'lizard', 'guard'),
+						timers: { enemySpawnTelegraph: createTimer(60) },
+					}, { scope: 'playing' });
+					if (blockage === 'reserved') {
+						blocker.components.enemy.plannedMove = pixelToGrid(remainingPad.x, remainingPad.y);
+					}
+
+					world.update(0);
+					world.update(2);
+					world.update(0);
+					expect(world.hasComponent(enemyId, 'enemyElimination')).toBe(false);
+					expect(world.getComponent(enemyId, 'timers')?.enemyRespawn).toBeUndefined();
+					const position = world.getComponent(enemyId, 'position');
+					if (!position) throw new Error('Missing enemy position');
+					expect(pixelToGrid(position.x, position.y)).toEqual({ x: 1, y: 1 });
+
+					// Consuming that pad truly strands the enemy, even with the blocker still present.
+					consumeNeighborPads(world, neighborProblemIds);
+					for (let frame = 0; frame < 40; frame++) world.update(0.25);
+					expect(world.hasComponent(enemyId, 'enemyElimination')).toBe(true);
+				} finally {
+					await world.dispose();
+				}
+			});
+		});
+	});
+
 	(['lizard', 'frog', 'spider'] as const).forEach(enemyType => {
 		test(`${enemyType} leaves active queries, bounces, freezes, then spins and shrinks`, async () => {
 			const { world, enemyId, neighborProblemIds } = await createScenario(enemyType);
