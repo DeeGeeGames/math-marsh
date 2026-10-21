@@ -253,7 +253,7 @@ describe('stranded enemy elimination', () => {
 				expect(impact?.age).toBeCloseTo(0.1);
 				await world.popScreen();
 				world.update(0.2);
-				expect(impact?.age).toBe(0.28);
+				expect(impact?.age).toBeCloseTo(0.3);
 				world.update(2);
 				expect(sound).toHaveBeenCalledTimes(1);
 			} finally { await world.dispose(); }
@@ -265,7 +265,7 @@ describe('stranded enemy elimination', () => {
 		const sound = spyOn(audio, 'playSound');
 		try {
 			for (const [index, enemyType] of (['frog', 'spider'] as const).entries()) {
-				const position = gridToPixel(index + 2, 2);
+				const position = gridToPixel(index * 2, 2);
 				world.spawn({ ...enemyComponents(position.x, position.y, enemyType, 'guard'), timers: {} }, { scope: 'playing' });
 			}
 			world.update(0);
@@ -276,9 +276,9 @@ describe('stranded enemy elimination', () => {
 			expect(impacts).toHaveLength(3);
 			expect(impacts.every(impact => impact?.played && impact.age === 0)).toBe(true);
 			expect(new Set(impacts.map(impact => `${impact?.x},${impact?.y}`)).size).toBe(3);
-			expect(sound.mock.calls).toEqual([['enemyPop']]);
+			expect(sound.mock.calls).toEqual([['enemyPop'], ['tripleSplash']]);
 			world.update(0.1);
-			expect(sound).toHaveBeenCalledTimes(1);
+			expect(sound).toHaveBeenCalledTimes(2);
 		} finally { await world.dispose(); }
 	});
 

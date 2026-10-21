@@ -112,6 +112,11 @@ export interface Components {
       age: number;
     };
   };
+  eliminationCelebration: {
+    enemyIds: readonly number[];
+    /** Null until a member lands; seconds thereafter, paused with gameplay. */
+    age: number | null;
+  };
   mathProblem: {
     value: number;
     difficulty: number;

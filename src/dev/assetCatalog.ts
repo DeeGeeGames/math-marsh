@@ -43,6 +43,7 @@ export const EFFECTS = {
 	uiBack: 'UI back', uiSelect: 'UI select', move: 'Move',
 	answerSelect: 'Answer select', answerDeselect: 'Answer deselect',
 	equationChange: 'Equation changed', enemyPop: 'Enemy elimination pop',
+	doubleSplash: 'Double Splash', tripleSplash: 'Triple Splash', superSplash: 'Super Splash',
 	correct: 'Correct answer', incorrect: 'Incorrect answer', damage: 'Damage',
 	web: 'Spider web', frogTongue: 'Frog tongue',
 	levelComplete: 'Level complete', gameOver: 'Game over',

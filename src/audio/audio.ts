@@ -13,6 +13,9 @@ export type SoundEffect =
   | 'correct'
   | 'incorrect'
   | 'enemyPop'
+  | 'doubleSplash'
+  | 'tripleSplash'
+  | 'superSplash'
   | 'damage'
   | 'web'
   | 'frogTongue'
@@ -455,6 +458,9 @@ function playEffectBody(effect: SoundEffect, context: AudioContext): void {
       oscillator.stop(now + 0.12);
       playNoise(master, { start: now, duration: 0.035, volume: 0.025, filterFrequency: 1800 });
     },
+    doubleSplash: () => playNoteSequence(master, now + 0.035, [0, 7], { step: 0.065, duration: 0.16, volume: 0.032, type: 'triangle' }),
+    tripleSplash: () => playNoteSequence(master, now + 0.035, [0, 4, 12], { step: 0.065, duration: 0.16, volume: 0.032, type: 'triangle' }),
+    superSplash: () => playNoteSequence(master, now + 0.035, [0, 4, 7, 16], { step: 0.065, duration: 0.16, volume: 0.032, type: 'triangle' }),
     damage: () => {
       playNoise(master, { start: now, duration: 0.2, volume: 0.09, filterFrequency: 520 });
       playTone(master, { frequency: frequency(-12), start: now, duration: 0.22, volume: 0.06, type: 'sawtooth' });
