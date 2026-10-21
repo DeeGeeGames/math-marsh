@@ -1,0 +1,214 @@
+"controller_mappings"
+{
+	"version"		"3"
+	"title"		"Math Marsh Native Input Test"
+	"description"		"Button and held-direction diagnostic"
+	"actions"
+	{
+		"Diagnostic"
+		{
+			"title"		"Diagnostic"
+			"legacy_set"		"0"
+		}
+	}
+	"group"
+	{
+		"id"		"0"
+		"mode"		"four_buttons"
+		"inputs"
+		{
+		"button_a"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic select, "
+					}
+				}
+			}
+		}
+		"button_b"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic back, "
+					}
+				}
+			}
+		}
+		}
+	}
+	"group"
+	{
+		"id"		"1"
+		"mode"		"dpad"
+		"inputs"
+		{
+		"dpad_north"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic up, "
+					}
+				}
+			}
+		}
+		"dpad_south"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic down, "
+					}
+				}
+			}
+		}
+		"dpad_west"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic left, "
+					}
+				}
+			}
+		}
+		"dpad_east"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic right, "
+					}
+				}
+			}
+		}
+		}
+	}
+	"group"
+	{
+		"id"		"2"
+		"mode"		"dpad"
+		"inputs"
+		{
+		"dpad_north"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic up, "
+					}
+				}
+			}
+		}
+		"dpad_south"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic down, "
+					}
+				}
+			}
+		}
+		"dpad_west"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic left, "
+					}
+				}
+			}
+		}
+		"dpad_east"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic right, "
+					}
+				}
+			}
+		}
+		}
+	}
+	"group"
+	{
+		"id"		"3"
+		"mode"		"switches"
+		"inputs"
+		{
+		"button_escape"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic pause, "
+					}
+				}
+			}
+		}
+		"button_menu"
+		{
+			"activators"
+			{
+				"Full_Press"
+				{
+					"bindings"
+					{
+						"binding"		"game_action Diagnostic back, "
+					}
+				}
+			}
+		}
+		}
+	}
+	"preset"
+	{
+		"id"		"0"
+		"name"		"Diagnostic"
+		"group_source_bindings"
+		{
+			"0"		"button_diamond active"
+			"1"		"dpad active"
+			"2"		"joystick active"
+			"3"		"switch active"
+		}
+	}
+}

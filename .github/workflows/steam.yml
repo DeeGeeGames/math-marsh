@@ -14,8 +14,14 @@ on:
         required: true
         default: prerelease
 
+      input_diagnostics:
+        description: Deploy the native Steam Input test instead of the game (test branches only).
+        type: boolean
+        default: false
+
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: steam-${{ inputs.release_branch || 'prerelease' }}
@@ -23,7 +29,10 @@ concurrency:
 
 jobs:
   build_desktop:
+    if: ${{ !inputs.input_diagnostics || (inputs.release_branch != 'default' && inputs.release_branch != '') }}
     uses: ./.github/workflows/build-desktop.yml
+    with:
+      input-diagnostics: ${{ inputs.input_diagnostics || false }}
 
   deploy_steam:
     needs: build_desktop

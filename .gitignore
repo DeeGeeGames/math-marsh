@@ -26,3 +26,7 @@ desktop-dist
 *.njsproj
 *.sln
 *.sw?
+
+# Native Steam Input test output and local SDK redistributables
+dist-steam-input/
+steamworks_sdk/

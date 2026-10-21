@@ -52,6 +52,7 @@
     "ecspresso": "^0.22.0",
     "howler": "^2.2.4",
     "lit-html": "^3.3.3",
+    "steamworks-ffi-node": "0.11.3",
     "typescript-eslint": "^8.67.0"
   },
   "build": {

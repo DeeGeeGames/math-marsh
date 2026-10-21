@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>Math Marsh · Steam Input test</title>
+<style>
+* { box-sizing: border-box; } body { background: #07170f; color: #ecfff3; font: 26px/1.4 system-ui; margin: 0; padding: 3vh 4vw; }
+h1 { font-size: 36px; margin: 0 0 12px; } p { margin: 6px 0; overflow-wrap: anywhere; }
+.instructions { color: #b9e6cb; max-width: 1200px; } #report { margin: 22px 0; } .held { color: #80ffad; font-weight: 700; }
+button { font: inherit; padding: 10px 18px; margin: 6px; color: #07170f; background: #c0efcf; border: 3px solid transparent; border-radius: 8px; }
+button:focus-visible { outline: 4px solid #fff; outline-offset: 3px; } #status { color: #f4d989; }
+@media (max-width: 900px) { body { font-size: 21px; } h1 { font-size: 28px; } }
+</style></head><body>
+<h1>Math Marsh · Native Steam Input test</h1>
+<p class="instructions">Press and release each face/menu button. Hold each D-pad direction for 2 seconds, then try the left stick. Disconnect and reconnect once. The counters below must change.</p>
+<p class="instructions">If actions show “unbound”, open bindings and assign the named actions. Your normal game progress is not used by this test.</p>
+<div id="report" aria-live="off"><p>Starting diagnostic…</p></div>
+<button id="copy" autofocus>Copy report (C)</button><button id="bindings">Open bindings</button><button id="quit">Quit (Esc)</button>
+<p id="status" role="status">Report saves automatically while the test runs.</p>
+<script src="ui.js"></script></body></html>

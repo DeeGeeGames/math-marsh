@@ -1,0 +1,127 @@
+"Action Manifest"
+{
+	"configurations"
+	{
+		"controller_xboxone"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_xbox360"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_ps4"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_ps5"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_switch_pro"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_neptune"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_steamcontroller_gordon"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+		"controller_generic"
+		{
+			"0"
+			{
+				"path"		"gamepad_default.vdf"
+			}
+		}
+	}
+	"actions"
+	{
+		"Diagnostic"
+		{
+			"title"		"#Set_Diagnostic"
+			"StickPadGyro"
+			{
+			}
+			"AnalogTrigger"
+			{
+			}
+			"Button"
+			{
+				"select"
+				{
+					"title"		"#Action_select"
+					"input_mode"	"button"
+				}
+				"back"
+				{
+					"title"		"#Action_back"
+					"input_mode"	"button"
+				}
+				"pause"
+				{
+					"title"		"#Action_pause"
+					"input_mode"	"button"
+				}
+				"up"
+				{
+					"title"		"#Action_up"
+					"input_mode"	"button"
+				}
+				"down"
+				{
+					"title"		"#Action_down"
+					"input_mode"	"button"
+				}
+				"left"
+				{
+					"title"		"#Action_left"
+					"input_mode"	"button"
+				}
+				"right"
+				{
+					"title"		"#Action_right"
+					"input_mode"	"button"
+				}
+			}
+		}
+	}
+	"localization"
+	{
+		"english"
+		{
+			"Set_Diagnostic"		"Game Controls"
+			"Action_select"			"Select / Confirm"
+			"Action_back"			"Back / Cancel"
+			"Action_pause"			"Pause"
+			"Action_up"		"Navigate Up"
+			"Action_down"		"Navigate Down"
+			"Action_left"		"Navigate Left"
+			"Action_right"		"Navigate Right"
+		}
+	}
+}
