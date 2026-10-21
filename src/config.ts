@@ -77,9 +77,11 @@ export const GAME_CONFIG = {
 
   RENDER: {
     ENTITY_BASELINE_RATIO: 0.75,
-    PLAY_AREA_TOP_MARGIN_RATIO: 0.65,
+    // Leave room for enlarged numbers to arc above their header destinations.
+    PLAY_AREA_TOP_MARGIN_RATIO: 1.05,
     PLAY_AREA_SIDE_MARGIN_RATIO: 0.18,
     PLAY_AREA_BOTTOM_MARGIN_RATIO: 0.18,
+    CANVAS_INSET_PX: 7,
     DESKTOP_CANVAS_MARGIN_PX: 32,
   },
 

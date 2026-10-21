@@ -18,9 +18,12 @@ const tapPad = async function(page: Page, column: number, row = 0, touch = false
 	const canvas = page.locator('#game-canvas');
 	const point = await canvas.evaluate(function(element, cell): { x: number; y: number } {
 		const rect = element.getBoundingClientRect();
-		return { x: (cell.left + (cell.column + 0.5) * cell.size) * rect.width / element.width,
-			y: (cell.top + (cell.row + 0.5) * cell.size) * rect.height / element.height };
-	}, { column, row, size: 106, left: 20, top: 69 });
+		// The fixture has a 3×3 board and equal side/bottom margins.
+		const side = (element.width - 3 * cell.size) / 2;
+		const top = element.height - 3 * cell.size - side;
+		return { x: (side + (cell.column + 0.5) * cell.size) * rect.width / element.width,
+			y: (top + (cell.row + 0.5) * cell.size) * rect.height / element.height };
+	}, { column, row, size: 106 });
 	const arrived = `Tile ${column + 1},${row + 1} settled`;
 	const alreadyThere = (await page.locator('#status').innerText()).includes(arrived);
 	const tap = async function(): Promise<void> {
@@ -53,6 +56,60 @@ const nextFrameNumbers = async function(page: Page) {
 		return values;
 	});
 };
+
+test('answer and time-bonus flights stay inside the drawable canvas throughout their arcs', async ({ page }, testInfo) => {
+	await openPreview(page);
+	await page.locator('#slow').uncheck();
+	await tapPad(page, 0);
+	await page.locator('#game-canvas').evaluate(function(canvas): void {
+		const ctx = canvas.getContext('2d');
+		if (!ctx) throw new Error('Missing canvas context');
+		const original = ctx.fillText;
+		const bounds: Array<{ text: string; left: number; top: number; right: number; bottom: number }> = [];
+		ctx.fillText = function(text, x, y, maxWidth): void {
+			const matrix = ctx.getTransform();
+			if (matrix.a > 1.001 && /^[+−-]?\d+$/.test(text)
+				&& (ctx.fillStyle === '#fff7c6' || ctx.fillStyle === '#b7ff88')) {
+				const metrics = ctx.measureText(text);
+				const outline = ctx.lineWidth / 2;
+				bounds.push({ text,
+					left: matrix.e + (x - metrics.actualBoundingBoxLeft - outline) * matrix.a,
+					top: matrix.f + (y - metrics.actualBoundingBoxAscent - outline) * matrix.d,
+					right: matrix.e + (x + metrics.actualBoundingBoxRight + outline) * matrix.a,
+					bottom: matrix.f + (y + metrics.actualBoundingBoxDescent + outline) * matrix.d });
+				canvas.dataset.flightBounds = JSON.stringify(bounds);
+			}
+			if (maxWidth === undefined) original.call(ctx, text, x, y);
+			else original.call(ctx, text, x, y, maxWidth);
+		};
+	});
+	await tapPad(page, 1);
+	await expect(page.locator('#status')).toContainText('correct · 1 solved');
+	await page.screenshot({ path: testInfo.outputPath('answer-flight.png') });
+	await page.waitForTimeout(950);
+	const captured = await page.locator('#game-canvas').evaluate(function(canvas) {
+		type FlightBounds = { text: string; left: number; top: number; right: number; bottom: number };
+		const raw: unknown = JSON.parse(canvas.dataset.flightBounds ?? '[]');
+		if (!Array.isArray(raw) || !raw.every(function(bound: unknown): bound is FlightBounds {
+			return typeof bound === 'object' && bound !== null
+				&& 'text' in bound && typeof bound.text === 'string'
+				&& 'left' in bound && typeof bound.left === 'number'
+				&& 'top' in bound && typeof bound.top === 'number'
+				&& 'right' in bound && typeof bound.right === 'number'
+				&& 'bottom' in bound && typeof bound.bottom === 'number';
+		})) throw new Error('Invalid flight capture');
+		return { width: canvas.width, height: canvas.height, bounds: raw };
+	});
+	expect(captured.bounds.length).toBeGreaterThan(10);
+	expect(captured.bounds.some(bound => bound.text.startsWith('+'))).toBe(true);
+	expect(captured.bounds.some(bound => bound.text === '3')).toBe(true);
+	for (const bound of captured.bounds) {
+		expect(bound.left, `${bound.text} left`).toBeGreaterThanOrEqual(0);
+		expect(bound.top, `${bound.text} top`).toBeGreaterThanOrEqual(0);
+		expect(bound.right, `${bound.text} right`).toBeLessThanOrEqual(captured.width);
+		expect(bound.bottom, `${bound.text} bottom`).toBeLessThanOrEqual(captured.height);
+	}
+});
 
 test('keyboard and pointer selection share feedback; final answers and disruption take over', async ({ page }, testInfo) => {
 	await openPreview(page);
@@ -101,7 +158,7 @@ test('mixed prompt animates the selected operand slot, including a duplicate of 
 	const blueSlot = numbers.filter(value => value.color === '#e0f2fe' && value.y < 90);
 	expect(blueSlot.map(value => value.text)).toEqual(['8']);
 	expect(blueSlot[0]?.x).toBeGreaterThan(60);
-	expect(numbers.some(value => value.text === '8 - ' && value.x < 30 && value.color === '#fff7c6')).toBe(true);
+	expect(numbers.some(value => value.text === '8 - ' && value.x < 40 && value.color === '#fff7c6')).toBe(true);
 	await page.screenshot({ path: testInfo.outputPath('duplicate-operand.png') });
 	// Provisional styling persists after the transient effect and its state expire.
 	await page.locator('#slow').uncheck();
