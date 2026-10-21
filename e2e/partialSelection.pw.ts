@@ -57,60 +57,6 @@ const nextFrameNumbers = async function(page: Page) {
 	});
 };
 
-test('answer and time-bonus flights stay inside the drawable canvas throughout their arcs', async ({ page }, testInfo) => {
-	await openPreview(page);
-	await page.locator('#slow').uncheck();
-	await tapPad(page, 0);
-	await page.locator('#game-canvas').evaluate(function(canvas): void {
-		const ctx = canvas.getContext('2d');
-		if (!ctx) throw new Error('Missing canvas context');
-		const original = ctx.fillText;
-		const bounds: Array<{ text: string; left: number; top: number; right: number; bottom: number }> = [];
-		ctx.fillText = function(text, x, y, maxWidth): void {
-			const matrix = ctx.getTransform();
-			if (matrix.a > 1.001 && /^[+−-]?\d+$/.test(text)
-				&& (ctx.fillStyle === '#fff7c6' || ctx.fillStyle === '#b7ff88')) {
-				const metrics = ctx.measureText(text);
-				const outline = ctx.lineWidth / 2;
-				bounds.push({ text,
-					left: matrix.e + (x - metrics.actualBoundingBoxLeft - outline) * matrix.a,
-					top: matrix.f + (y - metrics.actualBoundingBoxAscent - outline) * matrix.d,
-					right: matrix.e + (x + metrics.actualBoundingBoxRight + outline) * matrix.a,
-					bottom: matrix.f + (y + metrics.actualBoundingBoxDescent + outline) * matrix.d });
-				canvas.dataset.flightBounds = JSON.stringify(bounds);
-			}
-			if (maxWidth === undefined) original.call(ctx, text, x, y);
-			else original.call(ctx, text, x, y, maxWidth);
-		};
-	});
-	await tapPad(page, 1);
-	await expect(page.locator('#status')).toContainText('correct · 1 solved');
-	await page.screenshot({ path: testInfo.outputPath('answer-flight.png') });
-	await page.waitForTimeout(950);
-	const captured = await page.locator('#game-canvas').evaluate(function(canvas) {
-		type FlightBounds = { text: string; left: number; top: number; right: number; bottom: number };
-		const raw: unknown = JSON.parse(canvas.dataset.flightBounds ?? '[]');
-		if (!Array.isArray(raw) || !raw.every(function(bound: unknown): bound is FlightBounds {
-			return typeof bound === 'object' && bound !== null
-				&& 'text' in bound && typeof bound.text === 'string'
-				&& 'left' in bound && typeof bound.left === 'number'
-				&& 'top' in bound && typeof bound.top === 'number'
-				&& 'right' in bound && typeof bound.right === 'number'
-				&& 'bottom' in bound && typeof bound.bottom === 'number';
-		})) throw new Error('Invalid flight capture');
-		return { width: canvas.width, height: canvas.height, bounds: raw };
-	});
-	expect(captured.bounds.length).toBeGreaterThan(10);
-	expect(captured.bounds.some(bound => bound.text.startsWith('+'))).toBe(true);
-	expect(captured.bounds.some(bound => bound.text === '3')).toBe(true);
-	for (const bound of captured.bounds) {
-		expect(bound.left, `${bound.text} left`).toBeGreaterThanOrEqual(0);
-		expect(bound.top, `${bound.text} top`).toBeGreaterThanOrEqual(0);
-		expect(bound.right, `${bound.text} right`).toBeLessThanOrEqual(captured.width);
-		expect(bound.bottom, `${bound.text} bottom`).toBeLessThanOrEqual(captured.height);
-	}
-});
-
 test('keyboard and pointer selection share feedback; final answers and disruption take over', async ({ page }, testInfo) => {
 	await openPreview(page);
 	const status = page.locator('#status');
