@@ -48,3 +48,17 @@ The main entry points are `src/main.ts` and `src/ecs/bootstrap.ts`. `src/ecs/Eng
 The browser build defaults to the `/math-marsh/` base path. Set `BASE_PATH` when deploying under another path, for example `BASE_PATH=/my-game/ bun run build`. A push to `master` runs the GitHub Pages workflow; Steam packaging and deployment use separate workflows.
 
 The production browser build is installable as a progressive web app on supported mobile and desktop browsers. Open it once while online and allow the page to finish loading; the service worker then stores the game shell and bundled assets for offline launches. New builds are cached in the background and take effect after all open game tabs are closed. Offline installation requires HTTPS or localhost; `bun run dev` does not provide the production service worker. Use `bun run build && bun run preview` to test the installed build locally.
+
+### Native Steam Input diagnostic
+
+This standalone desktop test leaves gameplay input unchanged. Install the dependencies with `bun install --frozen-lockfile`, place the Steamworks SDK redistributables in `steamworks_sdk/redistributable_bin/` (`linux64/libsteam_api.so` and `win64/steam_api64.dll`), then run:
+
+```sh
+bun run typecheck
+bun run scripts/build-steam-input-diagnostics.ts
+bun x electron-builder --linux --dir --config electron/steam-input-builder.cjs
+```
+
+On Windows, use `--win` and then `bun run scripts/steam-windows-executable.ts` to produce Steam's `game.exe`. Upload the unpacked directories only to the `steam-input-test` beta. The SDK is local and ignored by Git. The diagnostic includes its own manifest and default face-button, D-pad, left-stick, and menu bindings. If the controller's existing layout takes precedence, open Steam's controller bindings and select or assign the named diagnostic actions.
+
+Launch the beta through Steam, press and release the displayed actions, hold directions for two seconds, and disconnect/reconnect once. Copy the report with **Copy report** or **C**; it also saves to `steam-input-diagnostic.json` in Electron's user-data directory. Actual hardware results remain separate from initialization and packaging checks.

@@ -12,16 +12,8 @@ on:
         type: boolean
         default: false
 
-      input-diagnostics:
-        description: Package the standalone Steam Input diagnostic.
-        type: boolean
-        default: false
-
 jobs:
   build:
-    permissions:
-      contents: read
-      id-token: write
     strategy:
       matrix:
         include:
@@ -62,34 +54,8 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
 
-      - name: Configure SDK download credentials
-        if: inputs.input-diagnostics
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Download Steamworks SDK
-        if: inputs.input-diagnostics
-        shell: bash
-        env:
-          SDK_URI: ${{ vars.STEAM_SDK_S3_URI }}
-        run: |
-          aws s3 cp "$SDK_URI" steamworks_sdk.tar.gz
-          tar xzf steamworks_sdk.tar.gz
-
       - name: Package desktop (${{ matrix.platform }})
-        if: ${{ !inputs.input-diagnostics }}
         run: bun run ${{ matrix.package_script }}
-
-      - name: Package Steam Input diagnostic
-        if: inputs.input-diagnostics
-        shell: bash
-        run: |
-          bun run typecheck
-          bun run scripts/build-steam-input-diagnostics.ts
-          bun x electron-builder --${{ matrix.platform == 'windows' && 'win' || 'linux' }} --dir --config electron/steam-input-builder.cjs
-          if [ "${{ matrix.platform }}" = "windows" ]; then bun run scripts/steam-windows-executable.ts; fi
 
       - name: Upload release artifacts
         if: inputs.is-release
