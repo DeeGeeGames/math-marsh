@@ -200,6 +200,9 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       >
       </button>
       <div class="input-prompts-slot menu-input-prompts" data-input-prompts></div>
+      <div class="gameplay-toast-region">
+        <p id="player-save-notice" class="gameplay-toast" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+      </div>
     `,
     prompts: [
       { action: 'select', label: 'Select' },
@@ -209,6 +212,12 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
 		onShow: (root): void => {
       const badgeSlot = root.querySelector<HTMLElement>('[data-player-profile-badge]');
       if (badgeSlot) render(playerBadgeTemplate(actions), badgeSlot);
+      const notice = $(root, '#player-save-notice');
+      const sessionOnly = actions.getMathProgressPersistence() === 'session-only';
+      notice.textContent = sessionOnly
+        ? 'Your profile and progress can’t be saved on this device. You can play until you close the game.'
+        : '';
+      notice.hidden = !sessionOnly;
     },
   };
 }

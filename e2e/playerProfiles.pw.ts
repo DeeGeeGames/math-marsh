@@ -85,6 +85,96 @@ test('first-use naming and roster return keep controller-friendly focus', async 
   await expect(badge).toBeFocused();
 });
 
+test('profile actions work in a sandbox without allow-forms', async ({ page }) => {
+  await page.addInitScript(function(): void {
+    try { window.localStorage.clear(); } catch { /* Opaque sandbox origins have no storage. */ }
+  });
+  await page.route('**/sandbox-profile', route => route.fulfill({
+    contentType: 'text/html',
+    body: `<iframe title="Game" src="/" sandbox="allow-scripts allow-same-origin" style="width:100%;height:95vh"></iframe>`,
+  }));
+  await page.goto('/sandbox-profile');
+  const game = page.frameLocator('iframe');
+  await game.getByText('A game by').waitFor();
+  await page.locator('iframe').focus();
+  await pressActionKey(page, 'Space');
+  await game.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  const setup = game.getByRole('dialog', { name: 'Who’s playing?' });
+  await setup.getByLabel('Player name').fill('');
+  await setup.getByRole('button', { name: 'Continue' }).click();
+  await expect(setup.getByText('Enter a player name.')).toBeVisible();
+  await setup.getByLabel('Player name').fill('Mira');
+  await setup.getByRole('button', { name: 'Continue' }).click();
+  await expect(game.locator('#player-profile-badge')).toContainText('Mira');
+
+  await game.locator('#player-profile-badge').click();
+  await game.getByRole('button', { name: /Add player/ }).click();
+  const add = game.getByRole('dialog', { name: 'Add a player' });
+  await add.getByLabel('Player name').fill('Jordan');
+  await add.getByLabel('Player name').press('Enter');
+  await expect(game.locator('#player-profile-badge')).toContainText('Jordan');
+  await expect(game.getByRole('button', { name: 'Start Game' })).toBeFocused();
+
+  await game.locator('#player-profile-badge').click();
+  await game.getByRole('button', { name: 'Manage players' }).click();
+  await game.locator('.player-management-row').filter({ hasText: 'Jordan' })
+    .getByRole('button', { name: 'Rename' }).click();
+  const rename = game.getByRole('dialog', { name: 'Rename player' });
+  await rename.getByLabel('Player name').fill('Jules');
+  await rename.getByRole('button', { name: 'Save name' }).click();
+  await expect(game.getByRole('dialog', { name: 'Manage players' })).toContainText('Jules');
+});
+
+for (const failure of ['unavailable', 'quota', 'active-player'] as const) {
+  test(`profile creation stays playable and warns when saving fails: ${failure}`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', function(error): void { errors.push(error.message); });
+    await page.addInitScript(function(failure): void {
+      window.localStorage.clear();
+      if (failure === 'unavailable') {
+        Object.defineProperty(window, 'localStorage', {
+          get: function(): never { throw new DOMException('Storage blocked', 'SecurityError'); },
+        });
+        return;
+      }
+      const setItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key: string, value: string): void {
+        if (failure === 'quota' || key === 'math-marsh.active-player-profile') {
+          throw new DOMException('Storage full', 'QuotaExceededError');
+        }
+        setItem.call(this, key, value);
+      };
+    }, failure);
+    await page.goto('/');
+    await skipSplash(page);
+    await submitPlayerName(page, 'Mira');
+
+    const startGame = page.getByRole('button', { name: 'Start Game' });
+    await expect(startGame).toBeFocused();
+    await expect(page.locator('#player-profile-badge')).toContainText('Mira');
+    await expect(page.locator('#player-save-notice')).toBeVisible();
+    await expect(page.locator('#player-save-notice')).toContainText('can’t be saved');
+    await openRoster(page);
+    await page.getByRole('button', { name: /Add player/ }).click();
+    await submitPlayerName(page, 'Jordan');
+    await openRoster(page);
+    await expect(page.locator('[data-player-row]')).toHaveCount(2);
+    await page.locator('[data-player-row]').filter({ hasText: 'Mira' }).click();
+    await expect(page.locator('#player-profile-badge')).toContainText('Mira');
+
+    await startGame.click();
+    await page.locator('[data-operation="add"]').click();
+    await page.locator('[data-next-to-pond]').click();
+    await page.locator('[data-difficulty="easy"]').click();
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await page.getByRole('button', { name: 'Skip and Play', exact: true }).click();
+    await expect(page.locator('#game-canvas')).toBeVisible();
+    await expect(page.locator('#time-display')).toContainText('Time left:');
+    expect(errors).toEqual([]);
+  });
+}
+
 test('player name fields retain ordinary keyboard text editing', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.clear());
   await page.goto('/');
@@ -112,6 +202,7 @@ test('Enter submits first-use naming without activating the next screen', async 
   const startGame = page.getByRole('button', { name: 'Start Game' });
   await expect(startGame).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Pick your math' })).toHaveCount(0);
+  await expect(page.locator('#player-save-notice')).toBeHidden();
 });
 
 test('Enter on Cancel leaves add and rename forms without saving', async ({ page }) => {
