@@ -7,6 +7,12 @@ const projectRoot = resolve(import.meta.dir, '..');
 const distRoot = resolve(projectRoot, 'dist');
 const basePath = Bun.env.BASE_PATH ?? '/math-marsh/';
 const pwaFiles = ['math-marsh-pwa-192.png', 'math-marsh-pwa-512.png'] as const;
+// Gameplay screenshots from Math Marsh's Steam store gallery (app 4927380).
+const pwaScreenshots = [
+  { file: 'multiplication.jpg', label: 'Practice multiplication while avoiding pond creatures' },
+  { file: 'cooperative-addition.jpg', label: 'Solve addition equations together in cooperative play' },
+  { file: 'subtraction.jpg', label: 'Practice subtraction in a moonlit pond' },
+] as const;
 
 function withBasePath(path: string): string {
   return `${basePath.replace(/\/?$/, '/')}${path.replace(/^\//, '')}`;
@@ -31,6 +37,11 @@ async function build(): Promise<void> {
     resolve(projectRoot, 'src/assets/icons', file),
     resolve(distRoot, file),
   )));
+  await mkdir(resolve(distRoot, 'screenshots'), { recursive: true });
+  await Promise.all(pwaScreenshots.map(({ file }) => copyFile(
+    resolve(projectRoot, 'src/assets/screenshots', file),
+    resolve(distRoot, 'screenshots', file),
+  )));
 
   const manifest = {
     id: withBasePath('/'),
@@ -47,6 +58,13 @@ async function build(): Promise<void> {
       sizes: `${size}x${size}`,
       type: 'image/png',
       purpose: 'any',
+    })),
+    screenshots: pwaScreenshots.map(({ file, label }) => ({
+      src: withBasePath(`/screenshots/${file}`),
+      sizes: '1920x1080',
+      type: 'image/jpeg',
+      form_factor: 'wide',
+      label,
     })),
   };
   await writeFile(resolve(distRoot, 'manifest.webmanifest'), JSON.stringify(manifest));
