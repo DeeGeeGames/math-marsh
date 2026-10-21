@@ -39,7 +39,8 @@ import {
   enemyEmergencePresentation,
 } from './render/enemyTelegraphs';
 import { drawDamageFeedback } from './render/damageFeedback';
-import { drawEnemyEliminationBursts } from './render/enemyElimination';
+import { drawEnemyEliminationBursts, drawEnemySplashes } from './render/enemyElimination';
+import { drawSplashCelebration } from './render/splashCelebration';
 import { drawEquationChange } from './render/equationChange';
 
 export { initializeRenderSystem } from './render/context';
@@ -67,6 +68,7 @@ export const addRenderSystemToEngine = (
     .addQuery('disruptions', { with: ['position', 'selectionDisruption'], mutates: [] } as const)
     .addQuery('enemies', enemyQuery)
     .addQuery('eliminations', { with: ['enemyElimination'], mutates: [] } as const)
+    .addQuery('celebrations', { with: ['eliminationCelebration'], mutates: [] } as const)
     .addQuery('frogTongues', frogTongueQuery)
     .addQuery('spiderWebs', spiderWebQuery)
     .withResources(['equationMode', 'tapFeedback', 'remainingTimeSeconds', 'gameplayClock', 'board'])
@@ -183,6 +185,7 @@ export const addRenderSystemToEngine = (
       }
 
       drawEnemyEliminationBursts(ctx, queries.eliminations, reducedMotion);
+      drawEnemySplashes(ctx, queries.eliminations, reducedMotion);
       drawEnhancedFrogTongues(ctx, queries.frogTongues, currentTime, 'aboveFrog');
       drawSelectionDisruptionEffects(ctx, queries.disruptions, currentTime, reducedMotion);
       if (queries.player) {
@@ -200,6 +203,12 @@ export const addRenderSystemToEngine = (
         reducedMotion,
       );
       drawEquationChange(ctx, equationMode, margins, currentTime, reducedMotion);
+
+      if (ecs.getCurrentScreen() === 'playing') {
+        for (const entity of queries.celebrations) {
+          drawSplashCelebration(ctx, entity.components.eliminationCelebration, reducedMotion);
+        }
+      }
 
       const levelComplete = ecs.tryGetScreenState('levelComplete');
       if (levelComplete) {

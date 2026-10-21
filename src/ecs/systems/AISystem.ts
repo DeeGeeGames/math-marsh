@@ -149,6 +149,12 @@ export function addAISystemToEngine(systems: GameSystemRegistrar): void {
         processEnemyAI(ecs, enemy, player, blocked, activeLilyPadCells, ecs.tryGetResource('mathSession')
           ? enemyChallengeLevelForDifficulty(ecs.getResource('mathDifficulty')) : currentLevel, navGrid);
       });
+      // Finalize once per AI update. Separate updates never share credit.
+      if (eliminatingEnemyIds.size >= 2) {
+        ecs.commands.spawn({
+          eliminationCelebration: { enemyIds: [...eliminatingEnemyIds], age: null },
+        }, { scope: 'playing' });
+      }
     });
 }
 
