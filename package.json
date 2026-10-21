@@ -26,7 +26,7 @@
     "desktop:build": "bun run scripts/desktop-build.ts",
     "desktop:check": "bun run typecheck && bun run scripts/desktop-build.ts",
     "desktop:package:linux": "bun run desktop:build && electron-builder --linux --publish never",
-    "desktop:package:win": "bun run desktop:build && electron-builder --win --publish never",
+    "desktop:package:win": "bun run desktop:build && electron-builder --win --publish never && bun run scripts/steam-windows-executable.ts",
     "check": "bun run lint && bun run test && bun run build",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
