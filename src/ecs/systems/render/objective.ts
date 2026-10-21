@@ -1,4 +1,5 @@
 import { partialSelectionPresentation } from '../../partialSelection';
+import { GAME_CONFIG } from '../../../config';
 import { equationSelectionText } from '../../../math/equations';
 import {
   ANSWER_CONSUMPTION_DURATION_MS,
@@ -12,7 +13,7 @@ import { formatRemainingTime, LOW_TIME_SECONDS } from '../../runTime';
 const textColor = '#fff7c6';
 const shadowColor = 'rgba(9, 41, 44, 0.9)';
 const HEADER_SPLIT_RATIO = 0.72;
-const HEADER_SIDE_PADDING = 24;
+const HEADER_SIDE_PADDING = 24 + GAME_CONFIG.RENDER.CANVAS_INSET_PX;
 const HEADER_GAP = 16;
 
 export type EquationValueTarget = {

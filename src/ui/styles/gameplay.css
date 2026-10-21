@@ -1,9 +1,14 @@
-/* Canvas border with subtle transparency */
+/* The frame stays in the DOM; all cream space inside it is drawable. */
 #game-canvas {
+  display: block;
   pointer-events: auto;
   touch-action: none;
   background: var(--cream-panel);
-  border: 7px solid var(--cream-panel);
+}
+
+#game-canvas-frame {
+  flex: 0 0 auto;
+  border-radius: 8px;
   box-shadow:
     0 0 0 4px rgba(36, 107, 53, 0.86),
     0 0 0 8px rgba(109, 122, 52, 0.32),

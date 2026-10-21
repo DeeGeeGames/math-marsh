@@ -45,7 +45,9 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
       </div>
 
       <div id="canvas-container" class="flex-1 min-h-0 min-w-0 flex items-center justify-center mb-16 md:mb-20 px-2 md:px-4">
-        <canvas id="game-canvas" class="rounded-lg max-w-full max-h-full"></canvas>
+        <div id="game-canvas-frame">
+          <canvas id="game-canvas" class="rounded-lg max-w-full max-h-full"></canvas>
+        </div>
       </div>
 
       <div id="bottom-hud" class="hud-bottom absolute bottom-0 inset-x-0 p-3 md:p-4 lg:p-5 flex justify-center items-center text-white pointer-events-auto">

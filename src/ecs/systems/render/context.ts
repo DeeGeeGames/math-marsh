@@ -17,10 +17,13 @@ function canvasDisplayBounds(container: Element | null): { width: number; height
 	const isDesktop = isDesktopViewport();
 	const width = container?.clientWidth ?? window.innerWidth;
 	const height = container?.clientHeight ?? window.innerHeight;
+	const style = container ? getComputedStyle(container) : undefined;
+	const horizontalPadding = style ? parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) : 0;
+	const verticalPadding = style ? parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) : 0;
 	const margin = isDesktop ? GAME_CONFIG.RENDER.DESKTOP_CANVAS_MARGIN_PX : 0;
 	return {
-		width: Math.max(0, width - margin * 2),
-		height: Math.max(0, height - margin * 2),
+		width: Math.max(0, width - horizontalPadding - margin * 2),
+		height: Math.max(0, height - verticalPadding - margin * 2),
 		maxScale: isDesktop ? Number.POSITIVE_INFINITY : 1,
 	};
 }
@@ -35,7 +38,7 @@ const resizeCanvas = (): void => {
 	// #canvas-container is a flex-1 region below the in-flow top HUD and above
 	// the bottom hints / on-screen touch controls. Sizing against its rect
 	// makes the canvas grow into space the surrounding chrome leaves behind.
-	const container = canvas.parentElement;
+	const container = canvas.closest('#canvas-container') ?? canvas.parentElement;
 	const bounds = canvasDisplayBounds(container);
 
 	const scale = Math.min(bounds.width / gameSize.width, bounds.height / gameSize.height, bounds.maxScale);
@@ -79,7 +82,7 @@ export const initializeRenderSystem = (canvasElement: HTMLCanvasElement, getBoar
 
 	resizeCanvas();
 
-	const container = canvas.parentElement;
+	const container = canvas.closest('#canvas-container') ?? canvas.parentElement;
 	if (container) observeContainer(container);
 
 	if (isFirstInit) {

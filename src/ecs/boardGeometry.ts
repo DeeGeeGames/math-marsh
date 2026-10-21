@@ -23,7 +23,7 @@ export type RenderMargins = {
 };
 
 const marginPixels = (ratio: number): number =>
-	Math.ceil(GAME_CONFIG.GRID.CELL_SIZE * ratio);
+	Math.ceil(GAME_CONFIG.GRID.CELL_SIZE * ratio) + GAME_CONFIG.RENDER.CANVAS_INSET_PX;
 
 export const renderMargins = (): RenderMargins => ({
 	top: marginPixels(GAME_CONFIG.RENDER.PLAY_AREA_TOP_MARGIN_RATIO),
