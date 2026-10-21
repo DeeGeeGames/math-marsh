@@ -7,7 +7,7 @@ import {
 
 export const TUTORIAL_PROMPT_SPEC = {
   prompts: [
-    { action: 'select', label: 'Next' },
+    { action: 'select', label: 'Select' },
     { action: 'back', label: 'Back' },
     { action: 'skip', label: 'Skip' },
   ],
@@ -87,4 +87,10 @@ export function updateGameplayOnboardingUI(
       ? `Start Level ${session.returnTo.level}`
       : TUTORIAL_FINISH_LABELS[session.returnTo.kind]
     : 'Next';
+  // Keep controller activation in the tutorial, including after recovery and
+  // when Back becomes disabled again on the first step.
+  const focused = document.activeElement;
+  if (!panel.contains(focused) || (focused instanceof HTMLButtonElement && focused.disabled)) {
+    nextButton.focus();
+  }
 }

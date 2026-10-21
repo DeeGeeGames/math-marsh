@@ -451,6 +451,9 @@ export function showGameplayScreen(mode: 'normal' | 'tutorial'): void {
     mode === 'tutorial' ? TUTORIAL_PROMPT_SPEC : undefined,
   );
   showScreen('playing');
+  if (mode === 'tutorial') {
+    updateGameplayOnboardingUI(requireEngine().getResource('gameplayOnboardingSession'));
+  }
 }
 
 export function showControllerRecoveryScreen(): void {
