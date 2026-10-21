@@ -91,13 +91,13 @@ function profileNameForm(
   return html`
     <main class="player-name-card" role="dialog" aria-modal="true" aria-labelledby=${titleId}>
       ${profileDialogHeading(options.title, options.copy, titleId)}
-      <form data-profile-name-form data-form-kind=${options.form}>
+      <div data-profile-name-form data-form-kind=${options.form}>
         <label for=${inputId}>Player name</label>
         <input id=${inputId} data-profile-name-input name="playerName" type="text" maxlength="${PLAYER_NAME_MAX_LENGTH}"
           autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby=${errorId}>
         <p id=${errorId} data-profile-name-error class="player-form-error" aria-live="assertive"></p>
         <div class="player-dialog-actions">
-          <button type="submit" id=${submitId} class="btn-success ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">${options.button}</button>
+          <button type="button" data-profile-name-confirm id=${submitId} class="btn-success ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">${options.button}</button>
           ${options.form === 'setup' ? nothing : html`
             <button type="button" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.mdResponsive}"
               @click=${(): void => actions.closePlayerScreen(options.cancelFocusSelector?.() ?? '#player-add-button')}>
@@ -105,7 +105,7 @@ function profileNameForm(
             </button>
           `}
         </div>
-      </form>
+      </div>
       <p class="player-local-note">Profiles stay on this device and are not password protected.</p>
       <div class="input-prompts-slot" data-input-prompts></div>
     </main>
@@ -132,18 +132,21 @@ function wireProfileNameForm(
   root: HTMLElement,
   complete: (name: string) => PlayerProfilesError | undefined,
 ): void {
-  const form = root.querySelector<HTMLFormElement>('[data-profile-name-form]');
+  const form = root.querySelector<HTMLElement>('[data-profile-name-form]');
   const input = root.querySelector<HTMLInputElement>('[data-profile-name-input]');
-  if (!form || !input) return;
+  const confirm = root.querySelector<HTMLButtonElement>('[data-profile-name-confirm]');
+  if (!form || !input || !confirm) return;
+  // Profile changes are local actions. Native submission is blocked in embeds
+  // whose sandbox omits allow-forms, before a submit handler can run.
+  const completeName = function(): void {
+    writeError(root, complete(input.value));
+  };
+  confirm.addEventListener('click', completeName);
   form.addEventListener('keydown', (event): void => {
     if (event.target !== input || event.key !== 'Enter' || event.isComposing) return;
     event.preventDefault();
     event.stopPropagation();
-    form.requestSubmit();
-  });
-  form.addEventListener('submit', (event): void => {
-    event.preventDefault();
-    writeError(root, complete(input.value));
+    completeName();
   });
 }
 
