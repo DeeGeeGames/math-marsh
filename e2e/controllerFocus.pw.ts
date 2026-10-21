@@ -40,9 +40,7 @@ const focusStyle = async function(page: Page, selector: string): Promise<FocusSt
   });
 };
 
-test('mouse and touch opened Settings keep rendered focus visible during controller navigation', async ({ browser }, testInfo) => {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, hasTouch: true });
-  const page = await context.newPage();
+const configureControllerPage = async function(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }));
     const axes = [0, 0, 0, 0];
@@ -59,6 +57,7 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     window.addEventListener('message', (event: MessageEvent<unknown>) => {
       const data = event.data;
       if (typeof data !== 'object' || data === null || !('type' in data) || data.type !== 'math-marsh-focus-gamepad') return;
+      if ('connected' in data && typeof data.connected === 'boolean') gamepad.connected = data.connected;
       if ('button' in data && 'pressed' in data && typeof data.button === 'number'
         && Number.isInteger(data.button) && data.button >= 0 && data.button < buttons.length
         && typeof data.pressed === 'boolean') {
@@ -85,6 +84,12 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     localStorage.setItem('math-marsh.player-profiles', JSON.stringify({ version: 1, profiles }));
     localStorage.setItem('math-marsh.active-player-profile', 'focus-player');
   });
+};
+
+test('mouse and touch opened Settings keep rendered focus visible during controller navigation', async ({ browser }, testInfo) => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, hasTouch: true });
+  const page = await context.newPage();
+  await configureControllerPage(page);
 
   try {
     await page.goto('/');
@@ -180,4 +185,81 @@ test('mouse and touch opened Settings keep rendered focus visible during control
   } finally {
     await context.close();
   }
+});
+
+
+test('tutorial controls support controller focus, later lessons, and keyboard navigation', async ({ page }, testInfo) => {
+  await configureControllerPage(page);
+  const pressButton = async function(button: number): Promise<void> {
+    await setGamepadButton(page, button, true);
+    await setGamepadButton(page, button, false);
+  };
+  await page.goto('/');
+  await page.getByText('A game by').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByRole('button', { name: 'How to Play', exact: true }).click();
+  await page.getByRole('button', { name: 'Play Tutorial', exact: true }).click();
+  const next = page.locator('#tutorial-next-btn');
+  const back = page.locator('#tutorial-back-btn');
+  const skip = page.locator('#skip-tutorial-btn');
+  const step = page.locator('#gameplay-onboarding-kicker');
+  await expect(next).toBeFocused();
+  await expect(back).toBeDisabled();
+  // Claim is consumed until the controller is released.
+  await pressButton(0);
+  await expect(step).toHaveText('Step 1 of 5');
+  await pressButton(0);
+  await expect(step).toHaveText('Step 2 of 5');
+  await pressButton(14);
+  await expect(back).toBeFocused();
+  expect(await focusStyle(page, '#tutorial-back-btn')).toMatchObject({ outlineStyle: 'solid', outlineWidth: '3px' });
+  await pressButton(0);
+  await expect(step).toHaveText('Step 1 of 5');
+  await expect(next).toBeFocused();
+  // Disabled Back must not capture focus. Stick navigation reaches Skip.
+  await pressButton(14);
+  await expect(next).toBeFocused();
+  await setGamepadAxis(page, 1, 1);
+  await setGamepadAxis(page, 1, 0);
+  await expect(skip).toBeFocused();
+  await page.screenshot({ path: testInfo.outputPath('tutorial-controller-focus.png') });
+  await pressButton(0);
+  await expect(page.getByRole('button', { name: 'Play Tutorial', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Play Tutorial', exact: true }).click();
+  // Complete basics to reach the later lessons, which have no enemy singleton.
+  for (let index = 1; index <= 5; index++) {
+    await expect(step).toHaveText(`Step ${index} of 5`);
+    await pressButton(0);
+  }
+  await expect(page.locator('#gameplay-onboarding-title')).toHaveText('Find two numbers');
+  await expect(step).toHaveText('Step 1 of 5');
+  await expect(next).toBeFocused();
+  await pressButton(0);
+  await expect(step).toHaveText('Step 2 of 5');
+  await pressButton(1);
+  await expect(step).toHaveText('Step 1 of 5');
+  // Disconnect recovery must return focus to Next without activating it.
+  await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', connected: false }, '*'));
+  await expect(page.getByRole('heading', { name: 'CONTROLLER DISCONNECTED' })).toBeVisible();
+  await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', connected: true }, '*'));
+  await pressButton(0);
+  await pressButton(0);
+  await expect(page.getByRole('heading', { name: 'CONTROLLER DISCONNECTED' })).toBeHidden();
+  await expect(step).toHaveText('Step 1 of 5');
+  await expect(next).toBeFocused();
+  for (let index = 1; index <= 5; index++) {
+    await expect(step).toHaveText(`Step ${index} of 5`);
+    await pressButton(0);
+  }
+  await expect(page.locator('#gameplay-onboarding-title')).toHaveText('Choose a number and a result');
+  await pressActionKey(page, 'Enter');
+  await expect(step).toHaveText('Step 2 of 5');
+  await pressActionKey(page, 'ArrowLeft');
+  await expect(back).toBeFocused();
+  await pressActionKey(page, 'Enter');
+  await expect(step).toHaveText('Step 1 of 5');
+  await pressButton(9);
+  await expect(page.getByRole('button', { name: 'Play Tutorial', exact: true })).toBeVisible();
 });

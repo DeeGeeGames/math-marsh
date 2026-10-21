@@ -15,6 +15,7 @@ import {
 export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec {
   return {
     id: 'gameplay-ui',
+    focusSelector: '#gameplay-onboarding button:not(:disabled)',
     className: 'absolute inset-0 flex flex-col pointer-events-none z-10',
     html: `
       ${pondSkyMarkup()}

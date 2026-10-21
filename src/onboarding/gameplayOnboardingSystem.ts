@@ -6,7 +6,6 @@ import {
 } from '../ecs/queries';
 import { SYSTEM_PRIORITIES } from '../ecs/systemConfigs';
 import {
-  nextGameplayOnboardingStep,
   previousGameplayOnboardingStep,
   skipGameplayOnboarding,
 } from './gameplayOnboardingFlow';
@@ -14,6 +13,7 @@ import { applyTutorialStep } from './gameplayOnboardingScene';
 import type { GameplayOnboardingSession } from './gameplayOnboarding';
 import { updateTutorialTouchGuidance } from './gameplayOnboardingUI';
 import { isTouchPrimary } from '../ui/touchControls';
+import { activateFocus, navigateFocus } from '../ui/UIManager';
 
 export function registerGameplayOnboardingSystem(
   systems: GameSystemRegistrar,
@@ -63,14 +63,19 @@ export function registerGameplayOnboardingSystem(
         );
       }
 
-      if (gameActions(inputState, controllerSelection).justActivated('back')) {
+      const actions = gameActions(inputState, controllerSelection);
+      if (actions.justActivated('back')) {
         previousGameplayOnboardingStep(ecs);
         return;
       }
-      if (gameActions(inputState, controllerSelection).justActivated('skip')) {
+      if (actions.justActivated('skip')) {
         skipGameplayOnboarding(ecs);
         return;
       }
-      if (gameActions(inputState, controllerSelection).justActivated('eat')) nextGameplayOnboardingStep(ecs);
+      if (actions.justActivated('up')) navigateFocus('up');
+      if (actions.justActivated('down')) navigateFocus('down');
+      if (actions.justActivated('left')) navigateFocus('left');
+      if (actions.justActivated('right')) navigateFocus('right');
+      if (actions.justActivated('eat')) activateFocus();
     });
 }
