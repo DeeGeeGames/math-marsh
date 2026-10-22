@@ -52,3 +52,7 @@
   .practice-results .game-over-actions { width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .practice-results .game-over-actions button { padding: .7rem; }
 }
+
+@media (min-width: 1100px) {
+  .practice-topic-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}

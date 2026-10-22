@@ -1,6 +1,6 @@
 import type { EquationModeState, MathDifficulty } from './types';
-import { createEquationModeState, evaluateEquationSelection, type EquationCandidate } from '../math/equations';
-import { practiceFacts, practiceTopic, type PracticeFact } from '../math/practiceTopics';
+import { createEquationModeState, equationSelectionText, evaluateEquationSelection, type EquationCandidate } from '../math/equations';
+import { practiceFacts, practiceFactLabel, practiceTopic, type PracticeFact, type PracticeTopic } from '../math/practiceTopics';
 
 export const PRACTICE_SESSION_LENGTH = 12;
 export type PracticeSelection = Readonly<{ topicId: string; related: boolean; pond: MathDifficulty }>;
@@ -38,9 +38,25 @@ export const currentPracticeFact = function(session: PracticeSession): PracticeF
   return fact;
 };
 
+const promptForPracticeFact = function(topicId: string, fact: PracticeFact, solved: number, mode: EquationModeState): EquationModeState {
+  if (!topicId.startsWith('add-make-') && !topicId.startsWith('subtract-make-')) return mode;
+  // Addition's fixed sum and subtraction's fixed minuend must stay visible.
+  const promptKind = fact.operation === 'add'
+    ? solved % 2 === 0 ? 'selectLeftOperand' : 'selectRightOperand'
+    : solved % 2 === 0 ? 'selectRightOperand' : 'selectResult';
+  return { ...mode, promptKind, operandsRequired: 1 };
+};
+
+export const practiceFactExample = function(topic: PracticeTopic, fact: PracticeFact, index: number): string {
+  if (topic.operation === 'multiply' || topic.operation === 'divide') return practiceFactLabel(fact);
+  const mode = promptForPracticeFact(topic.id, fact, index, createEquationModeState(1, 'easy', [fact.operation]));
+  return equationSelectionText({ ...mode, target: fact.result, promptValues: [fact.left, fact.right] }, []);
+};
+
 export const practiceEquationMode = function(session: PracticeSession, level: number, clearedThisLevel = 0): EquationModeState {
   const fact = currentPracticeFact(session);
-  const mode = createEquationModeState(level, session.selection.pond, [fact.operation], clearedThisLevel);
+  const mode = promptForPracticeFact(session.selection.topicId, fact, session.solved,
+    createEquationModeState(level, session.selection.pond, [fact.operation], clearedThisLevel));
   const facts = session.deck.filter(candidate => candidate.operation === fact.operation);
   return {
     ...mode,
@@ -60,8 +76,9 @@ export const practiceEquationCandidate = function(session: PracticeSession): Equ
 /** Identify the actual submitted fact; arithmetic equivalence alone cannot broaden a topic. */
 export const submittedPracticeFact = function(session: PracticeSession, mode: EquationModeState, values: readonly number[]): PracticeFact | undefined {
   if (!evaluateEquationSelection(mode, values)) return undefined;
-  const left = mode.promptKind === 'selectOperands' ? values[0] : mode.promptValues[0];
-  const right = mode.promptKind === 'selectResult' ? mode.promptValues[1]
+  const left = mode.promptKind === 'selectLeftOperand' || mode.promptKind === 'selectOperands' ? values[0] : mode.promptValues[0];
+  const right = mode.promptKind === 'selectRightOperand' ? values[0]
+    : mode.promptKind === 'selectResult' || mode.promptKind === 'selectLeftOperand' ? mode.promptValues[1]
     : mode.promptKind === 'selectOperands' ? values[1] : values[0];
   const result = mode.promptKind === 'selectOperandAndResult' ? values[1] : mode.target;
   return session.deck.find(fact => fact.operation === mode.operation

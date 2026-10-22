@@ -59,32 +59,11 @@ const range = function (start: number, end: number): number[] {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 };
 
-const additionGoals = [
-  ...[5, 10, 20].map(target => ({
-    id: `make-${target}`,
-    label: `Make ${target}`,
-    facts: range(0, target).map(left => createFact('add', left, target - left)),
-  })),
-  {
-    id: 'doubles',
-    label: 'Doubles',
-    facts: range(1, 10).map(value => createFact('add', value, value)),
-  },
-  {
-    id: 'near-doubles',
-    label: 'Near doubles',
-    facts: range(1, 9).flatMap(value => [
-      createFact('add', value, value + 1),
-      createFact('add', value + 1, value),
-    ]),
-  },
-  {
-    id: 'mixed-to-20',
-    label: 'Mixed facts to 20',
-    facts: range(0, 20).flatMap(left =>
-      range(0, 20 - left).map(right => createFact('add', left, right))),
-  },
-];
+const additionGoals = range(3, 20).map(target => ({
+  id: `make-${target}`,
+  label: `Make ${target}`,
+  facts: range(0, target).map(left => createFact('add', left, target - left)),
+}));
 
 /** The facts on each topic are the authoritative base membership and denominator. */
 export const PRACTICE_TOPICS: readonly PracticeTopic[] = [

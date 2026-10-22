@@ -12,7 +12,7 @@ const skipSplash = async function(page: Page): Promise<void> {
 	await press(page, 'Space');
 };
 
-const seedProfiles = async function(page: Page, returning = false, failSaving = false): Promise<void> {
+const seedProfiles = async function(page: Page, returning: boolean | 'retired' = false, failSaving = false): Promise<void> {
 	await page.addInitScript(function({ returning, failSaving }): void {
 		if (!sessionStorage.getItem('practice-fixture-seeded')) {
 			const track = { currentStep: 1, highestUnlockedStep: 1 };
@@ -22,8 +22,10 @@ const seedProfiles = async function(page: Page, returning = false, failSaving = 
 				skitProgress: [],
 			};
 			const practiceProgress = returning ? {
-				version: 1, facts: { 'multiply:2:3': { attempts: 3, correct: 1 } },
-				lastSelection: { topicId: 'multiply-table-2', related: true, pond: 'medium' },
+				version: 1, facts: returning === 'retired'
+					? { 'add:0:0': { attempts: 1, correct: 1 }, 'add:1:4': { attempts: 1, correct: 1 } }
+					: { 'multiply:2:3': { attempts: 3, correct: 1 } },
+				lastSelection: { topicId: returning === 'retired' ? 'add-mixed-to-20' : 'multiply-table-2', related: true, pond: 'medium' },
 			} : { version: 1, facts: {}, lastSelection: null };
 			localStorage.clear();
 			localStorage.setItem('math-marsh.player-profiles', JSON.stringify({ version: 1, profiles: [
@@ -133,6 +135,20 @@ test('returning progress is truthful, Continue is fresh, and profiles keep indep
 	await expect(page.locator('.practice-preview-evidence')).toContainText('0 facts practiced');
 });
 
+test('retired topic Continue falls back honestly while preserving overlapping fact evidence', async ({ page }) => {
+	await seedProfiles(page, 'retired');
+	await page.goto('/');
+	await skipSplash(page);
+	await openPractice(page);
+	await expect(page.locator('[data-practice-continue]')).toHaveCount(0);
+	await expect(page.locator('.practice-empty')).toHaveText('Choose a topic below.');
+	await page.locator('[data-practice-operation="add"]').click();
+	await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
+	await expect(page.locator('[data-practice-topic="add-make-5"]')).toContainText('Practicing');
+	await expect(page.locator('[data-practice-topic="add-make-5"]')).toContainText('1 practiced');
+	await expect(page.locator('[data-practice-topic="add-make-3"] .practice-status')).toHaveCount(0);
+});
+
 test('Practice stays playable and shows session-only persistence when saving fails', async ({ page }) => {
 	await seedProfiles(page, false, true);
 	await page.goto('/');
@@ -176,11 +192,11 @@ for (const viewport of [
 		await openPractice(page);
 		await capture('home');
 		await page.locator('[data-practice-operation="add"]').click();
-		await expect(page.locator('[data-practice-topic]')).toHaveCount(6);
+		await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
 		await capture('addition-collection');
 		await page.locator('[data-practice-back]').click();
 		await page.locator('[data-practice-operation="subtract"]').click();
-		await expect(page.locator('[data-practice-topic]')).toHaveCount(6);
+		await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
 		await capture('subtraction-collection');
 		await page.locator('[data-practice-back]').click();
 		await page.locator('[data-practice-operation="multiply"]').click();

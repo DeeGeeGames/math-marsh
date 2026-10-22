@@ -126,6 +126,7 @@ export const mathQuestionBudgetSeconds = function(
 	promptKind: EquationPromptKind,
 	difficulty: MathDifficulty = 'easy',
 ): number | undefined {
+	if (promptKind === 'selectLeftOperand' || promptKind === 'selectRightOperand') return undefined;
 	const definition = mathStepForNumber(step);
 	const ranges = mathOperandRanges(step, operation);
 	const base = GAME_CONFIG.MATH_PROGRESSION.BASE_SECONDS_PER_CORRECT[operation][promptKind];

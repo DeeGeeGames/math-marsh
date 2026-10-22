@@ -198,7 +198,8 @@ export type PlayerProfileActionScreenConfig = { profileId: string };
 export type MathDifficulty = 'easy' | 'medium' | 'expert';
 export type EquationOperation = 'add' | 'subtract' | 'multiply' | 'divide';
 export type GameMode = readonly [EquationOperation, ...EquationOperation[]];
-export type EquationPromptKind = 'selectOperands' | 'selectResult' | 'selectOperandAndResult';
+export type EquationPromptKind = 'selectOperands' | 'selectResult' | 'selectOperandAndResult'
+  | 'selectLeftOperand' | 'selectRightOperand';
 
 export interface EquationValueRange {
   min: number;

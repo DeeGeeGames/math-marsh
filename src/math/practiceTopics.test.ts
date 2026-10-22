@@ -24,8 +24,8 @@ const range = function (start: number, end: number): number[] {
 
 describe('Practice topic catalog', () => {
   test('has stable topic identities and safely rejects unknown persisted input', () => {
-    expect(PRACTICE_TOPICS).toHaveLength(36);
-    expect(new Set(PRACTICE_TOPICS.map(topic => topic.id)).size).toBe(36);
+    expect(PRACTICE_TOPICS).toHaveLength(60);
+    expect(new Set(PRACTICE_TOPICS.map(topic => topic.id)).size).toBe(60);
     for (const invalid of [undefined, null, {}, [], 1, 'retired', 'multiply-table-0', 'divide-table-13']) {
       expect(practiceTopic(invalid)).toBeUndefined();
     }
@@ -46,7 +46,7 @@ describe('Practice topic catalog', () => {
   });
 
   test('Make topics enumerate all nonnegative ordered pairs and their inverse subtractions', () => {
-    [5, 10, 20].forEach(target => {
+    range(3, 20).forEach(target => {
       expect(factIds(`add-make-${target}`)).toEqual(new Set(
         range(0, target).map(left => `add:${left}:${target - left}`),
       ));
@@ -56,24 +56,21 @@ describe('Practice topic catalog', () => {
     });
   });
 
-  test('doubles and near doubles have their confirmed bounds', () => {
-    expect(factIds('add-doubles')).toEqual(new Set(range(1, 10).map(value => `add:${value}:${value}`)));
-    expect(factIds('subtract-doubles')).toEqual(new Set(range(1, 10).map(value => `subtract:${2 * value}:${value}`)));
-    expect(factIds('add-near-doubles')).toEqual(new Set(range(1, 9).flatMap(value => [
-      `add:${value}:${value + 1}`, `add:${value + 1}:${value}`,
-    ])));
-    expect(factIds('subtract-near-doubles')).toEqual(new Set(range(1, 9).flatMap(value => [
-      `subtract:${2 * value + 1}:${value}`, `subtract:${2 * value + 1}:${value + 1}`,
-    ])));
-  });
-
-  test('mixed facts include zero and every pair up to 20 with no negative or excessive sums', () => {
-    const expected = new Set(range(0, 20).flatMap(left =>
-      range(0, 20 - left).map(right => `add:${left}:${right}`)));
-    expect(factIds('add-mixed-to-20')).toEqual(expected);
-    expect(expected.size).toBe(231);
-    expect(factIds('subtract-mixed-to-20')).toEqual(new Set(range(0, 20).flatMap(left =>
-      range(0, left).map(right => `subtract:${left}:${right}`))));
+  test('addition and subtraction collections contain only Make 3 through Make 20', () => {
+    for (const operation of ['add', 'subtract']) {
+      expect(PRACTICE_TOPICS.filter(topic => topic.operation === operation).map(topic => topic.id))
+        .toEqual(range(3, 20).map(target => `${operation}-make-${target}`));
+      for (const suffix of ['doubles', 'near-doubles', 'mixed-to-20', 'make-0', 'make-1', 'make-2', 'make-21']) {
+        expect(practiceTopic(`${operation}-${suffix}`)).toBeUndefined();
+      }
+      for (const target of range(3, 20)) {
+        const facts = topicFacts(`${operation}-make-${target}`);
+        expect(facts).toHaveLength(target + 1);
+        expect(facts.every(fact => fact.left >= 0 && fact.right >= 0 && fact.result >= 0)).toBe(true);
+        expect(factIds(`${operation}-make-${target}`)).toContain(`${operation}:${operation === 'add' ? 0 : target}:${target}`);
+        expect(factIds(`${operation}-make-${target}`)).toContain(`${operation}:${target}:0`);
+      }
+    }
   });
 
   test('related facts are off by default and expand only their exact fact families', () => {
@@ -85,8 +82,8 @@ describe('Practice topic catalog', () => {
     expect(factIds('add-make-5', true)).toEqual(new Set([
       ...factIds('add-make-5'), ...factIds('subtract-make-5'),
     ]));
-    expect(factIds('subtract-near-doubles', true)).toEqual(new Set([
-      ...factIds('add-near-doubles'), ...factIds('subtract-near-doubles'),
+    expect(factIds('subtract-make-3', true)).toEqual(new Set([
+      ...factIds('add-make-3'), ...factIds('subtract-make-3'),
     ]));
   });
 

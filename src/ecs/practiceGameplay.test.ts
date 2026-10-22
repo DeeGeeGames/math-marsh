@@ -1,3 +1,4 @@
+import { goToNextLevel } from './systems/nextLevel';
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
@@ -85,22 +86,32 @@ const activeSession = function(world: GameEngine): PracticeSession {
 };
 
 describe('Practice gameplay boundaries', () => {
-  test('a two-pad wrong retry records once, then success credits its actual ordered fact once without changing Arcade', async () => {
+  test('Make board transitions skip unused two-pad tutorials while Arcade keeps them', async () => {
+    const world = await createWorld();
+    const transition = spyOn(world, 'setScreen').mockImplementation(async () => {});
+    try {
+      goToNextLevel(world, 2, 'expert', 'pending', 'pending');
+      expect(transition).toHaveBeenLastCalledWith('playing', { level: 2, isFreshGame: false });
+      world.setResource('practiceSession', null);
+      goToNextLevel(world, 2, 'expert', 'pending', 'pending');
+      expect(transition).toHaveBeenLastCalledWith('tutorial', {
+        kind: 'operands', isReplay: false, returnTo: { kind: 'level', level: 2 },
+      });
+    } finally { transition.mockRestore(); await world.dispose(); }
+  });
+
+  test('a missing-operand wrong retry credits its actual ordered fact once without changing Arcade', async () => {
     const world = await createWorld(2);
     try {
       [2, 4, 3].forEach((value, index) => world.spawn(mathProblemComponents(index * 100, 0, value, 1)));
       const [left, wrong, right] = problemsIn(world);
       if (!left || !wrong || !right) throw new Error('Missing pads');
       const beforeProfiles = world.getResource('playerProfiles');
-      select(world, left);
-      expect(activeSession(world).attempts).toHaveLength(0);
       select(world, wrong);
       expect(activeSession(world)).toMatchObject({ solved: 0, attempts: [{ factId: 'add:2:3', correct: false }] });
       expect(world.getResource('equationMode').selectedProblemIds).toEqual([]);
       expect(left.components.mathProblem.consumed).toBe(false);
       select(world, left);
-      expect(activeSession(world).attempts).toHaveLength(1);
-      select(world, right);
       expect(activeSession(world)).toMatchObject({ solved: 1, attempts: [
         { factId: 'add:2:3', correct: false }, { factId: 'add:2:3', correct: true },
       ] });
@@ -134,7 +145,7 @@ describe('Practice gameplay boundaries', () => {
     const transition = spyOn(world, 'setScreen').mockImplementation(async () => {});
     try {
       world.setResource('practiceSession', { ...activeSession(world), solved: 11 });
-      const answer = world.spawn(mathProblemComponents(0, 0, 5, 1));
+      const answer = world.spawn(mathProblemComponents(0, 0, 2, 1));
       const problem = problemsIn(world).find(candidate => candidate.id === answer.id);
       if (!problem) throw new Error('Missing answer');
       select(world, problem);
@@ -163,17 +174,16 @@ describe('Practice gameplay boundaries', () => {
         const position = gridToPixel(index % 3, Math.floor(index / 3));
         world.spawn(mathProblemComponents(position.x, position.y, value, 1));
       });
-      const blocked = problemsIn(world)[1];
+      const blocked = problemsIn(world)[0];
       if (!blocked) throw new Error('Missing occupied pad');
       world.spawn(enemyComponents(blocked.components.position.x, blocked.components.position.y, 'lizard', 'guard'));
       world.update(0);
       const mode = world.getResource('equationMode');
       expect(mode.promptValues).toEqual([2, 3]);
       expect(mode.target).toBe(5);
-      expect(blocked.components.mathProblem.value).toBe(3);
+      expect(blocked.components.mathProblem.value).toBe(2);
       const free = problemsIn(world).filter(problem => problem.id !== blocked.id);
-      expect(free.some(left => free.some(right => left.id !== right.id
-        && submittedPracticeFact(activeSession(world), mode, [left.components.mathProblem.value, right.components.mathProblem.value])))).toBe(true);
+      expect(free.some(problem => submittedPracticeFact(activeSession(world), mode, [problem.components.mathProblem.value]))).toBe(true);
       expect(activeSession(world).selection.topicId).toBe('add-make-5');
       expect(activeSession(world).attempts).toEqual([]);
     } finally { await world.dispose(); }
@@ -186,8 +196,7 @@ describe('Practice gameplay boundaries', () => {
       world.update(0);
       const mode = world.getResource('equationMode');
       const free = problemsIn(world);
-      expect(free.some(left => free.some(right => left.id !== right.id
-        && submittedPracticeFact(activeSession(world), mode, [left.components.mathProblem.value, right.components.mathProblem.value])))).toBe(true);
+      expect(free.some(problem => submittedPracticeFact(activeSession(world), mode, [problem.components.mathProblem.value]))).toBe(true);
       expect(mode.promptValues).toEqual([2, 3]);
     } finally { await world.dispose(); }
   });

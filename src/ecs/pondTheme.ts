@@ -33,10 +33,11 @@ const pondThemes = {
 	},
 } as const;
 
-export type PondTheme = (typeof pondThemes)[EquationPromptKind];
+export type PondTheme = (typeof pondThemes)[keyof typeof pondThemes];
 export type PondPhase = PondTheme['phase'];
 
 // Follow the equation cycle itself so tutorials and later number sets agree.
 export function pondThemeForPromptKind(promptKind: EquationPromptKind): PondTheme {
+	if (promptKind === 'selectLeftOperand' || promptKind === 'selectRightOperand') return pondThemes.selectResult;
 	return pondThemes[promptKind];
 }

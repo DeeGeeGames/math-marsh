@@ -1,9 +1,9 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { equationProblemValuesForCandidate, equationPromptKindForLevel } from '../math/equations';
-import { PRACTICE_TOPICS, practiceFacts } from '../math/practiceTopics';
+import { PRACTICE_TOPICS, practiceFacts, practiceTopic } from '../math/practiceTopics';
 import {
   createPracticeSession, currentPracticeFact, finishPracticeSession,
-  practiceEquationCandidate, practiceEquationMode, recordPracticeAttempt,
+  practiceEquationCandidate, practiceEquationMode, practiceFactExample, recordPracticeAttempt,
   submittedPracticeFact, PRACTICE_SESSION_LENGTH, type PracticeSession,
 } from './practiceSession';
 
@@ -14,6 +14,22 @@ const sessionFor = function(topicId = 'add-make-5'): PracticeSession {
 };
 
 describe('focused Practice sessions', () => {
+  test('Make examples alternate useful unknowns and table examples retain their resolved equations', () => {
+    const add = practiceTopic('add-make-5');
+    const subtract = practiceTopic('subtract-make-5');
+    const table = practiceTopic('multiply-table-2');
+    if (!add || !subtract || !table) throw new Error('Missing topic');
+    const addition = add.facts.find(fact => fact.left === 2 && fact.right === 3);
+    const subtraction = subtract.facts.find(fact => fact.right === 2);
+    const multiplication = table.facts.find(fact => fact.left === 2 && fact.right === 3);
+    if (!addition || !subtraction || !multiplication) throw new Error('Missing example');
+    expect(practiceFactExample(add, addition, 0)).toBe('_ + 3 = 5');
+    expect(practiceFactExample(add, addition, 1)).toBe('2 + _ = 5');
+    expect(practiceFactExample(subtract, subtraction, 0)).toBe('5 - _ = 3');
+    expect(practiceFactExample(subtract, subtraction, 1)).toBe('5 - 2 = _');
+    expect(practiceFactExample(table, multiplication, 0)).toBe('2 × 3 = 6');
+  });
+
   test('rejects retired topic IDs and starts each replay with fresh counters and the same options', () => {
     expect(createPracticeSession('learner', { topicId: 'retired', related: false, pond: 'easy' })).toBeUndefined();
     const original = sessionFor();
@@ -39,12 +55,19 @@ describe('focused Practice sessions', () => {
               const mode = practiceEquationMode(focused, level, 4);
               const candidate = practiceEquationCandidate(focused);
               const prepared = { ...mode, target: candidate.target, promptValues: candidate.operandValues };
-              expect(mode.promptKind).toBe(equationPromptKindForLevel(level, pond));
+              const expectedKind = topic.operation === 'add' || topic.operation === 'subtract'
+                ? fact.operation === 'add'
+                  ? index % 2 === 0 ? 'selectLeftOperand' : 'selectRightOperand'
+                  : index % 2 === 0 ? 'selectRightOperand' : 'selectResult'
+                : equationPromptKindForLevel(level, pond);
+              expect(mode.promptKind).toBe(expectedKind);
               expect(mode.operation).toBe(fact.operation);
               expect(mode.clearedThisLevel).toBe(4);
               expect(candidate).toEqual({ operandValues: [fact.left, fact.right], target: fact.result });
               const board = equationProblemValuesForCandidate(prepared, candidate, 9);
-              const values = mode.promptKind === 'selectResult' ? [fact.result]
+              const values = mode.promptKind === 'selectLeftOperand' ? [fact.left]
+                : mode.promptKind === 'selectRightOperand' ? [fact.right]
+                : mode.promptKind === 'selectResult' ? [fact.result]
                 : mode.promptKind === 'selectOperands' ? [fact.left, fact.right] : [fact.right, fact.result];
               const firstIndex = board.indexOf(values[0] ?? NaN);
               expect(firstIndex).toBeGreaterThanOrEqual(0);
@@ -57,15 +80,16 @@ describe('focused Practice sessions', () => {
     }
   });
 
-  test('decoys use topic bounds so result prompts do not fill every pad with the answer', () => {
+  test('decoys use topic bounds so missing-operand prompts include distractors', () => {
     const session = sessionFor();
     const random = spyOn(Math, 'random').mockReturnValue(0.9);
     try {
       const mode = practiceEquationMode(session, 1);
       const candidate = practiceEquationCandidate(session);
+      random.mockReturnValue(candidate.operandValues[0] === 0 ? 0.9 : 0);
       const board = equationProblemValuesForCandidate(mode, candidate, 9);
-      expect(board).toContain(5);
-      expect(board.some(value => value !== 5)).toBe(true);
+      expect(board).toContain(candidate.operandValues[0]);
+      expect(board.some(value => value !== candidate.operandValues[0])).toBe(true);
       expect(mode.operandRanges).toEqual({ left: { min: 0, max: 5 }, right: { min: 0, max: 5 } });
     } finally { random.mockRestore(); }
   });

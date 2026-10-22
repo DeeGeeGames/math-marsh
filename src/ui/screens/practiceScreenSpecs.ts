@@ -1,7 +1,7 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { GAME_CONFIG } from '../../config';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
-import { PRACTICE_SESSION_LENGTH, type PracticeSelection } from '../../ecs/practiceSession';
+import { PRACTICE_SESSION_LENGTH, practiceFactExample, type PracticeSelection } from '../../ecs/practiceSession';
 import { practiceTopicEvidence, practiceTopicStatus } from '../../ecs/practiceProgress';
 import { PRACTICE_TOPICS, practiceTopic, practiceFacts, practiceFactLabel, type PracticeTopic } from '../../math/practiceTopics';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
@@ -38,18 +38,24 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 	const evidence = function(topic: PracticeTopic, includeRelated = false): TemplateResult {
 		const progress = actions.getPracticeProgress();
 		const summary = practiceTopicEvidence(progress, topic, includeRelated);
-		return html`<span class="practice-status">${practiceTopicStatus(progress, topic, includeRelated)}</span>
-			<span class="practice-evidence">${summary.attempted} facts practiced · ${summary.solved}/${practiceFacts(topic, includeRelated).length} solved at least once</span>`;
+		const status = practiceTopicStatus(progress, topic, includeRelated);
+		const total = practiceFacts(topic, includeRelated).length;
+		const detail = view === 'collection'
+			? `${summary.attempted} practiced · ${summary.solved}/${total} solved`
+			: `${summary.attempted} facts practiced · ${summary.solved}/${total} solved at least once`;
+		return html`${view === 'collection' && status === 'New' ? nothing : html`<span class="practice-status">${status}</span>`}
+			<span class="practice-evidence">${detail}</span>`;
 	};
 
 	const home = function(): TemplateResult {
-		const previous = actions.getPracticeProgress().lastSelection;
+		const progress = actions.getPracticeProgress();
+		const previous = progress.lastSelection;
 		const previousTopic = previous ? practiceTopic(previous.topicId) : undefined;
 		return html`<h1 class="pond-title text-gold">Practice</h1>
 			${previous && previousTopic ? html`<button type="button" class="btn-success practice-continue" data-practice-continue>
 				<strong>Continue: ${previousTopic.label}</strong>
 				<span>${previous.related ? 'Related facts on' : 'Related facts off'} · ${difficultyLabels[previous.pond]} pond · start a fresh session</span>
-			</button>` : html`<p class="practice-empty">Choose your first topic below. No Practice attempts yet.</p>`}
+			</button>` : html`<p class="practice-empty">${Object.keys(progress.facts).length === 0 ? 'Choose your first topic below. No Practice attempts yet.' : 'Choose a topic below.'}</p>`}
 			<div class="practice-operation-grid" role="group" aria-label="Practice operations">
 				${OPERATIONS.map(function(item): TemplateResult {
 					const topics = PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === item; });
@@ -80,7 +86,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 		const summary = practiceTopicEvidence(actions.getPracticeProgress(), topic, related);
 		return html`<h1 class="pond-title text-gold">${topic.label}</h1>
 			<div class="practice-preview-evidence">${evidence(topic, related)}</div>
-			<div class="practice-examples" aria-label="Example equations">${sample.map(function(fact): TemplateResult { return html`<span>${practiceFactLabel(fact)}</span>`; })}</div>
+			<div class="practice-examples" aria-label="Example equations">${sample.map(function(fact, index): TemplateResult { return html`<span>${practiceFactExample(topic, fact, index)}</span>`; })}</div>
 			<button type="button" class="btn-secondary practice-option" data-practice-related aria-pressed=${String(related)}>
 				<strong>Related facts: ${related ? 'On' : 'Off'}</strong><span>Include related ${topic.operation === 'multiply' ? 'division' : topic.operation === 'divide' ? 'multiplication' : topic.operation === 'add' ? 'subtraction' : 'addition'} problems</span>
 			</button>

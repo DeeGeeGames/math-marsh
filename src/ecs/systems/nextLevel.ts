@@ -1,3 +1,4 @@
+import { practiceEquationMode } from '../practiceSession';
 import type { GameEngine } from '../Engine';
 import type { MathDifficulty } from '../types';
 import { mathTutorialForLevel } from '../mathMode';
@@ -10,8 +11,11 @@ export const goToNextLevel = function(
   operandOnboardingCompletion: GameplayOnboardingCompletion,
   operandAndResultOnboardingCompletion: GameplayOnboardingCompletion,
 ): void {
-  const tutorialKind = mathTutorialForLevel(nextLevel, mathDifficulty,
-    operandOnboardingCompletion, operandAndResultOnboardingCompletion);
+  const practice = ecs.tryGetResource('practiceSession');
+  const needsOperandTutorial = !practice || practiceEquationMode(practice, nextLevel).operandsRequired > 1;
+  const tutorialKind = needsOperandTutorial
+    ? mathTutorialForLevel(nextLevel, mathDifficulty, operandOnboardingCompletion, operandAndResultOnboardingCompletion)
+    : undefined;
   if (tutorialKind) {
     void ecs.setScreen('tutorial', {
       kind: tutorialKind,

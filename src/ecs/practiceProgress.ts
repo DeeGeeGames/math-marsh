@@ -13,7 +13,20 @@ export type PracticeProgress = Readonly<{
 
 export type PracticeTopicStatus = 'New' | 'Practicing' | 'Practiced';
 
-const factIds = new Set(PRACTICE_TOPICS.flatMap(topic => practiceFacts(topic, true).map(fact => fact.id)));
+// Earlier Doubles/Mixed topics included these facts, which no longer belong to
+// an active topic. Keep their validated evidence recoverable through future saves.
+const legacyFactIds = [
+  'add:0:0',
+  'add:0:1', 'add:1:0',
+  'add:0:2', 'add:1:1', 'add:2:0',
+  'subtract:0:0',
+  'subtract:1:0', 'subtract:1:1',
+  'subtract:2:0', 'subtract:2:1', 'subtract:2:2',
+] as const;
+const factIds = new Set([
+  ...PRACTICE_TOPICS.flatMap(topic => practiceFacts(topic, true).map(fact => fact.id)),
+  ...legacyFactIds,
+]);
 const isRecord = function(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
