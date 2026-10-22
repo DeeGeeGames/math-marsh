@@ -305,3 +305,41 @@ test('tutorial controls support controller focus, later lessons, and keyboard na
   await pressButton(9);
   await expect(page.getByRole('button', { name: 'Play Tutorial', exact: true })).toBeVisible();
 });
+
+test('Practice keeps controller prompts and focus clearance while navigating the bottom row', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await configureControllerPage(page);
+  await page.goto('/');
+  await page.getByText('A game by').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
+  await page.locator('[data-practice-operation="add"]').click();
+  const pressButton = async function(button: number): Promise<void> {
+    await setGamepadButton(page, button, true);
+    await setGamepadButton(page, button, false);
+  };
+  // The first press claims the controller without selecting the focused topic.
+  await pressButton(0);
+  await expect(page.locator('[data-practice-topic="add-make-3"]')).toBeFocused();
+  await pressButton(13);
+  await pressButton(13);
+  await expect(page.locator('[data-practice-topic="add-make-15"]')).toBeFocused();
+  for (let column = 1; column < 6; column++) await pressButton(15);
+  const lastTopic = page.locator('[data-practice-topic="add-make-20"]');
+  await expect(lastTopic).toBeFocused();
+  const footer = await page.locator('#practice-screen [data-input-prompts]').boundingBox();
+  const tile = await lastTopic.boundingBox();
+  if (!footer || !tile) throw new Error('Practice controller navigation bounds are missing');
+  expect(footer.y + footer.height).toBeLessThanOrEqual(720 - 12);
+  expect(footer.y - tile.y - tile.height).toBeGreaterThanOrEqual(28);
+  expect(await focusStyle(page, '[data-practice-topic="add-make-20"]')).toMatchObject({ outlineStyle: 'solid', outlineWidth: '3px' });
+  await page.screenshot({ path: testInfo.outputPath('practice-controller-bottom-row.png') });
+  await pressButton(0);
+  await expect(page.locator('[data-practice-start]')).toBeFocused();
+  await pressButton(1);
+  await expect(lastTopic).toBeFocused();
+  await pressButton(12);
+  await expect(page.locator('[data-practice-topic="add-make-14"]')).toBeFocused();
+});

@@ -8,6 +8,21 @@
 	margin-block: auto;
 }
 
+#practice-screen {
+	overflow: clip;
+	padding-block: max(env(safe-area-inset-top, 0px), clamp(1rem, 3vh, 2.5rem)) max(env(safe-area-inset-bottom, 0px), clamp(1rem, 3vh, 2.5rem));
+	padding-inline: max(env(safe-area-inset-left, 0px), 1rem) max(env(safe-area-inset-right, 0px), 1rem);
+}
+
+.practice-shell {
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 1;
+	min-height: 0;
+	max-height: 100%;
+	gap: 1rem;
+}
+
 .practice-content, .practice-results {
 	display: grid;
 	gap: 1rem;
@@ -19,6 +34,35 @@
 
 .practice-content {
 	font-size: clamp(1rem, 1.65vw, 1.35rem);
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: none;
+	/* Keep focus chrome and a comfortable gap inside the scrolling panel. */
+	scroll-padding: 1.5rem;
+}
+
+.practice-content::-webkit-scrollbar {
+	display: none;
+}
+
+.practice-content:has(.practice-topic-grid) {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.practice-content:has(.practice-topic-grid) > h1 {
+	grid-column: 1;
+	grid-row: 1;
+	align-self: center;
+}
+
+.practice-content:has(.practice-topic-grid) > .setup-back {
+	grid-column: 2;
+	grid-row: 1;
+	align-self: center;
+}
+
+.practice-topic-hint, .practice-topic-grid, .practice-content > .practice-save-status {
+	grid-column: 1 / -1;
 }
 
 .practice-content h1 {
@@ -61,9 +105,94 @@
 .practice-topic {
 	background: rgba(2,40,54,.55);
 	border: 2px solid var(--reed-border);
+	gap: .6rem;
 }
 
-.practice-topic strong, .practice-option strong, .practice-continue strong {
+.practice-topic[data-complete="true"] {
+	background: linear-gradient(145deg, rgba(36,107,53,.4), rgba(2,40,54,.6));
+}
+
+.practice-topic:hover {
+	border-color: var(--reed);
+}
+
+.practice-topic-hint {
+	color: #e0ede2;
+	font-size: .9em;
+}
+
+.practice-topic-caption {
+	font-size: .7em;
+	font-weight: 700;
+	letter-spacing: .08em;
+	text-transform: uppercase;
+}
+
+.practice-topic-ring {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: clamp(5.5rem, 8vw, 7rem);
+	max-width: 100%;
+	aspect-ratio: 1;
+}
+
+.practice-topic-ring svg {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	transform: rotate(-90deg);
+}
+
+.practice-topic-ring circle {
+	fill: none;
+	stroke-width: 7;
+}
+
+.practice-topic-track {
+	stroke: #739b9d;
+	stroke-opacity: .55;
+}
+
+.practice-topic-fill {
+	stroke: var(--leaf-light);
+	stroke-linecap: round;
+}
+
+.practice-topic-ring .practice-topic-number {
+	font-size: clamp(2.5rem, 4vw, 3rem);
+	font-weight: 800;
+	line-height: 1;
+}
+
+.practice-topic-check {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	display: grid;
+	place-items: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border: 3px solid var(--pond-deep);
+	border-radius: 50%;
+	background: var(--leaf-light);
+	color: var(--ink);
+	font-size: 1rem;
+	font-weight: 800;
+}
+
+.practice-topic-status {
+	font-size: .8em;
+	font-weight: 700;
+	color: #e0ede2;
+}
+
+.practice-topic[data-complete="true"] .practice-topic-status {
+	color: #c6ef9e;
+}
+
+.practice-option strong, .practice-continue strong {
 	font-size: 1.15em;
 }
 
@@ -161,7 +290,12 @@
 	background: rgba(0,0,0,.15);
 }
 
-.practice-shell .input-prompts-slot, .practice-results-layout .input-prompts-slot {
+.practice-shell .input-prompts-slot {
+	flex-shrink: 0;
+	margin-top: 0;
+}
+
+.practice-results-layout .input-prompts-slot {
 	margin-top: 1rem;
 }
 
@@ -197,7 +331,7 @@
 }
 
 @media (max-width: 360px) {
-	.practice-operation-grid, .practice-topic-grid {
+	.practice-operation-grid {
 		grid-template-columns: 1fr;
 	}
 }
