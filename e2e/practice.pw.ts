@@ -23,7 +23,13 @@ const seedProfiles = async function(page: Page, returning: boolean | 'retired' =
 			};
 			const practiceProgress = returning ? {
 				version: 1, facts: returning === 'retired'
-					? { 'add:0:0': { attempts: 1, correct: 1 }, 'add:1:4': { attempts: 1, correct: 1 } }
+					? {
+						'add:0:0': { attempts: 1, correct: 1 }, 'add:1:4': { attempts: 1, correct: 1 },
+						'add:0:4': { attempts: 1, correct: 0 },
+						...Object.fromEntries(Array.from({ length: 7 }, function(_, left) {
+							return [`add:${left}:${6 - left}`, { attempts: 1, correct: 1 }];
+						})),
+					}
 					: { 'multiply:2:3': { attempts: 3, correct: 1 } },
 				lastSelection: { topicId: returning === 'retired' ? 'add-mixed-to-20' : 'multiply-table-2', related: true, pond: 'medium' },
 			} : { version: 1, facts: {}, lastSelection: null };
@@ -144,9 +150,24 @@ test('retired topic Continue falls back honestly while preserving overlapping fa
 	await expect(page.locator('.practice-empty')).toHaveText('Choose a topic below.');
 	await page.locator('[data-practice-operation="add"]').click();
 	await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
-	await expect(page.locator('[data-practice-topic="add-make-5"]')).toContainText('Practicing');
-	await expect(page.locator('[data-practice-topic="add-make-5"]')).toContainText('1 practiced');
-	await expect(page.locator('[data-practice-topic="add-make-3"] .practice-status')).toHaveCount(0);
+	const fresh = page.locator('[data-practice-topic="add-make-3"]');
+	const tried = page.locator('[data-practice-topic="add-make-4"]');
+	const partial = page.locator('[data-practice-topic="add-make-5"]');
+	const complete = page.locator('[data-practice-topic="add-make-6"]');
+	await expect(fresh).toHaveAccessibleName('Make 3. New. 0 facts practiced. 0 of 4 facts solved at least once.');
+	await expect(fresh.locator('.practice-topic-fill')).toHaveAttribute('visibility', 'hidden');
+	await expect(tried).toHaveAccessibleName('Make 4. In progress. 1 facts practiced. 0 of 5 facts solved at least once.');
+	await expect(tried.locator('.practice-topic-fill')).toHaveAttribute('visibility', 'hidden');
+	await expect(partial).toHaveAccessibleName('Make 5. In progress. 1 facts practiced. 1 of 6 facts solved at least once.');
+	expect(await partial.locator('.practice-topic-fill').evaluate(element => Number(element.getAttribute('stroke-dasharray')?.split(' ')[0]))).toBeCloseTo(100 / 6);
+	await expect(complete).toHaveAccessibleName('Make 6. All solved. 7 facts practiced. 7 of 7 facts solved at least once.');
+	await expect(complete.locator('.practice-topic-fill')).toHaveAttribute('stroke-dasharray', '100 100');
+	await expect(complete.locator('.practice-topic-check')).toBeVisible();
+	await expect(partial.locator('.practice-topic-check')).toHaveCount(0);
+	await partial.click();
+	await expect(page.locator('.practice-preview-evidence')).toContainText('1 facts practiced · 1/6 solved at least once');
+	await press(page, 'Escape');
+	await expect(partial).toBeFocused();
 });
 
 test('Practice stays playable and shows session-only persistence when saving fails', async ({ page }) => {
@@ -193,6 +214,29 @@ for (const viewport of [
 		await capture('home');
 		await page.locator('[data-practice-operation="add"]').click();
 		await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
+		const prompt = page.locator('#practice-screen [data-input-prompts]');
+		const promptBounds = await prompt.boundingBox();
+		if (!promptBounds) throw new Error('Practice input prompts are missing');
+		const columns = await page.locator('.practice-topic-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+		const rows = Math.ceil(18 / columns);
+		for (let row = 1; row < rows; row++) {
+			await press(page, 'ArrowDown');
+			await expect(page.locator(`[data-practice-topic="add-make-${3 + row * columns}"]`)).toBeFocused();
+			const focused = await page.locator('[data-practice-topic]:focus').boundingBox();
+			const footer = await prompt.boundingBox();
+			const panel = await page.locator('.practice-content').boundingBox();
+			if (!focused || !footer || !panel) throw new Error('Practice navigation bounds are missing');
+			expect(footer.y).toBeCloseTo(promptBounds.y);
+			expect(footer.y + footer.height).toBeLessThanOrEqual(viewport.height - 12);
+			expect(focused.y).toBeGreaterThanOrEqual(panel.y + 12);
+			expect(focused.y + focused.height).toBeLessThanOrEqual(panel.y + panel.height - 12);
+			expect(footer.y - focused.y - focused.height).toBeGreaterThanOrEqual(28);
+		}
+		await page.screenshot({ path: testInfo.outputPath('addition-bottom-row.png') });
+		for (let row = rows - 2; row >= 0; row--) {
+			await press(page, 'ArrowUp');
+			await expect(page.locator(`[data-practice-topic="add-make-${3 + row * columns}"]`)).toBeFocused();
+		}
 		await capture('addition-collection');
 		await page.locator('[data-practice-back]').click();
 		await page.locator('[data-practice-operation="subtract"]').click();

@@ -15,6 +15,30 @@ const SYMBOLS: Record<EquationOperation, string> = { multiply: '×', divide: '÷
 const PONDS: readonly MathDifficulty[] = ['easy', 'medium', 'expert'];
 const RELATED_OPERATIONS: Readonly<Record<EquationOperation, string>> = { add: 'subtraction', subtract: 'addition', multiply: 'division', divide: 'multiplication' };
 
+const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence): TemplateResult | typeof nothing {
+	const fact = topic.facts[0];
+	if (!fact) return nothing;
+	const number = topic.operation === 'add' ? fact.result : topic.operation === 'divide' ? fact.right : fact.left;
+	const caption = topic.kind === 'make' ? 'Make' : topic.operation === 'multiply' ? 'Times table' : 'Divide by';
+	const complete = summary.status === 'Practiced';
+	const status = complete ? 'All solved' : summary.status === 'New' ? 'New' : 'In progress';
+	const filled = summary.total > 0 ? summary.solved / summary.total * 100 : 0;
+	return html`<button type="button" class="practice-topic" data-practice-topic=${topic.id} data-complete=${String(complete)}
+		aria-label=${`${topic.label}. ${status}. ${summary.attempted} facts practiced. ${summary.solved} of ${summary.total} facts solved at least once.`}>
+		<span class="practice-topic-caption" aria-hidden="true">${caption}</span>
+		<span class="practice-topic-ring" aria-hidden="true">
+			<svg viewBox="0 0 110 110" focusable="false">
+				<circle class="practice-topic-track" cx="55" cy="55" r="48"></circle>
+				<circle class="practice-topic-fill" cx="55" cy="55" r="48" pathLength="100"
+					stroke-dasharray=${`${filled} 100`} visibility=${filled > 0 ? 'visible' : 'hidden'}></circle>
+			</svg>
+			<strong class="practice-topic-number">${number}</strong>
+			${complete ? html`<span class="practice-topic-check">✓</span>` : nothing}
+		</span>
+		<span class="practice-topic-status" aria-hidden="true">${status}</span>
+	</button>`;
+};
+
 const persistenceNotice = function(actions: ScreenSpecActions): TemplateResult | typeof nothing {
 	return actions.getPracticePersistence() === 'session-only'
 		? html`<p class="practice-save-status" role="status">Practice progress lasts for this session only. Device saving is unavailable.</p>`
@@ -34,11 +58,8 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 
 	const evidence = function(summary: PracticeTopicEvidence): TemplateResult {
 		const { status, attempted, solved, total } = summary;
-		const detail = state.view === 'collection'
-			? `${attempted} practiced · ${solved}/${total} solved`
-			: `${attempted} facts practiced · ${solved}/${total} solved at least once`;
-		return html`${state.view === 'collection' && status === 'New' ? nothing : html`<span class="practice-status">${status}</span>`}
-			<span class="practice-evidence">${detail}</span>`;
+		return html`<span class="practice-status">${status}</span>
+			<span class="practice-evidence">${attempted} facts practiced · ${solved}/${total} solved at least once</span>`;
 	};
 
 	const home = function(): TemplateResult {
@@ -65,11 +86,10 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 	const collection = function(): TemplateResult {
 		const progress = actions.getPracticeProgress();
 		return html`<h1 class="pond-title text-gold">${operationLabels[state.operation]}</h1>
+			<p class="practice-topic-hint">Fill each ring by solving different facts.</p>
 			<div class="practice-topic-grid" role="group" aria-label=${`${operationLabels[state.operation]} topics`}>
-				${PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === state.operation; }).map(function(topic): TemplateResult {
-					return html`<button type="button" class="practice-topic" data-practice-topic=${topic.id}>
-						<strong>${topic.label}</strong>${evidence(practiceTopicEvidence(progress, topic))}
-					</button>`;
+				${PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === state.operation; }).map(function(topic) {
+					return topicTile(topic, practiceTopicEvidence(progress, topic));
 				})}
 			</div>`;
 	};
