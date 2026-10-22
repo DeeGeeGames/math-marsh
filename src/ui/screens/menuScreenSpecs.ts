@@ -148,10 +148,10 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
 
           <div class="menu-actions mt-5 sm:mt-7">
             <button @click=${actions.openModeSelect} class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
-              <span>Arcade</span><small>Play for a high score</small>
+              Arcade
             </button>
             <button @click=${actions.openPractice} class="btn-primary menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
-              <span>Practice</span><small>Work on specific math skills</small>
+              Practice
             </button>
             <div class="menu-secondary-actions">
               <button @click=${actions.openSkitGallery} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">

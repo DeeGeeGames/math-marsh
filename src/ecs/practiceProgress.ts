@@ -11,7 +11,7 @@ export type PracticeProgress = Readonly<{
   preservedValue?: unknown;
 }>;
 
-export type PracticeTopicStatus = 'New' | 'Practising' | 'Practised';
+export type PracticeTopicStatus = 'New' | 'Practicing' | 'Practiced';
 
 const factIds = new Set(PRACTICE_TOPICS.flatMap(topic => practiceFacts(topic, true).map(fact => fact.id)));
 const isRecord = function(value: unknown): value is Record<string, unknown> {
@@ -102,5 +102,5 @@ export const practiceTopicEvidence = function(progress: PracticeProgress, topic:
 export const practiceTopicStatus = function(progress: PracticeProgress, topic: PracticeTopic, related = false): PracticeTopicStatus {
   const evidence = practiceTopicEvidence(progress, topic, related);
   if (evidence.attempted === 0) return 'New';
-  return evidence.solved === evidence.total ? 'Practised' : 'Practising';
+  return evidence.solved === evidence.total ? 'Practiced' : 'Practicing';
 };

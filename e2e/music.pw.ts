@@ -88,7 +88,7 @@ test('starting a game through normal controls reaches the new pulse layer', asyn
 	await page.keyboard.press('Space', { delay: 200 });
 	await page.getByText('Built with').waitFor();
 	await page.keyboard.press('Space', { delay: 200 });
-	await page.getByRole('button', { name: 'Arcade Play for a high score', exact: true }).click();
+	await page.getByRole('button', { name: 'Arcade', exact: true }).click();
 	await page.locator('[data-operation="add"]').click();
 	await page.locator('[data-next-to-pond]').click();
 	await page.locator('[data-difficulty="easy"]').click();

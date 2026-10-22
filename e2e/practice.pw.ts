@@ -38,7 +38,7 @@ const seedProfiles = async function(page: Page, returning = false, failSaving = 
 };
 
 const openPractice = async function(page: Page): Promise<void> {
-	await page.getByRole('button', { name: 'Practice Work on specific math skills', exact: true }).click();
+	await page.getByRole('button', { name: 'Practice', exact: true }).click();
 	await expect(page.locator('#practice-screen')).toBeVisible();
 };
 
@@ -51,7 +51,7 @@ test('new Practice journey preserves options and pond across Back, with keyboard
 	await seedProfiles(page);
 	await page.goto('/');
 	await skipSplash(page);
-	await expect(page.getByRole('button', { name: 'Arcade Play for a high score', exact: true })).toBeFocused();
+	await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
 	await openPractice(page);
 	await expect(page.locator('[data-practice-continue]')).toHaveCount(0);
 	await expect(page.locator('[data-practice-operation]')).toHaveCount(4);
@@ -115,8 +115,8 @@ test('returning progress is truthful, Continue is fresh, and profiles keep indep
 	await page.locator('[data-practice-continue]').click();
 	await expect(page.locator('[data-practice-related]')).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('.practice-pond-summary')).toContainText('Medium');
-	await expect(page.locator('.practice-preview-evidence')).toContainText('Practising');
-	await expect(page.locator('.practice-preview-evidence')).toContainText('1 facts practised');
+	await expect(page.locator('.practice-preview-evidence')).toContainText('Practicing');
+	await expect(page.locator('.practice-preview-evidence')).toContainText('1 facts practiced');
 	await expect(page.locator('#practice-screen')).toContainText('33%');
 	await page.locator('[data-practice-start]').click();
 	await expect(page.locator('#game-canvas')).toBeVisible();
@@ -130,7 +130,7 @@ test('returning progress is truthful, Continue is fresh, and profiles keep indep
 	await expect(page.locator('[data-practice-continue]')).toHaveCount(0);
 	await openTimesTopic(page);
 	await expect(page.locator('.practice-preview-evidence .practice-status')).toHaveText('New');
-	await expect(page.locator('.practice-preview-evidence')).toContainText('0 facts practised');
+	await expect(page.locator('.practice-preview-evidence')).toContainText('0 facts practiced');
 });
 
 test('Practice stays playable and shows session-only persistence when saving fails', async ({ page }) => {
@@ -208,7 +208,7 @@ for (const viewport of [
 		}
 		await capture('results');
 		await page.getByRole('button', { name: 'Main menu', exact: true }).click();
-		await page.getByRole('button', { name: 'Arcade Play for a high score', exact: true }).click();
+		await page.getByRole('button', { name: 'Arcade', exact: true }).click();
 		await capture('arcade-math');
 		await page.locator('[data-operation="add"]').click();
 		await page.locator('[data-next-to-pond]').click();
@@ -227,7 +227,7 @@ test('Practice can be browsed and started with touch only', async ({ browser }) 
 		await page.locator('#studioSplash').tap({ delay: 200 });
 		await page.getByText('Built with').waitFor();
 		await page.locator('#engineSplash').tap({ delay: 200 });
-		await page.getByRole('button', { name: 'Practice Work on specific math skills', exact: true }).tap();
+		await page.getByRole('button', { name: 'Practice', exact: true }).tap();
 		await expect(page.locator('#practice-screen [data-input-prompts]')).toBeHidden();
 		await page.locator('[data-practice-operation="add"]').tap();
 		await page.locator('[data-practice-topic="add-make-5"]').tap();

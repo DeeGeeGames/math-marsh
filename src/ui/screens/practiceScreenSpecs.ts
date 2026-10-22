@@ -1,4 +1,4 @@
-import { html, render, type TemplateResult } from 'lit-html';
+import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { GAME_CONFIG } from '../../config';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { PRACTICE_SESSION_LENGTH, type PracticeSelection } from '../../ecs/practiceSession';
@@ -39,14 +39,13 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 		const progress = actions.getPracticeProgress();
 		const summary = practiceTopicEvidence(progress, topic, includeRelated);
 		return html`<span class="practice-status">${practiceTopicStatus(progress, topic, includeRelated)}</span>
-			<span class="practice-evidence">${summary.attempted} facts practised · ${summary.solved}/${practiceFacts(topic, includeRelated).length} solved at least once</span>`;
+			<span class="practice-evidence">${summary.attempted} facts practiced · ${summary.solved}/${practiceFacts(topic, includeRelated).length} solved at least once</span>`;
 	};
 
 	const home = function(): TemplateResult {
 		const previous = actions.getPracticeProgress().lastSelection;
 		const previousTopic = previous ? practiceTopic(previous.topicId) : undefined;
 		return html`<h1 class="pond-title text-gold">Practice</h1>
-			<p>Work on specific math skills. Choose a topic at any time.</p>
 			${previous && previousTopic ? html`<button type="button" class="btn-success practice-continue" data-practice-continue>
 				<strong>Continue: ${previousTopic.label}</strong>
 				<span>${previous.related ? 'Related facts on' : 'Related facts off'} · ${difficultyLabels[previous.pond]} pond · start a fresh session</span>
@@ -54,25 +53,24 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 			<div class="practice-operation-grid" role="group" aria-label="Practice operations">
 				${OPERATIONS.map(function(item): TemplateResult {
 					const topics = PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === item; });
-					const practised = topics.filter(function(topic): boolean { return practiceTopicStatus(actions.getPracticeProgress(), topic) === 'Practised'; }).length;
+					const practiced = topics.filter(function(topic): boolean { return practiceTopicStatus(actions.getPracticeProgress(), topic) === 'Practiced'; }).length;
 					return html`<button type="button" class="mode-card practice-operation" data-practice-operation=${item} data-operation=${item}>
 						<span class="mode-symbol" aria-hidden="true">${SYMBOLS[item]}</span><strong>${operationLabels[item]}</strong>
-						<span>${topics.length} topics · ${practised} practised</span>
+						<span>${topics.length} topics · ${practiced} practiced</span>
 					</button>`;
 				})}
-			</div><p class="practice-note">Practice never changes Arcade scores, unlocks, or math steps.</p>`;
+			</div>`;
 	};
 
 	const collection = function(): TemplateResult {
 		return html`<h1 class="pond-title text-gold">${operationLabels[operation]}</h1>
-			<p>Pick a topic. Every topic is available.</p>
 			<div class="practice-topic-grid" role="group" aria-label=${`${operationLabels[operation]} topics`}>
 				${PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === operation; }).map(function(topic): TemplateResult {
 					return html`<button type="button" class="practice-topic" data-practice-topic=${topic.id}>
 						<strong>${topic.label}</strong>${evidence(topic)}
 					</button>`;
 				})}
-			</div><p class="practice-note">Practised means every fact was solved at least once. It is not a mastery rating.</p>`;
+			</div>`;
 	};
 
 	const preview = function(topic: PracticeTopic): TemplateResult {
@@ -84,12 +82,9 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 			<div class="practice-preview-evidence">${evidence(topic, related)}</div>
 			<div class="practice-examples" aria-label="Example equations">${sample.map(function(fact): TemplateResult { return html`<span>${practiceFactLabel(fact)}</span>`; })}</div>
 			<button type="button" class="btn-secondary practice-option" data-practice-related aria-pressed=${String(related)}>
-				<strong>Related facts: ${related ? 'On' : 'Off'}</strong><span>Include inverse ${topic.operation === 'multiply' ? 'division' : topic.operation === 'divide' ? 'multiplication' : topic.operation === 'add' ? 'subtraction' : 'addition'} equations</span>
+				<strong>Related facts: ${related ? 'On' : 'Off'}</strong><span>Include related ${topic.operation === 'multiply' ? 'division' : topic.operation === 'divide' ? 'multiplication' : topic.operation === 'add' ? 'subtraction' : 'addition'} problems</span>
 			</button>
-			<p class="practice-note">${facts.length} equations · reversed and inverse facts keep separate accuracy.</p>
 			<div class="practice-pond-summary"><button type="button" class="btn-secondary" data-practice-change-pond><span>Pond: <strong>${difficultyLabels[pond]}</strong></span><span>Change pond</span></button></div>
-			<p>${PRACTICE_SESSION_LENGTH} solved equations per session. Wrong answers count toward accuracy; retry the same question.</p>
-			<p class="practice-note">Usual pond timer, animals, and damage. Timeout or exit gives a partial summary. Progress has no speed requirement.</p>
 			${summary.attempts > 0 ? html`<p class="practice-note">Topic accuracy: ${summary.accuracy === null ? 'No attempts' : `${Math.round(summary.accuracy * 100)}%`} · ${summary.revisit.length} facts to revisit</p>` : ''}
 			<button type="button" class="btn-success practice-start" data-practice-start>Start practice · ${PRACTICE_SESSION_LENGTH} equations</button>`;
 	};
@@ -111,7 +106,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 		if (!content) return;
 		render(html`<button type="button" class="btn-secondary setup-back" data-practice-back>‹ Back</button>
 			${view === 'home' ? home() : view === 'collection' ? collection() : view === 'pond' ? pondChooser() : selectedTopic ? preview(selectedTopic) : home()}
-			<p class="practice-save-status" role="status">${persistenceCopy(actions)}</p>`, content);
+			${actions.getPracticePersistence() === 'session-only' ? html`<p class="practice-save-status" role="status">${persistenceCopy(actions)}</p>` : nothing}`, content);
 		if (focusSelector) focus(root, focusSelector);
 	};
 
@@ -193,7 +188,7 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 				<h2>Facts to revisit</h2>
 				${revisit.length ? html`<ul class="practice-revisit">${revisit.map(function(fact): TemplateResult { return html`<li>${practiceFactLabel(fact)}</li>`; })}</ul>` : html`<p>${attempts.length ? 'No wrong attempts in this session.' : 'Submit answers to build a revisit list.'}</p>`}
 				<p class="practice-save-status" role="status">${persistenceCopy(actions)}</p>
-				<div class="game-over-actions"><button type="button" class="btn-success" data-practice-again ?disabled=${!session} @click=${actions.repeatPractice}>Practise again</button>
+				<div class="game-over-actions"><button type="button" class="btn-success" data-practice-again ?disabled=${!session} @click=${actions.repeatPractice}>Practice again</button>
 				<button type="button" class="btn-primary" @click=${actions.openPractice}>Choose another topic</button>
 				<button type="button" class="btn-secondary" @click=${actions.goToMenu}>Main menu</button></div>`, content);
 		},

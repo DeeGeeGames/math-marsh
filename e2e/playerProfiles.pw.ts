@@ -57,7 +57,7 @@ test('first-use naming and roster return keep controller-friendly focus', async 
   await expect(continueButton).toBeFocused();
   await pressActionKey(page, 'Enter');
 
-  const startGame = page.getByRole('button', { name: 'Arcade Play for a high score' });
+  const startGame = page.getByRole('button', { name: 'Arcade' });
   const badge = page.locator('#player-profile-badge');
   await expect(startGame).toBeFocused();
   await expect(badge).toHaveAttribute('aria-label', 'Active player Player. Open player roster');
@@ -115,7 +115,7 @@ test('profile actions work in a sandbox without allow-forms', async ({ page }) =
   await add.getByLabel('Player name').fill('Jordan');
   await add.getByLabel('Player name').press('Enter');
   await expect(game.locator('#player-profile-badge')).toContainText('Jordan');
-  await expect(game.getByRole('button', { name: 'Arcade Play for a high score' })).toBeFocused();
+  await expect(game.getByRole('button', { name: 'Arcade' })).toBeFocused();
 
   await game.locator('#player-profile-badge').click();
   await game.getByRole('button', { name: 'Manage players' }).click();
@@ -151,7 +151,7 @@ for (const failure of ['unavailable', 'quota', 'active-player'] as const) {
     await skipSplash(page);
     await submitPlayerName(page, 'Mira');
 
-    const startGame = page.getByRole('button', { name: 'Arcade Play for a high score' });
+    const startGame = page.getByRole('button', { name: 'Arcade' });
     await expect(startGame).toBeFocused();
     await expect(page.locator('#player-profile-badge')).toContainText('Mira');
     await expect(page.locator('#player-save-notice')).toBeVisible();
@@ -200,7 +200,7 @@ test('Enter submits first-use naming without activating the next screen', async 
   await nameInput.fill('Sam D');
   await nameInput.press('Enter');
 
-  const startGame = page.getByRole('button', { name: 'Arcade Play for a high score' });
+  const startGame = page.getByRole('button', { name: 'Arcade' });
   await expect(startGame).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Pick your math' })).toHaveCount(0);
   await expect(page.locator('#player-save-notice')).toBeHidden();
@@ -361,8 +361,8 @@ test('gamepad select and back use the active profile screens and restore focus',
   await expect(continueButton).toBeFocused();
 
   await setGamepadButton(page, 0, true);
-  await page.getByRole('button', { name: 'Arcade Play for a high score' }).waitFor();
-  await expect(page.getByRole('button', { name: 'Arcade Play for a high score' })).toBeFocused();
+  await page.getByRole('button', { name: 'Arcade' }).waitFor();
+  await expect(page.getByRole('button', { name: 'Arcade' })).toBeFocused();
   await setGamepadButton(page, 0, false);
   await page.waitForTimeout(150);
 

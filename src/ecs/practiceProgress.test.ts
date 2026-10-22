@@ -18,14 +18,14 @@ describe('Practice evidence', function() {
     expect(practiceTopicStatus(empty, topic)).toBe('New');
     const wrong = recordPracticeEvidence(empty, { factId: first.id, correct: false });
     const retried = recordPracticeEvidence(wrong, { factId: first.id, correct: true });
-    expect(practiceTopicStatus(retried, topic)).toBe('Practising');
+    expect(practiceTopicStatus(retried, topic)).toBe('Practicing');
     expect(practiceTopicEvidence(retried, topic)).toMatchObject({
       attempted: 1, solved: 1, attempts: 2, correct: 1, accuracy: 0.5, revisit: [first],
     });
     const complete = topic.facts.reduce((progress, fact) =>
       recordPracticeEvidence(progress, { factId: fact.id, correct: true }), retried);
-    expect(practiceTopicStatus(complete, topic)).toBe('Practised');
-    expect(practiceTopicStatus(complete, topic, true)).toBe('Practising');
+    expect(practiceTopicStatus(complete, topic)).toBe('Practiced');
+    expect(practiceTopicStatus(complete, topic, true)).toBe('Practicing');
     expect(practiceTopicEvidence(empty, topic).accuracy).toBeNull();
     expect(empty.facts).toEqual({});
   });
