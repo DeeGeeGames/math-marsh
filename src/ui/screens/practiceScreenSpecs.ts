@@ -90,14 +90,14 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 	};
 
 	const pondChooser = function(): TemplateResult {
-		return html`<h1 class="pond-title text-gold">Choose your pond</h1><p>Topic and related facts stay as selected.</p>
+		return html`<h1 class="pond-title text-gold">Choose your pond</h1>
 			<div class="practice-pond-grid" role="group" aria-label="Practice pond difficulty">${PONDS.map(function(item): TemplateResult {
 				const board = BOARD_SIZES[item];
 				const enemies = GAME_CONFIG.MATH_PROGRESSION.ENEMY_COUNT[item];
 				return html`<button type="button" class="difficulty-choice ${item} practice-pond" data-practice-pond=${item} aria-pressed=${String(pond === item)}>
-					<strong>${difficultyLabels[item]}</strong><span>${board.width} × ${board.height} spaces</span><span>${enemies} ${enemies === 1 ? 'animal' : 'animals'}</span>
+					<strong>${difficultyLabels[item]}</strong><span>${board.width} × ${board.height} spaces</span><span>${enemies} ${enemies === 1 ? 'enemy' : 'enemies'}</span>
 				</button>`;
-			})}</div><p class="practice-note">The selected pond uses its usual timer, enemies, damage, and failure rules.</p>
+			})}</div>
 			<button type="button" class="btn-success" data-practice-pond-done>Done</button>`;
 	};
 

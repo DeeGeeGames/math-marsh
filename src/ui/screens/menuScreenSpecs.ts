@@ -359,7 +359,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
   const difficultyHelp = MATH_DIFFICULTIES.map(function(difficulty): string {
     const board = BOARD_SIZES[difficulty];
     const enemies = GAME_CONFIG.MATH_PROGRESSION.ENEMY_COUNT[difficulty];
-    return `<li class="setup-help-row"><strong>${difficultyLabels[difficulty]}</strong><span>${board.width} × ${board.height} spaces · ${enemies} ${enemies === 1 ? 'animal' : 'animals'}</span></li>`;
+    return `<li class="setup-help-row"><strong>${difficultyLabels[difficulty]}</strong><span>${board.width} × ${board.height} spaces · ${enemies} ${enemies === 1 ? 'enemy' : 'enemies'}</span></li>`;
   }).join('');
 
   return {
@@ -392,7 +392,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
               <p class="setup-step-indicator" aria-label="Step 2 of 2">2 of 2 <span aria-hidden="true">● ●</span></p>
             </div>
             <h1 class="pond-title text-gold drop-shadow-lg">Choose your pond</h1>
-            <p>Bigger ponds. More animals.</p>
+            <p>Bigger ponds. More enemies.</p>
           </header>
           <div class="pond-choices" role="group" aria-label="Pond difficulty">
             ${difficultyChoices}
@@ -426,7 +426,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
           <header class="setup-secondary-heading">
             <button type="button" class="btn-secondary setup-back" data-close-setup-panel>‹ Done</button>
             <h1 class="pond-title text-gold drop-shadow-lg" id="difficulty-help-heading">What changes?</h1>
-            <p>Each pond has a different size and number of animals.</p>
+            <p>Each pond has a different size and number of enemies.</p>
           </header>
           <ul class="setup-help-list">${difficultyHelp}</ul>
         </section>
