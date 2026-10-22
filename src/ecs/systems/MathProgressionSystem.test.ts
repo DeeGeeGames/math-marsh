@@ -1,3 +1,4 @@
+import { emptyPracticeProgress } from '../practiceProgress';
 import { describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import type { GameEngine } from '../Engine';
@@ -28,6 +29,7 @@ const profilesFor = function(progress = initialSavedMathProgress()): PlayerProfi
 			mathProgress: progress,
 			onboarding: { basics: 'pending', operands: 'pending', operandAndResult: 'pending' },
 			skitProgress: [],
+    practiceProgress: emptyPracticeProgress(),
 		}],
 		activeProfileId: 'test-player',
 		initialLearnerData: initialPlayerLearnerData(),

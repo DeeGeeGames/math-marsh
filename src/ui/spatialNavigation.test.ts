@@ -9,6 +9,23 @@ const rect = function rect(left: number, top: number, width = 100, height = 50):
 };
 
 describe('findSpatialTargetIndex', () => {
+	test('returns from either first-row card to the wide Continue button before Back', () => {
+		const rects = [
+			rect(0, 0, 100, 50),
+			rect(0, 100, 1000, 100),
+			rect(0, 240, 480, 140),
+			rect(520, 240, 480, 140),
+			rect(0, 400, 480, 140),
+			rect(520, 400, 480, 140),
+		];
+		expect(findSpatialTargetIndex(rects, 1, 'down')).toBe(2);
+		expect(findSpatialTargetIndex(rects, 2, 'up')).toBe(1);
+		expect(findSpatialTargetIndex(rects, 3, 'up')).toBe(1);
+		expect(findSpatialTargetIndex(rects, 4, 'up')).toBe(2);
+		expect(findSpatialTargetIndex(rects, 5, 'up')).toBe(3);
+		expect(findSpatialTargetIndex(rects, 1, 'up')).toBe(0);
+	});
+
 	test('moves in the requested visual direction on a grid', () => {
 		const rects = [
 			rect(0, 0),

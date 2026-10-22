@@ -4,6 +4,8 @@ import type { TemplateResult } from 'lit-html';
 import type { InputPromptItem } from './inputPrompts';
 
 export type UIScreen = Exclude<SettingsReturnScreen, 'tutorial'>
+	| 'practice'
+	| 'practiceResults'
 	| 'settings'
 	| 'tutorialOffer'
 	| 'controllerRecovery'

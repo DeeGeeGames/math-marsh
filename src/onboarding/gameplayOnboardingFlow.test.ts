@@ -1,3 +1,4 @@
+import { emptyPracticeProgress } from '../ecs/practiceProgress';
 import { describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
 import * as audio from '../audio/audio';
@@ -32,6 +33,7 @@ const profilesFor = function(progress: SavedMathProgress): PlayerProfilesState {
 			mathProgress: progress,
 			onboarding: { basics: 'pending', operands: 'pending', operandAndResult: 'pending' },
 			skitProgress: [],
+    practiceProgress: emptyPracticeProgress(),
 		}],
 		activeProfileId: 'test-player',
 		initialLearnerData: initialPlayerLearnerData(),

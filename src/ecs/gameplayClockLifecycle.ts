@@ -8,6 +8,8 @@ const PAUSED_GAMEPLAY_CLOCK_SCREENS = [
   'menu',
   'skitGallery',
   'modeSelect',
+      'practice',
+      'practiceResults',
   'howToPlay',
   'tutorialOffer',
   'levelComplete',

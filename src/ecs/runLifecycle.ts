@@ -1,3 +1,4 @@
+import { finishPractice } from './practiceLifecycle';
 import type { GameEngine } from './Engine';
 import type { PlayerCollisionEntity } from './queries';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
@@ -12,7 +13,10 @@ export function triggerGameOver(ecs: GameEngine, player: PlayerCollisionEntity, 
   player.components.player.gameOverPending = true;
   startDeathAnimation(ecs, player.id, player.components.position.rotation ?? 0);
   player.components.timers.deathDelay = createTimer(ANIMATION_CONFIG.DEATH.DURATION / 1000, {
-    onComplete: () => { void ecs.setScreen('gameOver', {}); },
+    onComplete: () => {
+      if (ecs.tryGetResource('practiceSession')) finishPractice(ecs);
+      else void ecs.setScreen('gameOver', {});
+    },
   });
 }
 

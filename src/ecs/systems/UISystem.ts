@@ -1,3 +1,5 @@
+import { practiceTopic } from '../../math/practiceTopics';
+import { PRACTICE_SESSION_LENGTH } from '../practiceSession';
 import type { GameSystemRegistrar } from '../Engine';
 import { gameplayLevelLabel, updateGameplayUI } from '../../ui/UIManager';
 import { operationLabels } from '../../ui/labels';
@@ -27,6 +29,7 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
       'gameplayOnboardingSession',
       'equationMode',
       'mathSession',
+      'practiceSession',
       'mathRoundSummary',
       'gameplayClock',
     ])
@@ -42,10 +45,14 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         gameplayOnboardingSession,
         equationMode,
         mathSession,
+        practiceSession,
         mathRoundSummary,
         gameplayClock,
       } = resources;
-      const level = tutorialHudLabel(gameplayOnboardingSession)
+      const practiceLabel = practiceSession && !gameplayOnboardingSession.active
+        ? `Practice · ${practiceTopic(practiceSession.selection.topicId)?.label ?? 'Topic'} - ${practiceSession.solved}/${PRACTICE_SESSION_LENGTH} solved · ${mathDifficulty}`
+        : undefined;
+      const level = practiceLabel ?? tutorialHudLabel(gameplayOnboardingSession)
         ?? (mathSession
           ? `Level ${currentLevel} · ${mathDifficulty} - ${mathStepLabel(mathSession.tracks[equationMode.operation].boardStep, equationMode.operation)}`
           : gameplayLevelLabel(gameMode, mathDifficulty, currentLevel));

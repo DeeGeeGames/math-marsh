@@ -1,3 +1,5 @@
+import { currentPracticeFact, practiceEquationMode, submittedPracticeFact, PRACTICE_SESSION_LENGTH } from './practiceSession';
+import { submitPracticeAttempt } from './practiceLifecycle';
 import { gameplayTimeMs } from './gameplayClock';
 import type { GameEngine } from './Engine';
 import type { PlayerCollisionEntity, MathProblemEntityWithRenderable } from './queries';
@@ -87,6 +89,8 @@ export function handleEquationProblemSelection(
   resources: EquationSelectionResources,
 ): void {
   const { equationMode, gameMode, mathDifficulty } = resources;
+  const practice = ecs.tryGetResource('practiceSession');
+  if (practice && (practice.outcome !== 'active' || practice.solved >= PRACTICE_SESSION_LENGTH)) return;
   if (equationMode.target === null) return;
   if (equationMode.feedback?.kind === 'correct') return;
 
@@ -120,7 +124,9 @@ export function handleEquationProblemSelection(
 
   const selectedProblems = findSelectedProblems(selectedProblemIds, mathProblems);
   const selectedValues = selectedProblemValues(selectedProblems);
-  const isCorrect = evaluateEquationSelection(pendingMode, selectedValues);
+  const submittedFact = practice ? submittedPracticeFact(practice, pendingMode, selectedValues) : undefined;
+  const isCorrect = practice ? submittedFact !== undefined : evaluateEquationSelection(pendingMode, selectedValues);
+  if (practice) submitPracticeAttempt(ecs, { factId: submittedFact?.id ?? currentPracticeFact(practice).id, correct: isCorrect });
 
   if (!isCorrect) {
     playSound('incorrect');
@@ -152,11 +158,14 @@ export function handleEquationProblemSelection(
   });
 
   const clearedThisLevel = pendingMode.clearedThisLevel + selectedProblemIds.length;
-  const nextMode = mathSession
+  const nextPractice = ecs.tryGetResource('practiceSession');
+  const nextMode = nextPractice
+    ? practiceEquationMode(nextPractice, pendingMode.level, clearedThisLevel)
+    : mathSession
     ? equationModeForMathSession(mathSession, gameMode, pendingMode.level, clearedThisLevel, mathDifficulty)
     : createEquationModeState(pendingMode.level, mathDifficulty, gameMode, clearedThisLevel);
 
-  const nextCandidate = chooseEquationCandidate(
+  const nextCandidate = nextPractice ? undefined : chooseEquationCandidate(
     nextMode,
     activeEquationOperands(mathProblems),
     { enforceOperandRanges: mathSession !== null },

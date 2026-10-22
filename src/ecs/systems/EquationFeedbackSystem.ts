@@ -1,3 +1,5 @@
+import { finishPractice } from '../practiceLifecycle';
+import { PRACTICE_SESSION_LENGTH } from '../practiceSession';
 import { PARTIAL_SELECTION_DURATION_MS } from '../partialSelection';
 import { gameplayTimeMs } from '../gameplayClock';
 import type { GameSystemRegistrar } from '../Engine';
@@ -37,6 +39,11 @@ export function addEquationFeedbackSystemToEngine(systems: GameSystemRegistrar):
       const nextMode = nextEquationModeForFeedback(feedback, currentTime);
       if (!nextMode) return;
 
+      const practice = ecs.tryGetResource('practiceSession');
+      if (practice && practice.solved >= PRACTICE_SESSION_LENGTH) {
+        finishPractice(ecs);
+        return;
+      }
       ecs.setResource('equationMode', nextMode);
     });
 }

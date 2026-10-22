@@ -41,15 +41,20 @@ const DIRECTION_EPSILON_PX = 4;
 
 function scoreCandidate(
 	current: Point,
-	candidate: Point,
+	candidateRect: SpatialRect,
 	direction: FocusDirection,
 	index: number,
 ): ScoredIndex | null {
+	const candidate = center(candidateRect);
 	const axis = navigationAxis[direction];
 	const forwardDistance = (candidate[axis.forward] - current[axis.forward]) * axis.sign;
 	if (forwardDistance <= DIRECTION_EPSILON_PX) return null;
 
-	const crossDistance = Math.abs(candidate[axis.cross] - current[axis.cross]);
+	// A wide button spans every column underneath it. Vertical navigation
+	// should measure its nearest horizontal edge, not penalize its center.
+	const crossDistance = direction === 'up' || direction === 'down'
+		? Math.max(candidateRect.left - current.x, current.x - candidateRect.right, 0)
+		: Math.abs(candidate[axis.cross] - current[axis.cross]);
 	return {
 		index,
 		score: forwardDistance * forwardDistance + 4 * crossDistance * crossDistance,
@@ -74,7 +79,7 @@ export function findSpatialTargetIndex(
 				&& Math.min(currentRect.bottom, rect.bottom) <= Math.max(currentRect.top, rect.top)) {
 				return null;
 			}
-			return scoreCandidate(currentCenter, center(rect), direction, index);
+			return scoreCandidate(currentCenter, rect, direction, index);
 		})
 		.filter((candidate): candidate is ScoredIndex => candidate !== null)
 		.reduce<ScoredIndex | null>((best, candidate) => {

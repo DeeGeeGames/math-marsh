@@ -1,3 +1,4 @@
+import { createPracticeScreenSpec, createPracticeResultsScreenSpec } from './screens/practiceScreenSpecs';
 import { createSkitScreenSpec } from './screens/skitScreen';
 import { createSkitGalleryScreenSpec } from './screens/skitGalleryScreen';
 import { createSplashScreenSpec } from './screens/splashScreen';
@@ -44,6 +45,8 @@ export function createScreenSpecs(
     playerRename: createPlayerRenameScreenSpec(actions),
     playerDelete: createPlayerDeleteScreenSpec(actions),
     modeSelect: createModeSelectScreenSpec(actions),
+    practice: createPracticeScreenSpec(actions),
+    practiceResults: createPracticeResultsScreenSpec(actions),
     howToPlay: createHowToPlayScreenSpec(actions),
     tutorialOffer: createTutorialOfferScreenSpec(actions),
     playing: createPlayingScreenSpec(actions),

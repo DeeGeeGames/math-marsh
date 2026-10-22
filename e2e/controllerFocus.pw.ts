@@ -87,6 +87,7 @@ const configureControllerPage = async function(page: Page): Promise<void> {
 };
 
 test('mouse and touch opened Settings keep rendered focus visible during controller navigation', async ({ browser }, testInfo) => {
+  testInfo.setTimeout(60_000);
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, hasTouch: true });
   const page = await context.newPage();
   await configureControllerPage(page);
@@ -163,12 +164,53 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     // navigation keeps it visible as well.
     await setGamepadButton(page, 1, true);
     await setGamepadButton(page, 1, false);
-    const startGame = page.getByRole('button', { name: 'Start Game', exact: true });
+    const startGame = page.getByRole('button', { name: 'Arcade', exact: true });
     await expect(startGame).toBeFocused();
-    expect((await focusStyle(page, '.menu-primary-action')).outlineStyle).toBe('solid');
+    expect((await focusStyle(page, '.menu-primary-action.btn-success')).outlineStyle).toBe('solid');
     await pressActionKey(page, 'ArrowDown');
-    await expect(page.getByRole('button', { name: 'Scenes', exact: true })).toBeFocused();
-    expect((await focusStyle(page, '#main-menu .menu-secondary-action:focus')).outlineStyle).toBe('solid');
+    await expect(page.getByRole('button', { name: 'Practice', exact: true })).toBeFocused();
+    expect((await focusStyle(page, '#main-menu .menu-primary-action:focus')).outlineStyle).toBe('solid');
+
+    // Continue through Practice using the same input-plugin controller fixture.
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const controllerPress = async function(button: number): Promise<void> {
+      await setGamepadButton(page, button, true);
+      await setGamepadButton(page, button, false);
+    };
+    await controllerPress(0);
+    await expect(page.locator('[data-practice-operation="add"]')).toBeFocused();
+    await controllerPress(13);
+    await expect(page.locator('[data-practice-operation="multiply"]')).toBeFocused();
+    await controllerPress(0);
+    await expect(page.locator('[data-practice-topic="multiply-table-1"]')).toBeFocused();
+    await controllerPress(0);
+    await expect(page.locator('[data-practice-start]')).toBeFocused();
+    await controllerPress(12);
+    await expect(page.locator('[data-practice-change-pond]')).toBeFocused();
+    await controllerPress(0);
+    await expect(page.locator('[data-practice-pond="easy"]')).toBeFocused();
+    await controllerPress(15);
+    await expect(page.locator('[data-practice-pond="medium"]')).toBeFocused();
+    await controllerPress(0);
+    await expect(page.locator('[data-practice-pond="medium"]')).toHaveAttribute('aria-pressed', 'true');
+    await controllerPress(1);
+    await expect(page.locator('[data-practice-change-pond]')).toBeFocused();
+    await expect(page.locator('.practice-pond-summary')).toContainText('Medium');
+    await controllerPress(13);
+    await expect(page.locator('[data-practice-start]')).toBeFocused();
+    await controllerPress(0);
+    await expect(page.locator('#game-canvas')).toBeVisible();
+    await controllerPress(9);
+    await expect(page.locator('#resume-btn')).toBeFocused();
+    await controllerPress(13);
+    await controllerPress(13);
+    await controllerPress(13);
+    await expect(page.locator('#quit-to-menu-btn')).toBeFocused();
+    await controllerPress(0);
+    await expect(page.getByRole('heading', { name: 'Partial practice', exact: true })).toBeVisible();
+    await expect(page.locator('[data-practice-again]')).toBeFocused();
+    await controllerPress(1);
+    await expect(startGame).toBeFocused();
 
     // A touch opens Settings after navigation and returns to pointer focus.
     await page.setViewportSize({ width: 390, height: 844 });

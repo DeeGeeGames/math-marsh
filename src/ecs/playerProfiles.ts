@@ -1,3 +1,4 @@
+import { emptyPracticeProgress, parsePracticeProgress, serializePracticeProgress, type PracticeProgress } from './practiceProgress';
 import type { EquationOperation } from './types';
 import {
   initialSavedMathProgress,
@@ -29,6 +30,7 @@ export type PlayerLearnerData = Readonly<{
   mathProgress: SavedMathProgress;
   onboarding: Readonly<Record<GameplayOnboardingKind, GameplayOnboardingCompletion>>;
   skitProgress: SkitProgress;
+  practiceProgress: PracticeProgress;
 }>;
 
 export type PlayerProfile = PlayerLearnerData & Readonly<{
@@ -83,6 +85,7 @@ export const initialPlayerLearnerData = function(): PlayerLearnerData {
     mathProgress: initialSavedMathProgress(),
     onboarding: freshOnboarding(),
     skitProgress: [],
+    practiceProgress: emptyPracticeProgress(),
   };
 };
 
@@ -132,6 +135,7 @@ const legacyLearnerData = function(storage: ProfileStorage): Readonly<{
       mathProgress: mathProgressFromStoredValue(mathStored),
       onboarding,
       skitProgress: skitProgressFromStoredValue(skitsStored),
+      practiceProgress: emptyPracticeProgress(),
     },
     complete: reads.every(read => read.ok),
   };
@@ -173,6 +177,7 @@ const learnerDataFromUnknown = (value: unknown): PlayerLearnerData | undefined =
       ),
     ])) as Record<GameplayOnboardingKind, GameplayOnboardingCompletion>,
     skitProgress: skitProgressFromStoredValue(skits),
+    practiceProgress: parsePracticeProgress(value.practiceProgress),
   };
 };
 
@@ -262,6 +267,7 @@ const serializedProfileStore = (profiles: readonly PlayerProfile[]): string => J
       mathProgress: profile.mathProgress,
       onboarding: profile.onboarding,
       skitProgress: profile.skitProgress,
+      practiceProgress: serializePracticeProgress(profile.practiceProgress),
     },
   })),
 });

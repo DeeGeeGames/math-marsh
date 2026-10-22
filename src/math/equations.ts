@@ -38,7 +38,7 @@ const randomIndex = (length: number): number => Math.floor(Math.random() * lengt
 
 const randomFrom = <T>(items: readonly T[]): T => {
   const item = items[randomIndex(items.length)];
-  if (!item) throw new Error('Cannot choose from an empty list');
+  if (item === undefined) throw new Error('Cannot choose from an empty list');
   return item;
 };
 
@@ -346,6 +346,20 @@ export const chooseEquationCandidate = (
   operands: readonly EquationOperandCandidate[],
   options: { enforceOperandRanges?: boolean } = {},
 ): EquationCandidate | undefined => {
+  if (state.promptKind === 'selectLeftOperand' || state.promptKind === 'selectRightOperand') {
+    if (state.target === null) return undefined;
+    const [left, right] = state.promptValues;
+    if (left === undefined || right === undefined) return undefined;
+    const range = state.promptKind === 'selectLeftOperand' ? state.operandRanges.left : state.operandRanges.right;
+    const available = operands.filter(operand => evaluateEquationSelection(state, [operand.value])
+      && (!options.enforceOperandRanges || (operand.value >= range.min && operand.value <= range.max)));
+    const selected = available[randomIndex(available.length)];
+    if (!selected) return undefined;
+    return {
+      operandValues: state.promptKind === 'selectLeftOperand' ? [selected.value, right] : [left, selected.value],
+      target: state.target,
+    };
+  }
   if (state.promptKind === 'selectOperandAndResult') {
     const candidates = mixedCandidates(state, operands);
     return candidates[randomIndex(candidates.length)];
@@ -373,6 +387,14 @@ export const equationProblemValuesForCandidate = (
   candidate: EquationCandidate,
   totalProblems: number,
 ): number[] => {
+  if (state.promptKind === 'selectLeftOperand' || state.promptKind === 'selectRightOperand') {
+    const missingLeft = state.promptKind === 'selectLeftOperand';
+    const answer = candidate.operandValues[missingLeft ? 0 : 1];
+    const range = missingLeft ? state.operandRanges.left : state.operandRanges.right;
+    const decoyValues = valuesInRange(range).filter(value => state.operation !== 'divide' || missingLeft || value !== 0);
+    const decoys = Array.from({ length: Math.max(0, totalProblems - 1) }, () => randomFrom(decoyValues));
+    return shuffled([answer, ...decoys]);
+  }
   if (state.promptKind === 'selectOperandAndResult') {
     const answerValues = [candidate.operandValues[1], candidate.target];
     const ranges = [state.operandRanges.right, equationResultRange(state.operation, state.operandRanges)];
@@ -398,6 +420,12 @@ export const equationSelectionText = (
   selectedValues: readonly number[],
 ): string => {
   const operation = operations[state.operation];
+  if (state.promptKind === 'selectLeftOperand') {
+    return `${selectedValues[0]?.toString() ?? '_'} ${operation.symbol} ${state.promptValues[1]} = ${state.target}`;
+  }
+  if (state.promptKind === 'selectRightOperand') {
+    return `${state.promptValues[0]} ${operation.symbol} ${selectedValues[0]?.toString() ?? '_'} = ${state.target}`;
+  }
   if (state.promptKind === 'selectOperandAndResult') {
     const operand = selectedValues[0]?.toString() ?? '_';
     const result = selectedValues[1]?.toString() ?? '_';
@@ -419,6 +447,14 @@ export const evaluateEquationSelection = (
   selectedValues: readonly number[],
 ): boolean => {
   if (state.target === null || selectedValues.length !== state.operandsRequired) return false;
+  if (state.promptKind === 'selectLeftOperand' || state.promptKind === 'selectRightOperand') {
+    const selected = selectedValues[0];
+    const left = state.promptKind === 'selectLeftOperand' ? selected : state.promptValues[0];
+    const right = state.promptKind === 'selectRightOperand' ? selected : state.promptValues[1];
+    if (left === undefined || right === undefined || !Number.isInteger(left) || !Number.isInteger(right)
+      || (state.operation === 'divide' && right === 0)) return false;
+    return operations[state.operation].evaluate([left, right]) === state.target;
+  }
   if (state.promptKind === 'selectOperandAndResult') {
     const [selectedOperand, selectedResult] = selectedValues;
     const [promptOperand] = state.promptValues;

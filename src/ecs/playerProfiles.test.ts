@@ -20,6 +20,7 @@ import {
   type ProfileStorage,
 } from './playerProfiles';
 import { SKIT_PROGRESS_KEY } from './skitProgress';
+import { emptyPracticeProgress, recordPracticeEvidence, rememberPracticeSelection } from './practiceProgress';
 import { ONBOARDING_STORAGE_KEYS } from '../onboarding/gameplayOnboarding';
 import { MATH_FINAL_STEP } from './mathSteps';
 import {
@@ -266,6 +267,7 @@ describe('local player profiles', () => {
 
   test('shows operation unlocks from highestUnlockedStep, independent of currentStep', () => {
     const profile: PlayerProfile = {
+      ...initialPlayerLearnerData(),
       id: 'profile-progress',
       name: 'Learner',
       mathProgress: {
@@ -284,5 +286,81 @@ describe('local player profiles', () => {
       { operation: 'multiply', highestUnlockedStep: MATH_FINAL_STEP },
       { operation: 'divide', highestUnlockedStep: 3 },
     ]);
+  });
+});
+
+
+describe('Practice data in local player profiles', function() {
+  test('loads older profiles with empty Practice data and preserves Arcade fields on save', function() {
+    const learner = initialPlayerLearnerData();
+    const legacy = {
+      mathProgress: learner.mathProgress,
+      onboarding: learner.onboarding,
+      skitProgress: learner.skitProgress,
+    };
+    const { storage, values } = createMemoryStorage({
+      [PLAYER_PROFILES_KEY]: JSON.stringify({ version: 1, profiles: [{ id: 'one', name: 'One', learnerData: legacy }] }),
+      [ACTIVE_PLAYER_PROFILE_KEY]: 'one',
+    });
+    const loaded = loadPlayerProfiles(storage);
+    expect(activePlayerProfile(loaded)?.practiceProgress).toEqual(emptyPracticeProgress());
+    const updated = updateActivePlayerProfile(loaded, profile => ({
+      ...profile,
+      practiceProgress: rememberPracticeSelection(
+        recordPracticeEvidence(profile.practiceProgress, { factId: 'add:2:3', correct: true }),
+        { topicId: 'add-make-5', related: false, pond: 'expert' },
+      ),
+    }), storage);
+    expect(updated.persistence).toBe('persistent');
+    const reloaded = activePlayerProfile(loadPlayerProfiles(storage));
+    expect(reloaded?.practiceProgress.facts).toEqual({ 'add:2:3': { attempts: 1, correct: 1 } });
+    expect(reloaded?.practiceProgress.lastSelection).toEqual({ topicId: 'add-make-5', related: false, pond: 'expert' });
+    expect(reloaded?.mathProgress).toEqual(legacy.mathProgress);
+    expect(reloaded?.onboarding).toEqual(legacy.onboarding);
+    expect(reloaded?.skitProgress).toEqual(legacy.skitProgress);
+    expect(values.get(PLAYER_PROFILES_KEY)).toContain('"practiceProgress":{"version":1');
+  });
+
+  test('keeps evidence isolated per profile and usable when storage fails', function() {
+    const { storage } = createMemoryStorage();
+    let state = createPlayerProfile(loadPlayerProfiles(storage), 'One', 'one', storage).state;
+    state = createPlayerProfile(state, 'Two', 'two', storage).state;
+    state = updateActivePlayerProfile(state, profile => ({ ...profile,
+      practiceProgress: recordPracticeEvidence(profile.practiceProgress, { factId: 'add:2:3', correct: false }),
+    }), { getItem: storage.getItem, setItem: function() { throw new Error('Quota exceeded'); } });
+    expect(state.persistence).toBe('session-only');
+    expect(activePlayerProfile(state)?.practiceProgress.facts['add:2:3']).toEqual({ attempts: 1, correct: 0 });
+    expect(state.profiles.find(profile => profile.id === 'one')?.practiceProgress.facts).toEqual({});
+    state = switchActivePlayerProfile(state, 'one', storage).state;
+    expect(activePlayerProfile(state)?.practiceProgress.facts).toEqual({});
+  });
+
+  test('round-trips future Practice payload through other profile changes without blocking Arcade saves', function() {
+    const future = { version: 42, unfamiliar: { evidence: ['must', 'survive'] } };
+    const learner = initialPlayerLearnerData();
+    const { storage, values } = createMemoryStorage({
+      [PLAYER_PROFILES_KEY]: JSON.stringify({ version: 1, profiles: [{
+        id: 'one', name: 'One', learnerData: { ...learner, practiceProgress: future },
+      }] }),
+      [ACTIVE_PLAYER_PROFILE_KEY]: 'one',
+    });
+    let state = loadPlayerProfiles(storage);
+    expect(state.canPersist).toBe(true);
+    expect(activePlayerProfile(state)?.practiceProgress.canPersist).toBe(false);
+    state = updateActivePlayerProfile(state, profile => ({ ...profile,
+      mathProgress: { ...profile.mathProgress, add: { currentStep: 2, highestUnlockedStep: 2 } },
+      practiceProgress: recordPracticeEvidence(profile.practiceProgress, { factId: 'add:2:3', correct: true }),
+    }), storage);
+    state = renamePlayerProfile(state, 'one', 'Renamed', storage).state;
+    expect(state.persistence).toBe('persistent');
+    expect(activePlayerProfile(state)?.practiceProgress.facts['add:2:3']).toEqual({ attempts: 1, correct: 1 });
+    const stored = values.get(PLAYER_PROFILES_KEY);
+    if (!stored) throw new Error('Missing saved profile');
+    expect(stored).toContain(JSON.stringify(future));
+    const reloaded = activePlayerProfile(loadPlayerProfiles(storage));
+    expect(reloaded?.name).toBe('Renamed');
+    expect(reloaded?.mathProgress.add.currentStep).toBe(2);
+    expect(reloaded?.practiceProgress.canPersist).toBe(false);
+    expect(reloaded?.practiceProgress.facts).toEqual({});
   });
 });

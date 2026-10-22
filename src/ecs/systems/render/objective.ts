@@ -112,6 +112,8 @@ function selectedEquationLayout(
     selectResult: resultSearchStart,
     selectOperands: 0,
     selectOperandAndResult: mixedOperandStart,
+    selectLeftOperand: 0,
+    selectRightOperand: mixedOperandStart,
   };
   const initialCursor = selectionStarts[equationMode.promptKind];
   const located = selectedProblems.reduce<{

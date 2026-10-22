@@ -9,6 +9,7 @@ import {
   equationSelectionText,
   evaluateEquationSelection,
   operationForMode,
+  type EquationCandidate,
 } from './equations';
 
 const modes = [['add'], ['subtract'], ['multiply'], ['divide']] as const satisfies readonly GameMode[];
@@ -289,5 +290,89 @@ describe('zero answers and unprepared prompts', () => {
     if (!candidate) throw new Error('Expected a zero-result mixed prompt');
     expect(candidate.target).toBe(0);
     expect(evaluateEquationSelection({ ...mixedState, ...candidate, promptValues: candidate.operandValues }, [3, 0])).toBe(true);
+  });
+});
+
+describe('single missing operand prompts', () => {
+  const missingState = function(
+    promptKind: 'selectLeftOperand' | 'selectRightOperand',
+    operation: EquationOperation = 'add',
+    promptValues: number[] = [0, 5],
+    target = 5,
+  ): EquationModeState {
+    return {
+      ...createEquationModeState(1, 'easy', [operation]),
+      promptKind,
+      operandsRequired: 1,
+      promptValues,
+      target,
+      operandRanges: { left: { min: 0, max: 5 }, right: { min: 0, max: 5 } },
+    };
+  };
+
+  test('displays either blank and fills a selected zero without hiding fixed values', () => {
+    const left = missingState('selectLeftOperand');
+    const right = missingState('selectRightOperand', 'add', [5, 0]);
+    expect(equationSelectionText(left, [])).toBe('_ + 5 = 5');
+    expect(equationSelectionText(left, [0])).toBe('0 + 5 = 5');
+    expect(equationSelectionText(right, [])).toBe('5 + _ = 5');
+    expect(equationSelectionText(right, [0])).toBe('5 + 0 = 5');
+    expect(evaluateEquationSelection(left, [0])).toBe(true);
+    expect(evaluateEquationSelection(right, [0])).toBe(true);
+    expect(evaluateEquationSelection(left, [5])).toBe(false);
+    expect(evaluateEquationSelection(right, [])).toBe(false);
+    expect(evaluateEquationSelection(right, [0, 5])).toBe(false);
+  });
+
+  test('equal visible values need only one answer pad and fill the intended operand', () => {
+    for (const promptKind of ['selectLeftOperand', 'selectRightOperand'] as const) {
+      const state = missingState(promptKind, 'add', [2, 2], 4);
+      const candidate = chooseEquationCandidate(state, [{ id: 1, value: 2 }]);
+      expect(candidate).toEqual({ operandValues: [2, 2], target: 4 });
+      if (!candidate) throw new Error('Expected a single-pad candidate');
+      expect(equationProblemValuesForCandidate(state, candidate, 1)).toEqual([2]);
+      expect(equationSelectionText(state, [])).toBe(promptKind === 'selectLeftOperand' ? '_ + 2 = 4' : '2 + _ = 4');
+      expect(equationSelectionText(state, [2])).toBe('2 + 2 = 4');
+      expect(evaluateEquationSelection(state, [2])).toBe(true);
+    }
+  });
+
+  test('remaining-board candidates honor the fixed equation and available answer', () => {
+    const state = missingState('selectRightOperand', 'add', [2, 3]);
+    expect(chooseEquationCandidate(state, [{ id: 1, value: 5 }, { id: 2, value: 2 }])).toBeUndefined();
+    expect(chooseEquationCandidate(state, [{ id: 1, value: 3 }])).toEqual({ operandValues: [2, 3], target: 5 });
+    expect(chooseEquationCandidate({ ...state, target: null }, [{ id: 1, value: 3 }])).toBeUndefined();
+    expect(chooseEquationCandidate({ ...state, promptValues: [] }, [{ id: 1, value: 3 }])).toBeUndefined();
+    const outsideRange = { ...state, operandRanges: { ...state.operandRanges, right: { min: 0, max: 2 } } };
+    expect(chooseEquationCandidate(outsideRange, [{ id: 1, value: 3 }], { enforceOperandRanges: true })).toBeUndefined();
+  });
+
+  test('subtraction and division preserve operand order and reject a zero divisor', () => {
+    expect(evaluateEquationSelection(missingState('selectLeftOperand', 'subtract', [5, 3], 2), [5])).toBe(true);
+    expect(evaluateEquationSelection(missingState('selectRightOperand', 'subtract', [5, 3], 2), [3])).toBe(true);
+    expect(evaluateEquationSelection(missingState('selectRightOperand', 'subtract', [5, 3], 2), [7])).toBe(false);
+    const divide = missingState('selectRightOperand', 'divide', [4, 2], 2);
+    expect(evaluateEquationSelection(divide, [2])).toBe(true);
+    expect(evaluateEquationSelection(divide, [0])).toBe(false);
+    expect(evaluateEquationSelection({ ...divide, target: Infinity }, [0])).toBe(false);
+    expect(evaluateEquationSelection(missingState('selectLeftOperand', 'divide', [0, 2], 0), [0])).toBe(true);
+  });
+
+  test('fresh boards contain the missing answer with decoys in its operand range', () => {
+    for (const promptKind of ['selectLeftOperand', 'selectRightOperand'] as const) {
+      const state = {
+        ...missingState(promptKind, 'add', [2, 5], 7),
+        operandRanges: { left: { min: 0, max: 2 }, right: { min: 3, max: 5 } },
+      };
+      const candidate: EquationCandidate = { operandValues: [2, 5], target: 7 };
+      const values = equationProblemValuesForCandidate(state, candidate, 18);
+      const range = promptKind === 'selectLeftOperand' ? state.operandRanges.left : state.operandRanges.right;
+      expect(values).toHaveLength(18);
+      expect(values).toContain(promptKind === 'selectLeftOperand' ? 2 : 5);
+      expect(values.every(value => value >= range.min && value <= range.max)).toBe(true);
+      expect(values.some(value => evaluateEquationSelection(state, [value]))).toBe(true);
+    }
+    const divide = missingState('selectRightOperand', 'divide', [4, 2], 2);
+    expect(equationProblemValuesForCandidate(divide, { operandValues: [4, 2], target: 2 }, 100)).not.toContain(0);
   });
 });

@@ -1,0 +1,175 @@
+import { describe, expect, spyOn, test } from 'bun:test';
+import { equationProblemValuesForCandidate, equationPromptKindForLevel } from '../math/equations';
+import { PRACTICE_TOPICS, practiceFacts, practiceTopic } from '../math/practiceTopics';
+import {
+  createPracticeSession, currentPracticeFact, finishPracticeSession,
+  summarizePracticeSession, practiceEquationCandidate, practiceEquationMode, practiceFactExample, recordPracticeAttempt,
+  submittedPracticeFact, PRACTICE_SESSION_LENGTH, type PracticeSession,
+} from './practiceSession';
+
+const sessionFor = function(topicId = 'add-make-5'): PracticeSession {
+  const session = createPracticeSession('learner', { topicId, related: false, pond: 'expert' });
+  if (!session) throw new Error('Missing test session');
+  return session;
+};
+
+describe('focused Practice sessions', () => {
+  test('Make examples alternate useful unknowns and table examples retain their resolved equations', () => {
+    const add = practiceTopic('add-make-5');
+    const subtract = practiceTopic('subtract-make-5');
+    const table = practiceTopic('multiply-table-2');
+    if (!add || !subtract || !table) throw new Error('Missing topic');
+    const addition = add.facts.find(fact => fact.left === 2 && fact.right === 3);
+    const subtraction = subtract.facts.find(fact => fact.right === 2);
+    const multiplication = table.facts.find(fact => fact.left === 2 && fact.right === 3);
+    if (!addition || !subtraction || !multiplication) throw new Error('Missing example');
+    expect(practiceFactExample({ ...add, id: 'renamed-topic' }, addition, 0)).toBe('_ + 3 = 5');
+    expect(practiceFactExample(add, addition, 1)).toBe('2 + _ = 5');
+    expect(practiceFactExample(subtract, subtraction, 0)).toBe('5 - _ = 3');
+    expect(practiceFactExample(subtract, subtraction, 1)).toBe('5 - 2 = _');
+    expect(practiceFactExample(table, multiplication, 0)).toBe('2 × 3 = 6');
+  });
+
+  test('rejects retired topic IDs and starts each replay with fresh counters and the same options', () => {
+    expect(createPracticeSession('learner', { topicId: 'retired', related: false, pond: 'easy' })).toBeUndefined();
+    const original = sessionFor();
+    expect(recordPracticeAttempt(original, 'retired:fact', true)).toBe(original);
+    expect(recordPracticeAttempt(original, 'retired:fact', false)).toBe(original);
+    const partial = finishPracticeSession(recordPracticeAttempt(original, currentPracticeFact(original).id, true));
+    const replay = createPracticeSession(partial.ownerId, partial.selection);
+    expect(replay).toMatchObject({ solved: 0, attempts: [], outcome: 'active', selection: original.selection });
+    expect(replay).not.toBe(original);
+    expect(replay?.deck).not.toBe(original.deck);
+  });
+
+  test('all topic options and ponds preserve exact catalog membership across prompt cycles and high levels', () => {
+    for (const topic of PRACTICE_TOPICS) {
+      for (const related of [false, true]) {
+        for (const pond of ['easy', 'medium', 'expert'] as const) {
+          const session = createPracticeSession('learner', { topicId: topic.id, related, pond });
+          if (!session) throw new Error('Missing catalog session');
+          expect(new Set(session.deck.map(fact => fact.id))).toEqual(new Set(practiceFacts(topic, related).map(fact => fact.id)));
+          for (const [index, fact] of session.deck.entries()) {
+            const focused = { ...session, solved: index };
+            for (const level of [1, 2, 3, 11, 12, 99]) {
+              const mode = practiceEquationMode(focused, level, 4);
+              const candidate = practiceEquationCandidate(focused);
+              const prepared = { ...mode, target: candidate.target, promptValues: candidate.operandValues };
+              const expectedKind = topic.operation === 'add' || topic.operation === 'subtract'
+                ? fact.operation === 'add'
+                  ? index % 2 === 0 ? 'selectLeftOperand' : 'selectRightOperand'
+                  : index % 2 === 0 ? 'selectRightOperand' : 'selectResult'
+                : equationPromptKindForLevel(level, pond);
+              expect(mode.promptKind).toBe(expectedKind);
+              expect(mode.operation).toBe(fact.operation);
+              expect(mode.clearedThisLevel).toBe(4);
+              expect(candidate).toEqual({ operandValues: [fact.left, fact.right], target: fact.result });
+              const board = equationProblemValuesForCandidate(prepared, candidate, 9);
+              const values = mode.promptKind === 'selectLeftOperand' ? [fact.left]
+                : mode.promptKind === 'selectRightOperand' ? [fact.right]
+                : mode.promptKind === 'selectResult' ? [fact.result]
+                : mode.promptKind === 'selectOperands' ? [fact.left, fact.right] : [fact.right, fact.result];
+              const firstIndex = board.indexOf(values[0] ?? NaN);
+              expect(firstIndex).toBeGreaterThanOrEqual(0);
+              if (values.length === 2) expect(board.some((value, index) => index !== firstIndex && value === values[1])).toBe(true);
+              expect(submittedPracticeFact(focused, prepared, values)?.id).toBe(fact.id);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  test('decoys use topic bounds so missing-operand prompts include distractors', () => {
+    const session = sessionFor();
+    const random = spyOn(Math, 'random').mockReturnValue(0.9);
+    try {
+      const mode = practiceEquationMode(session, 1);
+      const candidate = practiceEquationCandidate(session);
+      random.mockReturnValue(candidate.operandValues[0] === 0 ? 0.9 : 0);
+      const board = equationProblemValuesForCandidate(mode, candidate, 9);
+      expect(board).toContain(candidate.operandValues[0]);
+      expect(board.some(value => value !== candidate.operandValues[0])).toBe(true);
+      expect(mode.operandRanges).toEqual({ left: { min: 0, max: 5 }, right: { min: 0, max: 5 } });
+    } finally { random.mockRestore(); }
+  });
+
+  test('arithmetic alternatives outside the topic receive no credit', () => {
+    const session = sessionFor();
+    const mode = { ...practiceEquationMode(session, 2), promptKind: 'selectOperands' as const, operandsRequired: 2, target: 5 };
+    expect(submittedPracticeFact(session, mode, [6, -1])).toBeUndefined();
+    expect(submittedPracticeFact(session, mode, [2, 3])?.id).toBe('add:2:3');
+    const wrong = { ...mode, promptKind: 'selectResult' as const, promptValues: [2, 3] };
+    expect(submittedPracticeFact(session, wrong, [4])).toBeUndefined();
+  });
+
+  test('wrong attempts retain the current equation and correct retries advance once toward a 12-solve budget', () => {
+    const original = sessionFor();
+    const fact = currentPracticeFact(original);
+    const retry = recordPracticeAttempt(original, fact.id, false);
+    expect(retry.solved).toBe(0);
+    expect(currentPracticeFact(retry)).toBe(fact);
+    expect(retry.attempts).toEqual([{ factId: fact.id, correct: false }]);
+    expect(original.attempts).toEqual([]);
+    let session = retry;
+    for (let solved = 0; solved < PRACTICE_SESSION_LENGTH; solved++) {
+      session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
+      expect(session.solved).toBe(solved + 1);
+    }
+    expect(session.attempts).toHaveLength(13);
+    expect(recordPracticeAttempt(session, fact.id, true)).toBe(session);
+    const complete = finishPracticeSession(session);
+    expect(complete.outcome).toBe('completed');
+    expect(finishPracticeSession(complete)).toBe(complete);
+    expect(recordPracticeAttempt(complete, fact.id, false)).toBe(complete);
+    const partial = finishPracticeSession(retry);
+    expect(partial).toMatchObject({ outcome: 'partial', solved: 0, attempts: retry.attempts });
+    expect(finishPracticeSession(partial)).toBe(partial);
+    expect(recordPracticeAttempt(partial, fact.id, true)).toBe(partial);
+  });
+
+  test('short topics repeat only after a full coverage deck', () => {
+    let session = sessionFor();
+    const first = currentPracticeFact(session);
+    const seen = new Set<string>();
+    for (let index = 0; index < session.deck.length; index++) {
+      seen.add(currentPracticeFact(session).id);
+      session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
+    }
+    expect(seen.size).toBe(session.deck.length);
+    expect(currentPracticeFact(session)).toBe(first);
+  });
+});
+
+test('session summaries retain wrong retries once per fact and keep completed and partial counters', function() {
+  let session = sessionFor();
+  const first = currentPracticeFact(session);
+  session = recordPracticeAttempt(session, first.id, false);
+  session = recordPracticeAttempt(session, first.id, false);
+  session = recordPracticeAttempt(session, first.id, true);
+  expect(summarizePracticeSession(finishPracticeSession(session))).toEqual({
+    solved: 1, attempts: 3, correct: 1, accuracy: 1 / 3, revisit: [first],
+  });
+  while (session.solved < PRACTICE_SESSION_LENGTH) {
+    session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
+  }
+  expect(summarizePracticeSession(finishPracticeSession(session))).toEqual({
+    solved: 12, attempts: 14, correct: 12, accuracy: 12 / 14, revisit: [first],
+  });
+  expect(summarizePracticeSession(finishPracticeSession(sessionFor()))).toEqual({
+    solved: 0, attempts: 0, correct: 0, accuracy: null, revisit: [],
+  });
+});
+
+test('related facts in session revisit lists preserve catalog order and separate inverse identities', function() {
+  const session = createPracticeSession('learner', { topicId: 'add-make-5', related: true, pond: 'easy' });
+  const topic = practiceTopic('add-make-5');
+  if (!session || !topic) throw new Error('Missing related session');
+  const first = currentPracticeFact(session);
+  const otherOperation = session.deck.find(function(fact): boolean { return fact.operation !== first.operation; });
+  if (!otherOperation) throw new Error('Missing inverse fact');
+  const retried = recordPracticeAttempt(recordPracticeAttempt(session, first.id, false), first.id, true);
+  const partial = finishPracticeSession(recordPracticeAttempt(retried, otherOperation.id, false));
+  expect(summarizePracticeSession(partial).revisit).toEqual(practiceFacts(topic, true)
+    .filter(function(fact): boolean { return fact.id === first.id || fact.id === otherOperation.id; }));
+});

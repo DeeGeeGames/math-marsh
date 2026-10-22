@@ -148,7 +148,10 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
 
           <div class="menu-actions mt-5 sm:mt-7">
             <button @click=${actions.openModeSelect} class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
-              Start Game
+              Arcade
+            </button>
+            <button @click=${actions.openPractice} class="btn-primary menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
+              Practice
             </button>
             <div class="menu-secondary-actions">
               <button @click=${actions.openSkitGallery} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
@@ -356,7 +359,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
   const difficultyHelp = MATH_DIFFICULTIES.map(function(difficulty): string {
     const board = BOARD_SIZES[difficulty];
     const enemies = GAME_CONFIG.MATH_PROGRESSION.ENEMY_COUNT[difficulty];
-    return `<li class="setup-help-row"><strong>${difficultyLabels[difficulty]}</strong><span>${board.width} × ${board.height} spaces · ${enemies} ${enemies === 1 ? 'animal' : 'animals'}</span></li>`;
+    return `<li class="setup-help-row"><strong>${difficultyLabels[difficulty]}</strong><span>${board.width} × ${board.height} spaces · ${enemies} ${enemies === 1 ? 'enemy' : 'enemies'}</span></li>`;
   }).join('');
 
   return {
@@ -370,7 +373,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
               <button type="button" class="btn-secondary setup-back" data-setup-back>‹ Back</button>
               <p class="setup-step-indicator" aria-label="Step 1 of 2">1 of 2 <span aria-hidden="true">● ○</span></p>
             </div>
-            <h1 class="pond-title text-gold drop-shadow-lg">Pick your math</h1>
+            <h1 class="pond-title text-gold drop-shadow-lg">Arcade: pick your math</h1>
             <p>Pick one or more.</p>
           </header>
           <div class="mode-options" role="group" aria-label="Math operations">
@@ -389,7 +392,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
               <p class="setup-step-indicator" aria-label="Step 2 of 2">2 of 2 <span aria-hidden="true">● ●</span></p>
             </div>
             <h1 class="pond-title text-gold drop-shadow-lg">Choose your pond</h1>
-            <p>Bigger ponds. More animals.</p>
+            <p>Bigger ponds. More enemies.</p>
           </header>
           <div class="pond-choices" role="group" aria-label="Pond difficulty">
             ${difficultyChoices}
@@ -423,7 +426,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
           <header class="setup-secondary-heading">
             <button type="button" class="btn-secondary setup-back" data-close-setup-panel>‹ Done</button>
             <h1 class="pond-title text-gold drop-shadow-lg" id="difficulty-help-heading">What changes?</h1>
-            <p>Each pond has a different size and number of animals.</p>
+            <p>Each pond has a different size and number of enemies.</p>
           </header>
           <ul class="setup-help-list">${difficultyHelp}</ul>
         </section>

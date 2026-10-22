@@ -18,7 +18,7 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
 
       ecs.updateScreenState('levelComplete', { transitionStarted: true });
       const skit = skitForCompletedLevel(state.completedLevel);
-      if (skit) {
+      if (skit && !ecs.tryGetResource('practiceSession')) {
         void ecs.setScreen('skit', { nextLevel: state.nextLevel, skitId: skit.id });
         return;
       }

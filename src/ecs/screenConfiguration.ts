@@ -25,6 +25,8 @@ export const configureGameScreens = function<World>(screens: ScreenConfigurator<
 		.add('playerRename', { initialState: (config: PlayerProfileActionScreenConfig) => ({ ...config }) })
 		.add('playerDelete', { initialState: (config: PlayerProfileActionScreenConfig) => ({ ...config }) })
 		.add('skitGallery', { initialState: () => ({}) })
+		.add('practice', { initialState: () => ({}) })
+		.add('practiceResults', { initialState: () => ({}) })
 		.add('modeSelect', { initialState: initialLevelSelectSequence })
 		.add('howToPlay', { initialState: () => ({}) })
 		.add('tutorialOffer', { initialState: () => ({}) })

@@ -28,6 +28,8 @@ export function addUINavigationSystemToEngine(systems: GameSystemRegistrar): voi
       'playerDelete',
       'skitGallery',
       'modeSelect',
+      'practice',
+      'practiceResults',
       'howToPlay',
       'tutorialOffer',
       'paused',
