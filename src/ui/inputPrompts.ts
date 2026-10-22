@@ -1,3 +1,5 @@
+import type { DesktopController } from '../platform/desktop';
+
 import keyboardEnter from '../assets/button-prompts/keyboard/enter.svg';
 import keyboardEscape from '../assets/button-prompts/keyboard/escape.svg';
 import playstationButtonCircle from '../assets/button-prompts/playstation/button_circle.svg';
@@ -26,6 +28,7 @@ export type InputPromptAction = 'select' | 'eat' | 'back' | 'skip' | 'pause';
 export interface InputPromptState {
   platform: InputPromptPlatform;
   gamepadAxesActive: boolean[];
+  nativeSignature?: string;
 }
 
 export interface InputPromptItem {
@@ -43,7 +46,59 @@ type TextGlyph = {
   alt: string;
 };
 
-type PromptGlyphSpec = PromptGlyph | TextGlyph;
+export type PromptGlyphSpec = PromptGlyph | TextGlyph;
+
+export type NativePromptBindings = Extract<DesktopController, { kind: 'steam' }>['prompts'];
+
+export const inputPromptGlyphs = function (
+  platform: InputPromptPlatform,
+  action: InputPromptAction,
+  nativeBindings?: NativePromptBindings,
+): readonly PromptGlyphSpec[] {
+  if (!nativeBindings) return buttonGlyphs[platform][action];
+  const origins = nativeBindings[action === 'select' ? 'eat' : action];
+  if (!origins?.length) return [{ text: 'Unbound', alt: 'Unbound' }];
+  return origins.map(origin => origin.glyph
+    ? { src: origin.glyph, alt: origin.label }
+    : { text: origin.label, alt: origin.label });
+};
+
+export type InputPromptPresentation = {
+  platform: InputPromptPlatform;
+  nativeBindings?: NativePromptBindings;
+};
+
+/** Refresh origins even while the same native owner is idle. Keyboard use
+ * clears the native signature so rebinding cannot steal keyboard prompts. */
+export const advanceInputPromptPresentation = function (
+  state: InputPromptState,
+  activity: {
+    keyboard: boolean;
+    controller: boolean;
+    ownerId: string | null;
+    platform: InputPromptPlatform;
+    nativeBindings?: NativePromptBindings;
+  },
+): InputPromptPresentation | undefined {
+  if (activity.keyboard || (state.nativeSignature && !activity.nativeBindings && !activity.controller)) {
+    if (state.platform === 'keyboard' && !state.nativeSignature) return undefined;
+    state.platform = 'keyboard';
+    delete state.nativeSignature;
+    return { platform: 'keyboard' };
+  }
+  if (!activity.controller && !state.nativeSignature) return undefined;
+  const signature = activity.nativeBindings
+    ? JSON.stringify([activity.ownerId, activity.nativeBindings])
+    : undefined;
+  if (state.platform === activity.platform && state.nativeSignature === signature) return undefined;
+  state.platform = activity.platform;
+  if (signature !== undefined) state.nativeSignature = signature;
+  else delete state.nativeSignature;
+  return {
+    platform: activity.platform,
+    ...(activity.nativeBindings ? { nativeBindings: activity.nativeBindings } : {}),
+  };
+};
 
 type ControllerPromptGlyphs = {
   select: PromptGlyph;
@@ -121,14 +176,14 @@ const createGlyphElement = (glyph: PromptGlyphSpec): HTMLElement => {
   return keycap;
 };
 
-const createPromptElement = (platform: InputPromptPlatform, prompt: InputPromptItem): HTMLElement => {
+const createPromptElement = (platform: InputPromptPlatform, prompt: InputPromptItem, nativeBindings?: NativePromptBindings): HTMLElement => {
   const item = document.createElement('span');
   item.className = 'input-prompt';
   item.dataset.promptAction = prompt.action;
 
   const glyphs = document.createElement('span');
   glyphs.className = 'input-prompt-glyphs';
-  buttonGlyphs[platform][prompt.action].map(createGlyphElement).forEach(glyph => glyphs.appendChild(glyph));
+  inputPromptGlyphs(platform, prompt.action, nativeBindings).map(createGlyphElement).forEach(glyph => glyphs.appendChild(glyph));
 
   const label = document.createElement('span');
   label.className = 'input-prompt-label';
@@ -141,10 +196,11 @@ const createPromptElement = (platform: InputPromptPlatform, prompt: InputPromptI
 export const renderInputPromptBar = (
   platform: InputPromptPlatform,
   prompts: InputPromptItem[],
+  nativeBindings?: NativePromptBindings,
 ): HTMLElement => {
   const bar = document.createElement('div');
   bar.className = 'input-prompts-bar';
   bar.dataset.inputPromptPlatform = platform;
-  prompts.map(prompt => createPromptElement(platform, prompt)).forEach(prompt => bar.appendChild(prompt));
+  prompts.map(prompt => createPromptElement(platform, prompt, nativeBindings)).forEach(prompt => bar.appendChild(prompt));
   return bar;
 };

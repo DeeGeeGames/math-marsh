@@ -48,3 +48,21 @@ The main entry points are `src/main.ts` and `src/ecs/bootstrap.ts`. `src/ecs/Eng
 The browser build defaults to the `/math-marsh/` base path. Set `BASE_PATH` when deploying under another path, for example `BASE_PATH=/my-game/ bun run build`. A push to `master` runs the GitHub Pages workflow; Steam packaging and deployment use separate workflows.
 
 The production browser build is installable as a progressive web app on supported mobile and desktop browsers. Open it once while online and allow the page to finish loading; the service worker then stores the game shell and bundled assets for offline launches. New builds are cached in the background and take effect after all open game tabs are closed. Offline installation requires HTTPS or localhost; `bun run dev` does not provide the production service worker. Use `bun run build && bun run preview` to test the installed build locally.
+
+### Native Steam Input
+
+Steam-launched desktop builds use named Menu/Gameplay actions through `steamworks-ffi-node` 0.11.3 and SDL 2.32.8 (`@kmamal/sdl` 0.11.13). SDL's Steam controller handle identifies emulated copies for per-device suppression; unrelated conventional controllers remain available. Native actions enter ECSpresso through its public gamepad polling hook, preserving ownership, neutral handoff, action edges, and navigation repeats. Native Skip and Pause are separate bindable actions. Prompts use the current action origins, including rebinding changes, with accessible labels when a glyph is unavailable.
+
+Direct standalone launches retain browser Gamepad input and never initialize Steamworks. The web bundle imports neither native library. Steam/SDL initialization or sampling failure falls back to browser controllers; provider identity changes use the existing controller recovery flow. Native input is suppressed while the Electron window is unfocused and until held controls return to neutral.
+
+Desktop packaging requires the approved SDK 1.64 redistributables archive; the full SDK stays outside Git. CI downloads `s3://steam-resources/steamworks_sdk.tar.gz` through the repository-specific `GitHubActions-MathMarsh-SteamSDK` OIDC role, which can read only that object. `scripts/prepare-steam-sdk.ts` pins the archive SHA-256 and both shipped libraries. For an authorized local build:
+
+```sh
+aws s3 cp s3://steam-resources/steamworks_sdk.tar.gz /tmp/math-marsh-steamworks_sdk.tar.gz
+bun scripts/prepare-steam-sdk.ts /tmp/math-marsh-steamworks_sdk.tar.gz
+bun run desktop:package:linux # use desktop:package:win on a Windows host
+```
+
+The native FFI modules, SDL binaries, SDK redistributables, action manifest, and default layout ship outside ASAR. Build each platform on its own host so SDL's native library matches the target. The native launch guard requires Math Marsh's Steam app ID (`4927380`) in the Steam launch environment; it never restarts the app through Steam. Local source launches can set `MATH_MARSH_STEAM_SDK_ROOT` to an extracted SDK directory.
+
+The bundled manifest is `resources/steam-input/game_actions.vdf`. Keep the existing Generic Gamepad Steam default for conventional builds during rollout. Publish compatible native configuration only with a gameplay build that consumes this manifest, and verify Linux/Steam Deck and Windows, controller families, remapped layouts, D-pad versus stick, and disconnect/reconnect before shipping native defaults. Unit tests and browser simulations do not establish that hardware acceptance.

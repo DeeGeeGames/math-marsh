@@ -49,9 +49,11 @@
   },
   "dependencies": {
     "@eslint/js": "^10.0.1",
+    "@kmamal/sdl": "0.11.13",
     "ecspresso": "^0.22.0",
     "howler": "^2.2.4",
     "lit-html": "^3.3.3",
+    "steamworks-ffi-node": "0.11.3",
     "typescript-eslint": "^8.67.0"
   },
   "build": {
@@ -67,7 +69,8 @@
       "electron/**",
       "!electron/launch.sh",
       "src/assets/icons/math-marsh-icon.png",
-      "package.json"
+      "package.json",
+      "!electron/**/*.test.js"
     ],
     "extraFiles": [
       {
@@ -97,6 +100,31 @@
         "dir"
       ],
       "icon": "src/assets/icons/math-marsh-icon.png"
-    }
-  }
+    },
+    "asarUnpack": [
+      "node_modules/steamworks-ffi-node/**",
+      "node_modules/koffi/**",
+      "node_modules/@koromix/**",
+      "node_modules/@kmamal/sdl/**"
+    ],
+    "npmRebuild": false,
+    "extraResources": [
+      {
+        "from": "steam/input",
+        "to": "steam-input"
+      },
+      {
+        "from": "steamworks_sdk/redistributable_bin",
+        "to": "steamworks_sdk/redistributable_bin",
+        "filter": [
+          "win64/steam_api64.dll",
+          "linux64/libsteam_api.so"
+        ]
+      }
+    ]
+  },
+  "trustedDependencies": [
+    "@kmamal/sdl",
+    "koffi"
+  ]
 }

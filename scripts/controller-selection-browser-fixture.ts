@@ -9,7 +9,7 @@ const errors: string[] = [];
 let quitRequests = 0;
 
 if (new URLSearchParams(location.search).has('fresh')) {
-  ['math-marsh.gameplayOnboarding', 'math-marsh.operandOnboarding', 'math-marsh.operandAndResultOnboarding'].forEach(key => localStorage.removeItem(key));
+  ['math-marsh.gameplayOnboarding', 'math-marsh.operandOnboarding', 'math-marsh.operandAndResultOnboarding', 'math-marsh.player-profiles', 'math-marsh.active-player-profile'].forEach(key => localStorage.removeItem(key));
 }
 
 Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => pads });
