@@ -1,8 +1,8 @@
 const { join, resolve } = require('node:path');
 
 const APP_ID = '4927380';
-// Assigned by Steamworks before shipping the demo. Never substitute a guessed id.
-const DEMO_APP_ID = null;
+// Math Marsh Demo, assigned by Steamworks.
+const DEMO_APP_ID = '5493870';
 const getSteamAppIdentity = function (environment = process.env, demoAppId = DEMO_APP_ID) {
 	const appId = environment.SteamAppId ?? environment.SteamGameId;
 	if (appId === APP_ID) return { appId, role: 'paid' };

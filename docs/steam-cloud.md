@@ -20,11 +20,11 @@ The first Steam account to launch the updated paid game claims that installation
 
 The demo has a distinct Electron `userData` directory, so its Chromium data and migration ownership record stay separate. Both apps still share the Steam save path under `appData`. Standalone desktop play continues with its original localStorage data and does not mirror later Steam progress. Do not delete a migration record to move saves between accounts; preserve both files when investigating recovery.
 
-## Steam app identity and demo prerequisite
+## Steam app identity and demo configuration
 
-The paid app ID is `4927380`. `DEMO_APP_ID` is currently `null`: Steamworks had no assigned demo app on 2026-10-22, and its associated page still showed **Add Demo**. After Steamworks assigns the ID, set that constant and initialize each build with its own app ID. Do not guess an ID.
+The paid app ID is `4927380`; Math Marsh Demo is `5493870`, created in Steamworks on 2026-10-22 and recorded in `DEMO_APP_ID`. Each process initializes Steamworks with its own app ID. The demo is attached to the base app without a separate demo store page.
 
-The demo's `userData` must remain distinct from the paid app's. Both apps use the shared `appData` save path above. Once the demo app exists, configure its Steam Cloud **Shared cloud APP ID** as `4927380` and mirror the paid Auto-Cloud file rule and quota. That configuration cannot be completed before Steamworks creates the demo app. Steamworks does not sync shared cloud data while the target/base app is unreleased; developers-only mode does not bypass that restriction.
+The demo's `userData` must remain distinct from the paid app's. Both apps use the shared `appData` save path above. The demo uses Steam Cloud **Shared cloud APP ID** `4927380`, with the same 1048576-byte and 10-file quotas. Steamworks explicitly inherits the target app's Auto-Cloud configuration when Shared Cloud is enabled, including the exact file rule and Linux override below; do not add a duplicate rule. The demo keeps **Enable cloud support for developers only** enabled pending acceptance, and Dynamic Cloud Sync disabled. These demo cloud settings were published successfully on 2026-10-22; the app remains unreleased. Steamworks does not sync shared cloud data while the target/base app is unreleased; developers-only mode does not bypass that restriction.
 
 ## Published Steamworks configuration for app 4927380
 
