@@ -1,3 +1,4 @@
+import { practiceEquationMode } from './practiceSession';
 import { addControllerSelectionSystemToEngine, registerControllerRecoveryLifecycle } from './systems/ControllerSelectionSystem';
 import { boardForDifficulty, TUTORIAL_BOARD } from './boardGeometry';
 import { initializeEngine, startGameLoop, gameEngine } from './Engine';
@@ -57,6 +58,8 @@ const INACTIVE_SCREENS = [
   'playerDelete',
   'skitGallery',
   'modeSelect',
+  'practice',
+  'practiceResults',
   'howToPlay',
   'tutorialOffer',
 ] as const;
@@ -79,7 +82,7 @@ const resetEnemySpawnSequence = (ecs: GameEngine): void => {
   const mathSession = ecs.getResource('mathSession');
   ecs.setResource('enemySpawn', {
     index: 0,
-    roster: mathSession
+    roster: mathSession || ecs.getResource('practiceSession')
       ? arcadeEnemyRosterForLevel(ecs.getResource('currentLevel'), ecs.getResource('mathDifficulty'))
       : enemyRosterForLevel(
           ecs.getResource('currentLevel'),
@@ -112,7 +115,10 @@ const enterPlayingScreen = (ecs: GameEngine, { level, isFreshGame }: PlayingScre
   const session = ecs.getResource('mathSession');
   const mathSession = session ? mathSessionForBoard(session) : null;
   ecs.setResource('mathSession', mathSession);
-  ecs.setResource('equationMode', mathSession
+  const practice = ecs.getResource('practiceSession');
+  ecs.setResource('equationMode', practice
+    ? practiceEquationMode(practice, level)
+    : mathSession
     ? equationModeForMathSession(mathSession, gameMode, level, 0, mathDifficulty)
     : createEquationModeState(level, mathDifficulty, gameMode));
   ecs.setResource('equationsSolvedThisBoard', 0);
@@ -162,6 +168,7 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenResume('skit', showSkit);
 
   gameEngine.onScreenEnter('levelComplete', ({ config, ecs }) => {
+    if (ecs.getResource('practiceSession')) return;
     const profiles = ecs.getResource('playerProfiles');
     const profile = activePlayerProfile(profiles);
     if (!profile) return;

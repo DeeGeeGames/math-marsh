@@ -27,7 +27,7 @@ const startGame = async function(page: Page): Promise<void> {
 	await pressActionKey(page, 'Space');
 	await page.getByText('Built with').waitFor();
 	await pressActionKey(page, 'Space');
-	await page.getByRole('button', { name: 'Start Game', exact: true }).click();
+	await page.getByRole('button', { name: 'Arcade Play for a high score', exact: true }).click();
 	await page.locator('[data-operation="add"]').click();
 	await page.locator('[data-next-to-pond]').click();
 	await page.locator('[data-difficulty="easy"]').click();

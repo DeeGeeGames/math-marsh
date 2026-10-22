@@ -1,3 +1,6 @@
+import { createPracticeSession, type PracticeSelection } from '../ecs/practiceSession';
+import { emptyPracticeProgress, rememberPracticeSelection } from '../ecs/practiceProgress';
+import { finishPractice } from '../ecs/practiceLifecycle';
 import { selectedStartingLevel } from '../ecs/levelSelectionCheat';
 import type { GameEngine } from '../ecs/Engine';
 import type {
@@ -126,6 +129,7 @@ const startGame = function(mode: GameMode, difficulty: MathDifficulty, level = 1
   const profile = activePlayerProfile(engine.getResource('playerProfiles'));
   if (!profile) return;
   playSound('uiSelect');
+  engine.setResource('practiceSession', null);
   engine.setResource('startingLevel', selectedStartingLevel(level));
   engine.setResource('mathDifficulty', difficulty);
   engine.setResource('gameMode', mode);
@@ -173,6 +177,12 @@ function returnToPreviousScreen(): void {
 }
 
 function goToMenu(): void {
+  const practice = requireEngine().getResource('practiceSession');
+  if (practice?.outcome === 'active') {
+    finishPractice(requireEngine());
+    return;
+  }
+  requireEngine().setResource('practiceSession', null);
   playSound('uiBack');
   const engine = requireEngine();
   engine.setResource('mathSession', null);
@@ -192,6 +202,7 @@ function openHowToPlay(): void {
 
 function clearPlayerRun(): void {
   const engine = requireEngine();
+  engine.setResource('practiceSession', null);
   engine.setResource('mathSession', null);
   engine.setResource('mathRoundSummary', null);
   engine.setResource('mathRoundCompletedThisBoard', false);
@@ -306,6 +317,8 @@ function openSettings(): void {
     || returnTo === 'playerManagement'
     || returnTo === 'playerRename'
     || returnTo === 'playerDelete'
+    || returnTo === 'practice'
+    || returnTo === 'practiceResults'
   ) return;
   playSound('uiSelect');
   void engine.pushScreen('settings', { returnTo });
@@ -323,6 +336,39 @@ function replayGame(): void {
   const engine = requireEngine();
   startGame(engine.getResource('gameMode'), engine.getResource('mathDifficulty'));
 }
+
+const startPractice = function(selection: PracticeSelection): void {
+  const engine = requireEngine();
+  const profiles = engine.getResource('playerProfiles');
+  const profile = activePlayerProfile(profiles);
+  if (!profile || (selection.pond !== 'easy' && selection.pond !== 'medium' && selection.pond !== 'expert')
+    || typeof selection.related !== 'boolean') return;
+  const session = createPracticeSession(profile.id, selection);
+  if (!session) return;
+  playSound('uiSelect');
+  engine.setResource('practiceSession', session);
+  engine.setResource('mathSession', null);
+  engine.setResource('mathRoundSummary', null);
+  engine.setResource('startingLevel', 1);
+  engine.setResource('mathDifficulty', selection.pond);
+  const fact = session.deck[0];
+  if (!fact) return;
+  engine.setResource('gameMode', [fact.operation]);
+  engine.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    ...active, practiceProgress: rememberPracticeSelection(active.practiceProgress, selection),
+  })));
+  if (profile.onboarding.basics === 'pending') {
+    void engine.setScreen('tutorialOffer', {});
+    return;
+  }
+  startNormalGame(engine);
+};
+
+const openPractice = function(): void {
+  clearPlayerRun();
+  playSound('uiSelect');
+  void requireEngine().setScreen('practice', {});
+};
 
 const desktopQuit = getDesktopQuitHandler();
 const quitApplication = desktopQuit
@@ -343,6 +389,21 @@ const SCREENS = createScreenSpecs({
   returnToPreviousScreen,
   goToMenu,
   openModeSelect,
+  openPractice,
+  startPractice,
+  getPracticeSession: function() { return requireEngine().getResource('practiceSession'); },
+  getPracticeProgress: function() {
+    return activePlayerProfile(requireEngine().getResource('playerProfiles'))?.practiceProgress ?? emptyPracticeProgress();
+  },
+  getPracticePersistence: function() {
+    const profiles = requireEngine().getResource('playerProfiles');
+    return profiles.persistence === 'persistent' && activePlayerProfile(profiles)?.practiceProgress.canPersist
+      ? 'persistent' : 'session-only';
+  },
+  repeatPractice: function(): void {
+    const session = requireEngine().getResource('practiceSession');
+    if (session) startPractice(session.selection);
+  },
   getMathProgress: function() {
     const profile = activePlayerProfile(requireEngine().getResource('playerProfiles'));
     return profile?.mathProgress ?? initialSavedMathProgress();

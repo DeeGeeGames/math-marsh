@@ -1,0 +1,121 @@
+import { describe, expect, test } from 'bun:test';
+import {
+  type PracticeFact,
+  PRACTICE_TOPICS,
+  practiceFactId,
+  practiceFactLabel,
+  practiceFacts,
+  practiceTopic,
+} from './practiceTopics';
+
+const topicFacts = function (id: string, related = false): readonly PracticeFact[] {
+  const topic = practiceTopic(id);
+  if (!topic) throw new Error(`Missing topic ${id}`);
+  return practiceFacts(topic, related);
+};
+
+const factIds = function (id: string, related = false): Set<string> {
+  return new Set(topicFacts(id, related).map(fact => fact.id));
+};
+
+const range = function (start: number, end: number): number[] {
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+};
+
+describe('Practice topic catalog', () => {
+  test('has stable topic identities and safely rejects unknown persisted input', () => {
+    expect(PRACTICE_TOPICS).toHaveLength(36);
+    expect(new Set(PRACTICE_TOPICS.map(topic => topic.id)).size).toBe(36);
+    for (const invalid of [undefined, null, {}, [], 1, 'retired', 'multiply-table-0', 'divide-table-13']) {
+      expect(practiceTopic(invalid)).toBeUndefined();
+    }
+  });
+
+  test('every table includes exactly multipliers 1–12 and both orientations', () => {
+    range(1, 12).forEach(table => {
+      const expected = new Set(range(1, 12).flatMap(multiplier => [
+        `multiply:${table}:${multiplier}`,
+        `multiply:${multiplier}:${table}`,
+      ]));
+      expect(factIds(`multiply-table-${table}`)).toEqual(expected);
+      expect(topicFacts(`multiply-table-${table}`)).toHaveLength(23);
+      expect(factIds(`divide-table-${table}`)).toEqual(new Set(
+        range(1, 12).map(quotient => `divide:${table * quotient}:${table}`),
+      ));
+    });
+  });
+
+  test('Make topics enumerate all nonnegative ordered pairs and their inverse subtractions', () => {
+    [5, 10, 20].forEach(target => {
+      expect(factIds(`add-make-${target}`)).toEqual(new Set(
+        range(0, target).map(left => `add:${left}:${target - left}`),
+      ));
+      expect(factIds(`subtract-make-${target}`)).toEqual(new Set(
+        range(0, target).map(right => `subtract:${target}:${right}`),
+      ));
+    });
+  });
+
+  test('doubles and near doubles have their confirmed bounds', () => {
+    expect(factIds('add-doubles')).toEqual(new Set(range(1, 10).map(value => `add:${value}:${value}`)));
+    expect(factIds('subtract-doubles')).toEqual(new Set(range(1, 10).map(value => `subtract:${2 * value}:${value}`)));
+    expect(factIds('add-near-doubles')).toEqual(new Set(range(1, 9).flatMap(value => [
+      `add:${value}:${value + 1}`, `add:${value + 1}:${value}`,
+    ])));
+    expect(factIds('subtract-near-doubles')).toEqual(new Set(range(1, 9).flatMap(value => [
+      `subtract:${2 * value + 1}:${value}`, `subtract:${2 * value + 1}:${value + 1}`,
+    ])));
+  });
+
+  test('mixed facts include zero and every pair up to 20 with no negative or excessive sums', () => {
+    const expected = new Set(range(0, 20).flatMap(left =>
+      range(0, 20 - left).map(right => `add:${left}:${right}`)));
+    expect(factIds('add-mixed-to-20')).toEqual(expected);
+    expect(expected.size).toBe(231);
+    expect(factIds('subtract-mixed-to-20')).toEqual(new Set(range(0, 20).flatMap(left =>
+      range(0, left).map(right => `subtract:${left}:${right}`))));
+  });
+
+  test('related facts are off by default and expand only their exact fact families', () => {
+    expect(factIds('divide-table-7')).not.toContain('divide:21:3');
+    expect(factIds('divide-table-7', true)).toContain('divide:21:3');
+    expect(factIds('divide-table-7', true)).toContain('multiply:3:7');
+    expect(factIds('divide-table-7', true)).not.toContain('multiply:3:8');
+    expect(factIds('multiply-table-7', true)).toEqual(factIds('divide-table-7', true));
+    expect(factIds('add-make-5', true)).toEqual(new Set([
+      ...factIds('add-make-5'), ...factIds('subtract-make-5'),
+    ]));
+    expect(factIds('subtract-near-doubles', true)).toEqual(new Set([
+      ...factIds('add-near-doubles'), ...factIds('subtract-near-doubles'),
+    ]));
+  });
+
+  test('all catalog facts have unique ordered identities, correct integer results and no zero divisors', () => {
+    PRACTICE_TOPICS.forEach(topic => {
+      [false, true].forEach(related => {
+        const facts = practiceFacts(topic, related);
+        expect(new Set(facts.map(fact => fact.id)).size).toBe(facts.length);
+        facts.forEach(fact => {
+          expect(fact.id).toBe(practiceFactId(fact.operation, fact.left, fact.right));
+          expect(Number.isInteger(fact.result)).toBe(true);
+          expect(fact.result).toBeGreaterThanOrEqual(0);
+          if (fact.operation === 'add') expect(fact.result).toBe(fact.left + fact.right);
+          if (fact.operation === 'subtract') expect(fact.result).toBe(fact.left - fact.right);
+          if (fact.operation === 'multiply') expect(fact.result).toBe(fact.left * fact.right);
+          if (fact.operation === 'divide') {
+            expect(fact.right).toBeGreaterThan(0);
+            expect(fact.result * fact.right).toBe(fact.left);
+          }
+        });
+      });
+    });
+    expect(practiceFactId('add', 2, 3)).not.toBe(practiceFactId('add', 3, 2));
+    expect(practiceFactId('multiply', 2, 3)).not.toBe(practiceFactId('divide', 6, 3));
+  });
+
+  test('example labels derive directly from catalog facts', () => {
+    const fact = topicFacts('divide-table-7').find(candidate => candidate.result === 3);
+    if (!fact) throw new Error('Expected division example');
+    expect(practiceFactLabel(fact)).toBe('21 ÷ 7 = 3');
+  });
+});

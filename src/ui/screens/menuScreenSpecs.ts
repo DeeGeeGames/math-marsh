@@ -148,7 +148,10 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
 
           <div class="menu-actions mt-5 sm:mt-7">
             <button @click=${actions.openModeSelect} class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
-              Start Game
+              <span>Arcade</span><small>Play for a high score</small>
+            </button>
+            <button @click=${actions.openPractice} class="btn-primary menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
+              <span>Practice</span><small>Work on specific math skills</small>
             </button>
             <div class="menu-secondary-actions">
               <button @click=${actions.openSkitGallery} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
@@ -370,7 +373,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
               <button type="button" class="btn-secondary setup-back" data-setup-back>‹ Back</button>
               <p class="setup-step-indicator" aria-label="Step 1 of 2">1 of 2 <span aria-hidden="true">● ○</span></p>
             </div>
-            <h1 class="pond-title text-gold drop-shadow-lg">Pick your math</h1>
+            <h1 class="pond-title text-gold drop-shadow-lg">Arcade: pick your math</h1>
             <p>Pick one or more.</p>
           </header>
           <div class="mode-options" role="group" aria-label="Math operations">

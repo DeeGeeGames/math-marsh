@@ -1,3 +1,4 @@
+import { practiceEquationCandidate, practiceEquationMode, submittedPracticeFact, type PracticeSession } from '../practiceSession';
 import { collectGridCellKeys, gridCellKey, gridCells } from '../lilyPads';
 import { selectableEquationProblems } from '../selectableEquationProblems';
 import { levelClearTarget } from '../levelProgression';
@@ -31,7 +32,7 @@ import { equationModeForMathSession } from '../mathMode';
 
 type ProblemResources = Readonly<Pick<
   Resources,
-  'gameMode' | 'currentLevel' | 'equationMode' | 'mathDifficulty' | 'mathSession'
+  'gameMode' | 'currentLevel' | 'equationMode' | 'mathDifficulty' | 'mathSession' | 'practiceSession'
 >>;
 
 /**
@@ -53,6 +54,7 @@ export function addProblemManagementSystemToEngine(
     .withResources(['gameMode', 'currentLevel', 'equationMode', 'mathDifficulty', 'board', 'enemySpawn', 'gameplayClock'])
     .setProcess(({ queries, ecs, resources }) => {
       const player = queries.player;
+      const practiceSession = ecs.tryGetResource('practiceSession') ?? null;
       const mathSession = ecs.tryGetResource('mathSession') ?? null;
       const activeProblems = queries.mathProblems.filter(
         problem => !problem.components.mathProblem.consumed
@@ -69,12 +71,13 @@ export function addProblemManagementSystemToEngine(
               resources.equationMode,
               resources.board,
               queries.enemies,
+              practiceSession,
             )
           : resources.equationMode;
         const selectableProblems = selectableEquationProblems(queries.mathProblems, queries.enemies);
         // Capture the cause before a repair can replace any of the pad values.
         const blockedAnswer = !shouldSpawnProblems
-          && !hasSelectableSolution(resources.equationMode, selectableProblems)
+          && !hasSelectableSolution(resources.equationMode, selectableProblems, practiceSession)
           ? activeProblems.find(problem => !selectableProblems.some(free => free.id === problem.id)
             && participatesInSolution(resources.equationMode, problem, activeProblems))
           : undefined;
@@ -82,7 +85,7 @@ export function addProblemManagementSystemToEngine(
           ? populatedEquationMode
           : equationStateFromBoard(
               selectableProblems,
-              { ...resources, mathSession },
+              { ...resources, mathSession, practiceSession },
               populatedEquationMode,
             );
 
@@ -134,6 +137,7 @@ function populateFullGrid(
   equationMode: Resources['equationMode'],
   board: Resources['board'],
   enemies: readonly PositionEntity[],
+  practiceSession: PracticeSession | null = null,
 ): Resources['equationMode'] {
   const availablePositions = getAllGridPositionsWithoutMathProblems(allPositionEntities, board);
   const occupiedCells = collectGridCellKeys(enemies);
@@ -141,7 +145,7 @@ function populateFullGrid(
   const occupiedPositions = availablePositions.filter(cell => occupiedCells.has(gridCellKey(cell)));
   if (selectablePositions.length < equationMode.operandsRequired) return equationMode;
 
-  const candidate = createRandomEquationCandidate(equationMode);
+  const candidate = practiceSession ? practiceEquationCandidate(practiceSession) : createRandomEquationCandidate(equationMode);
   const problemValues = equationProblemValuesForCandidate(
     equationMode,
     candidate,
@@ -197,19 +201,22 @@ function equationStateFromBoard(
     currentLevel,
     mathDifficulty,
     mathSession,
+    practiceSession,
   }: ProblemResources,
   currentState: Resources['equationMode'],
 ): Resources['equationMode'] {
   const state = currentState.level === currentLevel
     ? currentState
-    : mathSession
+    : practiceSession
+      ? practiceEquationMode(practiceSession, currentLevel)
+      : mathSession
       ? equationModeForMathSession(mathSession, gameMode, currentLevel, 0, mathDifficulty)
       : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
   if (state.feedback?.kind === 'correct') return currentState;
-  if (state.target !== null && hasSelectableSolution(state, mathProblems)) return currentState;
+  if (state.target !== null && hasSelectableSolution(state, mathProblems, practiceSession ?? null)) return currentState;
 
-  const existingCandidate = chooseEquationCandidate(
+  const existingCandidate = practiceSession ? undefined : chooseEquationCandidate(
     state,
     activeEquationProblems(mathProblems).map(problem => ({
       id: problem.id,
@@ -222,7 +229,7 @@ function equationStateFromBoard(
   // cannot form a prompt, replace only the pads needed for one valid answer.
   const freeProblems = activeEquationProblems(mathProblems);
   const candidate = existingCandidate ?? (freeProblems.length >= state.operandsRequired
-    ? restorePlayableAnswer(state, freeProblems)
+    ? restorePlayableAnswer(state, freeProblems, practiceSession ?? null)
     : undefined);
 
   if (!candidate && state.target === null) return currentState;
@@ -239,8 +246,9 @@ function equationStateFromBoard(
 const restorePlayableAnswer = function (
   state: Resources['equationMode'],
   freeProblems: readonly MathProblemEntityWithRenderable[],
+  practiceSession: PracticeSession | null,
 ): EquationCandidate {
-  const candidate = createRandomEquationCandidate(state);
+  const candidate = practiceSession ? practiceEquationCandidate(practiceSession) : createRandomEquationCandidate(state);
   const values = equationProblemValuesForCandidate(state, candidate, state.operandsRequired);
   values.forEach((value, index) => {
     const problem = freeProblems[index];
@@ -253,12 +261,16 @@ const restorePlayableAnswer = function (
 const hasSelectableSolution = function (
   state: Resources['equationMode'],
   problems: readonly MathProblemEntityWithRenderable[],
+  practiceSession: PracticeSession | null = null,
 ): boolean {
+  const accepts = function(values: readonly number[]): boolean {
+    return practiceSession ? submittedPracticeFact(practiceSession, state, values) !== undefined : evaluateEquationSelection(state, values);
+  };
   if (state.operandsRequired === 1) {
-    return problems.some(problem => evaluateEquationSelection(state, [problem.components.mathProblem.value]));
+    return problems.some(problem => accepts([problem.components.mathProblem.value]));
   }
   return problems.some(left => problems.some(right =>
-    left.id !== right.id && evaluateEquationSelection(state, [
+    left.id !== right.id && accepts([
       left.components.mathProblem.value,
       right.components.mathProblem.value,
     ]),

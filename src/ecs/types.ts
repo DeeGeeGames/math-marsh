@@ -243,6 +243,7 @@ export interface EquationModeState extends BaseEquationModeState {
 }
 
 export interface Resources {
+  practiceSession: import('./practiceSession').PracticeSession | null;
   playerProfiles: PlayerProfilesState;
   mathSession: MathSession | null;
   mathRoundSummary: MathRoundSummary | null;

@@ -1,3 +1,5 @@
+import type { PracticeSelection, PracticeSession } from '../../ecs/practiceSession';
+import type { PracticeProgress } from '../../ecs/practiceProgress';
 import type { EquationOperation, GameMode, MathDifficulty } from '../../ecs/types';
 import type { BoardPoint } from '../../ecs/lilyPads';
 import type { SkitId } from '../../ecs/skitSequence';
@@ -20,6 +22,12 @@ export type ScreenSpecActions = {
   returnToPreviousScreen: () => void;
   goToMenu: () => void;
   openModeSelect: () => void;
+  openPractice: () => void;
+  startPractice: (selection: PracticeSelection) => void;
+  getPracticeSession: () => PracticeSession | null;
+  getPracticeProgress: () => PracticeProgress;
+  getPracticePersistence: () => 'persistent' | 'session-only';
+  repeatPractice: () => void;
   selectMathStep: (operation: EquationOperation, step: number) => void;
   getMathProgress: () => SavedMathProgress;
   getMathProgressPersistence: () => MathProgressPersistence;
