@@ -223,3 +223,37 @@ describe('desktop native Steam Input', function () {
 		} finally { rmSync(directory, { recursive: true, force: true }); }
 	});
 });
+
+describe('shared Steam session ownership', function () {
+	test('input initialization failure never shuts down an app-owned Steam session', function () {
+		const f = fixture();
+		f.steam.input.init = function () { return false; };
+		let disposed = false;
+		const result = createSteamInput({ ...f.options, steamSession: {
+			steam: f.steam, dispose: function () { disposed = true; },
+		} });
+		expect(result).toBeNull();
+		expect(disposed).toBe(false);
+		expect(f.calls).not.toContain('shutdown');
+	});
+
+	test('disposing borrowed input only releases its own subsystem', function () {
+		const f = fixture();
+		let callbacks = 0;
+		f.steam.runCallbacks = function () { callbacks++; };
+		const provider = createSteamInput({ ...f.options, steamSession: {
+			steam: f.steam, dispose: function () { throw new Error('app owns shutdown'); },
+		} });
+		provider.sample('menu');
+		provider.dispose();
+		expect(callbacks).toBe(0);
+		expect(f.calls).toContain('input shutdown');
+		expect(f.calls).not.toContain('shutdown');
+	});
+
+	test('an explicitly unavailable app session never initializes Steam again', function () {
+		const f = fixture();
+		f.options.loadSteam = function () { throw new Error('must not retry'); };
+		expect(createSteamInput({ ...f.options, steamSession: null })).toBeNull();
+	});
+});

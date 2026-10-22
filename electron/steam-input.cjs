@@ -1,7 +1,7 @@
 const { readFileSync, statSync } = require('node:fs');
 const { join, resolve } = require('node:path');
+const { createSteamSession } = require('./steam-session.cjs');
 
-const APP_ID = '4927380';
 const ACTIONS = ['up', 'down', 'left', 'right', 'eat', 'back', 'skip', 'pause'];
 const SET_NAMES = { menu: 'Menu', gameplay: 'Gameplay' };
 const MAX_GLYPH_BYTES = 256 * 1024;
@@ -11,11 +11,11 @@ const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 // Loaded only by the desktop main process. A direct standalone launch never
 // loads the native dependency, attempts Steam initialization, or restarts Steam.
 const createSteamInput = function (options = {}) {
-	const environment = options.environment ?? process.env;
-	if (environment.SteamAppId !== APP_ID && environment.SteamGameId !== APP_ID) return null;
+	const ownsSession = !('steamSession' in options);
+	const session = ownsSession ? createSteamSession(options) : options.steamSession;
+	if (!session) return null;
 	const now = options.now ?? function () { return performance.now(); };
-	let steam;
-	let initialized = false;
+	const steam = session.steam;
 	let inputInitialized = false;
 	let disposed = false;
 	let generation = 0;
@@ -31,20 +31,12 @@ const createSteamInput = function (options = {}) {
 		glyphs.clear();
 		try { if (inputInitialized) steam.input.shutdown(); }
 		catch (error) { reportError(error); }
-		try { if (initialized) steam.shutdown(); }
+		try { if (ownsSession) session.dispose(); }
 		catch (error) { reportError(error); }
 	};
 	try {
-		const loadSteam = options.loadSteam ?? function () {
-			return require('steamworks-ffi-node').SteamworksSDK.getInstance();
-		};
-		steam = loadSteam();
 		const resourcesPath = options.resourcesPath ?? process.resourcesPath ?? resolve(__dirname, '..');
-		const sdkRoot = options.sdkRoot ?? environment.MATH_MARSH_STEAM_SDK_ROOT ?? join(resourcesPath, 'steamworks_sdk');
 		const manifestPath = options.manifestPath ?? join(resourcesPath, 'steam-input', 'game_actions.vdf');
-		steam.setSdkPath(resolve(sdkRoot));
-		initialized = steam.init({ appId: Number(APP_ID) });
-		if (!initialized) throw new Error('Steamworks initialization failed');
 		if (!steam.input.setInputActionManifestFilePath(resolve(manifestPath))) throw new Error('Steam Input manifest rejected');
 		inputInitialized = steam.input.init(true);
 		if (!inputInitialized) throw new Error('Steam Input initialization failed');
@@ -78,7 +70,7 @@ const createSteamInput = function (options = {}) {
 				const set = sets[context];
 				if (!set) return [];
 				try {
-					steam.runCallbacks();
+					if (ownsSession) steam.runCallbacks();
 					// Steam computes action data in runFrame. Activate before that update,
 					// including devices already known to Steam but new to this provider.
 					const beforeHandles = steam.input.getConnectedControllers();

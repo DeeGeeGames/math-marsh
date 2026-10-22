@@ -1,12 +1,25 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { join } = require('node:path');
 const { createDesktopInput } = require('./desktop-input.cjs');
+const { createSteamSession, isSteamLaunch } = require('./steam-session.cjs');
+const { createProfileStorage } = require('./profile-storage.cjs');
 
 const PROJECT_ROOT = join(__dirname, '..');
 const DEV_SERVER_URL = process.env.MATH_MARSH_DEV_SERVER_URL;
 let desktopInput;
 let inputPoll;
 let inputContext = 'menu';
+let steamSession;
+
+// One writer per userData directory, including atomic-save temporary files.
+const ownsInstance = app.requestSingleInstanceLock();
+if (!ownsInstance) app.quit();
+app.on('second-instance', () => {
+	const window = BrowserWindow.getAllWindows()[0];
+	if (!window) return;
+	if (window.isMinimized()) window.restore();
+	window.focus();
+});
 
 const createWindow = () => {
 	const window = new BrowserWindow({
@@ -52,6 +65,40 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+	if (!ownsInstance) return;
+	const steamOptions = {
+		sdkRoot: process.env.MATH_MARSH_STEAM_SDK_ROOT ?? (app.isPackaged
+			? join(process.resourcesPath, 'steamworks_sdk') : join(PROJECT_ROOT, 'steamworks_sdk')),
+		onError: error => console.warn('Steamworks unavailable.', error),
+	};
+	steamSession = createSteamSession(steamOptions);
+	let profileStorage;
+	try {
+		if (steamSession) profileStorage = createProfileStorage({
+			userData: join(app.getPath('appData'), 'math-marsh'), steamId: steamSession.steam.getStatus().steamId,
+		});
+	} catch (error) { console.warn('Steam profile storage unavailable.', error); }
+	ipcMain.on('desktop:profiles', (event, operation, ...args) => {
+		try {
+			if (!BrowserWindow.fromWebContents(event.sender)) throw new Error('Unknown profile storage caller');
+			if (!isSteamLaunch()) {
+				if (operation !== 'status') throw new Error('Not a Steam launch');
+				event.returnValue = { ok: true, value: 'standalone' };
+				return;
+			}
+			if (!profileStorage) throw new Error('Steam profile storage unavailable');
+			let value;
+			if (operation === 'status') value = profileStorage.status();
+			else if (operation === 'migrate') profileStorage.migrate(args[0]);
+			else if (operation === 'get') value = profileStorage.getItem(args[0]);
+			else if (operation === 'set') profileStorage.setItem(args[0], args[1]);
+			else throw new Error('Unknown profile storage operation');
+			event.returnValue = { ok: true, value };
+		} catch (error) {
+			console.warn('Steam profile operation failed.', error);
+			event.returnValue = { ok: false };
+		}
+	});
 	ipcMain.handle('desktop:input-snapshot', (event) => desktopInput?.sample(
 		inputContext, BrowserWindow.fromWebContents(event.sender)?.isFocused() ?? false,
 	) ?? { available: false, controllers: [] });
@@ -77,6 +124,7 @@ app.whenReady().then(() => {
 
 	createWindow();
 	desktopInput = createDesktopInput({
+		steamSession,
 		manifestPath: app.isPackaged
 			? join(process.resourcesPath, 'steam-input', 'game_actions.vdf')
 			: join(PROJECT_ROOT, 'steam/input/game_actions.vdf'),
@@ -85,6 +133,7 @@ app.whenReady().then(() => {
 		onError: error => console.warn('Native controller provider unavailable; using browser gamepads.', error),
 	});
 	inputPoll = setInterval(() => {
+		try { steamSession?.steam.runCallbacks(); } catch (error) { console.warn('Steam callback failed.', error); }
 		const windows = BrowserWindow.getAllWindows();
 		const snapshot = desktopInput.sample(inputContext, windows.some(window => window.isFocused()));
 		for (const window of windows) {
@@ -102,6 +151,7 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
 	clearInterval(inputPoll);
 	desktopInput?.dispose();
+	steamSession?.dispose();
 });
 
 app.on('window-all-closed', () => {

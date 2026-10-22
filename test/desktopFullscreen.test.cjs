@@ -8,9 +8,10 @@ const check = async function check(stored, storageUnavailable = false) {
 	const handlers = new Map();
 	const writes = [];
 	runInNewContext(code, {
-		require: () => ({
+		require: name => name === './profile-storage-bridge.cjs' ? require('../electron/profile-storage-bridge.cjs') : ({
 			contextBridge: {exposeInMainWorld: (_, value) => { api = value; }},
 			ipcRenderer: {
+				sendSync: () => ({ ok: true, value: 'standalone' }),
 				on: (name, handler) => handlers.set(name, handler),
 				invoke: async name => {
 					if (name === 'desktop:toggle-fullscreen') active = !active;

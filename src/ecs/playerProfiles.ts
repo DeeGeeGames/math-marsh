@@ -88,7 +88,7 @@ export const initialPlayerLearnerData = function(): PlayerLearnerData {
 
 const browserStorage = (): ProfileStorage | undefined => {
   try {
-    return typeof window === 'undefined' ? undefined : window.localStorage;
+    return typeof window === 'undefined' ? undefined : window.mathMarshDesktop?.profileStorage ?? window.localStorage;
   } catch {
     return undefined;
   }
