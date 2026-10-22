@@ -55,6 +55,8 @@ test('new Practice journey preserves options and pond across Back, with keyboard
 	await openPractice(page);
 	await expect(page.locator('[data-practice-continue]')).toHaveCount(0);
 	await expect(page.locator('[data-practice-operation]')).toHaveCount(4);
+	await expect(page.locator('[data-practice-operation="add"]')).toBeFocused();
+	await press(page, 'ArrowDown');
 	await expect(page.locator('[data-practice-operation="multiply"]')).toBeFocused();
 	await press(page, 'Enter');
 	await expect(page.locator('[data-practice-topic]')).toHaveCount(12);
@@ -98,6 +100,17 @@ test('returning progress is truthful, Continue is fresh, and profiles keep indep
 	await page.goto('/');
 	await skipSplash(page);
 	await openPractice(page);
+	await expect(page.locator('[data-practice-continue]')).toBeFocused();
+	const operationOrder = await page.locator('[data-practice-operation]').evaluateAll(elements => elements.map(element => element.getAttribute('data-practice-operation')));
+	expect(operationOrder).toEqual(['add', 'subtract', 'multiply', 'divide']);
+	await press(page, 'ArrowDown');
+	await expect(page.locator('[data-practice-operation="add"]')).toBeFocused();
+	await press(page, 'ArrowUp');
+	await expect(page.locator('[data-practice-continue]')).toBeFocused();
+	await press(page, 'ArrowDown');
+	await press(page, 'ArrowRight');
+	await expect(page.locator('[data-practice-operation="subtract"]')).toBeFocused();
+	await press(page, 'ArrowUp');
 	await expect(page.locator('[data-practice-continue]')).toBeFocused();
 	await page.locator('[data-practice-continue]').click();
 	await expect(page.locator('[data-practice-related]')).toHaveAttribute('aria-pressed', 'true');

@@ -9,7 +9,7 @@ import { difficultyLabels, isMathDifficulty, operationLabels } from '../labels';
 import type { ScreenSpec } from '../screenTypes';
 import { inputPromptsSlot, OVERLAY_BASE, type ScreenSpecActions } from './shared';
 
-const OPERATIONS: readonly EquationOperation[] = ['multiply', 'divide', 'add', 'subtract'];
+const OPERATIONS: readonly EquationOperation[] = ['add', 'subtract', 'multiply', 'divide'];
 const SYMBOLS: Record<EquationOperation, string> = { multiply: '×', divide: '÷', add: '+', subtract: '−' };
 const PONDS: readonly MathDifficulty[] = ['easy', 'medium', 'expert'];
 type PracticeView = 'home' | 'collection' | 'preview' | 'pond';
@@ -28,7 +28,7 @@ const focus = function(root: HTMLElement, selector: string): void {
 
 export const createPracticeScreenSpec = function(actions: ScreenSpecActions): ScreenSpec {
 	let view: PracticeView = 'home';
-	let operation: EquationOperation = 'multiply';
+	let operation: EquationOperation = 'add';
 	let selectedTopic: PracticeTopic | undefined;
 	let related = false;
 	let pond: MathDifficulty = 'easy';

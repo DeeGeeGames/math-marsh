@@ -178,6 +178,8 @@ test('mouse and touch opened Settings keep rendered focus visible during control
       await setGamepadButton(page, button, false);
     };
     await controllerPress(0);
+    await expect(page.locator('[data-practice-operation="add"]')).toBeFocused();
+    await controllerPress(13);
     await expect(page.locator('[data-practice-operation="multiply"]')).toBeFocused();
     await controllerPress(0);
     await expect(page.locator('[data-practice-topic="multiply-table-1"]')).toBeFocused();
