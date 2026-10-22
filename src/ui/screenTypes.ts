@@ -27,7 +27,7 @@ export type ScreenSpec = {
   html: string | TemplateResult;
   prompts?: InputPromptItem[];
   promptPlacement: InputPromptPlacement;
-  wire?: (root: HTMLElement) => void;
+  wire?: (root: HTMLElement) => void | (() => void);
   onShow?: (root: HTMLElement) => void;
   onLevelSelectionUnlocked?: (root: HTMLElement) => void;
   focusSelector?: string;
