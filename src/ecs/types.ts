@@ -10,7 +10,8 @@ import type {
   GameplayOnboardingSession,
 } from '../onboarding/gameplayOnboarding';
 import type { MathRoundSummary, MathSession } from './mathMode';
-import type { PlayerProfilesState } from './playerProfiles';
+import type { PlayerProfilesState } from '../profiles/types';
+import type { ProfilePersistence } from '../profiles/persistence';
 
 export type GameAction = 'up' | 'down' | 'left' | 'right' | 'eat' | 'back' | 'skip' | 'pause';
 
@@ -246,6 +247,7 @@ export interface EquationModeState extends BaseEquationModeState {
 export interface Resources {
   practiceSession: import('./practiceSession').PracticeSession | null;
   playerProfiles: PlayerProfilesState;
+  profilePersistence: ProfilePersistence;
   mathSession: MathSession | null;
   mathRoundSummary: MathRoundSummary | null;
   equationsSolvedThisBoard: number;

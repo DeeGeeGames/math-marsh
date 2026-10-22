@@ -1,10 +1,6 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
-import type { PlayerProfile, PlayerProfilesError } from '../../ecs/playerProfiles';
-import {
-  MAX_PLAYER_PROFILES,
-  operationProgressForProfile,
-  PLAYER_NAME_MAX_LENGTH,
-} from '../../ecs/playerProfiles';
+import { type PlayerProfile, type PlayerProfilesError } from '../../profiles/types';
+import { MAX_PLAYER_PROFILES, operationProgressForProfile, PLAYER_NAME_MAX_LENGTH } from '../../profiles/rules';
 import { MATH_FINAL_STEP } from '../../ecs/mathSteps';
 import type { EquationOperation } from '../../ecs/types';
 import { mathProgressCue } from '../modeSelectSetup';

@@ -50,12 +50,8 @@ import {
 } from '../onboarding/gameplayOnboardingUI';
 import { createScreenRuntime } from './screenRuntime';
 import { initialSavedMathProgress } from '../ecs/mathProgressStore';
-import {
-	activePlayerProfile,
-	nextDefaultPlayerName,
-	type PlayerProfile,
-	type PlayerProfilesState,
-} from '../ecs/playerProfiles';
+import { activePlayerProfile, nextDefaultPlayerName } from '../profiles/rules';
+import { type PlayerProfile, type PlayerProfilesState } from '../profiles/types';
 import { boardPointGridCell, isPointOnLilyPad, isActiveLilyPadCell, activeLilyPadCellKeys } from '../ecs/lilyPads';
 
 import { createRunActions } from '../application/runActions';

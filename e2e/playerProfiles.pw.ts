@@ -440,3 +440,54 @@ test('the full roster keeps its active row usable at TV, portrait, and short-lan
   }, Promise.resolve());
   await context.close();
 });
+
+test('profile edits and active deletion survive reload without losing another learner’s progress', async ({ page }, testInfo) => {
+  await page.addInitScript(function(): void {
+    // Seed only the legacy key; later reloads must use the persisted profiles.
+    window.localStorage.setItem('math-marsh-practice-progress', JSON.stringify({
+      version: 1, tracks: { add: { currentStep: 4, highestUnlockedStep: 7 } },
+    }));
+  });
+  await page.goto('/');
+  await skipSplash(page);
+  await submitPlayerName(page, 'Mira');
+  await openRoster(page);
+  const mira = page.locator('[data-player-row]').filter({ hasText: 'Mira' });
+  await expect(mira.getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '7');
+  await page.getByRole('button', { name: /Add player/ }).click();
+  await submitPlayerName(page, 'Jordan');
+  await openRoster(page);
+  const jordan = page.locator('[data-player-row]').filter({ hasText: 'Jordan' });
+  await expect(jordan.getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '1');
+  await mira.click();
+  await openRoster(page);
+  await page.getByRole('button', { name: 'Manage players' }).click();
+  const row = page.locator('.player-management-row').filter({ hasText: 'Mira' });
+  await row.getByRole('button', { name: 'Rename' }).click();
+  await submitPlayerName(page, 'Mira Two');
+  await expect(row.getByRole('button', { name: 'Rename' })).toBeFocused();
+
+  const reloadMenu = async function(): Promise<void> {
+    await page.reload();
+    await page.getByText('A game by').waitFor();
+    await pressActionKey(page, 'Space');
+    await page.getByText('Built with').waitFor();
+    await pressActionKey(page, 'Space');
+    await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
+  };
+  await reloadMenu();
+  await expect(page.locator('#player-profile-badge')).toContainText('Mira Two');
+  await openRoster(page);
+  await expect(page.locator('[data-active-player-row]')).toContainText('Mira Two');
+  await expect(page.locator('[data-active-player-row]').getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '7');
+  await page.screenshot({ path: testInfo.outputPath('persisted-roster.png') });
+  await page.getByRole('button', { name: 'Manage players' }).click();
+  await page.locator('.player-management-row').filter({ hasText: 'Mira Two' }).getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('button', { name: 'Delete player', exact: true }).click();
+  await expect(page.locator('#player-profile-badge')).toContainText('Jordan');
+  await reloadMenu();
+  await expect(page.locator('#player-profile-badge')).toContainText('Jordan');
+  await openRoster(page);
+  await expect(page.locator('[data-player-row]')).toHaveCount(1);
+  await expect(page.locator('[data-active-player-row]').getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '1');
+});

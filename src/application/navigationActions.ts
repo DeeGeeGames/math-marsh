@@ -1,4 +1,4 @@
-import { activePlayerProfile } from '../ecs/playerProfiles';
+import { activePlayerProfile } from '../profiles/rules';
 import { playerQuery } from '../ecs/queries';
 import { skitById, type SkitId } from '../ecs/skitSequence';
 import type { GameEngine } from '../ecs/Engine';
