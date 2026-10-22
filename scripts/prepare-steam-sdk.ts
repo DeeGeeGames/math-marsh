@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 
 // The existing authorized S3 archive contains redistributables only. Pin both
 // the archive and the desktop files to SDK 1.64, independent of its mutable key.
@@ -19,7 +19,11 @@ export const prepareSteamSdk = async function (archive: string, destination = re
 	}
 	for (const [file, expected] of redistributables) {
 		const member = `steamworks_sdk/redistributable_bin/${file}`;
-		const extraction = Bun.spawn(['tar', '-xOf', resolve(archive), member], { stdout: 'pipe', stderr: 'pipe' });
+		// Git for Windows' GNU tar treats a drive-letter path as a remote host.
+		// A basename in the archive directory works with both GNU and BSD tar.
+		const extraction = Bun.spawn(['tar', '-xOf', basename(archive), member], {
+			cwd: dirname(resolve(archive)), stdout: 'pipe', stderr: 'pipe',
+		});
 		const [bytes, errors, exitCode] = await Promise.all([
 			new Response(extraction.stdout).arrayBuffer(), new Response(extraction.stderr).text(), extraction.exited,
 		]);
