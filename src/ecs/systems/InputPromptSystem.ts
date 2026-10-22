@@ -1,18 +1,14 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
-import type { InputPromptPlatform } from '../../ui/inputPrompts';
-import { detectInputPromptPlatform } from '../../ui/inputPrompts';
+import type { InputPromptState } from '../../ui/inputPrompts';
+import { advanceInputPromptPresentation, detectInputPromptPlatform } from '../../ui/inputPrompts';
+import { desktopInputProvider } from '../../platform/steamInput';
 import { updateInputPromptPlatform } from '../../ui/UIManager';
 
 const KEYBOARD_ACTION_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Enter', 'Escape', 'Tab'] as const;
 const GAMEPAD_BUTTONS = [0, 1, 9, 12, 13, 14, 15] as const;
 const GAMEPAD_AXES = [0, 1] as const;
 const ACTIVE_AXIS_THRESHOLD = 0.5;
-
-type InputPromptResource = {
-  platform: InputPromptPlatform;
-  gamepadAxesActive: boolean[];
-};
 
 const hasKeyboardActivity = (keyboard: {
   justPressed(key: string): boolean;
@@ -28,10 +24,12 @@ const isGamepadAxisActive = (gamepad: {
   Math.abs(gamepad.axis(axisIndex)) > ACTIVE_AXIS_THRESHOLD;
 
 const hasGamepadActivity = (gamepadIndex: number, gamepad: {
+  id: string | null;
   justPressed(button: number): boolean;
   axis(index: number): number;
-}, inputPrompt: InputPromptResource): boolean =>
-  GAMEPAD_BUTTONS.some(button => gamepad.justPressed(button))
+}, inputPrompt: InputPromptState): boolean =>
+  (gamepad.id?.startsWith('steam:') && gamepad.justPressed(8))
+  || GAMEPAD_BUTTONS.some(button => gamepad.justPressed(button))
   || GAMEPAD_AXES.some(axis => {
     const promptAxisIndex = gamepadAxisIndex(gamepadIndex, axis);
     const isActive = isGamepadAxisActive(gamepad, axis);
@@ -42,19 +40,10 @@ const rememberGamepadAxes = (
   gamepads: ReadonlyArray<{
     axis(index: number): number;
   }>,
-  inputPrompt: InputPromptResource,
+  inputPrompt: InputPromptState,
 ): void => {
   inputPrompt.gamepadAxesActive = gamepads.flatMap((gamepad) =>
     GAMEPAD_AXES.map(axis => isGamepadAxisActive(gamepad, axis)));
-};
-
-const updatePlatform = (
-  inputPrompt: InputPromptResource,
-  platform: InputPromptPlatform,
-): void => {
-  if (inputPrompt.platform === platform) return;
-  inputPrompt.platform = platform;
-  updateInputPromptPlatform(platform);
 };
 
 export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void {
@@ -65,15 +54,18 @@ export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void
       const keyboardActivity = hasKeyboardActivity(inputState.keyboard);
       const owner = controllerSelection.owner;
       const ownerPad = owner ? inputState.gamepads[owner.slot] : undefined;
-      const gamepadPlatform = owner && ownerPad?.connected
-        && hasGamepadActivity(owner.slot, ownerPad, inputPrompt)
-        ? detectInputPromptPlatform(ownerPad.id ?? '')
-        : undefined;
+      const nativeController = owner ? desktopInputProvider.getController(owner.id) : undefined;
+      const nativeBindings = nativeController?.kind === 'steam' ? nativeController.prompts : undefined;
+      const controllerActivity = Boolean(owner && ownerPad?.connected
+        && hasGamepadActivity(owner.slot, ownerPad, inputPrompt));
       rememberGamepadAxes(inputState.gamepads, inputPrompt);
-
-      if (keyboardActivity || inputState.pointer.justPressed(0)) {
-        return updatePlatform(inputPrompt, 'keyboard');
-      }
-      if (gamepadPlatform) updatePlatform(inputPrompt, gamepadPlatform);
+      const presentation = advanceInputPromptPresentation(inputPrompt, {
+        keyboard: keyboardActivity || inputState.pointer.justPressed(0),
+        controller: controllerActivity,
+        ownerId: owner?.id ?? null,
+        platform: nativeBindings ? 'generic' : detectInputPromptPlatform(ownerPad?.id ?? ''),
+        ...(nativeBindings ? { nativeBindings } : {}),
+      });
+      if (presentation) updateInputPromptPlatform(presentation.platform, presentation.nativeBindings);
     });
 }

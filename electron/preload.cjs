@@ -1,5 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const FULLSCREEN_ENABLED_KEY = 'fullscreen-enabled';
+let inputSnapshot = { available: false, controllers: [] };
+let inputReceivedAt = 0;
+const receiveInput = function (snapshot) {
+	inputSnapshot = snapshot;
+	inputReceivedAt = performance.now();
+};
+ipcRenderer.on('desktop:input-snapshot', (_event, snapshot) => receiveInput(snapshot));
+ipcRenderer.invoke('desktop:input-snapshot').then(receiveInput).catch(() => {});
 
 const state = {
 	isFullscreenActive: false,
@@ -48,6 +56,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 }, { once: true });
 
 contextBridge.exposeInMainWorld('mathMarshDesktop', {
+	input: {
+		snapshot: () => performance.now() - inputReceivedAt <= 1500
+			? inputSnapshot : { available: false, controllers: [] },
+		setContext: context => {
+			if (context === 'menu' || context === 'gameplay') ipcRenderer.send('desktop:input-context', context);
+		},
+	},
 	fullscreen: {
 		isSupported: () => true,
 		isActive: () => state.isFullscreenActive,

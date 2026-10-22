@@ -1,8 +1,12 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { join } = require('node:path');
+const { createDesktopInput } = require('./desktop-input.cjs');
 
 const PROJECT_ROOT = join(__dirname, '..');
 const DEV_SERVER_URL = process.env.MATH_MARSH_DEV_SERVER_URL;
+let desktopInput;
+let inputPoll;
+let inputContext = 'menu';
 
 const createWindow = () => {
 	const window = new BrowserWindow({
@@ -48,6 +52,12 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+	ipcMain.handle('desktop:input-snapshot', (event) => desktopInput?.sample(
+		inputContext, BrowserWindow.fromWebContents(event.sender)?.isFocused() ?? false,
+	) ?? { available: false, controllers: [] });
+	ipcMain.on('desktop:input-context', (_event, context) => {
+		if (context === 'menu' || context === 'gameplay') inputContext = context;
+	});
 	ipcMain.handle('desktop:fullscreen-active', (event) => {
 		const window = BrowserWindow.fromWebContents(event.sender);
 		return window?.isFullScreen() ?? false;
@@ -66,11 +76,32 @@ app.whenReady().then(() => {
 	});
 
 	createWindow();
+	desktopInput = createDesktopInput({
+		manifestPath: app.isPackaged
+			? join(process.resourcesPath, 'steam-input', 'game_actions.vdf')
+			: join(PROJECT_ROOT, 'steam/input/game_actions.vdf'),
+		sdkRoot: process.env.MATH_MARSH_STEAM_SDK_ROOT ?? (app.isPackaged
+			? join(process.resourcesPath, 'steamworks_sdk') : join(PROJECT_ROOT, 'steamworks_sdk')),
+		onError: error => console.warn('Native controller provider unavailable; using browser gamepads.', error),
+	});
+	inputPoll = setInterval(() => {
+		const windows = BrowserWindow.getAllWindows();
+		const snapshot = desktopInput.sample(inputContext, windows.some(window => window.isFocused()));
+		for (const window of windows) {
+			if (!window.webContents.isDestroyed()) window.webContents.send('desktop:input-snapshot', snapshot);
+		}
+	}, 16);
+	inputPoll.unref();
 
 	app.on('activate', () => {
 		if (BrowserWindow.getAllWindows().length > 0) return;
 		createWindow();
 	});
+});
+
+app.on('before-quit', () => {
+	clearInterval(inputPoll);
+	desktopInput?.dispose();
 });
 
 app.on('window-all-closed', () => {

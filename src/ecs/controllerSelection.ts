@@ -1,3 +1,4 @@
+import { isSteamControllerId } from '../platform/steamInput';
 import {
   gamepadAxisOn,
   gamepadButtonsOn,
@@ -44,7 +45,7 @@ export const controllerActionMap = function (
     right: { ...map.right, gamepadButtons: gamepadButtonsOn(slot, 15), gamepadAxes: [gamepadAxisOn(slot, 0, 1)] },
     eat: { ...map.eat, gamepadButtons: gamepadButtonsOn(slot, 0) },
     back: { ...map.back, gamepadButtons: gamepadButtonsOn(slot, 1) },
-    skip: { ...map.skip, gamepadButtons: gamepadButtonsOn(slot, 9) },
+    skip: { ...map.skip, gamepadButtons: gamepadButtonsOn(slot, isSteamControllerId(selection.owner.id) ? 8 : 9) },
     pause: { ...map.pause, gamepadButtons: gamepadButtonsOn(slot, 9) },
   };
 };

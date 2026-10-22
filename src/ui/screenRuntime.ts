@@ -2,6 +2,7 @@ import { render } from 'lit-html';
 import {
   renderInputPromptBar,
   type InputPromptPlatform,
+  type NativePromptBindings,
 } from './inputPrompts';
 import {
   findSpatialTargetIndex,
@@ -24,7 +25,7 @@ type ScreenRuntime = {
   revealLevelSelection: () => boolean;
   setPromptOverride: (screen: UIScreen, spec: PromptSpec | undefined) => void;
   triggerCancel: () => void;
-  updateInputPromptPlatform: (platform: InputPromptPlatform) => void;
+  updateInputPromptPlatform: (platform: InputPromptPlatform, nativeBindings?: NativePromptBindings) => void;
 };
 
 export type ScreenPresentationOptions = Readonly<{
@@ -59,7 +60,8 @@ export function createScreenRuntime(
   const container = createGameContainer();
   const screenElements = new Map<UIScreen, HTMLElement>();
   const promptOverrides = new Map<UIScreen, PromptSpec>();
-  const state = {
+  const state: { currentPromptPlatform: InputPromptPlatform; currentScreen: UIScreen; nativeBindings: NativePromptBindings | undefined } = {
+    nativeBindings: undefined,
     currentPromptPlatform: 'keyboard' as InputPromptPlatform,
     currentScreen: 'menu' as UIScreen,
   };
@@ -73,7 +75,7 @@ export function createScreenRuntime(
     if (!slot || !spec.prompts) return;
     slot.classList.add(`input-prompts-slot--${spec.promptPlacement}`);
     slot.dataset.inputPromptPlacement = spec.promptPlacement;
-    slot.replaceChildren(renderInputPromptBar(state.currentPromptPlatform, spec.prompts));
+    slot.replaceChildren(renderInputPromptBar(state.currentPromptPlatform, spec.prompts, state.nativeBindings));
   }
 
   function createScreen(screen: UIScreen): HTMLElement {
@@ -145,7 +147,8 @@ export function createScreenRuntime(
     if (root) renderPromptSlot(root, promptSpecForScreen(screen));
   }
 
-  function updateInputPromptPlatform(platform: InputPromptPlatform): void {
+  function updateInputPromptPlatform(platform: InputPromptPlatform, nativeBindings?: NativePromptBindings): void {
+    state.nativeBindings = nativeBindings;
     state.currentPromptPlatform = platform;
     container.dataset.inputPlatform = platform;
     screenElements.forEach((root, screen) => {

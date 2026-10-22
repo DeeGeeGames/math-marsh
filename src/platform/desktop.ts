@@ -1,3 +1,5 @@
+import type { GameAction } from '../ecs/types';
+
 export type DesktopFullscreenController = {
 	isSupported: () => boolean;
 	isActive: () => boolean;
@@ -5,7 +7,31 @@ export type DesktopFullscreenController = {
 	onChange: (handler: () => void) => () => void;
 };
 
+export type DesktopController = {
+	kind: 'steam';
+	id: string;
+	steamHandle: string;
+	actions: Readonly<Record<GameAction, boolean>>;
+	prompts: Partial<Record<GameAction, readonly { label: string; glyph?: string }[]>>;
+} | {
+	kind: 'gamepad';
+	id: string;
+	buttons: readonly { pressed: boolean; value: number }[];
+	axes: readonly number[];
+};
+
+export type DesktopInputSnapshot = {
+	available: boolean;
+	controllers: readonly DesktopController[];
+};
+
+export type DesktopInputController = {
+	snapshot: () => DesktopInputSnapshot;
+	setContext: (context: 'menu' | 'gameplay') => void;
+};
+
 export type DesktopPlatform = {
+	input?: DesktopInputController;
 	fullscreen?: DesktopFullscreenController;
 	quit?: () => Promise<void>;
 };
@@ -29,3 +55,7 @@ export function getDesktopFullscreenController(): DesktopFullscreenController | 
 export function getDesktopQuitHandler(): DesktopPlatform['quit'] {
 	return getDesktopPlatform()?.quit;
 }
+
+export const getDesktopInputController = function (): DesktopInputController | undefined {
+	return typeof window === 'undefined' ? undefined : getDesktopPlatform()?.input;
+};

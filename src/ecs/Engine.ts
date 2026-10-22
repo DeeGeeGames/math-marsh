@@ -1,3 +1,4 @@
+import { desktopInputProvider } from '../platform/steamInput';
 import { boardForDifficulty } from './boardGeometry';
 import { frameDeltaSeconds } from './frameTime';
 import ECSpresso, { type SystemRegistrarOf } from 'ecspresso';
@@ -41,6 +42,7 @@ const isEditableTarget = function(target: EventTarget | null): boolean {
 };
 
 const inputPlugin = createInputPlugin<GameAction>({
+  gamepad: { poll: desktopInputProvider.poll },
   actions: controllerActionMap(initialControllerSelection()),
   players: {
     keyboard: keyboardActionMap(),
@@ -86,6 +88,13 @@ export const gameEngine = ECSpresso.create()
   .withRequired('enemy', 'health', () => ({ current: 1, max: 1 }))
   .withScreens(configureGameScreens)
   .build();
+
+gameEngine.addSystem('desktop-input-context')
+  .inPhase('preUpdate')
+  .setPriority(101)
+  .setProcess(({ ecs }) => {
+    desktopInputProvider.setContext(ecs.getCurrentScreen() === 'playing' ? 'gameplay' : 'menu');
+  });
 
 export type GameEngine = typeof gameEngine;
 export type GameSystemRegistrar = SystemRegistrarOf<GameEngine>;

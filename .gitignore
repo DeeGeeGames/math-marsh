@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 desktop-dist
+steamworks_sdk/
+steamworks_sdk.tar.gz
 /output/music-options/
 /test-results/
 *.local

@@ -1,0 +1,413 @@
+"controller_mappings"
+{
+	"version" "3"
+	"title" "Math Marsh"
+	"description" "Native menu and gameplay actions"
+	"actions"
+	{
+		"Menu" { "title" "Menu" "legacy_set" "0" }
+		"Gameplay" { "title" "Gameplay" "legacy_set" "0" }
+	}
+	"group"
+	{
+		"id" "0"
+		"mode" "four_buttons"
+		"inputs"
+		{
+			"button_a"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_eat, "
+						}
+					}
+				}
+			}
+			"button_b"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_back, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"group"
+	{
+		"id" "1"
+		"mode" "dpad"
+		"inputs"
+		{
+			"dpad_north"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_up, "
+						}
+					}
+				}
+			}
+			"dpad_south"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_down, "
+						}
+					}
+				}
+			}
+			"dpad_west"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_left, "
+						}
+					}
+				}
+			}
+			"dpad_east"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_right, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"group"
+	{
+		"id" "2"
+		"mode" "dpad"
+		"inputs"
+		{
+			"dpad_north"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_up, "
+						}
+					}
+				}
+			}
+			"dpad_south"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_down, "
+						}
+					}
+				}
+			}
+			"dpad_west"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_left, "
+						}
+					}
+				}
+			}
+			"dpad_east"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_right, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"group"
+	{
+		"id" "3"
+		"mode" "switches"
+		"inputs"
+		{
+			"button_escape"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_pause, "
+							"binding" "game_action Menu menu_skip, "
+						}
+					}
+				}
+			}
+			"button_menu"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Menu menu_back, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"preset"
+	{
+		"id" "0"
+		"name" "Menu"
+		"group_source_bindings"
+		{
+			"0" "button_diamond active"
+			"1" "dpad active"
+			"2" "joystick active"
+			"3" "switch active"
+		}
+	}
+	"group"
+	{
+		"id" "4"
+		"mode" "four_buttons"
+		"inputs"
+		{
+			"button_a"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_eat, "
+						}
+					}
+				}
+			}
+			"button_b"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_back, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"group"
+	{
+		"id" "5"
+		"mode" "dpad"
+		"inputs"
+		{
+			"dpad_north"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_up, "
+						}
+					}
+				}
+			}
+			"dpad_south"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_down, "
+						}
+					}
+				}
+			}
+			"dpad_west"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_left, "
+						}
+					}
+				}
+			}
+			"dpad_east"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_right, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"group"
+	{
+		"id" "6"
+		"mode" "dpad"
+		"inputs"
+		{
+			"dpad_north"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_up, "
+						}
+					}
+				}
+			}
+			"dpad_south"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_down, "
+						}
+					}
+				}
+			}
+			"dpad_west"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_left, "
+						}
+					}
+				}
+			}
+			"dpad_east"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_right, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"group"
+	{
+		"id" "7"
+		"mode" "switches"
+		"inputs"
+		{
+			"button_escape"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_pause, "
+							"binding" "game_action Gameplay gameplay_skip, "
+						}
+					}
+				}
+			}
+			"button_menu"
+			{
+				"activators"
+				{
+					"Full_Press"
+					{
+						"bindings"
+						{
+							"binding" "game_action Gameplay gameplay_back, "
+						}
+					}
+				}
+			}
+		}
+	}
+	"preset"
+	{
+		"id" "1"
+		"name" "Gameplay"
+		"group_source_bindings"
+		{
+			"4" "button_diamond active"
+			"5" "dpad active"
+			"6" "joystick active"
+			"7" "switch active"
+		}
+	}
+}

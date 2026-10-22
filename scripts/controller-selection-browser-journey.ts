@@ -45,7 +45,17 @@ export const runControllerJourney = async function (fixture: Fixture) {
   };
 
   try {
-    for (let attempt = 0; attempt < 120 && fixture.observe().screen !== 'menu'; attempt += 1) await wait(100);
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      const current = fixture.observe().screen;
+      if (current === 'menu' || current === 'playerSetup') break;
+      await wait(100);
+    }
+    if (fixture.observe().screen === 'playerSetup') {
+      await pulse(1, 0); // Claim, then confirm the default local player name.
+      await pulse(1, 0);
+      fixture.disconnect(1);
+      await wait(100);
+    }
     screen('menu');
     record('fresh menu');
     await setPad(1, [], [1, 0]);
@@ -61,10 +71,18 @@ export const runControllerJourney = async function (fixture: Fixture) {
     await setPad(2);
     await pulse(1, 0);
     screen('modeSelect');
+    await pulse(1, 13); // Back -> Add in the current two-step setup.
     await pulse(1, 0);
     await pulse(1, 13);
     await pulse(1, 13);
-    assert(document.activeElement?.id === 'easy-difficulty', 'Difficulty navigation failed');
+    await pulse(1, 15);
+    assert(document.activeElement?.hasAttribute('data-next-to-pond') === true, 'Math setup navigation failed');
+    await pulse(1, 0);
+    assert(document.activeElement instanceof HTMLElement && document.activeElement.dataset.difficulty === 'easy', 'Difficulty navigation failed');
+    await pulse(1, 0);
+    for (let step = 0; step < 4 && !document.activeElement?.hasAttribute('data-open-difficulty-help'); step += 1) await pulse(1, 13);
+    await pulse(1, 15);
+    assert(document.activeElement?.hasAttribute('data-play-selected') === true, 'Play navigation failed');
     await pulse(1, 0);
     screen('tutorialOffer');
     record('tutorial offer via slot 1');
@@ -130,7 +148,7 @@ export const runControllerJourney = async function (fixture: Fixture) {
     for (let index = 0; index < 3; index += 1) await pulse(3, 13);
     await pulse(3, 0);
     screen('menu');
-    for (let index = 0; index < 3; index += 1) await pulse(3, 13);
+    for (let index = 0; index < 5 && document.activeElement?.textContent?.trim() !== 'Quit'; index += 1) await pulse(3, 13);
     await pulse(3, 0);
     assert(fixture.observe().quitRequests === 1, 'Desktop quit action was not invoked');
     assert(fixture.observe().errors.length === 0, 'Browser errors occurred');
