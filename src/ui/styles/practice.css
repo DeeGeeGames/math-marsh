@@ -23,8 +23,10 @@
 .practice-results { text-align: center; font-size: clamp(1rem, 1.5vw, 1.25rem); }
 .practice-results h2 { font-weight: 700; font-size: 1.1em; }
 .practice-results .game-over-title { font-size: clamp(1.75rem, 4vw, 3rem); }
+.practice-revisit-panel { padding: 1rem; border: 2px solid var(--reed-border); border-radius: 16px; background: rgba(2,40,54,.35); }
+.practice-revisit-panel > p { margin-top: .75rem; }
 .practice-revisit { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1rem; padding: .75rem; }
-.practice-revisit li { list-style: none; }
+.practice-revisit li { list-style: none; padding: .5rem .75rem; border: 1px solid var(--reed-border); border-radius: 10px; background: rgba(0,0,0,.15); }
 .practice-shell .input-prompts-slot, .practice-results-layout .input-prompts-slot { margin-top: 1rem; }
 @media (min-width: 1500px) { .practice-content { font-size: 1.5rem; } .practice-shell { width: min(95%, 78rem); } }
 @media (max-width: 640px) { .practice-topic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .practice-pond-grid { grid-template-columns: 1fr; } .practice-content, .practice-results { gap: .8rem; } }

@@ -14,10 +14,10 @@ const SYMBOLS: Record<EquationOperation, string> = { multiply: '×', divide: '÷
 const PONDS: readonly MathDifficulty[] = ['easy', 'medium', 'expert'];
 type PracticeView = 'home' | 'collection' | 'preview' | 'pond';
 
-const persistenceCopy = function(actions: ScreenSpecActions): string {
-	return actions.getPracticePersistence() === 'persistent'
-		? 'Practice progress is saved for this player.'
-		: 'Practice progress lasts for this session only. Device saving is unavailable.';
+const persistenceNotice = function(actions: ScreenSpecActions): TemplateResult | typeof nothing {
+	return actions.getPracticePersistence() === 'session-only'
+		? html`<p class="practice-save-status" role="status">Practice progress lasts for this session only. Device saving is unavailable.</p>`
+		: nothing;
 };
 
 const focus = function(root: HTMLElement, selector: string): void {
@@ -112,7 +112,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 		if (!content) return;
 		render(html`<button type="button" class="btn-secondary setup-back" data-practice-back>‹ Back</button>
 			${view === 'home' ? home() : view === 'collection' ? collection() : view === 'pond' ? pondChooser() : selectedTopic ? preview(selectedTopic) : home()}
-			${actions.getPracticePersistence() === 'session-only' ? html`<p class="practice-save-status" role="status">${persistenceCopy(actions)}</p>` : nothing}`, content);
+			${persistenceNotice(actions)}`, content);
 		if (focusSelector) focus(root, focusSelector);
 	};
 
@@ -190,10 +190,11 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 				<p class="practice-results-topic">${topic?.label ?? 'Practice'}</p>
 				<p class="run-result">${session?.solved ?? 0}/${PRACTICE_SESSION_LENGTH} equations solved</p>
 				<p>${attempts.length === 0 ? 'No submitted attempts yet.' : `${Math.round(correct / attempts.length * 100)}% accuracy · ${correct} correct of ${attempts.length} attempts`}</p>
-				<p class="practice-note">${session?.outcome === 'completed' ? 'Completed answers add to topic evidence.' : 'Completed answers and attempts still add to topic evidence.'} No mastery or speed rating.</p>
-				<h2>Facts to revisit</h2>
-				${revisit.length ? html`<ul class="practice-revisit">${revisit.map(function(fact): TemplateResult { return html`<li>${practiceFactLabel(fact)}</li>`; })}</ul>` : html`<p>${attempts.length ? 'No wrong attempts in this session.' : 'Submit answers to build a revisit list.'}</p>`}
-				<p class="practice-save-status" role="status">${persistenceCopy(actions)}</p>
+				<section class="practice-revisit-panel" aria-labelledby="practice-revisit-heading">
+					<h2 id="practice-revisit-heading">Facts to revisit</h2>
+					${revisit.length ? html`<ul class="practice-revisit">${revisit.map(function(fact): TemplateResult { return html`<li>${practiceFactLabel(fact)}</li>`; })}</ul>` : html`<p>${attempts.length ? 'No wrong attempts in this session.' : 'Submit answers to build a revisit list.'}</p>`}
+				</section>
+				${persistenceNotice(actions)}
 				<div class="game-over-actions"><button type="button" class="btn-success" data-practice-again ?disabled=${!session} @click=${actions.repeatPractice}>Practice again</button>
 				<button type="button" class="btn-primary" @click=${actions.openPractice}>Choose another topic</button>
 				<button type="button" class="btn-secondary" @click=${actions.goToMenu}>Main menu</button></div>`, content);
