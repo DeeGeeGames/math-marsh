@@ -3,7 +3,7 @@ import { equationProblemValuesForCandidate, equationPromptKindForLevel } from '.
 import { PRACTICE_TOPICS, practiceFacts, practiceTopic } from '../math/practiceTopics';
 import {
   createPracticeSession, currentPracticeFact, finishPracticeSession,
-  practiceEquationCandidate, practiceEquationMode, practiceFactExample, recordPracticeAttempt,
+  summarizePracticeSession, practiceEquationCandidate, practiceEquationMode, practiceFactExample, recordPracticeAttempt,
   submittedPracticeFact, PRACTICE_SESSION_LENGTH, type PracticeSession,
 } from './practiceSession';
 
@@ -23,7 +23,7 @@ describe('focused Practice sessions', () => {
     const subtraction = subtract.facts.find(fact => fact.right === 2);
     const multiplication = table.facts.find(fact => fact.left === 2 && fact.right === 3);
     if (!addition || !subtraction || !multiplication) throw new Error('Missing example');
-    expect(practiceFactExample(add, addition, 0)).toBe('_ + 3 = 5');
+    expect(practiceFactExample({ ...add, id: 'renamed-topic' }, addition, 0)).toBe('_ + 3 = 5');
     expect(practiceFactExample(add, addition, 1)).toBe('2 + _ = 5');
     expect(practiceFactExample(subtract, subtraction, 0)).toBe('5 - _ = 3');
     expect(practiceFactExample(subtract, subtraction, 1)).toBe('5 - 2 = _');
@@ -139,4 +139,37 @@ describe('focused Practice sessions', () => {
     expect(seen.size).toBe(session.deck.length);
     expect(currentPracticeFact(session)).toBe(first);
   });
+});
+
+test('session summaries retain wrong retries once per fact and keep completed and partial counters', function() {
+  let session = sessionFor();
+  const first = currentPracticeFact(session);
+  session = recordPracticeAttempt(session, first.id, false);
+  session = recordPracticeAttempt(session, first.id, false);
+  session = recordPracticeAttempt(session, first.id, true);
+  expect(summarizePracticeSession(finishPracticeSession(session))).toEqual({
+    solved: 1, attempts: 3, correct: 1, accuracy: 1 / 3, revisit: [first],
+  });
+  while (session.solved < PRACTICE_SESSION_LENGTH) {
+    session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
+  }
+  expect(summarizePracticeSession(finishPracticeSession(session))).toEqual({
+    solved: 12, attempts: 14, correct: 12, accuracy: 12 / 14, revisit: [first],
+  });
+  expect(summarizePracticeSession(finishPracticeSession(sessionFor()))).toEqual({
+    solved: 0, attempts: 0, correct: 0, accuracy: null, revisit: [],
+  });
+});
+
+test('related facts in session revisit lists preserve catalog order and separate inverse identities', function() {
+  const session = createPracticeSession('learner', { topicId: 'add-make-5', related: true, pond: 'easy' });
+  const topic = practiceTopic('add-make-5');
+  if (!session || !topic) throw new Error('Missing related session');
+  const first = currentPracticeFact(session);
+  const otherOperation = session.deck.find(function(fact): boolean { return fact.operation !== first.operation; });
+  if (!otherOperation) throw new Error('Missing inverse fact');
+  const retried = recordPracticeAttempt(recordPracticeAttempt(session, first.id, false), first.id, true);
+  const partial = finishPracticeSession(recordPracticeAttempt(retried, otherOperation.id, false));
+  expect(summarizePracticeSession(partial).revisit).toEqual(practiceFacts(topic, true)
+    .filter(function(fact): boolean { return fact.id === first.id || fact.id === otherOperation.id; }));
 });

@@ -85,6 +85,7 @@ export const rememberPracticeSelection = function(progress: PracticeProgress, se
 };
 
 export type PracticeTopicEvidence = Readonly<{
+  status: PracticeTopicStatus;
   attempted: number;
   solved: number;
   total: number;
@@ -98,9 +99,12 @@ export const practiceTopicEvidence = function(progress: PracticeProgress, topic:
   const facts = practiceFacts(topic, related);
   const attempts = facts.reduce((total, fact) => total + (progress.facts[fact.id]?.attempts ?? 0), 0);
   const correct = facts.reduce((total, fact) => total + (progress.facts[fact.id]?.correct ?? 0), 0);
+  const attempted = facts.filter(fact => (progress.facts[fact.id]?.attempts ?? 0) > 0).length;
+  const solved = facts.filter(fact => (progress.facts[fact.id]?.correct ?? 0) > 0).length;
   return {
-    attempted: facts.filter(fact => (progress.facts[fact.id]?.attempts ?? 0) > 0).length,
-    solved: facts.filter(fact => (progress.facts[fact.id]?.correct ?? 0) > 0).length,
+    status: attempted === 0 ? 'New' : solved === facts.length ? 'Practiced' : 'Practicing',
+    attempted,
+    solved,
     total: facts.length,
     attempts,
     correct,
@@ -113,7 +117,5 @@ export const practiceTopicEvidence = function(progress: PracticeProgress, topic:
 };
 
 export const practiceTopicStatus = function(progress: PracticeProgress, topic: PracticeTopic, related = false): PracticeTopicStatus {
-  const evidence = practiceTopicEvidence(progress, topic, related);
-  if (evidence.attempted === 0) return 'New';
-  return evidence.solved === evidence.total ? 'Practiced' : 'Practicing';
+  return practiceTopicEvidence(progress, topic, related).status;
 };

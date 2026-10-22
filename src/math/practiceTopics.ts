@@ -9,6 +9,7 @@ export interface PracticeFact {
 }
 
 export interface PracticeTopic {
+  readonly kind: 'table' | 'make';
   readonly id: string;
   readonly label: string;
   readonly operation: EquationOperation;
@@ -70,6 +71,7 @@ export const PRACTICE_TOPICS: readonly PracticeTopic[] = [
   ...range(1, 12).map(table => ({
     id: `multiply-table-${table}`,
     label: `${table} times table`,
+    kind: 'table' as const,
     operation: 'multiply' as const,
     facts: uniqueFacts(range(1, 12).flatMap(multiplier => [
       createFact('multiply', table, multiplier),
@@ -79,18 +81,21 @@ export const PRACTICE_TOPICS: readonly PracticeTopic[] = [
   ...range(1, 12).map(table => ({
     id: `divide-table-${table}`,
     label: `Divide by ${table}`,
+    kind: 'table' as const,
     operation: 'divide' as const,
     facts: range(1, 12).map(quotient => createFact('divide', table * quotient, table)),
   })),
   ...additionGoals.map(goal => ({
     id: `add-${goal.id}`,
     label: goal.label,
+    kind: 'make' as const,
     operation: 'add' as const,
     facts: goal.facts,
   })),
   ...additionGoals.map(goal => ({
     id: `subtract-${goal.id}`,
     label: goal.label,
+    kind: 'make' as const,
     operation: 'subtract' as const,
     facts: uniqueFacts(goal.facts.flatMap(inverseFacts)),
   })),

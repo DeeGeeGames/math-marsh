@@ -38,8 +38,8 @@ export const currentPracticeFact = function(session: PracticeSession): PracticeF
   return fact;
 };
 
-const promptForPracticeFact = function(topicId: string, fact: PracticeFact, solved: number, mode: EquationModeState): EquationModeState {
-  if (!topicId.startsWith('add-make-') && !topicId.startsWith('subtract-make-')) return mode;
+const promptForPracticeFact = function(topic: PracticeTopic | undefined, fact: PracticeFact, solved: number, mode: EquationModeState): EquationModeState {
+  if (topic?.kind !== 'make') return mode;
   // Addition's fixed sum and subtraction's fixed minuend must stay visible.
   const promptKind = fact.operation === 'add'
     ? solved % 2 === 0 ? 'selectLeftOperand' : 'selectRightOperand'
@@ -48,14 +48,14 @@ const promptForPracticeFact = function(topicId: string, fact: PracticeFact, solv
 };
 
 export const practiceFactExample = function(topic: PracticeTopic, fact: PracticeFact, index: number): string {
-  if (topic.operation === 'multiply' || topic.operation === 'divide') return practiceFactLabel(fact);
-  const mode = promptForPracticeFact(topic.id, fact, index, createEquationModeState(1, 'easy', [fact.operation]));
+  if (topic.kind === 'table') return practiceFactLabel(fact);
+  const mode = promptForPracticeFact(topic, fact, index, createEquationModeState(1, 'easy', [fact.operation]));
   return equationSelectionText({ ...mode, target: fact.result, promptValues: [fact.left, fact.right] }, []);
 };
 
 export const practiceEquationMode = function(session: PracticeSession, level: number, clearedThisLevel = 0): EquationModeState {
   const fact = currentPracticeFact(session);
-  const mode = promptForPracticeFact(session.selection.topicId, fact, session.solved,
+  const mode = promptForPracticeFact(practiceTopic(session.selection.topicId), fact, session.solved,
     createEquationModeState(level, session.selection.pond, [fact.operation], clearedThisLevel));
   const facts = session.deck.filter(candidate => candidate.operation === fact.operation);
   return {
@@ -94,4 +94,28 @@ export const recordPracticeAttempt = function(session: PracticeSession, factId: 
 export const finishPracticeSession = function(session: PracticeSession): PracticeSession {
   if (session.outcome !== 'active') return session;
   return { ...session, outcome: session.solved >= PRACTICE_SESSION_LENGTH ? 'completed' : 'partial' };
+};
+
+export type PracticeSessionSummary = Readonly<{
+  solved: number;
+  attempts: number;
+  correct: number;
+  accuracy: number | null;
+  revisit: readonly PracticeFact[];
+}>;
+
+/** Session results use only this run's attempts, independently of lifetime evidence. */
+export const summarizePracticeSession = function(session: PracticeSession): PracticeSessionSummary {
+  const correct = session.attempts.filter(function(attempt): boolean { return attempt.correct; }).length;
+  const wrongIds = new Set(session.attempts.filter(function(attempt): boolean { return !attempt.correct; })
+    .map(function(attempt): string { return attempt.factId; }));
+  const topic = practiceTopic(session.selection.topicId);
+  const facts = topic ? practiceFacts(topic, session.selection.related) : [];
+  return {
+    solved: session.solved,
+    attempts: session.attempts.length,
+    correct,
+    accuracy: session.attempts.length > 0 ? correct / session.attempts.length : null,
+    revisit: facts.filter(function(fact): boolean { return wrongIds.has(fact.id); }),
+  };
 };
