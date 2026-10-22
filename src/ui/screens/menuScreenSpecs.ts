@@ -131,7 +131,9 @@ const refreshMathProgress = function(root: HTMLElement, actions: ScreenSpecActio
   });
   $(root, '#math-save-status').textContent = actions.getMathProgressPersistence() === 'persistent'
     ? 'Math progress is saved on this device.'
-    : 'Math progress lasts for this session only. Device saving is unavailable.';
+    : actions.getMathProgressPersistence() === 'read-only'
+      ? 'This demo is using your full-game save. Math progress changes last for this session only.'
+      : 'Math progress lasts for this session only. Device saving is unavailable.';
 };
 
 export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
@@ -216,8 +218,11 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       const badgeSlot = root.querySelector<HTMLElement>('[data-player-profile-badge]');
       if (badgeSlot) render(playerBadgeTemplate(actions), badgeSlot);
       const notice = $(root, '#player-save-notice');
-      const sessionOnly = actions.getMathProgressPersistence() === 'session-only';
-      notice.textContent = sessionOnly
+      const persistence = actions.getMathProgressPersistence();
+      const sessionOnly = persistence !== 'persistent';
+      notice.textContent = persistence === 'read-only'
+        ? 'This demo is using your full-game save. Changes in the demo are temporary and last until you close the game.'
+        : sessionOnly
         ? 'Your profile and progress can’t be saved on this device. You can play until you close the game.'
         : '';
       notice.hidden = !sessionOnly;

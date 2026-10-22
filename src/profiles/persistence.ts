@@ -8,6 +8,7 @@ import type { PlayerProfile, PlayerProfilesResult, PlayerProfilesState } from '.
 export type ProfileStorage = Readonly<{
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
+  getPersistenceMode?: () => 'read-only' | 'read-write';
 }>;
 
 type StorageRead = Readonly<{ ok: true; value: string | null }> | Readonly<{ ok: false }>;
@@ -23,6 +24,7 @@ const safeRead = function(storage: ProfileStorage, key: string): StorageRead {
 const safeWrite = function(storage: ProfileStorage | undefined, key: string, value: string): boolean {
   if (!storage) return false;
   try {
+    if (storage.getPersistenceMode?.() === 'read-only') return false;
     storage.setItem(key, value);
     return true;
   } catch {
@@ -37,8 +39,22 @@ const emptyState = function(): PlayerProfilesState {
   };
 };
 
+// Once a session has diverged from a read-only save, never write its temporary
+// edits back, even if a later adapter becomes writable.
+const withPersistenceMode = function(state: PlayerProfilesState, storage: ProfileStorage | undefined): PlayerProfilesState {
+  if (state.persistence === 'read-only') return state;
+  try {
+    if (storage?.getPersistenceMode?.() === 'read-only') {
+      return { ...state, persistence: 'read-only', canPersist: false };
+    }
+  } catch {
+    // Reads/writes retain the existing unavailable-storage failure semantics.
+  }
+  return state;
+};
+
 export const loadPlayerProfiles = function(storage?: ProfileStorage): PlayerProfilesState {
-  const empty = emptyState();
+  const empty = withPersistenceMode(emptyState(), storage);
   if (!storage) return empty;
   const storedProfiles = safeRead(storage, PLAYER_PROFILES_KEY);
   if (!storedProfiles.ok) return empty;
@@ -60,8 +76,8 @@ export const loadPlayerProfiles = function(storage?: ProfileStorage): PlayerProf
           operandAndResult: operandAndResult.ok ? operandAndResult.value : null,
         },
       }),
-      persistence: complete ? 'persistent' : 'session-only',
-      canPersist: complete,
+      persistence: empty.persistence === 'read-only' ? 'read-only' : complete ? 'persistent' : 'session-only',
+      canPersist: empty.persistence !== 'read-only' && complete,
     };
   }
   const parsed = parsedProfileStore(storedProfiles.value);
@@ -71,21 +87,23 @@ export const loadPlayerProfiles = function(storage?: ProfileStorage): PlayerProf
   const activeProfileId = parsed.profiles.some(profile => profile.id === savedActiveId)
     ? savedActiveId
     : parsed.profiles[0]?.id ?? null;
-  if (activeProfileId !== null && activeProfileId !== savedActiveId) {
+  if (empty.persistence !== 'read-only' && activeProfileId !== null && activeProfileId !== savedActiveId) {
     safeWrite(storage, ACTIVE_PLAYER_PROFILE_KEY, activeProfileId);
   }
   // Active-ID repair has always been best effort; only the profile envelope
   // determines load protection and status here.
-  return {
+  return withPersistenceMode({
     ...empty, profiles: parsed.profiles, activeProfileId,
-    persistence: parsed.containsOnlyInvalidProfiles ? 'session-only' : 'persistent',
-    canPersist: !parsed.containsOnlyInvalidProfiles,
-  };
+    persistence: empty.persistence === 'read-only' ? 'read-only' : parsed.containsOnlyInvalidProfiles ? 'session-only' : 'persistent',
+    canPersist: empty.persistence !== 'read-only' && !parsed.containsOnlyInvalidProfiles,
+  }, storage);
 };
 
 const saveProfiles = function(state: PlayerProfilesState, storage: ProfileStorage | undefined): PlayerProfilesState {
-  const saved = state.canPersist && safeWrite(storage, PLAYER_PROFILES_KEY, serializedProfileStore(state.profiles));
-  return { ...state, persistence: saved ? 'persistent' : 'session-only' };
+  const current = withPersistenceMode(state, storage);
+  if (current.persistence === 'read-only') return current;
+  const saved = current.canPersist && safeWrite(storage, PLAYER_PROFILES_KEY, serializedProfileStore(state.profiles));
+  return withPersistenceMode({ ...current, persistence: saved ? 'persistent' : 'session-only' }, storage);
 };
 
 export const createPlayerProfile = function(
@@ -94,9 +112,10 @@ export const createPlayerProfile = function(
   const result = rules.createPlayerProfile(state, name, id);
   if (result.error) return result;
   const saved = saveProfiles(result.state, storage);
+  if (saved.persistence === 'read-only') return { state: saved };
   // Retain the active-ID attempt even after a failed or protected profile write.
   const activeSaved = safeWrite(storage, ACTIVE_PLAYER_PROFILE_KEY, id);
-  return { state: { ...saved, persistence: activeSaved ? saved.persistence : 'session-only' } };
+  return { state: withPersistenceMode({ ...saved, persistence: activeSaved ? saved.persistence : 'session-only' }, storage) };
 };
 
 export const switchActivePlayerProfile = function(
@@ -104,8 +123,10 @@ export const switchActivePlayerProfile = function(
 ): PlayerProfilesResult {
   const result = rules.switchActivePlayerProfile(state, id);
   if (result.error) return result;
+  const current = withPersistenceMode(result.state, storage);
+  if (current.persistence === 'read-only') return { state: current };
   const activeSaved = safeWrite(storage, ACTIVE_PLAYER_PROFILE_KEY, id);
-  return { state: { ...result.state, persistence: activeSaved ? state.persistence : 'session-only' } };
+  return { state: withPersistenceMode({ ...current, persistence: activeSaved ? state.persistence : 'session-only' }, storage) };
 };
 
 export const renamePlayerProfile = function(
@@ -120,11 +141,14 @@ export const deletePlayerProfile = function(
 ): PlayerProfilesResult {
   const result = rules.deletePlayerProfile(state, id);
   if (result.error) return result;
+  const current = withPersistenceMode(result.state, storage);
+  if (current.persistence === 'read-only') return { state: current };
   if (!state.canPersist) return { state, error: 'profilesNotPersisted' };
   const next = result.state;
   if (state.activeProfileId === id && next.activeProfileId !== null
     && !safeWrite(storage, ACTIVE_PLAYER_PROFILE_KEY, next.activeProfileId)) {
-    return { state, error: 'activeProfileNotPersisted' };
+    const mode = withPersistenceMode(next, storage);
+    return mode.persistence === 'read-only' ? { state: mode } : { state, error: 'activeProfileNotPersisted' };
   }
   const saved = saveProfiles(next, storage);
   if (saved.persistence === 'session-only') {

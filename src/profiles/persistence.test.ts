@@ -37,3 +37,26 @@ test('injected persistence resolves storage per action, retries failed writes, a
   expect(values.get(ACTIVE_PLAYER_PROFILE_KEY)).toBe('mira');
   expect(values.get(PLAYER_PROFILES_KEY)).toContain('Mira Two');
 });
+
+
+test('temporary read-only edits cannot leak when a later adapter becomes writable', function() {
+  const values = new Map<string, string>();
+  let mode: 'read-write' | 'read-only' = 'read-write';
+  let writes = 0;
+  const storage: ProfileStorage = {
+    getPersistenceMode: function() { return mode; },
+    getItem: function(key) { return values.get(key) ?? null; },
+    setItem: function(key, value) { writes += 1; values.set(key, value); },
+  };
+  const persistence = createProfilePersistence(() => storage);
+  const saved = persistence.create(persistence.load(), 'Ada', 'a').state;
+  mode = 'read-only';
+  const temporary = persistence.rename(saved, 'a', 'Temporary').state;
+  expect(temporary.persistence).toBe('read-only');
+  mode = 'read-write';
+  const updated = persistence.create(temporary, 'Ben', 'b').state;
+  expect(updated.persistence).toBe('read-only');
+  expect(updated.profiles).toHaveLength(2);
+  expect(writes).toBe(2);
+  expect(activePlayerProfile(persistence.load())?.name).toBe('Ada');
+});

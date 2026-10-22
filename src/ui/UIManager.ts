@@ -162,6 +162,7 @@ const createUIIntegration = function(engine: GameEngine) {
     },
     getPracticePersistence: function() {
       const profiles = engine.getResource('playerProfiles');
+      if (profiles.persistence === 'read-only') return 'read-only';
       return profiles.persistence === 'persistent' && activePlayerProfile(profiles)?.practiceProgress.canPersist
         ? 'persistent' : 'session-only';
     },
@@ -173,7 +174,7 @@ const createUIIntegration = function(engine: GameEngine) {
       const profile = activePlayerProfile(engine.getResource('playerProfiles'));
       return profile?.mathProgress ?? initialSavedMathProgress();
     },
-    getMathProgressPersistence: function(): 'persistent' | 'session-only' {
+    getMathProgressPersistence: function() {
       return engine.getResource('playerProfiles').persistence;
     },
     selectMathStep,

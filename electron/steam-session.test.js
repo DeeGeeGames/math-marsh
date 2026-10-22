@@ -31,3 +31,27 @@ describe('app-owned Steam session', function () {
 		expect(reported).toBe(true);
 	});
 });
+
+describe('Steam process app identity', function () {
+	const { getSteamAppIdentity, DEMO_APP_ID } = createRequire(import.meta.url)('./steam-session.cjs');
+	test('unassigned demo id cannot authorize other apps, and primary process id takes precedence', function () {
+		expect(DEMO_APP_ID).toBeNull();
+		expect(getSteamAppIdentity({ SteamAppId: '123', SteamGameId: '4927380' })).toBeNull();
+		expect(getSteamAppIdentity({ SteamAppId: '123' })).toBeNull();
+		expect(getSteamAppIdentity({})).toBeNull();
+		expect(getSteamAppIdentity({ SteamAppId: '4927380' })).toEqual({ appId: '4927380', role: 'paid' });
+	});
+	test('demo initializes as its own assigned process id using an injected test assignment', function () {
+		let initializedId;
+		const session = createSteamSession({
+			environment: { SteamAppId: '123' }, demoAppId: '123',
+			loadSteam: function () { return {
+				setSdkPath: function () {}, init: function ({ appId }) { initializedId = appId; return true; }, shutdown: function () {},
+			}; },
+		});
+		expect(initializedId).toBe(123);
+		expect(session.role).toBe('demo');
+		expect(session.appId).toBe('123');
+		session.dispose();
+	});
+});

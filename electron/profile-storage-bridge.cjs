@@ -23,6 +23,13 @@ const createProfileStorageBridge = function (request, legacyStorage) {
 		initialized = true;
 	};
 	return {
+		getPersistenceMode: function () {
+			initialize();
+			const status = call('status');
+			if (status === 'read-only') return 'read-only';
+			if (status === 'ready') return 'read-write';
+			throw new Error('Steam profile storage unavailable');
+		},
 		getItem: function (key) { initialize(); return call('get', key); },
 		setItem: function (key, value) { initialize(); call('set', key, value); },
 	};
