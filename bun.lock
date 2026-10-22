@@ -29,6 +29,7 @@
   },
   "trustedDependencies": [
     "@kmamal/sdl",
+    "bun",
     "koffi",
   ],
   "packages": {
