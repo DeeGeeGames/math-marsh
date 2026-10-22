@@ -31,6 +31,7 @@ export type DesktopInputController = {
 };
 
 export type DesktopPlatform = {
+	profileStorage?: Pick<Storage, 'getItem' | 'setItem'>;
 	input?: DesktopInputController;
 	fullscreen?: DesktopFullscreenController;
 	quit?: () => Promise<void>;

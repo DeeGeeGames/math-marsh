@@ -1,4 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const { createProfileStorageBridge } = require('./profile-storage-bridge.cjs');
+const profileStorage = createProfileStorageBridge(
+	(operation, ...args) => ipcRenderer.sendSync('desktop:profiles', operation, ...args),
+	() => localStorage,
+);
 const FULLSCREEN_ENABLED_KEY = 'fullscreen-enabled';
 let inputSnapshot = { available: false, controllers: [] };
 let inputReceivedAt = 0;
@@ -56,6 +61,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 }, { once: true });
 
 contextBridge.exposeInMainWorld('mathMarshDesktop', {
+	...(profileStorage ? { profileStorage } : {}),
 	input: {
 		snapshot: () => performance.now() - inputReceivedAt <= 1500
 			? inputSnapshot : { available: false, controllers: [] },
