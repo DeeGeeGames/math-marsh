@@ -4,7 +4,7 @@ import { selectedStartingLevel } from '../ecs/levelSelectionCheat';
 import type { EquationOperation, GameMode, MathDifficulty } from '../ecs/types';
 import { createMathSession } from '../ecs/mathMode';
 import { selectUnlockedMathStep } from '../ecs/mathProgressStore';
-import { activePlayerProfile, updateActivePlayerProfile } from '../ecs/playerProfiles';
+import { activePlayerProfile } from '../profiles/rules';
 import type { ResourceActions, ScreenActions, ActionSound } from './actionDependencies';
 
 // Preserve inference for the factory's public action signatures.
@@ -36,7 +36,7 @@ export const createRunActions = function(
     if (!profile) return;
     const progress = selectUnlockedMathStep(profile.mathProgress, operation, step);
     if (!progress) return;
-    engine.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    engine.setResource('playerProfiles', engine.getResource('profilePersistence').updateActive(profiles, active => ({
       ...active,
       mathProgress: progress,
     })));
@@ -69,7 +69,7 @@ export const createRunActions = function(
     const fact = session.deck[0];
     if (!fact) return;
     engine.setResource('gameMode', [fact.operation]);
-    engine.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    engine.setResource('playerProfiles', engine.getResource('profilePersistence').updateActive(profiles, active => ({
       ...active, practiceProgress: rememberPracticeSelection(active.practiceProgress, selection),
     })));
     if (profile.onboarding.basics === 'pending') {

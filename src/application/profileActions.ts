@@ -1,11 +1,5 @@
-import {
-  createPlayerProfile as addPlayerProfileRecord,
-  createPlayerProfileId,
-  deletePlayerProfile as deletePlayerProfileRecord,
-  renamePlayerProfile as renamePlayerProfileRecord,
-  switchActivePlayerProfile,
-  type PlayerProfilesError,
-} from '../ecs/playerProfiles';
+import { createPlayerProfileId } from '../platform/profileStorage';
+import type { PlayerProfilesError } from '../profiles/types';
 import type { ResourceActions, ScreenActions, ActionSound } from './actionDependencies';
 
 // Preserve inference for the factory's public action signatures.
@@ -50,7 +44,7 @@ export const createProfileActions = function(
   }
 
   function createPlayer(name: string): PlayerProfilesError | undefined {
-    const result = addPlayerProfileRecord(
+    const result = engine.getResource('profilePersistence').create(
       engine.getResource('playerProfiles'),
       name,
       createId(),
@@ -69,7 +63,7 @@ export const createProfileActions = function(
       void engine.setScreen('menu', {});
       return;
     }
-    const result = switchActivePlayerProfile(profiles, profileId);
+    const result = engine.getResource('profilePersistence').switchActive(profiles, profileId);
     if (result.error) return;
     engine.setResource('playerProfiles', result.state);
     clearPlayerRun();
@@ -79,7 +73,7 @@ export const createProfileActions = function(
 
   function renamePlayer(profileId: string, name: string): PlayerProfilesError | undefined {
     const profiles = engine.getResource('playerProfiles');
-    const result = renamePlayerProfileRecord(profiles, profileId, name);
+    const result = engine.getResource('profilePersistence').rename(profiles, profileId, name);
     if (result.error) return result.error;
     engine.setResource('playerProfiles', result.state);
     void engine.popScreen().then(() => focusRenamedProfile(profileId));
@@ -88,7 +82,7 @@ export const createProfileActions = function(
 
   function deletePlayer(profileId: string): PlayerProfilesError | undefined {
     const profiles = engine.getResource('playerProfiles');
-    const result = deletePlayerProfileRecord(profiles, profileId);
+    const result = engine.getResource('profilePersistence').delete(profiles, profileId);
     if (result.state !== profiles) engine.setResource('playerProfiles', result.state);
     if (result.error) return result.error;
     clearPlayerRun();

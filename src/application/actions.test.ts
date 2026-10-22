@@ -1,3 +1,4 @@
+import { createProfilePersistence } from '../profiles/persistence';
 import { expect, test } from 'bun:test';
 import ECSpresso from 'ecspresso';
 import type { Components, Resources } from '../ecs/types';
@@ -14,6 +15,7 @@ const fixture = function() {
   const engine = ECSpresso.create().withComponentTypes<Components>().withResourceTypes<Resources>()
     .withScreens(configureGameScreens).build();
   const first = createPlayerProfile(loadPlayerProfiles({ getItem: () => null, setItem: () => {} }), 'Mira', 'mira');
+  engine.setResource('profilePersistence', createProfilePersistence(() => undefined));
   engine.setResource('playerProfiles', first.state);
   engine.setResource('practiceSession', null);
   engine.setResource('mathSession', null);

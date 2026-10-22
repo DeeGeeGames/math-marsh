@@ -1,3 +1,4 @@
+import { createProfilePersistence } from '../profiles/persistence';
 import { goToNextLevel } from './systems/nextLevel';
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
@@ -52,6 +53,7 @@ const createWorld = async function(level = 1, manageBoard = false): Promise<Game
   if (!fact) throw new Error('Missing test fact');
   const session: PracticeSession = { ...initial, deck: [fact, ...initial.deck.filter(candidate => candidate.id !== fact.id)] };
   world.setResource('practiceSession', session);
+  world.setResource('profilePersistence', createProfilePersistence(() => undefined));
   world.setResource('playerProfiles', profiles());
   world.setResource('mathSession', null);
   world.setResource('equationsSolved', 0);

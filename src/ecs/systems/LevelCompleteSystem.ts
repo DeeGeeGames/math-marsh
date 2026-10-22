@@ -1,7 +1,7 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { LEVEL_COMPLETE_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 import { skitForCompletedLevel } from '../skitSequence';
-import { activePlayerProfile } from '../playerProfiles';
+import { activePlayerProfile } from '../../profiles/rules';
 import { goToNextLevel } from './nextLevel';
 
 export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): void {

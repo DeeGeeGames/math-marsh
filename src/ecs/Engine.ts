@@ -8,7 +8,8 @@ import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { controllerActionMap, controllerOnlyActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { configureGameScreens } from './screenConfiguration';
-import { loadPlayerProfiles } from './playerProfiles';
+import { createProfilePersistence } from '../profiles/persistence';
+import { browserProfileStorage } from '../platform/profileStorage';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
 import { configureImageAssets } from './assets';
@@ -53,6 +54,8 @@ const inputPlugin = createInputPlugin<GameAction>({
     && !isEditableTarget(event.target),
 });
 
+const profilePersistence = createProfilePersistence(browserProfileStorage);
+
 export const gameEngine = ECSpresso.create()
   .withPlugin(inputPlugin)
   .withPlugin(timerPlugin)
@@ -73,7 +76,8 @@ export const gameEngine = ECSpresso.create()
   .withResource('enemySpawn', { index: 0, roster: [] })
   .withResource('equationMode', createEquationModeState(1, 'easy', ['add']))
   .withResource('controllerSelection', initialControllerSelection())
-  .withResource('playerProfiles', loadPlayerProfiles())
+  .withResource('profilePersistence', profilePersistence)
+  .withResource('playerProfiles', profilePersistence.load())
   .withResource('practiceSession', null as Resources['practiceSession'])
   .withResource('mathSession', noMathSession)
   .withResource('mathRoundSummary', noMathRoundSummary)

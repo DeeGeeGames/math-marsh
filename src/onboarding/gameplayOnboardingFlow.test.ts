@@ -1,3 +1,4 @@
+import { createProfilePersistence } from '../profiles/persistence';
 import { emptyPracticeProgress } from '../ecs/practiceProgress';
 import { describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
@@ -62,6 +63,7 @@ const createWorld = async function(): Promise<Fixture> {
 		} } },
 	};
 	world.setResource('mathSession', mathSession);
+	world.setResource('profilePersistence', createProfilePersistence(() => undefined));
 	world.setResource('playerProfiles', profilesFor(progress));
 	world.setResource('mathDifficulty', 'expert');
 	world.setResource('gameMode', ['add']);

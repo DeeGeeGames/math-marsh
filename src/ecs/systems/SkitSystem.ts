@@ -1,6 +1,6 @@
 import type { GameSystemRegistrar } from '../Engine';
 import { gameActions } from '../controllerSelection';
-import { activePlayerProfile } from '../playerProfiles';
+import { activePlayerProfile } from '../../profiles/rules';
 import { skitById } from '../skitSequence';
 import { updateSkitPresentation } from '../../ui/screens/skitScreen';
 import { goToNextLevel } from './nextLevel';

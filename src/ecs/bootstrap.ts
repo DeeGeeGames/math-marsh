@@ -38,7 +38,7 @@ import { addSkitSystemToEngine } from './systems/SkitSystem';
 import { updateSkitPresentation } from '../ui/screens/skitScreen';
 import { skitById } from './skitSequence';
 import { unlockSkitForCompletedLevel } from './skitProgress';
-import { activePlayerProfile, updateActivePlayerProfile } from './playerProfiles';
+import { activePlayerProfile } from '../profiles/rules';
 import { STARTING_TIME_SECONDS } from './runTime';
 import { enemyRosterForLevel, arcadeEnemyRosterForLevel } from './enemyRosters';
 import { equationModeForMathSession, mathSessionForBoard } from './mathMode';
@@ -167,7 +167,7 @@ const setupScreenHooks = (): void => {
     if (!profile) return;
     const unlocked = unlockSkitForCompletedLevel(profile.skitProgress, config.completedLevel);
     if (unlocked === profile.skitProgress) return;
-    ecs.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    ecs.setResource('playerProfiles', ecs.getResource('profilePersistence').updateActive(profiles, active => ({
       ...active,
       skitProgress: unlocked,
     })));
