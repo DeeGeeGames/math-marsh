@@ -9,3 +9,20 @@ declare global {
 	}
 }
 window.toastTestEngine = gameEngine;
+
+import { initializeUI, showPauseScreen } from '../../src/ui/UIManager';
+import { getCtx } from '../../src/ecs/systems/render/context';
+
+declare global {
+  interface Window {
+    replacePausedTestUI: () => void;
+    rendererTargetsTestCanvas: () => boolean;
+  }
+}
+window.replacePausedTestUI = function(): void {
+  initializeUI(gameEngine);
+  showPauseScreen();
+};
+window.rendererTargetsTestCanvas = function(): boolean {
+  return getCtx()?.canvas === document.querySelector('#game-canvas');
+};

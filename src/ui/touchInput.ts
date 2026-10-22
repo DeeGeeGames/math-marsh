@@ -17,18 +17,9 @@ const dispatchKey = (type: 'keydown' | 'keyup', key: string): void => {
 	window.dispatchEvent(new KeyboardEvent(type, { key, bubbles: true, cancelable: true }));
 };
 
-// Single module-scope visibilitychange listener that fans out to whichever
-// buttons are currently pressed — registering one per button leaked listeners
-// every time the playing screen was re-mounted.
-const activeReleases = new Set<() => void>();
-document.addEventListener('visibilitychange', () => {
-	if (document.visibilityState !== 'hidden') return;
-	activeReleases.forEach((r) => r());
-});
-
 type BindOptions = { repeat: boolean };
 
-const bindButton = (button: HTMLButtonElement, action: TouchAction, options: BindOptions): void => {
+const bindButton = (button: HTMLButtonElement, action: TouchAction, options: BindOptions, activeReleases: Set<() => void>): (() => void) => {
 	const key = ACTION_KEYS[action];
 	let timers: { initial: number | null; interval: number | null } = { initial: null, interval: null };
 
@@ -44,7 +35,7 @@ const bindButton = (button: HTMLButtonElement, action: TouchAction, options: Bin
 		dispatchKey('keyup', key);
 	};
 
-	button.addEventListener('pointerdown', (event) => {
+	const onPointerDown = function(event: PointerEvent): void {
 		event.preventDefault();
 		button.setPointerCapture(event.pointerId);
 		activeReleases.add(release);
@@ -54,13 +45,23 @@ const bindButton = (button: HTMLButtonElement, action: TouchAction, options: Bin
 			dispatchKey('keydown', key);
 			timers.interval = window.setInterval(() => dispatchKey('keydown', key), REPEAT_INTERVAL_MS);
 		}, INITIAL_REPEAT_DELAY_MS);
-	});
-	button.addEventListener('pointerup', (event) => {
+	};
+	const onPointerUp = function(event: PointerEvent): void {
 		event.preventDefault();
 		release();
-	});
+	};
+	button.addEventListener('pointerdown', onPointerDown);
+	button.addEventListener('pointerup', onPointerUp);
 	button.addEventListener('pointercancel', release);
 	button.addEventListener('lostpointercapture', release);
+	return function(): void {
+		if (activeReleases.has(release)) release();
+		clearTimers();
+		button.removeEventListener('pointerdown', onPointerDown);
+		button.removeEventListener('pointerup', onPointerUp);
+		button.removeEventListener('pointercancel', release);
+		button.removeEventListener('lostpointercapture', release);
+	};
 };
 
 const findButton = (root: ParentNode, id: string): HTMLButtonElement => {
@@ -69,12 +70,17 @@ const findButton = (root: ParentNode, id: string): HTMLButtonElement => {
 	return el;
 };
 
-export const bindTouchControls = (root: ParentNode): void => {
-	bindButton(findButton(root, 'touch-up'), 'up', { repeat: true });
-	bindButton(findButton(root, 'touch-down'), 'down', { repeat: true });
-	bindButton(findButton(root, 'touch-left'), 'left', { repeat: true });
-	bindButton(findButton(root, 'touch-right'), 'right', { repeat: true });
-	// Eat: keydown on pointerdown, keyup on pointerup. The two events must
-	// straddle a frame so the input plugin's per-frame poll observes the edge.
-	bindButton(findButton(root, 'touch-eat'), 'eat', { repeat: false });
+export const bindTouchControls = (root: ParentNode): (() => void) => {
+	const activeReleases = new Set<() => void>();
+	const onVisibilityChange = function(): void {
+		if (document.visibilityState === 'hidden') activeReleases.forEach(function(release) { release(); });
+	};
+	document.addEventListener('visibilitychange', onVisibilityChange);
+	const cleanups = (['up', 'down', 'left', 'right', 'eat'] as const).map(function(action) {
+		return bindButton(findButton(root, `touch-${action}`), action, { repeat: action !== 'eat' }, activeReleases);
+	});
+	return function(): void {
+		document.removeEventListener('visibilitychange', onVisibilityChange);
+		cleanups.forEach(function(cleanup) { cleanup(); });
+	};
 };

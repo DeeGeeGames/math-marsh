@@ -6,7 +6,6 @@ import { createPlayer } from './entities';
 import type { PlayingScreenConfig } from './types';
 import { gridToPixel } from './gameUtils';
 import {
-  initializeRenderSystem,
   addRenderSystemToEngine
 } from './systems/RenderSystem';
 import { addEquationFeedbackSystemToEngine } from './systems/EquationFeedbackSystem';
@@ -71,12 +70,6 @@ const PROFILE_OVERLAY_SCREENS = [
   'playerRename',
   'playerDelete',
 ] as const;
-
-const setupCanvas = (): void => {
-  const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
-  if (!canvas) throw new Error('Canvas element not found');
-  initializeRenderSystem(canvas, () => gameEngine.getResource('board'));
-};
 
 const resetEnemySpawnSequence = (ecs: GameEngine): void => {
   const mathSession = ecs.getResource('mathSession');
@@ -195,7 +188,6 @@ const setupScreenHooks = (): void => {
       boardForDifficulty(ecs.getResource('mathDifficulty')),
     );
     showGameplayScreen('normal');
-    setupCanvas();
     gameEngine.setResource('gameplayOnboardingSession', { active: false });
     enterPlayingScreen(ecs, config);
   });
@@ -207,7 +199,6 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenEnter('tutorial', ({ config }) => {
     gameEngine.setResource('board', TUTORIAL_BOARD);
     showGameplayScreen('tutorial');
-    setupCanvas();
     setupScriptedTutorialScene(gameEngine, config);
   });
 

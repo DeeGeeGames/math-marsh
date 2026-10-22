@@ -91,16 +91,17 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
       { action: 'pause', label: 'Pause' },
     ],
     promptPlacement: 'hud',
-    wire: (root): void => {
+    wire: (root): (() => void) => {
       $(root, '#pause-btn').addEventListener('click', actions.pauseGame);
       actions.wireFullscreenButton($<HTMLButtonElement>(root, '#hud-fullscreen-btn'));
       actions.wireTouchControlsSetting(root);
       bindGameplayHud(root);
-      bindTouchControls(root);
+      const disposeTouch = bindTouchControls(root);
       bindBoardPointer($<HTMLCanvasElement>(root, '#game-canvas'), actions.tapBoardPoint);
       $(root, '#tutorial-back-btn').addEventListener('click', actions.previousTutorialStep);
       $(root, '#tutorial-next-btn').addEventListener('click', actions.nextTutorialStep);
       $(root, '#skip-tutorial-btn').addEventListener('click', actions.skipTutorial);
+      return disposeTouch;
     },
   };
 }
