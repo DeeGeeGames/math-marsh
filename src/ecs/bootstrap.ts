@@ -6,7 +6,6 @@ import { createPlayer } from './entities';
 import type { PlayingScreenConfig } from './types';
 import { gridToPixel } from './gameUtils';
 import {
-  initializeRenderSystem,
   addRenderSystemToEngine
 } from './systems/RenderSystem';
 import { addEquationFeedbackSystemToEngine } from './systems/EquationFeedbackSystem';
@@ -39,7 +38,7 @@ import { addSkitSystemToEngine } from './systems/SkitSystem';
 import { updateSkitPresentation } from '../ui/screens/skitScreen';
 import { skitById } from './skitSequence';
 import { unlockSkitForCompletedLevel } from './skitProgress';
-import { activePlayerProfile, updateActivePlayerProfile } from './playerProfiles';
+import { activePlayerProfile } from '../profiles/rules';
 import { STARTING_TIME_SECONDS } from './runTime';
 import { enemyRosterForLevel, arcadeEnemyRosterForLevel } from './enemyRosters';
 import { equationModeForMathSession, mathSessionForBoard } from './mathMode';
@@ -71,12 +70,6 @@ const PROFILE_OVERLAY_SCREENS = [
   'playerRename',
   'playerDelete',
 ] as const;
-
-const setupCanvas = (): void => {
-  const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
-  if (!canvas) throw new Error('Canvas element not found');
-  initializeRenderSystem(canvas, () => gameEngine.getResource('board'));
-};
 
 const resetEnemySpawnSequence = (ecs: GameEngine): void => {
   const mathSession = ecs.getResource('mathSession');
@@ -174,7 +167,7 @@ const setupScreenHooks = (): void => {
     if (!profile) return;
     const unlocked = unlockSkitForCompletedLevel(profile.skitProgress, config.completedLevel);
     if (unlocked === profile.skitProgress) return;
-    ecs.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+    ecs.setResource('playerProfiles', ecs.getResource('profilePersistence').updateActive(profiles, active => ({
       ...active,
       skitProgress: unlocked,
     })));
@@ -195,7 +188,6 @@ const setupScreenHooks = (): void => {
       boardForDifficulty(ecs.getResource('mathDifficulty')),
     );
     showGameplayScreen('normal');
-    setupCanvas();
     gameEngine.setResource('gameplayOnboardingSession', { active: false });
     enterPlayingScreen(ecs, config);
   });
@@ -207,7 +199,6 @@ const setupScreenHooks = (): void => {
   gameEngine.onScreenEnter('tutorial', ({ config }) => {
     gameEngine.setResource('board', TUTORIAL_BOARD);
     showGameplayScreen('tutorial');
-    setupCanvas();
     setupScriptedTutorialScene(gameEngine, config);
   });
 

@@ -215,9 +215,7 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     // A touch opens Settings after navigation and returns to pointer focus.
     await page.setViewportSize({ width: 390, height: 844 });
     const settingsButton = page.getByRole('button', { name: 'Settings', exact: true });
-    const settingsBounds = await settingsButton.boundingBox();
-    if (!settingsBounds) throw new Error('Settings button is not visible');
-    await page.touchscreen.tap(settingsBounds.x + settingsBounds.width / 2, settingsBounds.y + settingsBounds.height / 2);
+    await settingsButton.tap();
     await expect(soundEffects).toBeFocused();
     expect(await page.locator('html').getAttribute('data-focus-navigation')).toBeNull();
     expect(await focusStyle(page, '#sound-effects')).toMatchObject({

@@ -92,6 +92,9 @@ export const initializeRenderSystem = (canvasElement: HTMLCanvasElement, getBoar
 };
 
 export const cleanupRenderSystem = (): void => {
+	if (canvas) boardReaders.delete(canvas);
+	canvas = null;
+	ctx = null;
 	window.removeEventListener('resize', resizeCanvas);
 	observer?.disconnect();
 	observer = null;

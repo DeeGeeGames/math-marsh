@@ -56,3 +56,10 @@ export const updateGameplayHud = (
     gameplayHud.lastLevel = level;
   }
 };
+
+export const clearGameplayHud = function(): void {
+  delete gameplayHud.time;
+  delete gameplayHud.level;
+  delete gameplayHud.notice;
+  delete gameplayHud.container;
+};

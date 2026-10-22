@@ -18,6 +18,7 @@ import {
 type PromptSpec = Pick<ScreenSpec, 'prompts' | 'promptPlacement'>;
 
 type ScreenRuntime = {
+  dispose: () => void;
   activateFocus: () => void;
   focus: (selector: string) => boolean;
   navigateFocus: (direction: FocusDirection) => void;
@@ -58,6 +59,8 @@ export function createScreenRuntime(
   screenSpecs: Readonly<Record<UIScreen, ScreenSpec>>,
 ): ScreenRuntime {
   const container = createGameContainer();
+  const cleanups: (() => void)[] = [];
+  let disposed = false;
   const screenElements = new Map<UIScreen, HTMLElement>();
   const promptOverrides = new Map<UIScreen, PromptSpec>();
   const state: { currentPromptPlatform: InputPromptPlatform; currentScreen: UIScreen; nativeBindings: NativePromptBindings | undefined } = {
@@ -86,7 +89,8 @@ export function createScreenRuntime(
     if (typeof spec.html === 'string') root.innerHTML = spec.html;
     else render(spec.html, root);
     renderPromptSlot(root, promptSpecForScreen(screen));
-    spec.wire?.(root);
+    const cleanup = spec.wire?.(root);
+    if (cleanup) cleanups.push(cleanup);
     container.appendChild(root);
     screenElements.set(screen, root);
     return root;
@@ -119,6 +123,7 @@ export function createScreenRuntime(
     screen: UIScreen,
     options: ScreenPresentationOptions = {},
   ): HTMLElement {
+    if (disposed) throw new Error('Screen runtime has been disposed');
     const root = screenElements.get(screen) ?? createScreen(screen);
     screenSpecs[screen].onShow?.(root);
     renderPromptSlot(root, promptSpecForScreen(screen));
@@ -209,6 +214,15 @@ export function createScreenRuntime(
   }
 
   return {
+    dispose: function(): void {
+      if (disposed) return;
+      disposed = true;
+      cleanups.splice(0).reverse().forEach(function(cleanup) { cleanup(); });
+      container.replaceChildren();
+      container.remove();
+      screenElements.clear();
+      promptOverrides.clear();
+    },
     activateFocus,
     focus,
     navigateFocus,

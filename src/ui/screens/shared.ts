@@ -5,11 +5,7 @@ import type { BoardPoint } from '../../ecs/lilyPads';
 import type { SkitId } from '../../ecs/skitSequence';
 import type { SkitProgress } from '../../ecs/skitProgress';
 import type { MathProgressPersistence, SavedMathProgress } from '../../ecs/mathProgressStore';
-import type {
-	PlayerProfile,
-	PlayerProfilesError,
-	PlayerProfilesState,
-} from '../../ecs/playerProfiles';
+import { type PlayerProfile, type PlayerProfilesError, type PlayerProfilesState } from '../../profiles/types';
 
 export type ScreenSpecActions = {
   startGame: (mode: GameMode, difficulty: MathDifficulty, level?: number) => void;

@@ -58,6 +58,15 @@ export const scheduleTouchControlsLayout = (): void => {
 	});
 };
 
-window.addEventListener('resize', scheduleTouchControlsLayout);
-window.addEventListener('orientationchange', scheduleTouchControlsLayout);
-window.addEventListener('math-marsh:canvas-resize', scheduleTouchControlsLayout);
+export const initializeTouchControlsLayout = function(): () => void {
+  window.addEventListener('resize', scheduleTouchControlsLayout);
+  window.addEventListener('orientationchange', scheduleTouchControlsLayout);
+  window.addEventListener('math-marsh:canvas-resize', scheduleTouchControlsLayout);
+  return function(): void {
+    window.removeEventListener('resize', scheduleTouchControlsLayout);
+    window.removeEventListener('orientationchange', scheduleTouchControlsLayout);
+    window.removeEventListener('math-marsh:canvas-resize', scheduleTouchControlsLayout);
+    if (layoutFrame !== null) window.cancelAnimationFrame(layoutFrame);
+    layoutFrame = null;
+  };
+};

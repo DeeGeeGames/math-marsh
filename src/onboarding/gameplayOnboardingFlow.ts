@@ -3,7 +3,7 @@ import type { GameEngine } from '../ecs/Engine';
 import type { TutorialScreenConfig } from '../ecs/types';
 import { mathTutorialForLevel } from '../ecs/mathMode';
 import { goToNextLevel } from '../ecs/systems/nextLevel';
-import { activePlayerProfile, updateActivePlayerProfile } from '../ecs/playerProfiles';
+import { activePlayerProfile } from '../profiles/rules';
 import {
   completedOnboardingCompletion,
   skippedOnboardingCompletion,
@@ -30,7 +30,7 @@ function recordOnboardingCompletion(
   const current = profile.onboarding[kind];
   const next = ONBOARDING_COMPLETION_TRANSITIONS[requested](current);
   if (next === current) return;
-  engine.setResource('playerProfiles', updateActivePlayerProfile(profiles, active => ({
+  engine.setResource('playerProfiles', engine.getResource('profilePersistence').updateActive(profiles, active => ({
     ...active,
     onboarding: { ...active.onboarding, [kind]: next },
   })));

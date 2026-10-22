@@ -1,3 +1,4 @@
+import { createProfilePersistence } from '../../profiles/persistence';
 import { emptyPracticeProgress } from '../practiceProgress';
 import { describe, expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
@@ -53,6 +54,7 @@ const createWorld = async function(includeProblems = false): Promise<MathTestWor
 		.build();
 	const progress = initialSavedMathProgress();
 	const session = createMathSession(progress);
+	world.setResource('profilePersistence', createProfilePersistence(() => undefined));
 	world.setResource('playerProfiles', profilesFor(progress));
 	world.setResource('mathRoundSummary', null);
 	world.setResource('mathRoundCompletedThisBoard', false);

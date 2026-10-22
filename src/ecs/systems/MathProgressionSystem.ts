@@ -3,7 +3,7 @@ import { addMathAssessmentTime, createMathAssessment, mathAssessmentForEvaluatio
 import { MATH_FINAL_STEP } from '../mathSteps';
 import { mathSceneIdsForUnlockedSteps } from '../mathMode';
 import { evaluateMathProgressionRound } from '../mathProgression';
-import { activePlayerProfile, updateActivePlayerProfile } from '../playerProfiles';
+import { activePlayerProfile } from '../../profiles/rules';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { GAME_CONFIG } from '../../config';
 import { playerQuery } from '../queries';
@@ -17,7 +17,7 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
     .setPriority(SYSTEM_PRIORITIES.MATH_PROGRESSION)
     .runWhenEmpty()
     .addQuery('players', playerQuery)
-    .withResources(['mathSession', 'playerProfiles', 'equationMode', 'gameplayOnboardingSession', 'gameplayClock'])
+    .withResources(['mathSession', 'playerProfiles', 'profilePersistence', 'equationMode', 'gameplayOnboardingSession', 'gameplayClock'])
     .setProcess(({ ecs, dt, queries, resources }) => {
       const session = resources.mathSession;
       if (!session || ecs.getCurrentScreen() !== 'playing' || resources.gameplayOnboardingSession.active) return;
@@ -71,7 +71,7 @@ export function addMathProgressionSystemToEngine(systems: GameSystemRegistrar): 
       const unlockedSceneIds = mathSceneIdsForUnlockedSteps(outcome.unlockedSteps)
         .filter(id => !profile.skitProgress.includes(id));
       const skitProgress = [...profile.skitProgress, ...unlockedSceneIds];
-      const playerProfiles = updateActivePlayerProfile(resources.playerProfiles, active => ({
+      const playerProfiles = resources.profilePersistence.updateActive(resources.playerProfiles, active => ({
         ...active,
         mathProgress,
         skitProgress,
