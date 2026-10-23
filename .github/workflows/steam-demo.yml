@@ -1,0 +1,47 @@
+name: Steam Demo Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Owner-approved full source commit SHA to package.
+        required: true
+        type: string
+      build_description:
+        description: Owner-approved build label shown in Steamworks.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: steam-demo-upload
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require an immutable source revision
+        env:
+          SOURCE_REVISION: ${{ inputs.source_revision }}
+        run: '[[ "$SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]]'
+
+  build_desktop:
+    needs: validate
+    uses: ./.github/workflows/build-desktop.yml
+    with:
+      source_revision: ${{ inputs.source_revision }}
+
+  upload_demo:
+    needs: build_desktop
+    uses: ./.github/workflows/deploy-steam.yml
+    with:
+      app_id: '5493870'
+      build_description: ${{ inputs.build_description }}
+      # Upload only. Assign to a password-protected test branch in Steamworks.
+      # Public branch promotion requires a separate owner release decision.
+      release_branch: ''
+    secrets: inherit
