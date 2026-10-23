@@ -1,0 +1,102 @@
+{
+  "appId": 4927380,
+  "artworkRevisionDate": "2026-10-23",
+  "sourceArtwork": "src/assets/brand/math-marsh-banner.png",
+  "correction": {
+    "tool": "Built-in imagegen",
+    "prompt": "Preserve each existing Steam artwork composition, branding, characters, scenery, colors, and framing. Use the owner-corrected banner as the anatomy reference. Correct visible frog and lizard paws to four distinct rounded toes, preserving natural occlusion.",
+    "detailRepairPrompt": "Split the central downward digit on the three-toed foreground frog paw into two separate rounded middle digits. Keep the outside digits so the final paw has four digits, matching the supplied corrected banner. Preserve the surrounding artwork."
+  },
+  "assets": [
+    {
+      "file": "header-capsule.png",
+      "slot": "Header Capsule",
+      "width": 920,
+      "height": 430,
+      "sha256": "75628288cb06614ed7b93283dc3c1c4b1dc6e8131f608a597b0d752ce69d00c0",
+      "originalFile": "header.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/3bb21f6450cd9914378b86057d9e736b55cb69ef/header_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "small-capsule.png",
+      "slot": "Small Capsule",
+      "width": 462,
+      "height": 174,
+      "sha256": "463176106158e39e08e0d34dac8c585d22df66187557293450c8462526918888",
+      "originalFile": "small.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/a3ad7663926d45b29aa9929d5da2a7baeb8623b4/capsule_231x87_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "main-capsule.png",
+      "slot": "Main Capsule",
+      "width": 1232,
+      "height": 706,
+      "sha256": "c6c4db201065a40184810a8c108f2234002b3188ea0425f708d8c90d9d2a5036",
+      "originalFile": "main.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/af0cf55246db22f420f4f337c5a846cd3539f99f/capsule_616x353_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "vertical-capsule.png",
+      "slot": "Vertical Capsule",
+      "width": 748,
+      "height": 896,
+      "sha256": "92a6dcbd2ef22ca88c56296270080f747e2d62e1b9b9d410b284af6cb60d84e6",
+      "originalFile": "vertical.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/160c909e4a3a8512e2659cc2e65bc7c2128c628a/hero_capsule_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "page-background.png",
+      "slot": "Page Background",
+      "width": 1438,
+      "height": 810,
+      "sha256": "d0786f26909e2d4b8cb771ae2b4353d4c41f20bd4d4ff90f0740bfd22de56291",
+      "originalFile": "background.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/abc5e068c7dc5ec5d1c7fbf23284d1c423619a31/page_bg_raw.jpg?t=1792780616"
+    },
+    {
+      "file": "library-capsule.png",
+      "slot": "Library Capsule",
+      "width": 600,
+      "height": 900,
+      "sha256": "5ba87d8a59e617c5197634eeecae99b5fba47c928b167b00a5a8cd63bc5d2ac3",
+      "originalFile": "library-capsule.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/3c182f2f7b7f534b798d35b4657816ae1e57752c/library_capsule_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "library-header.png",
+      "slot": "Library Header",
+      "width": 920,
+      "height": 430,
+      "sha256": "75628288cb06614ed7b93283dc3c1c4b1dc6e8131f608a597b0d752ce69d00c0",
+      "originalFile": "library-header.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/3bb21f6450cd9914378b86057d9e736b55cb69ef/library_header_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "library-hero.png",
+      "slot": "Library Hero",
+      "width": 3840,
+      "height": 1240,
+      "sha256": "8f8043f83fa019d91352f9b64bdbfd8d498b9268e992bb0cbc3ea8e8ef37a261",
+      "originalFile": "library-hero.png",
+      "provenance": "corrected upload export",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/1f0061d64040f0da78f3d47906b432484167177d/library_hero_2x.jpg?t=1792780616"
+    },
+    {
+      "file": "library-logo.png",
+      "slot": "Library Logo",
+      "width": 1280,
+      "height": 720,
+      "sha256": "3832b510c680275fdf910706d5f3e6f5be58ab794676561d721a3407f5bc3a35",
+      "originalFile": "logo_2x.png",
+      "provenance": "retained Steamworks library logo",
+      "savedSteamworksAsset": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4927380/81eacb8b19f29c29ba12edbb0d8eaf527bdbfd07/logo_2x.png?t=1792780616"
+    }
+  ]
+}
