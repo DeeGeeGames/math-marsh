@@ -18,6 +18,7 @@ const PAUSED_GAMEPLAY_CLOCK_SCREENS = [
   'controllerRecovery',
   'settings',
   'gameOver',
+  'demoEnd',
 ] as const;
 
 export function pauseGameplayClocks(ecs: GameEngine): void {

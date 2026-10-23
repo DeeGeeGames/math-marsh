@@ -31,7 +31,11 @@ export type DesktopInputController = {
 	setContext: (context: 'menu' | 'gameplay') => void;
 };
 
+export type SteamAppRole = 'demo' | 'paid' | null;
+
 export type DesktopPlatform = {
+	steamRole?: SteamAppRole;
+	openFullGame?: () => Promise<void>;
 	profileStorage?: ProfileStorage;
 	input?: DesktopInputController;
 	fullscreen?: DesktopFullscreenController;
@@ -60,4 +64,15 @@ export function getDesktopQuitHandler(): DesktopPlatform['quit'] {
 
 export const getDesktopInputController = function (): DesktopInputController | undefined {
 	return typeof window === 'undefined' ? undefined : getDesktopPlatform()?.input;
+};
+
+export const getDesktopSteamRole = function(): SteamAppRole {
+	const role = typeof window === 'undefined' ? null : getDesktopPlatform()?.steamRole;
+	return role === 'demo' || role === 'paid' ? role : null;
+};
+
+export const openDesktopFullGame = async function(): Promise<void> {
+	const open = typeof window === 'undefined' ? undefined : getDesktopPlatform()?.openFullGame;
+	if (!open) throw new Error('Desktop store link unavailable');
+	await open();
 };

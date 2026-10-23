@@ -84,6 +84,7 @@ export const createNavigationActions = function(
       || returnTo === 'playerDelete'
       || returnTo === 'practice'
       || returnTo === 'practiceResults'
+      || returnTo === 'demoEnd'
     ) return;
     playSound('uiSelect');
     void engine.pushScreen('settings', { returnTo });

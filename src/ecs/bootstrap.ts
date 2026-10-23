@@ -1,3 +1,4 @@
+import { isDemoArcadeComplete } from './demoArcade';
 import { practiceEquationMode } from './practiceSession';
 import { addControllerSelectionSystemToEngine, registerControllerRecoveryLifecycle } from './systems/ControllerSelectionSystem';
 import { boardForDifficulty, TUTORIAL_BOARD } from './boardGeometry';
@@ -59,6 +60,7 @@ const INACTIVE_SCREENS = [
   'modeSelect',
   'practice',
   'practiceResults',
+  'demoEnd',
   'howToPlay',
   'tutorialOffer',
 ] as const;
@@ -215,7 +217,8 @@ const setupScreenHooks = (): void => {
 
   function showGameOverScreen(): void {
     showScreen('gameOver');
-    setRunResult(gameEngine.getResource('currentLevel'), gameEngine.getResource('equationsSolved'));
+    setRunResult(gameEngine.getResource('currentLevel'), gameEngine.getResource('equationsSolved'),
+      isDemoArcadeComplete(gameEngine.getResource('demoArcadeRun')));
   }
 
   gameEngine.onScreenEnter('gameOver', showGameOverScreen);

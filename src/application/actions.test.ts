@@ -17,6 +17,8 @@ const fixture = function() {
   const first = createPlayerProfile(loadPlayerProfiles({ getItem: () => null, setItem: () => {} }), 'Mira', 'mira');
   engine.setResource('profilePersistence', createProfilePersistence(() => undefined));
   engine.setResource('playerProfiles', first.state);
+  engine.setResource('steamAppRole', null);
+  engine.setResource('demoArcadeRun', null);
   engine.setResource('practiceSession', null);
   engine.setResource('mathSession', null);
   engine.setResource('mathRoundSummary', null);

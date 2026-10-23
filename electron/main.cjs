@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { join } = require('node:path');
 const { mkdirSync } = require('node:fs');
 const { createDesktopInput } = require('./desktop-input.cjs');
@@ -88,6 +88,13 @@ app.whenReady().then(() => {
 			steamId: steamSession.steam.getStatus().steamId, role: steamSession.role,
 		});
 	} catch (error) { console.warn('Steam profile storage unavailable.', error); }
+	ipcMain.on('desktop:steam-role', (event) => {
+		event.returnValue = BrowserWindow.fromWebContents(event.sender) ? steamIdentity?.role ?? null : null;
+	});
+	ipcMain.handle('desktop:open-full-game', async (event) => {
+		if (!BrowserWindow.fromWebContents(event.sender)) throw new Error('Unknown full-game caller');
+		await shell.openExternal('https://store.steampowered.com/app/4927380/');
+	});
 	ipcMain.on('desktop:profiles', (event, operation, ...args) => {
 		try {
 			if (!BrowserWindow.fromWebContents(event.sender)) throw new Error('Unknown profile storage caller');

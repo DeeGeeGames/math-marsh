@@ -44,5 +44,6 @@ export const configureGameScreens = function<World>(screens: ScreenConfigurator<
 		.add('controllerRecovery', { initialState: () => ({ startedAt: performance.now() }) })
 		.add('paused', { initialState: () => ({}) })
 		.add('settings', { initialState: (config: SettingsScreenConfig) => ({ ...config }) })
+		.add('demoEnd', { initialState: () => ({}) })
 		.add('gameOver', { initialState: () => ({}) });
 };
