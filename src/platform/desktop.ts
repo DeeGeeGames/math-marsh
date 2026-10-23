@@ -1,3 +1,4 @@
+import type { ProfileStorage } from '../profiles/persistence';
 import type { GameAction } from '../ecs/types';
 
 export type DesktopFullscreenController = {
@@ -31,7 +32,7 @@ export type DesktopInputController = {
 };
 
 export type DesktopPlatform = {
-	profileStorage?: Pick<Storage, 'getItem' | 'setItem'>;
+	profileStorage?: ProfileStorage;
 	input?: DesktopInputController;
 	fullscreen?: DesktopFullscreenController;
 	quit?: () => Promise<void>;

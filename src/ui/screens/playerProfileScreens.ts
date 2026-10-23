@@ -102,7 +102,9 @@ function profileNameForm(
           `}
         </div>
       </div>
-      <p class="player-local-note">Profiles stay on this device and are not password protected.</p>
+      <p class="player-local-note">${actions.getPlayerProfiles().persistence === 'read-only'
+        ? 'This demo is using your full-game save. Profile changes last for this session only.'
+        : 'Profiles stay on this device and are not password protected.'}</p>
       <div class="input-prompts-slot" data-input-prompts></div>
     </main>
   `;
@@ -359,8 +361,11 @@ export function createPlayerDeleteScreenSpec(actions: ScreenSpecActions): Screen
     }
     return html`
       <main class="player-name-card player-delete-card" role="dialog" aria-modal="true" aria-labelledby="player-delete-title">
-        ${profileDialogHeading(`Delete ${profile.name}?`, 'Their profile and learner progress will be removed from this device.', 'player-delete-title')}
-        <p class="player-delete-warning">This cannot be undone.</p>
+        ${profileDialogHeading(`Delete ${profile.name}?`, actions.getPlayerProfiles().persistence === 'read-only'
+          ? 'This removes the player for this demo session. Your full-game save is kept.'
+          : 'Their profile and learner progress will be removed from this device.', 'player-delete-title')}
+        <p class="player-delete-warning">${actions.getPlayerProfiles().persistence === 'read-only'
+          ? 'The player returns when you reopen the demo.' : 'This cannot be undone.'}</p>
         <p id="player-action-error" class="player-form-error" aria-live="assertive"></p>
         <div class="player-dialog-actions">
           <button type="button" id="keep-player-button" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.mdResponsive}"

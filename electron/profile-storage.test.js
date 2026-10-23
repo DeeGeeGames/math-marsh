@@ -19,7 +19,7 @@ const { createProfileStorageBridge } = require('./profile-storage-bridge.cjs');
 const { PROFILE_STORAGE_KEYS } = require('./profile-storage-keys.cjs');
 const USER_A = '76561198012345678';
 const USER_B = '76561198098765432';
-const savePath = function (root, id = USER_A) { return join(root, 'steam-saves', id, 'progress.json'); };
+const savePath = function (root, id = USER_A) { return join(root, 'math-marsh', 'steam-saves', id, 'progress.json'); };
 const withRoot = function (run) {
 	const root = mkdtempSync(join(tmpdir(), 'math-marsh-save-'));
 	try { return run(root); } finally { rmSync(root, { recursive: true, force: true }); }
@@ -55,7 +55,7 @@ describe('Steam account profile storage', function () {
 				[ONBOARDING_STORAGE_KEYS.basics]: 'completed',
 				'fullscreen-enabled': '1',
 			};
-			const storage = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A }), legacy);
+			const storage = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A }), legacy);
 			let state = createPlayerProfile(loadPlayerProfiles(storage), 'Maya', 'maya', storage).state;
 			expect(state.profiles[0].mathProgress.add.highestUnlockedStep).toBe(7);
 			expect(state.profiles[0].onboarding.basics).toBe('completed');
@@ -73,7 +73,7 @@ describe('Steam account profile storage', function () {
 			withRoot(function (otherDevice) {
 				mkdirSync(dirname(savePath(otherDevice)), { recursive: true });
 				cpSync(savePath(root), savePath(otherDevice));
-				const restored = loadPlayerProfiles(bridgeFor(createProfileStorage({ userData: otherDevice, steamId: USER_A }), {}, function () {
+				const restored = loadPlayerProfiles(bridgeFor(createProfileStorage({ appData: otherDevice, userData: otherDevice, steamId: USER_A }), {}, function () {
 					throw new Error('Cloud save must win over legacy storage');
 				}));
 				expect(restored.profiles).toEqual(state.profiles);
@@ -86,9 +86,9 @@ describe('Steam account profile storage', function () {
 	test('keeps Steam users isolated and never reimports shared legacy progress for a second account', function () {
 		withRoot(function (root) {
 			const oldProfile = { [MATH_PROGRESS_KEY]: JSON.stringify({ version: 1, tracks: { add: { currentStep: 5, highestUnlockedStep: 5 } } }) };
-			const first = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A }), oldProfile);
+			const first = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A }), oldProfile);
 			createPlayerProfile(loadPlayerProfiles(first), 'First', 'a', first);
-			const second = bridgeFor(createProfileStorage({ userData: root, steamId: USER_B }), oldProfile, function () {
+			const second = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_B }), oldProfile, function () {
 				throw new Error('Other account must not inspect legacy storage');
 			});
 			expect(loadPlayerProfiles(second).profiles).toEqual([]);
@@ -104,18 +104,18 @@ describe('Steam account profile storage', function () {
 			const oldStorage = { getItem: key => legacy[key] ?? null, setItem: (key, value) => { legacy[key] = value; } };
 			createPlayerProfile(loadPlayerProfiles(oldStorage), 'Existing', 'old', oldStorage);
 			const original = { ...legacy };
-			const storage = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A }), legacy);
+			const storage = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A }), legacy);
 			expect(loadPlayerProfiles(storage).profiles[0].name).toBe('Existing');
 			expect(legacy).toEqual(original);
 		});
 	});
 
-	for (const corrupt of ['{broken', 'null', JSON.stringify({ version: 2, values: {} }), JSON.stringify({ version: 1, values: { secret: 'unexpected' } }), 'x'.repeat(MAX_SAVE_BYTES + 1)]) {
+	for (const corrupt of ['{broken', 'null', JSON.stringify({ version: 2, values: {} }), JSON.stringify({ version: 1, values: { secret: 123 } }), 'x'.repeat(MAX_SAVE_BYTES + 1)]) {
 		test(`preserves corrupt, future, or oversized saves (${corrupt.slice(0, 24)})`, function () {
 			withRoot(function (root) {
 				mkdirSync(dirname(savePath(root)), { recursive: true });
 				writeFileSync(savePath(root), corrupt);
-				const storage = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A }));
+				const storage = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A }));
 				const state = loadPlayerProfiles(storage);
 				expect(state.persistence).toBe('session-only');
 				expect(state.canPersist).toBe(false);
@@ -132,7 +132,7 @@ describe('Steam account profile storage', function () {
 				if (failWrite) throw new Error('disk failure');
 				fs.renameSync(...args);
 			} };
-			const storage = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A, io }));
+			const storage = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A, io }));
 			const state = createPlayerProfile(loadPlayerProfiles(storage), 'Original', 'one', storage).state;
 			const original = readFileSync(savePath(root), 'utf8');
 			failWrite = true;
@@ -143,7 +143,7 @@ describe('Steam account profile storage', function () {
 			failWrite = false;
 			const retried = renamePlayerProfile(failed, 'one', 'Retried', storage).state;
 			expect(retried.persistence).toBe('persistent');
-			expect(loadPlayerProfiles(bridgeFor(createProfileStorage({ userData: root, steamId: USER_A }))).profiles[0].name).toBe('Retried');
+			expect(loadPlayerProfiles(bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A }))).profiles[0].name).toBe('Retried');
 		});
 	});
 
@@ -153,16 +153,16 @@ describe('Steam account profile storage', function () {
 				if (to === savePath(root)) throw new Error('migration interrupted');
 				fs.renameSync(from, to);
 			} };
-			const failed = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A, io }));
+			const failed = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A, io }));
 			expect(loadPlayerProfiles(failed).persistence).toBe('session-only');
-			expect(createProfileStorage({ userData: root, steamId: USER_B }).status()).toBe('ready');
-			expect(createProfileStorage({ userData: root, steamId: USER_A }).status()).toBe('migration');
+			expect(createProfileStorage({ appData: root, userData: root, steamId: USER_B }).status()).toBe('ready');
+			expect(createProfileStorage({ appData: root, userData: root, steamId: USER_A }).status()).toBe('migration');
 		});
 	});
 
 	test('unreadable legacy storage never seeds an empty cloud save', function () {
 		withRoot(function (root) {
-			const storage = bridgeFor(createProfileStorage({ userData: root, steamId: USER_A }), {}, function () { throw new Error('storage denied'); });
+			const storage = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A }), {}, function () { throw new Error('storage denied'); });
 			expect(loadPlayerProfiles(storage).persistence).toBe('session-only');
 			expect(existsSync(savePath(root))).toBe(false);
 		});
@@ -170,10 +170,10 @@ describe('Steam account profile storage', function () {
 
 	test('deleting a migrated save never resurrects the old browser profiles', function () {
 		withRoot(function (root) {
-			const initial = createProfileStorage({ userData: root, steamId: USER_A });
+			const initial = createProfileStorage({ appData: root, userData: root, steamId: USER_A });
 			initial.migrate({ [ACTIVE_PLAYER_PROFILE_KEY]: 'old' });
 			unlinkSync(savePath(root));
-			const fresh = createProfileStorage({ userData: root, steamId: USER_A });
+			const fresh = createProfileStorage({ appData: root, userData: root, steamId: USER_A });
 			expect(fresh.status()).toBe('ready');
 			expect(fresh.getItem(ACTIVE_PLAYER_PROFILE_KEY)).toBeNull();
 		});
@@ -186,9 +186,9 @@ describe('Steam account profile storage', function () {
 				if (to.endsWith('steam-save-migration.json') && ++ownerWrites === 2) throw new Error('completion interrupted');
 				fs.renameSync(from, to);
 			} };
-			const initial = createProfileStorage({ userData: root, steamId: USER_A, io });
+			const initial = createProfileStorage({ appData: root, userData: root, steamId: USER_A, io });
 			expect(function () { initial.migrate({ [ACTIVE_PLAYER_PROFILE_KEY]: 'preserved' }); }).toThrow();
-			const recovered = createProfileStorage({ userData: root, steamId: USER_A });
+			const recovered = createProfileStorage({ appData: root, userData: root, steamId: USER_A });
 			expect(recovered.status()).toBe('ready');
 			expect(recovered.getItem(ACTIVE_PLAYER_PROFILE_KEY)).toBe('preserved');
 			expect(JSON.parse(readFileSync(join(root, 'steam-save-migration.json'), 'utf8')).imported).toBe(true);
@@ -207,12 +207,160 @@ describe('Steam account profile storage', function () {
 
 	test('rejects nonportable keys and oversized writes without changing the save', function () {
 		withRoot(function (root) {
-			const storage = createProfileStorage({ userData: root, steamId: USER_A });
+			const storage = createProfileStorage({ appData: root, userData: root, steamId: USER_A });
 			storage.migrate({});
 			const before = readFileSync(savePath(root), 'utf8');
 			expect(function () { storage.setItem('fullscreen-enabled', '1'); }).toThrow();
 			expect(function () { storage.setItem(PLAYER_PROFILES_KEY, 'x'.repeat(MAX_SAVE_BYTES)); }).toThrow();
 			expect(readFileSync(savePath(root), 'utf8')).toBe(before);
+		});
+	});
+});
+
+const writeEnvelope = function (root, envelope) {
+	mkdirSync(dirname(savePath(root)), { recursive: true });
+	writeFileSync(savePath(root), JSON.stringify(envelope));
+};
+const futureCompatibleDemo = function () {
+	return {
+		version: 1, saveOwner: 'demo', envelopeExtension: { version: 8, nested: ['retained'] },
+		values: {
+			[PLAYER_PROFILES_KEY]: JSON.stringify({ version: 1, profiles: [{
+				id: 'imported', name: 'Imported', learnerData: {
+					mathProgress: { add: { currentStep: 4, highestUnlockedStep: 8 }, futureTrack: { arbitrary: true } },
+					skitProgress: ['future-scene'], onboarding: {}, practiceProgress: { version: 99, future: [1, 2] },
+					futureLearnerField: { retained: true },
+				},
+			}] }),
+			[ACTIVE_PLAYER_PROFILE_KEY]: 'imported', 'future.storage.key': '{"unchanged":true}',
+		},
+	};
+};
+
+describe('Steam demo handoff', function () {
+	test('promotes the raw envelope once and preserves every unknown JSON and string value', function () {
+		withRoot(function (root) {
+			const fixture = futureCompatibleDemo();
+			writeEnvelope(root, fixture);
+			let promotions = 0;
+			const io = { ...fs, renameSync: function (from, to) {
+				if (to === savePath(root)) promotions++;
+				fs.renameSync(from, to);
+			} };
+			const paid = createProfileStorage({ appData: root, userData: root, steamId: USER_A, role: 'paid', io });
+			expect(paid.status()).toBe('ready');
+			expect(JSON.parse(readFileSync(savePath(root), 'utf8'))).toEqual({ ...fixture, saveOwner: 'paid' });
+			paid.status();
+			paid.getItem(PLAYER_PROFILES_KEY);
+			expect(promotions).toBe(1);
+			paid.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'changed');
+			expect(JSON.parse(readFileSync(savePath(root), 'utf8'))).toEqual({
+				...fixture, saveOwner: 'paid', values: { ...fixture.values, [ACTIVE_PLAYER_PROFILE_KEY]: 'changed' },
+			});
+		});
+	});
+
+	for (const saveOwner of [undefined, 'paid']) {
+		test(`demo reads ${saveOwner ?? 'legacy paid'} ownership without changing bytes or reading legacy storage`, function () {
+			withRoot(function (root) {
+				const fixture = { ...futureCompatibleDemo(), saveOwner };
+				writeEnvelope(root, fixture);
+				const original = readFileSync(savePath(root), 'utf8');
+				const native = createProfileStorage({ appData: root, userData: root, steamId: USER_A, role: 'demo' });
+				const bridge = bridgeFor(native, {}, function () { throw new Error('must not inspect legacy'); });
+				expect(bridge.getPersistenceMode()).toBe('read-only');
+				expect(bridge.getItem(PLAYER_PROFILES_KEY)).toBe(fixture.values[PLAYER_PROFILES_KEY]);
+				expect(function () { bridge.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'temporary'); }).toThrow();
+				expect(function () { native.migrate({}); }).toThrow();
+				expect(readFileSync(savePath(root), 'utf8')).toBe(original);
+				expect(existsSync(join(root, 'steam-save-migration.json'))).toBe(false);
+			});
+		});
+	}
+
+	test('demo first creates demo ownership; later demo session detects paid promotion before every write', function () {
+		withRoot(function (root) {
+			const demo = createProfileStorage({ appData: root, userData: root, steamId: USER_A, role: 'demo' });
+			const bridge = bridgeFor(demo);
+			expect(bridge.getPersistenceMode()).toBe('read-write');
+			demo.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'demo-player');
+			expect(JSON.parse(readFileSync(savePath(root), 'utf8')).saveOwner).toBe('demo');
+			const paid = createProfileStorage({ appData: root, userData: root, steamId: USER_A });
+			expect(paid.status()).toBe('ready');
+			paid.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'paid-player');
+			const original = readFileSync(savePath(root), 'utf8');
+			expect(function () { demo.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'stale-demo-player'); }).toThrow();
+			expect(bridge.getPersistenceMode()).toBe('read-only');
+			expect(demo.getItem(ACTIVE_PLAYER_PROFILE_KEY)).toBe('paid-player');
+			expect(readFileSync(savePath(root), 'utf8')).toBe(original);
+		});
+	});
+
+	test('migration rechecks ownership when a paid save appears after first-run status', function () {
+		withRoot(function (root) {
+			const demo = createProfileStorage({ appData: root, userData: root, steamId: USER_A, role: 'demo' });
+			expect(demo.status()).toBe('migration');
+			writeEnvelope(root, { ...futureCompatibleDemo(), saveOwner: 'paid' });
+			const original = readFileSync(savePath(root), 'utf8');
+			expect(function () { demo.migrate({ [ACTIVE_PLAYER_PROFILE_KEY]: 'legacy' }); }).toThrow();
+			expect(demo.status()).toBe('read-only');
+			expect(readFileSync(savePath(root), 'utf8')).toBe(original);
+		});
+	});
+
+	test('failed promotion preserves demo bytes and retries on a later paid launch', function () {
+		withRoot(function (root) {
+			writeEnvelope(root, futureCompatibleDemo());
+			const original = readFileSync(savePath(root), 'utf8');
+			const io = { ...fs, renameSync: function () { throw new Error('replacement denied'); } };
+			const failed = bridgeFor(createProfileStorage({ appData: root, userData: root, steamId: USER_A, io }));
+			expect(function () { failed.getPersistenceMode(); }).toThrow();
+			expect(readFileSync(savePath(root), 'utf8')).toBe(original);
+			expect(existsSync(`${savePath(root)}.tmp`)).toBe(false);
+			expect(createProfileStorage({ appData: root, userData: root, steamId: USER_A }).status()).toBe('ready');
+			expect(JSON.parse(readFileSync(savePath(root), 'utf8')).saveOwner).toBe('paid');
+		});
+	});
+
+	for (const unsupported of [
+		{ ...futureCompatibleDemo(), version: 2 },
+		{ ...futureCompatibleDemo(), saveOwner: null },
+		{ ...futureCompatibleDemo(), saveOwner: 'other' },
+		{ ...futureCompatibleDemo(), values: { [PLAYER_PROFILES_KEY]: JSON.stringify({ version: 2, profiles: [] }) } },
+	]) {
+		test(`preserves unsupported demo files (${JSON.stringify(unsupported).slice(0, 70)})`, function () {
+			withRoot(function (root) {
+				writeEnvelope(root, unsupported);
+				const original = readFileSync(savePath(root), 'utf8');
+				for (const role of ['paid', 'demo']) {
+					const native = createProfileStorage({ appData: root, userData: root, steamId: USER_A, role });
+					expect(function () { native.status(); }).toThrow();
+					expect(function () { native.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'replacement'); }).toThrow();
+				}
+				expect(readFileSync(savePath(root), 'utf8')).toBe(original);
+			});
+		});
+	}
+
+	test('save disappearance after a load blocks stale writes; an initially missing save remains a normal first run', function () {
+		withRoot(function (root) {
+			const native = createProfileStorage({ appData: root, userData: root, steamId: USER_A });
+			expect(native.status()).toBe('migration');
+			native.migrate({});
+			unlinkSync(savePath(root));
+			expect(function () { native.setItem(ACTIVE_PLAYER_PROFILE_KEY, 'stale'); }).toThrow();
+			expect(existsSync(savePath(root))).toBe(false);
+		});
+	});
+
+	test('path is independent of product userData while migration ownership stays local', function () {
+		withRoot(function (root) {
+			const userData = join(root, 'Some Demo Product');
+			const demo = createProfileStorage({ appData: root, userData, steamId: USER_A, role: 'demo' });
+			demo.migrate({});
+			expect(existsSync(savePath(root))).toBe(true);
+			expect(existsSync(join(userData, 'steam-save-migration.json'))).toBe(true);
+			expect(existsSync(join(userData, 'steam-saves'))).toBe(false);
 		});
 	});
 });

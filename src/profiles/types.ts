@@ -15,11 +15,13 @@ export type PlayerProfile = PlayerLearnerData & Readonly<{
   name: string;
 }>;
 
+export type ProfilePersistenceStatus = MathProgressPersistence | 'read-only';
+
 export type PlayerProfilesState = Readonly<{
   profiles: readonly PlayerProfile[];
   activeProfileId: string | null;
   initialLearnerData: PlayerLearnerData;
-  persistence: MathProgressPersistence;
+  persistence: ProfilePersistenceStatus;
   canPersist: boolean;
 }>;
 

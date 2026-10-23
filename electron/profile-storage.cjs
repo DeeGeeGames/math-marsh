@@ -7,8 +7,8 @@ const isRecord = function (value) {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 const validValues = function (value) {
-	return isRecord(value) && Object.entries(value).every(function ([key, item]) {
-		return PROFILE_STORAGE_KEYS.includes(key) && typeof item === 'string';
+	return isRecord(value) && Object.values(value).every(function (item) {
+		return typeof item === 'string';
 	});
 };
 const readJson = function (file, io) {
@@ -41,58 +41,110 @@ const atomicWrite = function (file, value, io) {
 
 // Steam syncs progress.json before launch and after exit. Never sync Chromium's
 // storage database, migration ownership, temporary files, or device settings.
-const createProfileStorage = function ({ userData, steamId, io = fs }) {
+const validateEnvelope = function (saved) {
+	if (!isRecord(saved) || saved.version !== 1 || !validValues(saved.values)
+		|| (Object.hasOwn(saved, 'saveOwner') && saved.saveOwner !== 'demo' && saved.saveOwner !== 'paid')) {
+		throw new Error('Unsupported or invalid Steam save; original file preserved');
+	}
+	const profiles = saved.values['math-marsh.player-profiles'];
+	if (profiles !== undefined) {
+		const store = JSON.parse(profiles);
+		if (!isRecord(store) || store.version !== 1 || !Array.isArray(store.profiles)) {
+			throw new Error('Unsupported profile store; original file preserved');
+		}
+	}
+	return saved;
+};
+const createProfileStorage = function ({ appData, userData, steamId, role = 'paid', io = fs }) {
 	if (typeof steamId !== 'string' || !/^[1-9]\d{16}$/.test(steamId)) throw new Error('Steam user identity unavailable');
-	const file = join(userData, 'steam-saves', steamId, 'progress.json');
+	if (role !== 'paid' && role !== 'demo') throw new Error('Steam app identity unavailable');
+	const file = join(appData, 'math-marsh', 'steam-saves', steamId, 'progress.json');
 	const ownerFile = join(userData, 'steam-save-migration.json');
-	let values;
+	let envelope;
+	let loadedFile = false;
 	let needsMigration = false;
 	let ready = false;
+	const readCurrent = function () {
+		const saved = readJson(file, io);
+		if (saved === undefined) {
+			if (loadedFile) throw new Error('Steam save disappeared; original session preserved');
+			return undefined;
+		}
+		validateEnvelope(saved);
+		loadedFile = true;
+		return saved;
+	};
+	const isReadOnly = function (saved) {
+		return role === 'demo' && saved !== undefined && saved.saveOwner !== 'demo';
+	};
+	const refresh = function () {
+		const saved = readCurrent();
+		if (saved !== undefined) {
+			if (role === 'paid' && saved.saveOwner === 'demo') {
+				// Promotion changes only ownership. Never decode and reconstruct profiles.
+				const promoted = { ...saved, saveOwner: 'paid' };
+				atomicWrite(file, promoted, io);
+				envelope = promoted;
+			} else envelope = saved;
+			needsMigration = false;
+		}
+		return envelope;
+	};
 	const initialize = function () {
 		if (ready) return;
-		const saved = readJson(file, io);
-		if (saved !== undefined && (!isRecord(saved) || saved.version !== 1 || !validValues(saved.values))) {
-			throw new Error('Unsupported or invalid Steam save; original file preserved');
-		}
+		const saved = refresh();
+		if (isReadOnly(saved)) { ready = true; return; }
 		const owner = readJson(ownerFile, io);
 		if (owner !== undefined && (!isRecord(owner) || owner.version !== 1 || typeof owner.steamId !== 'string'
 			|| !/^[1-9]\d{16}$/.test(owner.steamId) || typeof owner.imported !== 'boolean')) {
 			throw new Error('Invalid save migration ownership; original files preserved');
 		}
-		// Claim before importing. A failed import can retry for this account,
-		// while another account can never inherit the same legacy profiles.
+		// Migration ownership is local to this app's Chromium profile, never synced.
 		if (owner === undefined || (owner.steamId === steamId && !owner.imported && saved !== undefined)) {
-			atomicWrite(ownerFile, { version: 1, steamId, imported: saved !== undefined }, io);
+			// Recheck immediately before every mutation, including initialization.
+			refresh();
+			atomicWrite(ownerFile, { version: 1, steamId, imported: envelope !== undefined }, io);
 		}
-		needsMigration = saved === undefined && (owner === undefined || (owner.steamId === steamId && !owner.imported));
-		values = saved?.values ?? {};
+		needsMigration = envelope === undefined && (owner === undefined || (owner.steamId === steamId && !owner.imported));
 		ready = true;
 	};
 	return {
 		status: function () {
 			initialize();
-			return needsMigration ? 'migration' : 'ready';
+			refresh();
+			return isReadOnly(envelope) ? 'read-only' : needsMigration ? 'migration' : 'ready';
 		},
 		migrate: function (legacy) {
 			initialize();
+			refresh();
+			if (isReadOnly(envelope)) throw new Error('Steam save is read-only');
 			if (!needsMigration) return;
-			if (!validValues(legacy)) throw new Error('Invalid legacy save data');
-			atomicWrite(file, { version: 1, values: legacy }, io);
+			if (!validValues(legacy) || Object.keys(legacy).some(function (key) { return !PROFILE_STORAGE_KEYS.includes(key); })) throw new Error('Invalid legacy save data');
+			const next = { version: 1, saveOwner: role, values: { ...legacy } };
+			validateEnvelope(next);
+			atomicWrite(file, next, io);
+			loadedFile = true;
+			envelope = next;
+			refresh();
 			atomicWrite(ownerFile, { version: 1, steamId, imported: true }, io);
-			values = { ...legacy };
 			needsMigration = false;
 		},
 		getItem: function (key) {
 			initialize();
+			refresh();
 			if (needsMigration || !PROFILE_STORAGE_KEYS.includes(key)) throw new Error('Profile storage not ready');
-			return values[key] ?? null;
+			return envelope?.values[key] ?? null;
 		},
 		setItem: function (key, value) {
 			initialize();
+			refresh();
+			if (isReadOnly(envelope)) throw new Error('Steam save is read-only');
 			if (needsMigration || !PROFILE_STORAGE_KEYS.includes(key) || typeof value !== 'string') throw new Error('Invalid profile write');
-			const next = { ...values, [key]: value };
-			atomicWrite(file, { version: 1, values: next }, io);
-			values = next;
+			const next = { ...(envelope ?? { version: 1, saveOwner: role }), values: { ...envelope?.values, [key]: value } };
+			validateEnvelope(next);
+			atomicWrite(file, next, io);
+			loadedFile = true;
+			envelope = next;
 		},
 	};
 };

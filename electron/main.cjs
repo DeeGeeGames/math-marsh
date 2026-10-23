@@ -1,7 +1,8 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { join } = require('node:path');
+const { mkdirSync } = require('node:fs');
 const { createDesktopInput } = require('./desktop-input.cjs');
-const { createSteamSession, isSteamLaunch } = require('./steam-session.cjs');
+const { createSteamSession, isSteamLaunch, getSteamAppIdentity } = require('./steam-session.cjs');
 const { createProfileStorage } = require('./profile-storage.cjs');
 
 const PROJECT_ROOT = join(__dirname, '..');
@@ -10,6 +11,13 @@ let desktopInput;
 let inputPoll;
 let inputContext = 'menu';
 let steamSession;
+
+const steamIdentity = getSteamAppIdentity();
+if (steamIdentity?.role === 'demo') {
+	const demoUserData = join(app.getPath('appData'), 'math-marsh-demo');
+	mkdirSync(demoUserData, { recursive: true });
+	app.setPath('userData', demoUserData);
+}
 
 // One writer per userData directory, including atomic-save temporary files.
 const ownsInstance = app.requestSingleInstanceLock();
@@ -75,7 +83,9 @@ app.whenReady().then(() => {
 	let profileStorage;
 	try {
 		if (steamSession) profileStorage = createProfileStorage({
-			userData: join(app.getPath('appData'), 'math-marsh'), steamId: steamSession.steam.getStatus().steamId,
+			appData: app.getPath('appData'),
+			userData: steamSession.role === 'demo' ? app.getPath('userData') : join(app.getPath('appData'), 'math-marsh'),
+			steamId: steamSession.steam.getStatus().steamId, role: steamSession.role,
 		});
 	} catch (error) { console.warn('Steam profile storage unavailable.', error); }
 	ipcMain.on('desktop:profiles', (event, operation, ...args) => {

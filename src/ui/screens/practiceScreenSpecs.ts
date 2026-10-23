@@ -40,6 +40,9 @@ const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence)
 };
 
 const persistenceNotice = function(actions: ScreenSpecActions): TemplateResult | typeof nothing {
+	if (actions.getPracticePersistence() === 'read-only') {
+		return html`<p class="practice-save-status" role="status">This demo is using your full-game save. Practice changes are temporary and last until you close the game.</p>`;
+	}
 	return actions.getPracticePersistence() === 'session-only'
 		? html`<p class="practice-save-status" role="status">Practice progress lasts for this session only. Device saving is unavailable.</p>`
 		: nothing;
