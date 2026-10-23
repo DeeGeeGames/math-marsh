@@ -3,6 +3,10 @@ name: Deploy to Steam
 on:
   workflow_call:
     inputs:
+      app_id:
+        description: Explicit Steam app ID. Empty preserves the repository deployment target.
+        type: string
+        default: ''
       build_description:
         description: Build description shown in Steamworks.
         type: string
@@ -27,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       STEAM_USERNAME: ${{ vars.STEAM_USERNAME || secrets.STEAM_USERNAME }}
-      STEAM_APP_ID: ${{ vars.STEAM_APP_ID || secrets.STEAM_APP_ID }}
+      STEAM_APP_ID: ${{ inputs.app_id || vars.STEAM_APP_ID || secrets.STEAM_APP_ID }}
       STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
     steps:
       - name: Checkout Steam metadata
