@@ -245,6 +245,8 @@ export interface EquationModeState extends BaseEquationModeState {
 }
 
 export interface Resources {
+  steamAppRole: import('../platform/desktop').SteamAppRole;
+  demoArcadeRun: import('./demoArcade').DemoArcadeRun | null;
   practiceSession: import('./practiceSession').PracticeSession | null;
   playerProfiles: PlayerProfilesState;
   profilePersistence: ProfilePersistence;

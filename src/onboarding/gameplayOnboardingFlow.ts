@@ -1,3 +1,4 @@
+import { isDemoArcadeComplete } from '../ecs/demoArcade';
 import { playSound } from '../audio/audio';
 import type { GameEngine } from '../ecs/Engine';
 import type { TutorialScreenConfig } from '../ecs/types';
@@ -37,6 +38,10 @@ function recordOnboardingCompletion(
 }
 
 export function startNormalGame(engine: GameEngine): void {
+  if (isDemoArcadeComplete(engine.tryGetResource('demoArcadeRun'))) {
+    void engine.setScreen('gameOver', {});
+    return;
+  }
   const profile = activePlayerProfile(engine.getResource('playerProfiles'));
   if (!profile) return;
   const kind = mathTutorialForLevel(engine.getResource('startingLevel'), engine.getResource('mathDifficulty'),

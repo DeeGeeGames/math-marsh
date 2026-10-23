@@ -1,3 +1,4 @@
+import { completeDemoArcadeRound, isDemoArcadeComplete } from '../demoArcade';
 import type { GameSystemRegistrar } from '../Engine';
 import { LEVEL_COMPLETE_DURATION_MS, SYSTEM_PRIORITIES } from '../systemConfigs';
 import { skitForCompletedLevel } from '../skitSequence';
@@ -17,6 +18,13 @@ export function addLevelCompleteSystemToEngine(systems: GameSystemRegistrar): vo
       if (elapsed < LEVEL_COMPLETE_DURATION_MS || state.transitionStarted) return;
 
       ecs.updateScreenState('levelComplete', { transitionStarted: true });
+      const demoRun = ecs.tryGetResource('practiceSession') ? null
+        : completeDemoArcadeRound(ecs.tryGetResource('demoArcadeRun') ?? null, state.completedLevel);
+      ecs.setResource('demoArcadeRun', demoRun);
+      if (isDemoArcadeComplete(demoRun)) {
+        void ecs.setScreen('gameOver', {});
+        return;
+      }
       const skit = skitForCompletedLevel(state.completedLevel);
       if (skit && !ecs.tryGetResource('practiceSession')) {
         void ecs.setScreen('skit', { nextLevel: state.nextLevel, skitId: skit.id });

@@ -147,8 +147,18 @@ export function createGameOverScreenSpec(actions: ScreenSpecActions): ScreenSpec
     ],
     promptPlacement: 'panel',
     wire: (root): void => {
-      $(root, '#play-again-btn').addEventListener('click', actions.replayGame);
+      $(root, '#play-again-btn').addEventListener('click', function(): void {
+        if (actions.isDemoArcadeComplete()) actions.continueDemo();
+        else actions.replayGame();
+      });
       $(root, '#main-menu-btn').addEventListener('click', actions.goToMenu);
+    },
+    onShow: function(root): void {
+      const complete = actions.isDemoArcadeComplete();
+      $(root, '.game-over-title').textContent = complete ? 'Nice hopping!' : 'Game Over';
+      $(root, '.game-over-message').textContent = complete
+        ? 'Your demo run is complete.' : 'The pond goes quiet. Try another run.';
+      $(root, '#play-again-btn').textContent = complete ? 'Continue' : 'Play Again';
     },
     onCancel: actions.goToMenu,
   };

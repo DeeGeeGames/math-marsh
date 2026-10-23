@@ -61,6 +61,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 }, { once: true });
 
 contextBridge.exposeInMainWorld('mathMarshDesktop', {
+	steamRole: ipcRenderer.sendSync('desktop:steam-role'),
+	openFullGame: () => ipcRenderer.invoke('desktop:open-full-game'),
 	...(profileStorage ? { profileStorage } : {}),
 	input: {
 		snapshot: () => performance.now() - inputReceivedAt <= 1500

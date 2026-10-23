@@ -36,6 +36,7 @@ export function addUINavigationSystemToEngine(systems: GameSystemRegistrar): voi
       'controllerRecovery',
       'settings',
       'gameOver',
+      'demoEnd',
     ])
     .withResources(['inputState', 'controllerSelection', 'levelSelectionUnlocked'])
     .setProcess(({ ecs, dt, resources: { inputState, controllerSelection, levelSelectionUnlocked } }) => {

@@ -1,3 +1,4 @@
+import { createDemoArcadeRun } from '../ecs/demoArcade';
 import { createPracticeSession, type PracticeSelection } from '../ecs/practiceSession';
 import { rememberPracticeSelection } from '../ecs/practiceProgress';
 import { selectedStartingLevel } from '../ecs/levelSelectionCheat';
@@ -17,6 +18,7 @@ export const createRunActions = function(
     const profile = activePlayerProfile(engine.getResource('playerProfiles'));
     if (!profile) return;
     playSound('uiSelect');
+    engine.setResource('demoArcadeRun', createDemoArcadeRun(engine.getResource('steamAppRole')));
     engine.setResource('practiceSession', null);
     engine.setResource('startingLevel', selectedStartingLevel(level));
     engine.setResource('mathDifficulty', difficulty);
@@ -43,6 +45,7 @@ export const createRunActions = function(
   };
 
   function clearPlayerRun(): void {
+    engine.setResource('demoArcadeRun', null);
     engine.setResource('practiceSession', null);
     engine.setResource('mathSession', null);
     engine.setResource('mathRoundSummary', null);
@@ -61,6 +64,7 @@ export const createRunActions = function(
     const session = createPracticeSession(profile.id, selection);
     if (!session) return;
     playSound('uiSelect');
+    engine.setResource('demoArcadeRun', null);
     engine.setResource('practiceSession', session);
     engine.setResource('mathSession', null);
     engine.setResource('mathRoundSummary', null);

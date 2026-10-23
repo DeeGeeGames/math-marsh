@@ -1,3 +1,4 @@
+import { isDemoArcadeComplete } from '../demoArcade';
 import { practiceEquationMode } from '../practiceSession';
 import type { GameEngine } from '../Engine';
 import type { MathDifficulty } from '../types';
@@ -11,6 +12,10 @@ export const goToNextLevel = function(
   operandOnboardingCompletion: GameplayOnboardingCompletion,
   operandAndResultOnboardingCompletion: GameplayOnboardingCompletion,
 ): void {
+  if (isDemoArcadeComplete(ecs.tryGetResource('demoArcadeRun'))) {
+    void ecs.setScreen('gameOver', {});
+    return;
+  }
   const practice = ecs.tryGetResource('practiceSession');
   const needsOperandTutorial = !practice || practiceEquationMode(practice, nextLevel).operandsRequired > 1;
   const tutorialKind = needsOperandTutorial

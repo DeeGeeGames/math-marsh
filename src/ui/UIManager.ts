@@ -1,3 +1,5 @@
+import { isDemoArcadeComplete } from '../ecs/demoArcade';
+import { openDesktopFullGame } from '../platform/desktop';
 import type { InputPromptPlatform, NativePromptBindings } from './inputPrompts';
 import { emptyPracticeProgress } from '../ecs/practiceProgress';
 import { finishPractice } from '../ecs/practiceLifecycle';
@@ -151,6 +153,9 @@ const createUIIntegration = function(engine: GameEngine) {
     nextTutorialStep,
     previousTutorialStep,
     replayGame,
+    isDemoArcadeComplete: () => isDemoArcadeComplete(engine.getResource('demoArcadeRun')),
+    continueDemo: () => { void engine.setScreen('demoEnd', {}); },
+    openFullGame: openDesktopFullGame,
     returnToPreviousScreen,
     goToMenu,
     openModeSelect,
@@ -371,7 +376,7 @@ export const triggerCancel = function(): void { requireUI().triggerCancel(); };
 export const revealLevelSelection = function(): void { requireUI().revealLevelSelection(); };
 export const updateGameplayUI = updateGameplayHud;
 
-export const setRunResult = (level: number, equationsSolved: number): void => {
+export const setRunResult = (level: number, equationsSolved: number, demoComplete = false): void => {
   const el = document.getElementById('run-result');
-  if (el) el.textContent = `Level ${level} · ${equationsSolved} equation${equationsSolved === 1 ? '' : 's'} solved`;
+  if (el) el.textContent = `${demoComplete ? '5 rounds cleared' : `Level ${level}`} · ${equationsSolved} equation${equationsSolved === 1 ? '' : 's'} solved`;
 };

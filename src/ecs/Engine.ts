@@ -1,3 +1,4 @@
+import { getDesktopSteamRole } from '../platform/desktop';
 import { desktopInputProvider } from '../platform/steamInput';
 import { boardForDifficulty } from './boardGeometry';
 import { frameDeltaSeconds } from './frameTime';
@@ -65,6 +66,8 @@ export const gameEngine = ECSpresso.create()
   .withComponentTypes<Components>()
   .withAssets(configureImageAssets)
   .withResourceTypes<Resources>()
+  .withResource('steamAppRole', getDesktopSteamRole())
+  .withResource('demoArcadeRun', null as Resources['demoArcadeRun'])
   .withResource('gameMode', ['add'] as const)
   .withResource('mathDifficulty', 'easy')
   .withResource('board', boardForDifficulty('easy'))

@@ -1,3 +1,4 @@
+import { createDemoEndScreenSpec } from './screens/demoEndScreen';
 import { createPracticeScreenSpec, createPracticeResultsScreenSpec } from './screens/practiceScreenSpecs';
 import { createSkitScreenSpec } from './screens/skitScreen';
 import { createSkitGalleryScreenSpec } from './screens/skitGalleryScreen';
@@ -52,6 +53,7 @@ export function createScreenSpecs(
     playing: createPlayingScreenSpec(actions),
     settings: createSettingsScreenSpec(actions),
     gameOver: createGameOverScreenSpec(actions),
+    demoEnd: createDemoEndScreenSpec(actions),
     paused: createPauseScreenSpec(actions),
     controllerRecovery: createControllerRecoveryScreenSpec(actions),
   };
