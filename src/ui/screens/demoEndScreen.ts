@@ -1,4 +1,4 @@
-import splashImage from '../../assets/marketing/math-marsh-splash.jpg';
+import bannerImage from '../../assets/brand/math-marsh-banner.png';
 import type { ScreenSpec } from '../screenTypes';
 import { BTN_CHROME, OVERLAY_BASE, inputPromptsSlot, type ScreenSpecActions } from './shared';
 
@@ -7,7 +7,7 @@ export const createDemoEndScreenSpec = function(actions: ScreenSpecActions): Scr
     id: 'demo-end-screen',
     className: `${OVERLAY_BASE} app-background`,
     html: `<div class="demo-end-layout"><section class="demo-end-panel" aria-labelledby="demo-end-title">
-      <img class="demo-end-art" src="${splashImage}" alt="Math Marsh: a frog, lizard, spider, and fly on a sunny pond">
+      <img class="demo-end-art" src="${bannerImage}" alt="Math Marsh: a frog, lizard, spider, and fly on a sunny pond">
       <div class="demo-end-content">
         <p class="demo-end-eyebrow">Demo complete</p>
         <h1 id="demo-end-title">There’s more beyond this pond</h1>
