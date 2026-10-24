@@ -2,6 +2,7 @@ import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import tailwind from 'bun-plugin-tailwind';
+import { analyticsTagForBuild } from './analyticsTag';
 
 const projectRoot = resolve(import.meta.dir, '..');
 const distRoot = resolve(projectRoot, 'dist');
@@ -73,7 +74,8 @@ async function build(): Promise<void> {
   const html = await readFile(htmlPath, 'utf8');
   const pwaHead = `<link rel="manifest" href="${withBasePath('/manifest.webmanifest')}">`;
   const registration = `<script>if ('serviceWorker' in navigator && location.protocol !== 'file:') { window.addEventListener('load', () => { navigator.serviceWorker.register('${withBasePath('/sw.js')}').catch(console.error); }); }</script>`;
-  await writeFile(htmlPath, html.replace('</head>', `${pwaHead}${registration}</head>`));
+  const analytics = analyticsTagForBuild(basePath);
+  await writeFile(htmlPath, html.replace('</head>', `${pwaHead}${analytics}${registration}</head>`));
 
   const files = (await Array.fromAsync(new Bun.Glob('**/*').scan({ cwd: distRoot, onlyFiles: true })))
     .filter(file => !file.endsWith('.map') && file !== 'sw.js')
