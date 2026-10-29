@@ -2,7 +2,7 @@
  * the top of the scroll area, and input hints reserve their own space below. */
 #main-menu {
   justify-content: flex-start;
-  padding: max(env(safe-area-inset-top, 0px), 16px) max(env(safe-area-inset-right, 0px), 16px) max(env(safe-area-inset-bottom, 0px), 16px) max(env(safe-area-inset-left, 0px), 16px);
+  padding: max(env(safe-area-inset-top, 0px), 96px) max(env(safe-area-inset-right, 0px), 16px) max(env(safe-area-inset-bottom, 0px), 16px) max(env(safe-area-inset-left, 0px), 16px);
 }
 
 .menu-shell {
@@ -40,12 +40,17 @@
 }
 
 .menu-title {
-  display: inline-block;
-  max-width: 9ch;
-  font-size: clamp(3.25rem, 10vw, 6.8rem);
-  font-weight: 900;
-  line-height: 0.9;
-  text-wrap: balance;
+  width: min(100%, 30rem);
+  margin-inline: auto;
+}
+
+.menu-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 32vh;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 12px rgba(5, 31, 36, 0.28));
 }
 
 .menu-actions {
@@ -62,8 +67,23 @@
 .menu-secondary-actions {
   display: grid;
   width: min(100%, 21rem);
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+/* Keep the final utility centered when the browser has no Quit action. */
+.menu-secondary-action:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .menu-board { display: none; }
+  .menu-title { max-width: 22rem; }
+}
+
+/* Portrait already reserves the profile badge space above the panel. */
+@media (max-width: 720px) and (orientation: portrait) {
+  #main-menu { padding-top: max(env(safe-area-inset-top, 0px), 16px); }
 }
 
 .menu-board {
@@ -179,6 +199,11 @@
   white-space: nowrap;
 }
 
+@media (min-height: 601px) and (max-height: 800px) {
+  #main-menu .menu-shell { padding-block: 20px; }
+  .menu-logo { max-height: 22vh; }
+}
+
 /* Short landscape screens need a height-based layout, including phones below
  * the usual desktop column breakpoint. Keep touch targets at least 44px. */
 @media (max-height: 600px) and (min-width: 480px) {
@@ -189,12 +214,15 @@
   }
 
   .menu-title {
-    max-width: 100%;
-    font-size: clamp(2rem, 10vh, 4rem);
+    width: min(100%, 24rem);
   }
 
+  .menu-copy { display: contents; }
+  .menu-board { display: none; }
+  .menu-logo { max-height: 46vh; }
+
   .menu-actions {
-    margin-top: 12px;
+    margin-top: 0;
     gap: 8px;
   }
 
