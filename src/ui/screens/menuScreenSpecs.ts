@@ -7,6 +7,7 @@ import flyMoveToward from '../../assets/sprites/fly/fly-move-toward.png';
 import frogHopToward from '../../assets/sprites/frog/frog-hop-toward.png';
 import lizardWalkToward from '../../assets/sprites/lizard/lizard-walk-toward.png';
 import spiderWalkToward from '../../assets/sprites/spider/spider-walk-toward.png';
+import mathMarshLogo from '../../assets/brand/math-marsh.png';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { MATH_FINAL_STEP, mathStepLabel } from '../../ecs/mathSteps';
 import { $ } from '../dom';
@@ -144,8 +145,8 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
       <div class="player-profile-badge-slot" data-player-profile-badge></div>
       <div class="menu-shell w-[min(92vw,980px)] px-5 sm:px-7 md:px-9 py-5 sm:py-7 md:py-8 grid gap-5 sm:gap-7 md:gap-9 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)] items-center">
         <div class="menu-copy text-center md:text-left">
-          <h1 class="menu-title text-gold drop-shadow-lg">
-            Math Marsh
+          <h1 class="menu-title">
+            <img class="menu-logo" src=${mathMarshLogo} alt="Math Marsh" width="1448" height="1086">
           </h1>
 
           <div class="menu-actions mt-5 sm:mt-7">
