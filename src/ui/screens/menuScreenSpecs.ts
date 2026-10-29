@@ -3,10 +3,6 @@ import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { GAME_CONFIG } from '../../config';
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
-import flyMoveToward from '../../assets/sprites/fly/fly-move-toward.png';
-import frogHopToward from '../../assets/sprites/frog/frog-hop-toward.png';
-import lizardWalkToward from '../../assets/sprites/lizard/lizard-walk-toward.png';
-import spiderWalkToward from '../../assets/sprites/spider/spider-walk-toward.png';
 import mathMarshLogo from '../../assets/brand/math-marsh.png';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { MATH_FINAL_STEP, mathStepLabel } from '../../ecs/mathSteps';
@@ -38,6 +34,7 @@ import {
   OVERLAY_BASE,
   type ScreenSpecActions,
 } from './shared';
+import { presentTitleScene, titleCastTemplate, titleDemoTemplate, titlePreloadsTemplate } from '../titleScene';
 import { playerBadgeTemplate } from './playerProfileScreens';
 
 const MATH_OPERATIONS: readonly EquationOperation[] = ['add', 'subtract', 'multiply', 'divide'];
@@ -73,16 +70,6 @@ const HOW_TO_PLAY_STEPS = [
     description: 'Correct answers add time. Wrong answers and animal hits cost time. Keep solving to stay in the pond.',
   },
 ] as const;
-
-function menuSprite(className: string, imageSrc: string): TemplateResult {
-  return html`
-    <span
-      class="menu-board-sprite ${className}"
-      style="background-image: url('${imageSrc}')"
-      aria-hidden="true"
-    ></span>
-  `;
-}
 
 function howToPlayStep(
   step: (typeof HOW_TO_PLAY_STEPS)[number],
@@ -140,60 +127,43 @@ const refreshMathProgress = function(root: HTMLElement, actions: ScreenSpecActio
 export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
   return {
     id: 'main-menu',
-    className: `${OVERLAY_BASE} app-background`,
+    className: `${OVERLAY_BASE} title-screen`,
     html: html`
       <div class="player-profile-badge-slot" data-player-profile-badge></div>
-      <div class="menu-shell w-[min(92vw,980px)] px-5 sm:px-7 md:px-9 py-5 sm:py-7 md:py-8 grid gap-5 sm:gap-7 md:gap-9 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)] items-center">
-        <div class="menu-copy text-center md:text-left">
-          <h1 class="menu-title">
-            <img class="menu-logo" src=${mathMarshLogo} alt="Math Marsh" width="1448" height="1086">
-          </h1>
+      <div class="menu-shell">
+        <h1 class="menu-title">
+          <img class="menu-logo" src=${mathMarshLogo} alt="Math Marsh" width="1448" height="1086">
+        </h1>
 
-          <div class="menu-actions mt-5 sm:mt-7">
-            <button @click=${actions.openModeSelect} class="btn-success menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
-              Arcade
+        <div class="menu-actions">
+          <button @click=${actions.openModeSelect} class="menu-primary-action">
+            Arcade <span class="menu-chevron" aria-hidden="true">›</span>
+          </button>
+          <button @click=${actions.openPractice} class="menu-primary-action">
+            Practice <span class="menu-chevron" aria-hidden="true">›</span>
+          </button>
+          <div class="menu-secondary-actions">
+            <button @click=${actions.openSkitGallery} class="menu-secondary-action">
+              Scenes
             </button>
-            <button @click=${actions.openPractice} class="btn-primary menu-primary-action ${BTN_CHROME} ${BTN_SIZE.lgResponsive}">
-              Practice
+            <button @click=${actions.openHowToPlay} class="menu-secondary-action">
+              How to Play
             </button>
-            <div class="menu-secondary-actions">
-              <button @click=${actions.openSkitGallery} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
-                Scenes
+            <button @click=${actions.openSettings} class="menu-secondary-action">
+              Settings
+            </button>
+            ${actions.quitApplication ? html`
+              <button @click=${actions.quitApplication} class="menu-secondary-action">
+                Quit
               </button>
-              <button @click=${actions.openHowToPlay} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
-                How to Play
-              </button>
-              <button @click=${actions.openSettings} class="btn-primary menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
-                Settings
-              </button>
-              ${actions.quitApplication ? html`
-                <button @click=${actions.quitApplication} class="btn-danger menu-secondary-action ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">
-                  Quit
-                </button>
-              ` : nothing}
-            </div>
+            ` : nothing}
           </div>
         </div>
-
-        <div class="menu-board" aria-hidden="true">
-          <div class="menu-board-grid">
-            <span class="menu-board-tile menu-board-answer">8</span>
-            <span class="menu-board-tile"></span>
-            <span class="menu-board-tile menu-board-answer">12</span>
-            <span class="menu-board-tile"></span>
-            <span class="menu-board-tile"></span>
-            <span class="menu-board-tile menu-board-answer">16</span>
-            <span class="menu-board-tile"></span>
-            <span class="menu-board-tile"></span>
-            <span class="menu-board-tile menu-board-answer">24</span>
-          </div>
-          ${menuSprite('menu-board-frog', frogHopToward)}
-          ${menuSprite('menu-board-fly', flyMoveToward)}
-          ${menuSprite('menu-board-lizard', lizardWalkToward)}
-          ${menuSprite('menu-board-spider', spiderWalkToward)}
-          <div class="menu-equation-chip">6 x 4 = ?</div>
-        </div>
+        ${titleDemoTemplate()}
+        ${titleCastTemplate()}
       </div>
+      <div class="title-bank" aria-hidden="true"></div>
+      ${titlePreloadsTemplate()}
 
       <button
         ${ref(function connectFullscreenButton(element): void {
@@ -202,7 +172,7 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
           actions.wireFullscreenButton(element);
         })}
         type="button"
-        class="utility-btn absolute top-3 right-3 md:top-4 md:right-4 text-white border-none w-10 h-10 md:w-12 md:h-12 rounded-md cursor-pointer text-lg md:text-xl transition-colors duration-200 flex items-center justify-center z-10"
+        class="title-fullscreen utility-btn absolute top-3 right-3 md:top-4 md:right-4 text-white border-none w-10 h-10 md:w-12 md:h-12 rounded-md cursor-pointer text-lg md:text-xl transition-colors duration-200 flex items-center justify-center z-10"
       >
       </button>
       <div class="input-prompts-slot menu-input-prompts" data-input-prompts></div>
@@ -216,6 +186,7 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
     promptPlacement: 'panel',
     initialFocusSelector: '.menu-primary-action',
 		onShow: (root): void => {
+      presentTitleScene(root, 0);
       const badgeSlot = root.querySelector<HTMLElement>('[data-player-profile-badge]');
       if (badgeSlot) render(playerBadgeTemplate(actions), badgeSlot);
       const notice = $(root, '#player-save-notice');

@@ -17,7 +17,7 @@ export const configureGameScreens = function<World>(screens: ScreenConfigurator<
 	return screens
 		.add('studioSplash', { initialState: initialSplashState })
 		.add('engineSplash', { initialState: initialSplashState })
-		.add('menu', { initialState: () => ({}) })
+		.add('menu', { initialState: (): { elapsed?: number } => ({ elapsed: 0 }) })
 		.add('playerSetup', { initialState: () => ({}) })
 		.add('playerRoster', { initialState: () => ({}) })
 		.add('playerAdd', { initialState: () => ({}) })

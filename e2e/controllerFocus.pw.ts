@@ -166,7 +166,7 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     await setGamepadButton(page, 1, false);
     const startGame = page.getByRole('button', { name: 'Arcade', exact: true });
     await expect(startGame).toBeFocused();
-    expect((await focusStyle(page, '.menu-primary-action.btn-success')).outlineStyle).toBe('solid');
+    expect((await focusStyle(page, '#main-menu .menu-primary-action:focus')).outlineStyle).toBe('solid');
     await pressActionKey(page, 'ArrowDown');
     await expect(page.getByRole('button', { name: 'Practice', exact: true })).toBeFocused();
     expect((await focusStyle(page, '#main-menu .menu-primary-action:focus')).outlineStyle).toBe('solid');

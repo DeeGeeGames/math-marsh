@@ -34,6 +34,7 @@ import {
 import { setupScriptedTutorialScene } from '../onboarding/gameplayOnboardingScene';
 import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
 import { addUISystemToEngine } from './systems/UISystem';
+import { addTitleSceneSystem } from './systems/TitleSceneSystem';
 import { addSplashSystemToEngine } from './systems/SplashSystem';
 import { addSkitSystemToEngine } from './systems/SkitSystem';
 import { updateSkitPresentation } from '../ui/screens/skitScreen';
@@ -249,6 +250,7 @@ const registerSystems = async (): Promise<void> => {
   addPauseSystemToEngine(gameEngine);
   addUINavigationSystemToEngine(gameEngine);
   addSplashSystemToEngine(gameEngine);
+  addTitleSceneSystem(gameEngine);
   addSkitSystemToEngine(gameEngine);
   addInputPromptSystemToEngine(gameEngine);
   addLevelCompleteSystemToEngine(gameEngine);
