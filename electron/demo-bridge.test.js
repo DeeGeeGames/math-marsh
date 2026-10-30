@@ -101,6 +101,7 @@ const createBridge = async function (environment = {}) {
 		'node:fs': { mkdirSync: function () {} },
 		'./desktop-input.cjs': { createDesktopInput: function () { return inputProvider; } },
 		'./steam-session.cjs': steamSession,
+		'./achievements.cjs': nodeRequire('./achievements.cjs'),
 		'./profile-storage.cjs': { createProfileStorage: function () { throw new Error('SDK failure must not create profile storage'); } },
 	};
 	loadCommonJs(mainPath, mainDependencies, {
@@ -173,10 +174,12 @@ describe('Electron demo bridge integration', function () {
 			try {
 				expect(bridge.api.steamRole).toBe(scenario.role);
 				expect(bridge.sdkInitCalls()).toBe(scenario.initCalls);
+				expect(await bridge.api.unlockAchievements([])).toBeUndefined();
+				await expect(bridge.api.unlockAchievements(['UNREGISTERED'])).rejects.toThrow('Unregistered achievement');
 				if (scenario.role === 'demo') expect(bridge.demoUserDataPaths).toEqual(['/test/app-data/math-marsh-demo']);
 			} finally {
 				const cleanup = bridge.cleanup();
-				expect(cleanup.clearedTimers).toHaveLength(1);
+				expect(cleanup.clearedTimers).toHaveLength(2);
 				expect(cleanup.inputDisposals).toBe(1);
 			}
 		}
@@ -200,7 +203,7 @@ describe('Electron demo bridge integration', function () {
 			expect(bridge.externalUrls).toEqual([storeUrl, storeUrl]);
 		} finally {
 			const cleanup = bridge.cleanup();
-			expect(cleanup.clearedTimers).toHaveLength(1);
+			expect(cleanup.clearedTimers).toHaveLength(2);
 			expect(cleanup.inputDisposals).toBe(1);
 		}
 	});

@@ -1,0 +1,13 @@
+# Steam achievement mechanism
+
+Only initialized paid app 4927380 uses the app-owned Steamworks session for achievements. Demo 5493870, web/PWA and standalone builds grant nothing. The registry and native API-name allowlist ship empty in #121; fixture names exist only in tests.
+
+The profile persistence service observes a complete successful operation and reads back the supported persistent roster before evaluating pure per-profile predicates. Any one saved profile must satisfy the whole rule. Read-only and session-only results submit nothing, including partially failed create/delete operations. Reading back also prevents temporary Practice evidence from a preserved future payload from qualifying. No save fields or versions change.
+
+The main-process bridge validates the calling window and the entire API-name request. Its session queue retries once per minute, serializes manager calls, and deduplicates already stored names. Failed queries, missing definitions and failed stores remain pending without blocking play. Profile deletion never clears Steam records. Shutdown clears the retry timer and disposes the queue before the existing Steam session.
+
+SDK `steamworks-ffi-node` 0.11.3 initializes with a current-stats request. The queue uses the public stats manager's `requestUserStats` for this session's Steam ID and the achievement manager's query/unlock methods. `unlockAchievement` calls SetAchievement followed by StoreStats and returns false on either failure. After any attempted unlock, an in-memory unlocked bit is insufficient proof of storage: retry still calls unlock/store. The SDK exposes StoreStats' immediate bool rather than server callback confirmation; this is the queue's successful-store boundary, not independently verified server receipt.
+
+[Valve's user stats API](https://partner.steamgames.com/doc/api/ISteamUserStats) documents SetAchievement as an in-memory change, StoreStats retries/rate limiting, and the deprecated startup RequestCurrentStats. No private SDK access, second SDK instance, clear call, substitute toast, or achievement state in progress.json is used.
+
+Automated fake-manager tests cover readiness/request failure, query exceptions, absent definitions, failed stores that leave an in-memory unlock, retries, serialization, duplicate suppression and invalid names. They do not prove native Steam overlay behavior or library records. The catalog and published partner definitions are separate work.

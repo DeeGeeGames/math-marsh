@@ -10,6 +10,7 @@ import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
 import { controllerActionMap, controllerOnlyActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { configureGameScreens } from './screenConfiguration';
 import { createProfilePersistence } from '../profiles/persistence';
+import { submitSavedAchievements } from '../platform/achievements';
 import { browserProfileStorage } from '../platform/profileStorage';
 import { gameplayClockPlugin } from './gameplayClock';
 import { SYSTEM_PRIORITIES } from './systemConfigs';
@@ -55,7 +56,7 @@ const inputPlugin = createInputPlugin<GameAction>({
     && !isEditableTarget(event.target),
 });
 
-const profilePersistence = createProfilePersistence(browserProfileStorage);
+const profilePersistence = createProfilePersistence(browserProfileStorage, submitSavedAchievements);
 
 export const gameEngine = ECSpresso.create()
   .withPlugin(inputPlugin)
