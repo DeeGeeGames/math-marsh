@@ -28,7 +28,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       STEAM_USERNAME: ${{ vars.STEAM_USERNAME || secrets.STEAM_USERNAME }}
       STEAM_APP_ID: ${{ inputs.app_id || vars.STEAM_APP_ID || secrets.STEAM_APP_ID }}
