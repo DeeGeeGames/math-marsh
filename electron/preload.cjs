@@ -7,6 +7,9 @@ const profileStorage = createProfileStorageBridge(
 const FULLSCREEN_ENABLED_KEY = 'fullscreen-enabled';
 let inputSnapshot = { available: false, controllers: [] };
 let inputReceivedAt = 0;
+const inputDiagnosticsEnabled = typeof process !== 'undefined' && process.env.MATH_MARSH_INPUT_DIAGNOSTICS === '1';
+let previousInputDiagnostic;
+let inputDiagnosticSentAt = -Infinity;
 const receiveInput = function (snapshot) {
 	inputSnapshot = snapshot;
 	inputReceivedAt = performance.now();
@@ -66,6 +69,19 @@ contextBridge.exposeInMainWorld('mathMarshDesktop', {
 	openFullGame: () => ipcRenderer.invoke('desktop:open-full-game'),
 	...(profileStorage ? { profileStorage } : {}),
 	input: {
+		...(inputDiagnosticsEnabled ? { reportDiagnostics: function (diagnostic) {
+			try {
+				const serialized = JSON.stringify(diagnostic);
+				const at = performance.now();
+				if (serialized === previousInputDiagnostic && at - inputDiagnosticSentAt < 1000) return;
+				previousInputDiagnostic = serialized;
+				inputDiagnosticSentAt = at;
+				ipcRenderer.send('desktop:input-diagnostics', {
+					...diagnostic,
+					bridge: { fresh: at - inputReceivedAt <= 1500, available: inputSnapshot.available },
+				});
+			} catch { /* Diagnostics cannot interrupt input. */ }
+		} } : {}),
 		snapshot: () => performance.now() - inputReceivedAt <= 1500
 			? inputSnapshot : { available: false, controllers: [] },
 		setContext: context => {

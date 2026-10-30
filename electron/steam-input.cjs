@@ -24,6 +24,9 @@ const createSteamInput = function (options = {}) {
 	const reportError = function (error) {
 		try { options.onError?.(error); } catch { /* Logging cannot block fallback. */ }
 	};
+	const reportDiagnostic = function (data) {
+		try { options.onDiagnostic?.('native', data); } catch { /* Preserve input behavior. */ }
+	};
 	const dispose = function () {
 		if (disposed) return;
 		disposed = true;
@@ -82,6 +85,7 @@ const createSteamInput = function (options = {}) {
 					const handles = steam.input.getConnectedControllers();
 					const current = new Map();
 					const sampledAt = now();
+					const diagnostics = options.onDiagnostic ? [] : null;
 					const snapshots = handles.flatMap(function (handle) {
 						const steamHandle = String(handle);
 						const previous = connections.get(steamHandle);
@@ -89,14 +93,17 @@ const createSteamInput = function (options = {}) {
 						const connection = { id, context, suppressed: previous?.suppressed === true || (previous !== undefined && previous.context !== context) };
 						current.set(steamHandle, connection);
 						if (!beforeFrame.has(steamHandle)) steam.input.activateActionSet(handle, set.handle);
-						let settled = beforeFrame.has(steamHandle) && steam.input.getCurrentActionSet(handle) === set.handle;
+						const currentSet = beforeFrame.has(steamHandle) ? steam.input.getCurrentActionSet(handle) : null;
+						let settled = currentSet === set.handle;
 						let hasActiveAction = false;
 						let hasOrigins = false;
 						const actions = {};
 						const prompts = {};
+						const actionData = diagnostics ? {} : null;
 						for (const action of ACTIONS) {
 							const data = steam.input.getDigitalActionData(handle, set.actions[action]);
 							const origins = steam.input.getDigitalActionOrigins(handle, set.handle, set.actions[action]).slice(0, 8);
+							if (actionData) actionData[action] = { active: data.active === true, pressed: data.state === true, origins: origins.length };
 							hasActiveAction ||= data.active === true;
 							hasOrigins ||= origins.length > 0;
 							// An inactive bound action is transitional, never evidence of
@@ -120,13 +127,22 @@ const createSteamInput = function (options = {}) {
 						connection.nativeRoute = hasNativeData || (previous?.nativeRoute === true
 							&& sampledAt - connection.missingSince < NATIVE_ROUTE_GRACE_MS);
 						if (!settled) connection.suppressed = true;
+						const suppressedThisFrame = connection.suppressed || !settled;
 						if (connection.suppressed || !settled) {
 							if (settled && !Object.values(actions).some(Boolean)) connection.suppressed = false;
 							for (const action of ACTIONS) actions[action] = false;
 						}
+						if (diagnostics) diagnostics.push({
+							id, newToFrame: !beforeFrame.has(steamHandle), context,
+							currentSet: currentSet?.toString() ?? null, expectedSet: set.handle.toString(),
+							settled, hasActiveAction, hasOrigins, nativeRoute: connection.nativeRoute,
+							suppressedThisFrame, waitingForNeutral: connection.suppressed,
+							actionData, outputActions: { ...actions },
+						});
 						return connection.nativeRoute ? [{ id, kind: 'steam', steamHandle, actions, prompts }] : [];
 					});
 					connections = current;
+					if (diagnostics) reportDiagnostic({ context, controllers: diagnostics });
 					return snapshots;
 				} catch (error) {
 					reportError(error);

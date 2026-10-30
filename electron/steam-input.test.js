@@ -47,6 +47,54 @@ const fixture = function () {
 };
 
 describe('desktop native Steam Input', function () {
+	test('diagnostics explain blocked readiness without changing routing or delayed button behavior', function () {
+		const plain = fixture();
+		const traced = fixture();
+		const reports = [];
+		let clock = 0;
+		let ready = true;
+		let pressed = false;
+		const providers = [plain, traced].map(function (f, index) {
+			f.steam.input.getDigitalActionData = function (_, handle) {
+				return { active: ready || handle !== f.handles.get('menu_skip'), state: pressed && handle === f.handles.get('menu_eat') };
+			};
+			return createSteamInput({ ...f.options, now: function () { return clock; },
+				onDiagnostic: index === 1 ? function (stage, data) { reports.push({ stage, data }); } : undefined });
+		});
+		const sample = function () {
+			const first = providers[0].sample('menu');
+			expect(providers[1].sample('menu')).toEqual(first);
+			return first;
+		};
+		try {
+			sample();
+			clock = 30_000;
+			pressed = true;
+			expect(sample()[0].actions.eat).toBe(true);
+			ready = false;
+			clock = 60_000;
+			expect(sample()[0].actions.eat).toBe(false);
+			const report = reports.at(-1);
+			expect(report.stage).toBe('native');
+			expect(report.data.controllers[0]).toMatchObject({ settled: false, nativeRoute: true,
+				suppressedThisFrame: true, waitingForNeutral: true,
+				actionData: { eat: { active: true, pressed: true, origins: 1 }, skip: { active: false, pressed: false, origins: 1 } },
+				outputActions: { eat: false } });
+			ready = true;
+			pressed = false;
+			sample();
+			pressed = true;
+			expect(sample()[0].actions.eat).toBe(true);
+		} finally { providers.forEach(provider => provider.dispose()); }
+	});
+
+	test('a broken diagnostic observer cannot disable native input', function () {
+		const f = fixture();
+		const provider = createSteamInput({ ...f.options, onDiagnostic: function () { throw new Error('diagnostic failure'); } });
+		try { expect(provider.sample('menu')[0].actions.eat).toBe(true); }
+		finally { provider.dispose(); }
+	});
+
 	test('direct standalone launch never loads Steamworks', function () {
 		let loaded = false;
 		expect(createSteamInput({ environment: {}, loadSteam: function () { loaded = true; throw new Error('must not load'); } })).toBeNull();

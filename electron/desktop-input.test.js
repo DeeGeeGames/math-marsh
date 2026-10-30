@@ -26,7 +26,7 @@ const conventionalController = function (id, steamHandle = null) {
 	};
 };
 
-const fixture = function (initialControllers = []) {
+const fixture = function (initialControllers = [], onDiagnostic) {
 	let controllers = initialControllers;
 	let nativeControllers = [steamController()];
 	let nativeError = null;
@@ -48,6 +48,7 @@ const fixture = function (initialControllers = []) {
 		},
 	} };
 	const provider = createDesktopInput({
+		onDiagnostic,
 		createSteamInput: function () { return {
 			sample: function (context) { contexts.push(context); if (nativeError) throw nativeError; return nativeControllers; },
 			dispose: function () { nativeDisposed++; },
@@ -66,6 +67,31 @@ const fixture = function (initialControllers = []) {
 };
 
 describe('desktop input provider routing', function () {
+	test('diagnostics distinguish focus suppression, held input, and the neutral release', function () {
+		const conventional = conventionalController(1);
+		const reports = [];
+		const f = fixture([conventional], function (stage, data) { reports.push({ stage, data }); });
+		f.setNative([]);
+		try {
+			conventional.buttons.a = true;
+			expect(f.provider.sample('menu', false).controllers[0].buttons[0].pressed).toBe(false);
+			expect(reports.at(-1).data.controllers[0]).toMatchObject({ suppression: 'window-unfocused', input: { pressed: [0] }, output: { pressed: [] } });
+			f.provider.sample('menu', true);
+			expect(reports.at(-1).data.controllers[0].suppression).toBe('waiting-for-neutral');
+			conventional.buttons.a = false;
+			f.provider.sample('menu', true);
+			expect(reports.at(-1).data.controllers[0].suppression).toBeNull();
+			conventional.buttons.a = true;
+			expect(f.provider.sample('menu', true).controllers[0].buttons[0].pressed).toBe(true);
+		} finally { f.provider.dispose(); }
+	});
+
+	test('a broken diagnostic observer cannot disable desktop input', function () {
+		const f = fixture([], function () { throw new Error('diagnostic failure'); });
+		try { expect(f.provider.sample('menu').available).toBe(true); }
+		finally { f.provider.dispose(); }
+	});
+
 	test('no native bindings and no SDL devices leave browser controllers available, and native devices can appear later', function () {
 		const f = fixture();
 		try {
