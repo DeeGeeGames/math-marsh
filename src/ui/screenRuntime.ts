@@ -220,6 +220,7 @@ export function createScreenRuntime(
       cleanups.splice(0).reverse().forEach(function(cleanup) { cleanup(); });
       container.replaceChildren();
       container.remove();
+      delete document.documentElement.dataset.focusNavigation;
       screenElements.clear();
       promptOverrides.clear();
     },

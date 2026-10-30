@@ -222,6 +222,18 @@ test('mouse and touch opened Settings keep rendered focus visible during control
       focusVisible: false,
       outlineStyle: 'none',
     });
+    // Touch must not leave the next controller navigation invisible either.
+    await setGamepadButton(page, 13, true);
+    await setGamepadButton(page, 13, false);
+    await expect(backgroundMusic).toBeFocused();
+    expect(await focusStyle(page, '#background-music')).toMatchObject({
+      outlineStyle: 'solid', outlineWidth: '3px', outlineColor: 'rgb(244, 210, 122)',
+    });
+    await page.keyboard.press('Tab');
+    await expect(autoMode).toBeFocused();
+    expect(await focusStyle(page, '[data-touch-mode="auto"]')).toMatchObject({
+      focusVisible: true, outlineStyle: 'solid', outlineWidth: '3px',
+    });
   } finally {
     await context.close();
   }
