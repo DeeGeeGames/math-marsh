@@ -302,6 +302,7 @@ const createUIIntegration = function(engine: GameEngine) {
   }
 
   const updateInputPromptPlatform = screenRuntime.updateInputPromptPlatform;
+  const showNavigationFocus = screenRuntime.showNavigationFocus;
 
   function navigateFocus(direction: FocusDirection): void {
     screenRuntime.navigateFocus(direction);
@@ -357,7 +358,7 @@ const createUIIntegration = function(engine: GameEngine) {
     clearGameplayHud();
     if (currentUI?.dispose === dispose) currentUI = undefined;
   };
-  return { dispose, showScreen, showGameplayScreen, showControllerRecoveryScreen, showPauseScreen, showSettingsScreen, updateInputPromptPlatform, navigateFocus, activateFocus, triggerCancel, revealLevelSelection };
+  return { dispose, showScreen, showGameplayScreen, showControllerRecoveryScreen, showPauseScreen, showSettingsScreen, updateInputPromptPlatform, showNavigationFocus, navigateFocus, activateFocus, triggerCancel, revealLevelSelection };
 };
 
 export const showScreen = function(screen: UIScreen, options: ScreenPresentationOptions = {}): void {
@@ -371,6 +372,7 @@ export const updateInputPromptPlatform = function(platform: InputPromptPlatform,
   requireUI().updateInputPromptPlatform(platform, nativeBindings);
 };
 export const navigateFocus = function(direction: FocusDirection): void { requireUI().navigateFocus(direction); };
+export const showNavigationFocus = function(): void { requireUI().showNavigationFocus(); };
 export const activateFocus = function(): void { requireUI().activateFocus(); };
 export const triggerCancel = function(): void { requireUI().triggerCancel(); };
 export const revealLevelSelection = function(): void { requireUI().revealLevelSelection(); };

@@ -25,6 +25,7 @@ type ScreenRuntime = {
   presentScreen: (screen: UIScreen, options?: ScreenPresentationOptions) => HTMLElement;
   revealLevelSelection: () => boolean;
   setPromptOverride: (screen: UIScreen, spec: PromptSpec | undefined) => void;
+  showNavigationFocus: () => void;
   triggerCancel: () => void;
   updateInputPromptPlatform: (platform: InputPromptPlatform, nativeBindings?: NativePromptBindings) => void;
 };
@@ -229,6 +230,7 @@ export function createScreenRuntime(
     presentScreen,
     revealLevelSelection,
     setPromptOverride,
+    showNavigationFocus: enableNavigationFocus,
     triggerCancel,
     updateInputPromptPlatform,
   };

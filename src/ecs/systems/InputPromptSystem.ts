@@ -3,7 +3,7 @@ import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { InputPromptState } from '../../ui/inputPrompts';
 import { advanceInputPromptPresentation, detectInputPromptPlatform } from '../../ui/inputPrompts';
 import { desktopInputProvider } from '../../platform/steamInput';
-import { updateInputPromptPlatform } from '../../ui/UIManager';
+import { showNavigationFocus, updateInputPromptPlatform } from '../../ui/UIManager';
 
 const KEYBOARD_ACTION_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Enter', 'Escape', 'Tab'] as const;
 const GAMEPAD_BUTTONS = [0, 1, 9, 12, 13, 14, 15] as const;
@@ -52,6 +52,7 @@ export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void
     .withResources(['inputState', 'inputPrompt', 'controllerSelection'])
     .setProcess(({ resources: { inputState, inputPrompt, controllerSelection } }) => {
       const keyboardActivity = hasKeyboardActivity(inputState.keyboard);
+      if (keyboardActivity) showNavigationFocus();
       const owner = controllerSelection.owner;
       const ownerPad = owner ? inputState.gamepads[owner.slot] : undefined;
       const nativeController = owner ? desktopInputProvider.getController(owner.id) : undefined;

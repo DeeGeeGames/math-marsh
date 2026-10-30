@@ -175,56 +175,94 @@ test('keyboard traverses secondary controls and launches only through Play', asy
 	expect(await page.evaluate(() => window.toastTestEngine.getResource('gameMode'))).toEqual(['add']);
 });
 
-test('simulated controller selects mixed math, closes panels, retains ponds and launches', async ({ page }, testInfo) => {
-	await page.addInitScript(function(): void {
-		const buttons = Array.from({ length: 17 }, function() { return { pressed: false, touched: false, value: 0 }; });
-		const gamepad = { id: 'Xbox setup test controller', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons };
-		Object.defineProperty(navigator, 'getGamepads', { value: function() { return [gamepad]; } });
-		window.addEventListener('message', function(event: MessageEvent<unknown>): void {
-			const data = event.data;
-			if (typeof data !== 'object' || data === null || !('setupButton' in data) || typeof data.setupButton !== 'number' || !('pressed' in data) || typeof data.pressed !== 'boolean') return;
-			const button = buttons[data.setupButton];
-			if (button) { button.pressed = data.pressed; button.value = data.pressed ? 1 : 0; }
+test.describe('touch-capable setup with keyboard and controller', function() {
+	test.use({ hasTouch: true });
+
+	test('simulated controller selects mixed math, closes panels, retains ponds and launches', async ({ page }, testInfo) => {
+		await page.addInitScript(function(): void {
+			const buttons = Array.from({ length: 17 }, function() { return { pressed: false, touched: false, value: 0 }; });
+			const gamepad = { id: 'Xbox setup test controller', index: 0, connected: true, mapping: 'standard', timestamp: 0, axes: [0, 0, 0, 0], buttons };
+			Object.defineProperty(navigator, 'getGamepads', { value: function() { return [gamepad]; } });
+			window.addEventListener('message', function(event: MessageEvent<unknown>): void {
+				const data = event.data;
+				if (typeof data !== 'object' || data === null || !('setupButton' in data) || typeof data.setupButton !== 'number' || !('pressed' in data) || typeof data.pressed !== 'boolean') return;
+				const button = buttons[data.setupButton];
+				if (button) { button.pressed = data.pressed; button.value = data.pressed ? 1 : 0; }
+			});
 		});
+		const press = async function(button: number): Promise<void> {
+			for (const pressed of [true, false]) {
+				await page.evaluate(data => window.postMessage(data, '*'), { setupButton: button, pressed });
+				await page.waitForTimeout(140);
+			}
+		};
+		await openSetup(page);
+		await expect(page.locator('#mode-select-screen [data-input-prompts]')).toBeHidden();
+		await press(0); // Claim controller; the initial press does not activate a choice.
+		await press(0);
+		await expect(page.locator('[data-operation="add"]')).toHaveAttribute('aria-pressed', 'true');
+		await expect(page.locator('#mode-select-screen [data-input-prompts]')).toBeVisible();
+		await press(15);
+		await press(0);
+		await expect(page.locator('[data-operation="subtract"]')).toHaveAttribute('aria-pressed', 'true');
+		await press(13); // Divide
+		await press(13); // Next
+		await expect(page.locator('[data-next-to-pond]')).toBeFocused();
+		const outline = await page.locator('[data-next-to-pond]').evaluate(element => getComputedStyle(element).outlineColor);
+		expect(outline).toBe('rgb(255, 247, 198)');
+		await page.screenshot({ path: testInfo.outputPath('controller-math-focus.png') });
+		await press(0);
+		await press(15);
+		await expect(page.locator('[data-difficulty="medium"]')).toBeFocused();
+		await press(0);
+		await press(1);
+		await expect(page.locator('[data-next-to-pond]')).toBeFocused();
+		await press(0);
+		await expect(page.locator('[data-difficulty="medium"]')).toHaveAttribute('aria-pressed', 'true');
+		await press(15);
+		await press(13);
+		await expect(page.locator('[data-play-selected]')).toBeFocused();
+		await page.screenshot({ path: testInfo.outputPath('controller-pond-focus.png') });
+		await press(14); // What changes?
+		await press(0);
+		await expect(page.locator('[data-close-setup-panel]:visible')).toBeFocused();
+		await press(1);
+		await expect(page.locator('[data-open-difficulty-help]')).toBeFocused();
+		await press(15);
+		await press(0);
+		await expect(page.locator('#game-canvas')).toBeVisible();
+		expect(await page.evaluate(() => window.toastTestEngine.getResource('gameMode'))).toEqual(['add', 'subtract']);
 	});
-	const press = async function(button: number): Promise<void> {
-		for (const pressed of [true, false]) {
-			await page.evaluate(data => window.postMessage(data, '*'), { setupButton: button, pressed });
-			await page.waitForTimeout(140);
+
+	test('touch hides prompts and keyboard Tab restores them on a phone', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await openSetup(page);
+		const prompts = page.locator('#mode-select-screen [data-input-prompts]');
+		await page.locator('[data-operation="add"]').tap();
+		await expect(prompts).toBeHidden();
+		await pressKey(page, 'Tab');
+		await expect(prompts).toBeVisible();
+		await expect(prompts).toContainText('Select');
+		await page.locator('[data-operation="subtract"]').tap();
+		await expect(prompts).toBeHidden();
+	});
+});
+
+test('short setup layouts preserve nonzero safe-area insets', async ({ page }, testInfo) => {
+	const session = await page.context().newCDPSession(page);
+	try {
+		await session.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 44, bottom: 34, left: 0, right: 0 } });
+		await page.setViewportSize({ width: 390, height: 568 });
+		await openSetup(page);
+		for (const [width, height] of [[390, 568], [844, 390]] as const) {
+			await page.setViewportSize({ width, height });
+			const padding = await page.locator('#mode-select-screen').evaluate(element => {
+				const style = getComputedStyle(element);
+				return { top: parseFloat(style.paddingTop), bottom: parseFloat(style.paddingBottom) };
+			});
+			expect(padding.top).toBeGreaterThanOrEqual(44);
+			expect(padding.bottom).toBeGreaterThanOrEqual(34);
+			await page.screenshot({ path: testInfo.outputPath(`safe-area-${width}x${height}.png`) });
 		}
-	};
-	await openSetup(page);
-	await press(0); // Claim controller; the initial press does not activate a choice.
-	await press(0);
-	await expect(page.locator('[data-operation="add"]')).toHaveAttribute('aria-pressed', 'true');
-	await press(15);
-	await press(0);
-	await expect(page.locator('[data-operation="subtract"]')).toHaveAttribute('aria-pressed', 'true');
-	await press(13); // Divide
-	await press(13); // Next
-	await expect(page.locator('[data-next-to-pond]')).toBeFocused();
-	const outline = await page.locator('[data-next-to-pond]').evaluate(element => getComputedStyle(element).outlineColor);
-	expect(outline).toBe('rgb(255, 247, 198)');
-	await page.screenshot({ path: testInfo.outputPath('controller-math-focus.png') });
-	await press(0);
-	await press(15);
-	await expect(page.locator('[data-difficulty="medium"]')).toBeFocused();
-	await press(0);
-	await press(1);
-	await expect(page.locator('[data-next-to-pond]')).toBeFocused();
-	await press(0);
-	await expect(page.locator('[data-difficulty="medium"]')).toHaveAttribute('aria-pressed', 'true');
-	await press(15);
-	await press(13);
-	await expect(page.locator('[data-play-selected]')).toBeFocused();
-	await page.screenshot({ path: testInfo.outputPath('controller-pond-focus.png') });
-	await press(14); // What changes?
-	await press(0);
-	await expect(page.locator('[data-close-setup-panel]:visible')).toBeFocused();
-	await press(1);
-	await expect(page.locator('[data-open-difficulty-help]')).toBeFocused();
-	await press(15);
-	await press(0);
-	await expect(page.locator('#game-canvas')).toBeVisible();
-	expect(await page.evaluate(() => window.toastTestEngine.getResource('gameMode'))).toEqual(['add', 'subtract']);
+	} finally { await session.detach(); }
 });
