@@ -5,12 +5,16 @@ const { createDesktopInput } = require('./desktop-input.cjs');
 const { createSteamSession, isSteamLaunch, getSteamAppIdentity } = require('./steam-session.cjs');
 const { createProfileStorage } = require('./profile-storage.cjs');
 
+const { createAchievementQueue } = require('./achievements.cjs');
+
 const PROJECT_ROOT = join(__dirname, '..');
 const DEV_SERVER_URL = process.env.MATH_MARSH_DEV_SERVER_URL;
 let desktopInput;
 let inputPoll;
 let inputContext = 'menu';
 let steamSession;
+let achievementQueue;
+let achievementPoll;
 
 const steamIdentity = getSteamAppIdentity();
 if (steamIdentity?.role === 'demo') {
@@ -80,6 +84,14 @@ app.whenReady().then(() => {
 		onError: error => console.warn('Steamworks unavailable.', error),
 	};
 	steamSession = createSteamSession(steamOptions);
+	achievementQueue = createAchievementQueue(steamSession);
+	ipcMain.handle('desktop:achievements', (event, names) => {
+		if (!BrowserWindow.fromWebContents(event.sender)) throw new Error('Unknown achievement caller');
+		achievementQueue.submit(names);
+	});
+	// StoreStats can be rate limited. Retry on a minute cadence, outside play.
+	achievementPoll = setInterval(() => { void achievementQueue.flush(); }, 60_000);
+	achievementPoll.unref();
 	let profileStorage;
 	try {
 		if (steamSession) profileStorage = createProfileStorage({
@@ -167,6 +179,8 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
 	clearInterval(inputPoll);
+	clearInterval(achievementPoll);
+	achievementQueue?.dispose();
 	desktopInput?.dispose();
 	steamSession?.dispose();
 });

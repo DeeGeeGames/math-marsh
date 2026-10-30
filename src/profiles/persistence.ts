@@ -180,13 +180,34 @@ export type ProfilePersistence = Readonly<{
   updateActive: (state: PlayerProfilesState, update: (profile: PlayerProfile) => PlayerProfile) => PlayerProfilesState;
 }>;
 
-export const createProfilePersistence = function(storage: () => ProfileStorage | undefined): ProfilePersistence {
+export const createProfilePersistence = function(
+  storage: () => ProfileStorage | undefined,
+  onSavedRoster?: (state: PlayerProfilesState) => void,
+): ProfilePersistence {
+  const observed = function(state: PlayerProfilesState): PlayerProfilesState {
+    if (state.persistence === 'persistent' && onSavedRoster) {
+      // Read back persisted data: supported future Practice payloads may retain
+      // temporary in-memory edits that serialization intentionally omits.
+      const saved = loadPlayerProfiles(storage());
+      if (saved.persistence === 'persistent') {
+        try { onSavedRoster(saved); } catch { /* Optional integrations cannot fail a save. */ }
+      }
+    }
+    return state;
+  };
+  const result = function(value: PlayerProfilesResult): PlayerProfilesResult {
+    if (!value.error) observed(value.state);
+    return value;
+  };
   return {
-    load: (): PlayerProfilesState => loadPlayerProfiles(storage()),
-    create: (state: PlayerProfilesState, name: string, id: string): PlayerProfilesResult => createPlayerProfile(state, name, id, storage()),
-    switchActive: (state: PlayerProfilesState, id: string): PlayerProfilesResult => switchActivePlayerProfile(state, id, storage()),
-    rename: (state: PlayerProfilesState, id: string, name: string): PlayerProfilesResult => renamePlayerProfile(state, id, name, storage()),
-    delete: (state: PlayerProfilesState, id: string): PlayerProfilesResult => deletePlayerProfile(state, id, storage()),
-    updateActive: (state: PlayerProfilesState, update: (profile: PlayerProfile) => PlayerProfile): PlayerProfilesState => updateActivePlayerProfile(state, update, storage()),
+    load: (): PlayerProfilesState => observed(loadPlayerProfiles(storage())),
+    create: (state: PlayerProfilesState, name: string, id: string): PlayerProfilesResult => result(createPlayerProfile(state, name, id, storage())),
+    switchActive: (state: PlayerProfilesState, id: string): PlayerProfilesResult => result(switchActivePlayerProfile(state, id, storage())),
+    rename: (state: PlayerProfilesState, id: string, name: string): PlayerProfilesResult => result(renamePlayerProfile(state, id, name, storage())),
+    delete: (state: PlayerProfilesState, id: string): PlayerProfilesResult => result(deletePlayerProfile(state, id, storage())),
+    updateActive: (state: PlayerProfilesState, update: (profile: PlayerProfile) => PlayerProfile): PlayerProfilesState => {
+      const next = updateActivePlayerProfile(state, update, storage());
+      return next === state ? state : observed(next);
+    },
   };
 };

@@ -34,6 +34,7 @@ export type DesktopInputController = {
 export type SteamAppRole = 'demo' | 'paid' | null;
 
 export type DesktopPlatform = {
+	unlockAchievements?: (names: readonly string[]) => Promise<void>;
 	steamRole?: SteamAppRole;
 	openFullGame?: () => Promise<void>;
 	profileStorage?: ProfileStorage;
