@@ -77,3 +77,40 @@ Use `?timerFrames&fresh&startupClaim` to seed a held slot 1 claim before boot.
   disappearance or ID change triggers recovery and requires a deliberate claim.
 - Screenshot and alternate viewport verification remain unavailable in this T3
   preview. Hardware validation should include the recovery panel's readability.
+
+## Prompt families and focus (#69 / #70)
+
+Settings has a controller-navigable **Button prompts** cycle button: Auto, Xbox,
+PlayStation, Nintendo, Steam Deck. The choice persists locally and applies to
+conventional controllers across menus, gameplay and recovery. Auto uses the active
+owner's observed device ID; Steam emulation can mask that identity. Choose a family
+explicitly in that case. This changes artwork, not controls: conventional standard
+mapping remains bottom face button for Select/Eat, right face button for Back and
+Start/Options/Plus for Pause/Skip (Nintendo B selects, A goes back).
+
+Existing native Steam action-origin glyphs and labels take priority over this
+artwork preference, including remapped or unbound actions. This work does not add
+native action routing or infer physical identity from browser slot numbers.
+Valve documents native-handle/XInput association for emulated controllers, which
+cannot safely be inferred from Chromium's Gamepad index. A new native emulation
+bridge was therefore deferred in favor of the explicit family fallback:
+
+- [Steam Input emulation guidance](https://partner.steamgames.com/doc/features/steam_controller/steam_input_gamepad_emulation_bestpractices)
+- [ISteamInput action-origin and glyph APIs](https://partner.steamgames.com/doc/api/ISteamInput)
+
+The fallback is not binding-aware. Custom Steam legacy remaps cannot be represented
+by selecting an artwork family. Native origins use the existing provider's actual
+action data, but physical remapping accuracy still requires Steam-launched checks.
+
+Automated evidence: `e2e/controllerFocus.pw.ts` exercises mouse/touch-to-controller
+rendered focus, stick/D-pad navigation, restored and keyboard focus; masked Xbox
+IDs with a saved PlayStation fallback; controller-only selection; reconnecting a
+Nintendo replacement; Auto detection; and matching glyph alt text in Settings,
+tutorial, gameplay, pause and recovery. Screenshots cover 1920×1080 TV, 1280×800 Deck and 390×844
+mobile prompt Settings; the focus journey also covers 1280×720. These are Chromium
+simulations, not physical TV-distance or controller acceptance. The shared native
+origin renderer and prompt state transitions also have Bun regression coverage.
+
+Unavailable here: packaged Steam-launched Xbox, PlayStation, Nintendo-compatible
+and Steam Deck checks with Steam Input enabled/disabled and remapped layouts.
+These remain owner/device acceptance gates; no Steam settings were published.

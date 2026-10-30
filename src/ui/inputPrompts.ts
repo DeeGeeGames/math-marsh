@@ -23,6 +23,8 @@ export type InputPromptPlatform =
   | 'steamdeck'
   | 'generic';
 
+export type ControllerPromptPreference = 'auto' | Exclude<InputPromptPlatform, 'keyboard' | 'generic'>;
+
 export type InputPromptAction = 'select' | 'eat' | 'back' | 'skip' | 'pause';
 
 export interface InputPromptState {
@@ -78,24 +80,27 @@ export const advanceInputPromptPresentation = function (
     ownerId: string | null;
     platform: InputPromptPlatform;
     nativeBindings?: NativePromptBindings;
+    preference?: ControllerPromptPreference;
   },
 ): InputPromptPresentation | undefined {
-  if (activity.keyboard || (state.nativeSignature && !activity.nativeBindings && !activity.controller)) {
+  if (activity.keyboard || (activity.ownerId === null && state.platform !== 'keyboard')) {
     if (state.platform === 'keyboard' && !state.nativeSignature) return undefined;
     state.platform = 'keyboard';
     delete state.nativeSignature;
     return { platform: 'keyboard' };
   }
-  if (!activity.controller && !state.nativeSignature) return undefined;
+  if (!activity.controller && state.platform === 'keyboard' && !state.nativeSignature) return undefined;
+  const platform = activity.nativeBindings || !activity.preference || activity.preference === 'auto'
+    ? activity.platform : activity.preference;
   const signature = activity.nativeBindings
     ? JSON.stringify([activity.ownerId, activity.nativeBindings])
     : undefined;
-  if (state.platform === activity.platform && state.nativeSignature === signature) return undefined;
-  state.platform = activity.platform;
+  if (state.platform === platform && state.nativeSignature === signature) return undefined;
+  state.platform = platform;
   if (signature !== undefined) state.nativeSignature = signature;
   else delete state.nativeSignature;
   return {
-    platform: activity.platform,
+    platform,
     ...(activity.nativeBindings ? { nativeBindings: activity.nativeBindings } : {}),
   };
 };

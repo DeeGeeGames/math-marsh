@@ -1,3 +1,4 @@
+import { wireControllerPromptPreference } from '../controllerPromptPreference';
 import { $ } from '../dom';
 import type { ScreenSpec } from '../screenTypes';
 import {
@@ -43,6 +44,10 @@ export function createSettingsScreenSpec(actions: ScreenSpecActions): ScreenSpec
           </div>
         </div>
 
+        <div class="settings-panel controller-prompt-setting p-3 rounded-xl mt-3 text-left">
+          <button type="button" data-controller-prompts aria-describedby="controller-prompts-help" class="utility-btn px-3 py-2 rounded-lg w-full md:text-lg">Button prompts: Auto</button>
+          <p id="controller-prompts-help" class="text-xs md:text-base opacity-80 mt-2">Press to change artwork. Auto uses device detection. Steam action labels take priority. Bottom button selects; right button goes back. Custom layouts may differ.</p>
+        </div>
         <button id="back-to-menu-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.lg} mt-4 md:mt-8 landscape:mt-3 w-full md:w-auto">
           ← Back to Menu
         </button>
@@ -56,6 +61,7 @@ export function createSettingsScreenSpec(actions: ScreenSpecActions): ScreenSpec
     promptPlacement: 'viewport',
     wire: (root): void => {
       $(root, '#back-to-menu-btn').addEventListener('click', actions.returnToPreviousScreen);
+      wireControllerPromptPreference(root);
       actions.wireAudioSettings(root);
       actions.wireTouchControlsSetting(root);
     },

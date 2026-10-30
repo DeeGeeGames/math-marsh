@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { advanceInputPromptPresentation, inputPromptGlyphs, type InputPromptState, type NativePromptBindings } from './inputPrompts';
+import { advanceInputPromptPresentation, detectInputPromptPlatform, inputPromptGlyphs, type InputPromptState, type NativePromptBindings } from './inputPrompts';
 
 const state = function (): InputPromptState {
   return { platform: 'keyboard', gamepadAxesActive: [] };
@@ -57,5 +57,39 @@ describe('native input prompts', () => {
     expect(advanceInputPromptPresentation(prompt, {
       keyboard: false, controller: false, ownerId: null, platform: 'generic',
     })).toEqual({ platform: 'keyboard' });
+  });
+});
+
+describe('controller prompt family fallback', () => {
+  test('a selected family overrides masked and ambiguous IDs, without changing native origins', () => {
+    for (const id of ['Xbox 360 Controller (XInput STANDARD GAMEPAD)', 'Unknown Controller', '']) {
+      const prompt = state();
+      const detected = detectInputPromptPlatform(id);
+      const presentation = advanceInputPromptPresentation(prompt, {
+        keyboard: false, controller: true, ownerId: id, platform: detected, preference: 'playstation',
+      });
+      expect(presentation?.platform).toBe('playstation');
+      expect(inputPromptGlyphs(presentation?.platform ?? 'generic', 'select')[0]?.alt).toBe('Cross button');
+    }
+    const native = { eat: [{ label: 'L4' }] };
+    expect(advanceInputPromptPresentation(state(), { ...activity(native), preference: 'switch' }))
+      .toEqual({ platform: 'generic', nativeBindings: native });
+  });
+
+  test('updates a fallback while idle, preserves keyboard use, and follows replacement owners in Auto', () => {
+    const prompt = state();
+    const pad = { keyboard: false, controller: true, ownerId: 'masked-xbox', platform: 'xbox' as const };
+    advanceInputPromptPresentation(prompt, pad);
+    expect(advanceInputPromptPresentation(prompt, { ...pad, controller: false, preference: 'switch' }))
+      .toEqual({ platform: 'switch' });
+    expect(inputPromptGlyphs('switch', 'select')[0]?.alt).toBe('B button');
+    expect(inputPromptGlyphs('switch', 'back')[0]?.alt).toBe('A button');
+    expect(inputPromptGlyphs('switch', 'skip')).toEqual(inputPromptGlyphs('switch', 'pause'));
+    expect(advanceInputPromptPresentation(prompt, { ...pad, keyboard: true })).toEqual({ platform: 'keyboard' });
+    expect(advanceInputPromptPresentation(prompt, { ...pad, controller: false, preference: 'switch' })).toBeUndefined();
+    expect(advanceInputPromptPresentation(prompt, { ...pad, ownerId: 'new-ps', platform: 'playstation', preference: 'auto' }))
+      .toEqual({ platform: 'playstation' });
+    expect(advanceInputPromptPresentation(prompt, { ...pad, ownerId: null, controller: false }))
+      .toEqual({ platform: 'keyboard' });
   });
 });

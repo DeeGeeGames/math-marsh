@@ -45,7 +45,7 @@ const configureControllerPage = async function(page: Page): Promise<void> {
     const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }));
     const axes = [0, 0, 0, 0];
     const gamepad = {
-      id: 'Math Marsh controller focus fixture',
+      id: 'Xbox 360 Controller (XInput STANDARD GAMEPAD)',
       index: 0,
       connected: true,
       mapping: 'standard',
@@ -57,6 +57,7 @@ const configureControllerPage = async function(page: Page): Promise<void> {
     window.addEventListener('message', (event: MessageEvent<unknown>) => {
       const data = event.data;
       if (typeof data !== 'object' || data === null || !('type' in data) || data.type !== 'math-marsh-focus-gamepad') return;
+      if ('id' in data && typeof data.id === 'string') gamepad.id = data.id;
       if ('connected' in data && typeof data.connected === 'boolean') gamepad.connected = data.connected;
       if ('button' in data && 'pressed' in data && typeof data.button === 'number'
         && Number.isInteger(data.button) && data.button >= 0 && data.button < buttons.length
@@ -352,4 +353,88 @@ test('Practice keeps controller prompts and focus clearance while navigating the
   await expect(lastTopic).toBeFocused();
   await pressButton(12);
   await expect(page.locator('[data-practice-topic="add-make-14"]')).toBeFocused();
+});
+
+test('masked controller uses accessible saved prompt choice across screens and controller recovery', async ({ page }, testInfo) => {
+  testInfo.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await configureControllerPage(page);
+  await page.goto('/');
+  await page.getByText('A game by').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const press = async function(button: number): Promise<void> {
+    await setGamepadButton(page, button, true);
+    await setGamepadButton(page, button, false);
+  };
+  await press(0);
+  const preference = page.locator('[data-controller-prompts]');
+  for (let step = 0; step < 8 && !(await preference.evaluate(element => element === document.activeElement)); step++) await press(13);
+  await expect(preference).toBeFocused();
+  await press(0); // Xbox
+  await press(0); // PlayStation
+  await expect(preference).toHaveText('Button prompts: PlayStation');
+  const selectGlyph = page.locator('#settings-screen [data-prompt-action="select"] img');
+  await expect(selectGlyph).toHaveAttribute('alt', 'Cross button');
+  await expect(page.locator('#settings-screen [data-prompt-action="back"] img')).toHaveAttribute('alt', 'Circle button');
+  for (const layout of [{ width: 1920, height: 1080 }, { width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(layout);
+    await expect(preference).toBeInViewport();
+    expect((await focusStyle(page, '[data-controller-prompts]')).outlineStyle).toBe('solid');
+    const back = await page.locator('#back-to-menu-btn').boundingBox();
+    if (!back) throw new Error('Settings back button missing');
+    expect(back.y + back.height).toBeLessThanOrEqual(layout.height);
+    await page.screenshot({ path: testInfo.outputPath(`prompt-choice-${layout.width}x${layout.height}.png`) });
+  }
+  await press(1);
+  await page.getByRole('button', { name: 'How to Play', exact: true }).click();
+  await page.getByRole('button', { name: 'Play Tutorial', exact: true }).click();
+  await press(13);
+  await expect(page.locator('#gameplay-ui [data-prompt-action="select"] img')).toHaveAttribute('alt', 'Cross button');
+  await expect(page.locator('#gameplay-ui [data-prompt-action="skip"] img')).toHaveAttribute('alt', 'Options button');
+  await expect(page.locator('#gameplay-ui [data-prompt-action="skip"] .input-prompt-label')).toHaveText('Skip');
+  // Tutorial's prompt bar belongs to the gameplay screen.
+  await expect(page.locator('#gameplay-ui [data-prompt-action="back"] img')).toHaveAttribute('alt', 'Circle button');
+  await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', connected: false }, '*'));
+  await expect(page.getByRole('heading', { name: 'CONTROLLER DISCONNECTED' })).toBeVisible();
+  await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', connected: true, id: 'Nintendo Switch Pro Controller' }, '*'));
+  await press(0);
+  await expect(page.locator('#controller-recovery-screen [data-prompt-action="select"] img')).toHaveAttribute('alt', 'Cross button');
+  await expect(page.locator('#controller-recovery-screen [data-prompt-action="pause"] img')).toHaveAttribute('alt', 'Options button');
+  await press(0);
+  await expect(page.getByRole('heading', { name: 'CONTROLLER DISCONNECTED' })).toBeHidden();
+  await expect(page.locator('#gameplay-ui [data-prompt-action="back"] img')).toHaveAttribute('alt', 'Circle button');
+  await press(9); // Skip the tutorial with the displayed Options binding.
+  await expect(page.getByRole('button', { name: 'Play Tutorial', exact: true })).toBeVisible();
+  await press(1);
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
+  await page.locator('[data-practice-operation="add"]').click();
+  await page.locator('[data-practice-topic="add-make-3"]').click();
+  await page.locator('[data-practice-start]').click();
+  await expect(page.locator('#game-canvas')).toBeVisible();
+  await press(13);
+  await expect(page.locator('#gameplay-ui [data-prompt-action="eat"] img')).toHaveAttribute('alt', 'Cross button');
+  await expect(page.locator('#gameplay-ui [data-prompt-action="eat"] .input-prompt-label')).toHaveText('Eat');
+  await expect(page.locator('#gameplay-ui [data-prompt-action="pause"] img')).toHaveAttribute('alt', 'Options button');
+  await press(9);
+  await expect(page.locator('#resume-btn')).toBeFocused();
+  await expect(page.locator('#pause-screen [data-prompt-action="select"] img')).toHaveAttribute('alt', 'Cross button');
+  await expect(page.locator('#pause-screen [data-prompt-action="back"] img')).toHaveAttribute('alt', 'Circle button');
+  await page.reload();
+  await page.getByText('A game by').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(preference).toHaveText('Button prompts: PlayStation');
+  await preference.click(); // Nintendo
+  await preference.click(); // Steam Deck
+  await preference.click(); // Auto
+  await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', id: 'Nintendo Switch Pro Controller' }, '*'));
+  await press(0);
+  await expect(preference).toHaveText('Button prompts: Auto');
+  await expect(selectGlyph).toHaveAttribute('alt', 'B button');
+  await expect(page.locator('#settings-screen [data-prompt-action="back"] img')).toHaveAttribute('alt', 'A button');
 });
