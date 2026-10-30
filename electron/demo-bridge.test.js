@@ -32,6 +32,8 @@ const createBridge = async function (environment = {}) {
 	const clearedTimers = [];
 	const externalUrls = [];
 	const demoUserDataPaths = [];
+	const diagnosticLines = [];
+	let rendererClock = 0;
 	let sdkInitCalls = 0;
 	let inputDisposals = 0;
 	let platformError = null;
@@ -100,6 +102,14 @@ const createBridge = async function (environment = {}) {
 		'node:path': nodeRequire('node:path'),
 		'node:fs': { mkdirSync: function () {} },
 		'./desktop-input.cjs': { createDesktopInput: function () { return inputProvider; } },
+		'./input-diagnostics.cjs': {
+			...nodeRequire('./input-diagnostics.cjs'),
+			createInputDiagnostics: function (options) {
+				return nodeRequire('./input-diagnostics.cjs').createInputDiagnostics({ ...options,
+					now: function () { return rendererClock; },
+					emit: function (line) { diagnosticLines.push(line); } });
+			},
+		},
 		'./steam-session.cjs': steamSession,
 		'./achievements.cjs': nodeRequire('./achievements.cjs'),
 		'./profile-storage.cjs': { createProfileStorage: function () { throw new Error('SDK failure must not create profile storage'); } },
@@ -132,7 +142,10 @@ const createBridge = async function (environment = {}) {
 			listeners.push(handler);
 			ipcListeners.set(channel, listeners);
 		},
-		send: function () {},
+		send: function (channel, ...args) {
+			const listener = ipcListeners.get(channel);
+			if (typeof listener === 'function') listener({ sender }, ...args);
+		},
 	};
 	const contextBridge = {
 		exposeInMainWorld: function (name, api) { windowObject[name] = api; },
@@ -143,14 +156,18 @@ const createBridge = async function (environment = {}) {
 		'./profile-storage-bridge.cjs': nodeRequire('./profile-storage-bridge.cjs'),
 	};
 	loadCommonJs(preloadPath, preloadDependencies, {
+		process: mainProcess,
 		window: windowObject,
 		localStorage: { getItem: function () { return null; }, setItem: function () {} },
-		performance: { now: function () { return 0; } },
+		performance: { now: function () { return rendererClock; } },
 		console: { error: function () {}, warn: function () {} },
 	});
 
 	return {
 		api: windowObject.mathMarshDesktop,
+		diagnosticLines,
+		setRendererClock: function (clock) { rendererClock = clock; },
+		sendUnknownDiagnostic: function (diagnostic) { ipcListeners.get('desktop:input-diagnostics')?.({ sender: {} }, diagnostic); },
 		sdkInitCalls: function () { return sdkInitCalls; },
 		setPlatformError: function (error) { platformError = error; },
 		externalUrls,
@@ -163,6 +180,32 @@ const createBridge = async function (environment = {}) {
 };
 
 describe('Electron demo bridge integration', function () {
+	test('diagnostic bridge is opt-in, filters senders and payloads, and deduplicates renderer frames', async function () {
+		const disabled = await createBridge({ SteamAppId: '5493870' });
+		try {
+			expect(disabled.api.input.reportDiagnostics).toBeUndefined();
+			expect(disabled.diagnosticLines).toHaveLength(0);
+		} finally { disabled.cleanup(); }
+		const enabled = await createBridge({ SteamAppId: '5493870', MATH_MARSH_INPUT_DIAGNOSTICS: '1' });
+		const diagnostic = { screen: 'menu', ownerId: null, ownerSlot: null, waitingForNeutral: false, blockFrame: false,
+			pageFocused: true, pageHidden: false, controllers: [], activeActions: [] };
+		const rendererLines = function () { return enabled.diagnosticLines.filter(line => JSON.parse(line.slice('[controller-input] '.length)).stage === 'renderer'); };
+		try {
+			enabled.sendUnknownDiagnostic(diagnostic);
+			enabled.api.input.reportDiagnostics({ invalid: true });
+			expect(rendererLines()).toHaveLength(0);
+			enabled.api.input.reportDiagnostics(diagnostic);
+			enabled.api.input.reportDiagnostics(diagnostic);
+			expect(rendererLines()).toHaveLength(1);
+			expect(JSON.parse(rendererLines()[0].slice('[controller-input] '.length)).data.bridge).toEqual({ fresh: true, available: false });
+			enabled.api.input.reportDiagnostics({ ...diagnostic, ownerSlot: 0, ownerId: 'steam:controller' });
+			expect(rendererLines()).toHaveLength(2);
+			enabled.setRendererClock(1000);
+			enabled.api.input.reportDiagnostics({ ...diagnostic, ownerSlot: 0, ownerId: 'steam:controller' });
+			expect(rendererLines()).toHaveLength(3);
+		} finally { enabled.cleanup(); }
+	});
+
 	test('exposes the process role through preload even when Steam SDK initialization fails', async function () {
 		for (const scenario of [
 			{ appId: '5493870', role: 'demo', initCalls: 1 },

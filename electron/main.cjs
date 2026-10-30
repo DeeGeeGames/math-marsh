@@ -4,11 +4,13 @@ const { mkdirSync } = require('node:fs');
 const { createDesktopInput } = require('./desktop-input.cjs');
 const { createSteamSession, isSteamLaunch, getSteamAppIdentity } = require('./steam-session.cjs');
 const { createProfileStorage } = require('./profile-storage.cjs');
+const { createInputDiagnostics, normalizeRendererInputDiagnostic } = require('./input-diagnostics.cjs');
 
 const { createAchievementQueue } = require('./achievements.cjs');
 
 const PROJECT_ROOT = join(__dirname, '..');
 const DEV_SERVER_URL = process.env.MATH_MARSH_DEV_SERVER_URL;
+const inputDiagnostics = createInputDiagnostics({ environment: process.env });
 let desktopInput;
 let inputPoll;
 let inputContext = 'menu';
@@ -78,12 +80,24 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
 	if (!ownsInstance) return;
+	let sourceRevision = null;
+	if (inputDiagnostics) {
+		try { sourceRevision = require('../dist/build-info.json').sourceRevision; } catch { /* Source/dev build. */ }
+		inputDiagnostics.record('session', {
+			sourceRevision, appId: steamIdentity?.appId ?? null, role: steamIdentity?.role ?? null,
+			platform: process.platform, arch: process.arch,
+		});
+	}
 	const steamOptions = {
 		sdkRoot: process.env.MATH_MARSH_STEAM_SDK_ROOT ?? (app.isPackaged
 			? join(process.resourcesPath, 'steamworks_sdk') : join(PROJECT_ROOT, 'steamworks_sdk')),
-		onError: error => console.warn('Steamworks unavailable.', error),
+		onError: error => {
+			console.warn('Steamworks unavailable.', error);
+			inputDiagnostics?.record('error', { source: 'steam-session', message: String(error) });
+		},
 	};
 	steamSession = createSteamSession(steamOptions);
+	inputDiagnostics?.record('steam-session', { initialized: Boolean(steamSession) });
 	achievementQueue = createAchievementQueue(steamSession);
 	ipcMain.handle('desktop:achievements', (event, names) => {
 		if (!BrowserWindow.fromWebContents(event.sender)) throw new Error('Unknown achievement caller');
@@ -134,6 +148,11 @@ app.whenReady().then(() => {
 	ipcMain.on('desktop:input-context', (_event, context) => {
 		if (context === 'menu' || context === 'gameplay') inputContext = context;
 	});
+	if (inputDiagnostics) ipcMain.on('desktop:input-diagnostics', (event, value) => {
+		if (!BrowserWindow.fromWebContents(event.sender)) return;
+		const diagnostic = normalizeRendererInputDiagnostic(value);
+		if (diagnostic) inputDiagnostics.record('renderer', diagnostic);
+	});
 	ipcMain.handle('desktop:fullscreen-active', (event) => {
 		const window = BrowserWindow.fromWebContents(event.sender);
 		return window?.isFullScreen() ?? false;
@@ -154,12 +173,16 @@ app.whenReady().then(() => {
 	createWindow();
 	desktopInput = createDesktopInput({
 		steamSession,
+		onDiagnostic: inputDiagnostics?.record,
 		manifestPath: app.isPackaged
 			? join(process.resourcesPath, 'steam-input', 'game_actions.vdf')
 			: join(PROJECT_ROOT, 'steam/input/game_actions.vdf'),
 		sdkRoot: process.env.MATH_MARSH_STEAM_SDK_ROOT ?? (app.isPackaged
 			? join(process.resourcesPath, 'steamworks_sdk') : join(PROJECT_ROOT, 'steamworks_sdk')),
-		onError: error => console.warn('Native controller provider unavailable; using browser gamepads.', error),
+		onError: error => {
+			console.warn('Native controller provider unavailable; using browser gamepads.', error);
+			inputDiagnostics?.record('error', { source: 'desktop-input', message: String(error) });
+		},
 	});
 	inputPoll = setInterval(() => {
 		try { steamSession?.steam.runCallbacks(); } catch (error) { console.warn('Steam callback failed.', error); }

@@ -23,6 +23,13 @@ async function build(): Promise<void> {
   await rm(distRoot, { recursive: true, force: true });
   await mkdir(distRoot, { recursive: true });
 
+  let sourceRevision: string | null = null;
+  try {
+    const revision = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: projectRoot });
+    if (revision.exitCode === 0) sourceRevision = revision.stdout.toString().trim();
+  } catch { /* Builds from a source archive may not have Git installed. */ }
+  await writeFile(resolve(distRoot, 'build-info.json'), JSON.stringify({ sourceRevision }));
+
   const result = await Bun.build({
     entrypoints: [resolve(projectRoot, 'index.html')],
     outdir: distRoot,

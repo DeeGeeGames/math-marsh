@@ -29,6 +29,25 @@ export type DesktopInputSnapshot = {
 export type DesktopInputController = {
 	snapshot: () => DesktopInputSnapshot;
 	setContext: (context: 'menu' | 'gameplay') => void;
+	reportDiagnostics?: (diagnostic: RendererInputDiagnostic) => void;
+};
+
+export type RendererInputDiagnostic = {
+	screen: string | null;
+	ownerId: string | null;
+	ownerSlot: number | null;
+	waitingForNeutral: boolean;
+	blockFrame: boolean;
+	pageFocused: boolean;
+	pageHidden: boolean;
+	controllers: readonly {
+		slot: number;
+		id: string | null;
+		connected: boolean;
+		pressed: readonly number[];
+		axes: readonly number[];
+	}[];
+	activeActions: readonly GameAction[];
 };
 
 export type SteamAppRole = 'demo' | 'paid' | null;
