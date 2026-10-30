@@ -3,9 +3,11 @@ import { ACHIEVEMENT_NAMES, ACHIEVEMENT_RULES, rosterAchievements, savedRosterAc
 import type { PlayerLearnerData } from '../profiles/types';
 import { initialPlayerLearnerData } from '../profiles/rules';
 
-test('shipping mechanism has no rules or bridge names', function() {
-  expect(ACHIEVEMENT_RULES).toEqual([]);
-  expect(ACHIEVEMENT_NAMES).toEqual([]);
+test('shipping registry and native allowlist contain exactly six permanent names', function() {
+  const names = ['ACH_FIRST_STEP_UP', 'ACH_EVERY_OPERATION', 'ACH_WHOLE_SHOW',
+    'ACH_TOPIC_PRACTICED', 'ACH_PRACTICE_COMPLETE', 'ACH_LESSONS_DONE'];
+  expect(ACHIEVEMENT_RULES.map(rule => rule.apiName)).toEqual(names);
+  expect(ACHIEVEMENT_NAMES).toEqual(names);
 });
 
 test('roster unions whole-profile matches, independently of identity or active profile', function() {
