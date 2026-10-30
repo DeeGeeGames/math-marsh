@@ -9,11 +9,11 @@
   align-items: stretch;
   gap: 16px;
   padding: 16px 18px;
-  border: 2px solid rgba(255, 247, 198, 0.42);
+  border: 3px solid var(--ink);
   border-radius: 16px;
-  background: linear-gradient(180deg, rgba(18, 52, 59, 0.96), rgba(5, 31, 36, 0.92));
-  box-shadow: 0 14px 28px rgba(5, 31, 36, 0.42);
-  color: var(--cream);
+  background: var(--cream);
+  box-shadow: 0 5px 0 var(--ink);
+  color: var(--ink);
   pointer-events: auto;
 }
 
@@ -23,7 +23,7 @@
 
 .gameplay-onboarding-kicker {
   margin-bottom: 2px;
-  color: var(--gold);
+  color: #426331;
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -135,7 +135,7 @@
 .tutorial-tap-example {
   margin: 6px 0 8px;
   text-align: center;
-  color: var(--gold);
+  color: #426331;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -152,7 +152,7 @@
   align-items: center;
   gap: 10px;
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 247, 198, 0.3);
+  border-top: 2px solid #a7b38c;
 }
 
 .tutorial-gamepad-option svg {

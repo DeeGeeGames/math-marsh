@@ -14,41 +14,41 @@ export function createSettingsScreenSpec(actions: ScreenSpecActions): ScreenSpec
     id: 'settings-screen',
     className: `${OVERLAY_BASE} app-background`,
     html: `
-      <div class="text-center max-w-sm md:max-w-lg landscape:max-w-4xl w-full px-4 md:px-8 py-4 sm:py-6 md:py-8 landscape:py-3">
-        <h2 class="pond-title text-2xl sm:text-3xl md:text-4xl landscape:text-xl landscape:md:text-2xl font-bold mb-4 sm:mb-6 md:mb-8 landscape:mb-3 text-gold drop-shadow-lg">Settings</h2>
+      <div class="settings-shell">
+        <h2 class="pond-title text-gold">Settings</h2>
 
-        <div class="grid grid-cols-1 landscape:grid-cols-2 gap-3 md:gap-6 landscape:gap-3 text-left items-stretch">
-          <div class="settings-panel p-3 md:p-6 landscape:p-3 rounded-xl">
-            <h3 class="text-base md:text-xl landscape:text-base font-semibold mb-2 md:mb-4 landscape:mb-2">Audio</h3>
-            <div class="space-y-2 md:space-y-3">
-              <label class="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" id="sound-effects" checked class="theme-checkbox w-5 h-5 rounded">
-                <span class="text-sm md:text-base">Sound Effects</span>
-              </label>
-              <label class="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" id="background-music" checked class="theme-checkbox w-5 h-5 rounded">
-                <span class="text-sm md:text-base">Background Music</span>
-              </label>
-            </div>
-          </div>
+        <div class="settings-grid">
+          <section class="settings-section" aria-labelledby="audio-settings-heading">
+            <h3 id="audio-settings-heading">Audio</h3>
+            <label class="settings-panel settings-toggle">
+              <input type="checkbox" id="sound-effects" checked class="theme-checkbox">
+              <span>Sound Effects</span>
+              <span class="settings-toggle-value" aria-hidden="true"></span>
+            </label>
+            <label class="settings-panel settings-toggle">
+              <input type="checkbox" id="background-music" checked class="theme-checkbox">
+              <span>Background Music</span>
+              <span class="settings-toggle-value" aria-hidden="true"></span>
+            </label>
+          </section>
 
-          <div class="settings-panel p-3 md:p-6 landscape:p-3 rounded-xl">
-            <h3 class="text-base md:text-xl landscape:text-base font-semibold mb-2 md:mb-4 landscape:mb-2">Touch Controls</h3>
-            <p class="text-xs md:text-sm opacity-80 mb-2">Use the on-screen gamepad, or tap lily pads to move and tap the fly to eat.</p>
-            <p class="text-xs md:text-sm opacity-80 mb-2">Auto hides the gamepad when you tap a lily pad. Use the gamepad button at the top to turn it back on.</p>
-            <div class="flex flex-col md:flex-row gap-2 md:gap-3">
-              <button class="touch-mode-btn flex-1 text-white border-none px-3 py-2 landscape:py-2 md:py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-touch-mode="auto">Auto</button>
-              <button class="touch-mode-btn flex-1 text-white border-none px-3 py-2 landscape:py-2 md:py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-touch-mode="on">Always On</button>
-              <button class="touch-mode-btn flex-1 text-white border-none px-3 py-2 landscape:py-2 md:py-3 rounded-lg cursor-pointer transition-colors duration-200 btn-mobile" data-touch-mode="off">Tap lily pads</button>
+          <section class="settings-panel settings-touch" aria-labelledby="touch-settings-heading">
+            <h3 id="touch-settings-heading">Touch Controls</h3>
+            <p>Use the on-screen gamepad, or tap lily pads to move and tap the fly to eat.</p>
+            <p>Auto hides the gamepad when you tap a lily pad. Use the gamepad button at the top to turn it back on.</p>
+            <div class="settings-touch-options" role="group" aria-label="Touch controls mode">
+              <button type="button" class="touch-mode-btn" data-touch-mode="auto">Auto</button>
+              <button type="button" class="touch-mode-btn" data-touch-mode="on">Always On</button>
+              <button type="button" class="touch-mode-btn" data-touch-mode="off">Tap lily pads</button>
             </div>
-          </div>
+          </section>
         </div>
 
-        <div class="settings-panel controller-prompt-setting p-3 rounded-xl mt-3 text-left">
-          <button type="button" data-controller-prompts aria-describedby="controller-prompts-help" class="utility-btn px-3 py-2 rounded-lg w-full md:text-lg">Button prompts: Auto</button>
-          <p id="controller-prompts-help" class="text-xs md:text-base opacity-80 mt-2">Press to change artwork. Auto uses device detection. Steam action labels take priority. Bottom button selects; right button goes back. Custom layouts may differ.</p>
+        <div class="settings-panel controller-prompt-setting">
+          <button type="button" data-controller-prompts aria-describedby="controller-prompts-help" class="utility-btn">Button prompts: Auto</button>
+          <p id="controller-prompts-help">Press to change artwork. Auto uses device detection. Steam action labels take priority. Bottom button selects; right button goes back. Custom layouts may differ.</p>
         </div>
-        <button id="back-to-menu-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.lg} mt-4 md:mt-8 landscape:mt-3 w-full md:w-auto">
+        <button id="back-to-menu-btn" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.lg}">
           ← Back to Menu
         </button>
         ${inputPromptsSlot()}
@@ -58,7 +58,7 @@ export function createSettingsScreenSpec(actions: ScreenSpecActions): ScreenSpec
       { action: 'select', label: 'Select' },
       { action: 'back', label: 'Back' },
     ],
-    promptPlacement: 'viewport',
+    promptPlacement: 'panel',
     wire: (root): void => {
       $(root, '#back-to-menu-btn').addEventListener('click', actions.returnToPreviousScreen);
       wireControllerPromptPreference(root);

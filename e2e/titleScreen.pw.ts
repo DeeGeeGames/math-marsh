@@ -50,6 +50,7 @@ test('fly eats an answer, cycles the problem, and stops when the menu is inactiv
 	await expect(page.locator('[data-title-problem]')).toHaveText('6 + 2 = 8 ✓');
 	await expect(page.locator('.title-pad-2 span')).toHaveCSS('opacity', '0');
 	await expect(page.locator('[data-title-problem]')).toHaveText('9 − 5 = ?', { timeout: 5000 });
+	const pausedProblem = await page.locator('[data-title-problem]').textContent();
 	await page.getByRole('button', { name: 'Settings', exact: true }).click();
 	const fly = page.locator('[data-title-actor="fly"]');
 	const stopped = await fly.getAttribute('style');
@@ -57,7 +58,8 @@ test('fly eats an answer, cycles the problem, and stops when the menu is inactiv
 	expect(await fly.getAttribute('style')).toBe(stopped);
 	await page.locator('#back-to-menu-btn').click();
 	await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
-	await expect(page.locator('[data-title-problem]')).toHaveText('6 + 2 = ?');
+	if (!pausedProblem) throw new Error('Title problem is missing');
+	await expect(page.locator('[data-title-problem]')).toHaveText(pausedProblem);
 });
 
 test('reduced motion freezes title presentation and compact layouts hide the demo', async ({ page }) => {

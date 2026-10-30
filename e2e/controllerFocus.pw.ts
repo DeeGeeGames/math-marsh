@@ -122,8 +122,8 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     expect(controllerRing).toMatchObject({
       focusVisible: false,
       outlineStyle: 'solid',
-      outlineWidth: '3px',
-      outlineColor: 'rgb(244, 210, 122)',
+      outlineWidth: '4px',
+      outlineColor: 'rgb(255, 245, 204)',
     });
     expect(controllerRing.boxShadow).not.toBe('none');
 
@@ -139,8 +139,8 @@ test('mouse and touch opened Settings keep rendered focus visible during control
       await expect(backgroundMusic).toBeFocused();
       expect(await focusStyle(page, '#background-music')).toMatchObject({
         outlineStyle: 'solid',
-        outlineWidth: '3px',
-        outlineColor: 'rgb(244, 210, 122)',
+        outlineWidth: '4px',
+        outlineColor: 'rgb(255, 245, 204)',
       });
       const bounds = await backgroundMusic.boundingBox();
       if (!bounds) throw new Error('Background Music focus target is not visible');
@@ -162,7 +162,7 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     expect(await focusStyle(page, '[data-touch-mode="auto"]')).toMatchObject({
       focusVisible: false,
       outlineStyle: 'solid',
-      outlineWidth: '3px',
+      outlineWidth: '4px',
     });
 
     // Controller cancel restores the menu focus with its indicator; keyboard
@@ -232,12 +232,12 @@ test('mouse and touch opened Settings keep rendered focus visible during control
     await setGamepadButton(page, 13, false);
     await expect(backgroundMusic).toBeFocused();
     expect(await focusStyle(page, '#background-music')).toMatchObject({
-      outlineStyle: 'solid', outlineWidth: '3px', outlineColor: 'rgb(244, 210, 122)',
+      outlineStyle: 'solid', outlineWidth: '4px', outlineColor: 'rgb(255, 245, 204)',
     });
     await page.keyboard.press('Tab');
     await expect(autoMode).toBeFocused();
     expect(await focusStyle(page, '[data-touch-mode="auto"]')).toMatchObject({
-      focusVisible: true, outlineStyle: 'solid', outlineWidth: '3px',
+      focusVisible: true, outlineStyle: 'solid', outlineWidth: '4px',
     });
   } finally {
     await context.close();
@@ -271,7 +271,7 @@ test('tutorial controls support controller focus, later lessons, and keyboard na
   await expect(step).toHaveText('Step 2 of 5');
   await pressButton(14);
   await expect(back).toBeFocused();
-  expect(await focusStyle(page, '#tutorial-back-btn')).toMatchObject({ outlineStyle: 'solid', outlineWidth: '3px' });
+  expect(await focusStyle(page, '#tutorial-back-btn')).toMatchObject({ outlineStyle: 'solid', outlineWidth: '4px' });
   await pressButton(0);
   await expect(step).toHaveText('Step 1 of 5');
   await expect(next).toBeFocused();
@@ -349,7 +349,7 @@ test('Practice keeps controller prompts and focus clearance while navigating the
   if (!footer || !tile) throw new Error('Practice controller navigation bounds are missing');
   expect(footer.y + footer.height).toBeLessThanOrEqual(720 - 12);
   expect(footer.y - tile.y - tile.height).toBeGreaterThanOrEqual(28);
-  expect(await focusStyle(page, '[data-practice-topic="add-make-20"]')).toMatchObject({ outlineStyle: 'solid', outlineWidth: '3px' });
+  expect(await focusStyle(page, '[data-practice-topic="add-make-20"]')).toMatchObject({ outlineStyle: 'solid', outlineWidth: '4px' });
   await page.screenshot({ path: testInfo.outputPath('practice-controller-bottom-row.png') });
   await pressButton(0);
   await expect(page.locator('[data-practice-start]')).toBeFocused();

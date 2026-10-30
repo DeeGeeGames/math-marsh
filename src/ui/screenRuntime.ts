@@ -43,6 +43,9 @@ function createGameContainer(): HTMLElement {
   container.addEventListener('pointerdown', () => {
     delete document.documentElement.dataset.focusNavigation;
   }, { capture: true });
+  container.addEventListener('keydown', function(event): void {
+    if (event.key === 'Tab') enableNavigationFocus();
+  });
   return container;
 }
 

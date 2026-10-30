@@ -41,6 +41,11 @@ async function build(): Promise<void> {
 
   if (!result.success) throw new Error('Browser bundle failed');
 
+  await copyFile(
+    resolve(projectRoot, 'src/assets/fonts/LilitaOne-OFL.txt'),
+    resolve(distRoot, 'LilitaOne-OFL.txt'),
+  );
+
   await Promise.all(pwaFiles.map(file => copyFile(
     resolve(projectRoot, 'src/assets/icons', file),
     resolve(distRoot, file),

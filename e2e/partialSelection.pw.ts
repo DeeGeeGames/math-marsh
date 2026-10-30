@@ -104,7 +104,7 @@ test('mixed prompt animates the selected operand slot, including a duplicate of 
 	const blueSlot = numbers.filter(value => value.color === '#e0f2fe' && value.y < 90);
 	expect(blueSlot.map(value => value.text)).toEqual(['8']);
 	expect(blueSlot[0]?.x).toBeGreaterThan(60);
-	expect(numbers.some(value => value.text === '8 - ' && value.x < 40 && value.color === '#fff7c6')).toBe(true);
+	expect(numbers.some(value => value.text === '8 - ' && value.x < 40 && value.color === '#102b31')).toBe(true);
 	await page.screenshot({ path: testInfo.outputPath('duplicate-operand.png') });
 	// Provisional styling persists after the transient effect and its state expire.
 	await page.locator('#slow').uncheck();

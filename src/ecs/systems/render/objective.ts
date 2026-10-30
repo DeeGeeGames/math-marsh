@@ -10,8 +10,8 @@ import type { MathProblemEntity } from '../../queries';
 import type { EquationFeedbackKind, EquationFeedback, EquationModeState } from '../../types';
 import { formatRemainingTime, LOW_TIME_SECONDS } from '../../runTime';
 
-const textColor = '#fff7c6';
-const shadowColor = 'rgba(9, 41, 44, 0.9)';
+const textColor = '#102b31';
+const shadowColor = '#fff5cc';
 const HEADER_SPLIT_RATIO = 0.72;
 const HEADER_SIDE_PADDING = 24 + GAME_CONFIG.RENDER.CANVAS_INSET_PX;
 const HEADER_GAP = 16;
@@ -73,8 +73,13 @@ const objectiveTextForMode = (
     : equationSelectionText(equationMode, selectedValues);
 };
 
-function objectiveFontSize(margin: number): number {
-  return Math.max(20, Math.min(30, margin * 0.42));
+function objectiveFontSize(ctx: CanvasRenderingContext2D, margin: number): number {
+  const displayWidth = ctx.canvas.getBoundingClientRect().width;
+  const displayScale = displayWidth > 0 ? displayWidth / ctx.canvas.width : 1;
+  const baseSize = Math.max(20, Math.min(30, margin * 0.42));
+  // The board shrinks between the phone's thumb controls. Keep its header
+  // readable in CSS pixels while staying inside the existing top margin.
+  return Math.min(margin * 0.8, Math.max(baseSize, 16 / displayScale));
 }
 
 function objectiveGeometry(
@@ -104,7 +109,7 @@ function selectedEquationLayout(
   const resultSearchStart = text.lastIndexOf('=') + 1;
 
   ctx.save();
-  ctx.font = `bold ${objectiveFontSize(margin)}px Arial`;
+  ctx.font = `bold ${objectiveFontSize(ctx, margin)}px Arial`;
   const { leftX, fitScale } = objectiveGeometry(ctx, text);
   // Start after the fixed operand and operator so matching values animate to the blank.
   const mixedOperandStart = text.indexOf(' ', text.indexOf(' ') + 1) + 1;
@@ -273,7 +278,7 @@ export const drawBoardObjective = (
   const normalizedText = text.trim();
   if (normalizedText.length === 0) return answerTargets;
 
-  const fontSize = objectiveFontSize(margin);
+  const fontSize = objectiveFontSize(ctx, margin);
   const progress = feedbackState?.progress ?? 1;
   const feedbackStyle = feedbackState ? feedbackStyles[feedbackState.feedback.kind] : undefined;
   const fade = 1 - progress;
@@ -318,11 +323,20 @@ export const drawBoardTime = (
   remainingSeconds: number,
   margin: number,
 ): EquationValueTarget => {
-  const text = `Time ${formatRemainingTime(remainingSeconds)}`;
+  const compact = ctx.canvas.getBoundingClientRect().width < 480;
+  const text = `${compact ? '' : 'Time '}${formatRemainingTime(remainingSeconds)}`;
   const availableWidth = ctx.canvas.width * (1 - HEADER_SPLIT_RATIO) - HEADER_SIDE_PADDING - HEADER_GAP;
 
   ctx.save();
-  ctx.font = `bold ${objectiveFontSize(margin)}px Arial`;
+  // A dark timer plaque separates this urgent value from the equation while
+  // retaining its established split and animation target.
+  const panelLeft = ctx.canvas.width * HEADER_SPLIT_RATIO - HEADER_GAP / 2;
+  const panelRight = ctx.canvas.width - HEADER_SIDE_PADDING + 12;
+  ctx.fillStyle = '#102b31';
+  ctx.beginPath();
+  ctx.roundRect(panelLeft, margin * 0.16, panelRight - panelLeft, margin * 0.64, 10);
+  ctx.fill();
+  ctx.font = `bold ${objectiveFontSize(ctx, margin)}px Arial`;
   const timeWidth = ctx.measureText(formatRemainingTime(remainingSeconds)).width;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
@@ -335,8 +349,8 @@ export const drawBoardTime = (
   };
   ctx.translate(ctx.canvas.width - HEADER_SIDE_PADDING, margin * 0.48);
   ctx.scale(fitScale, fitScale);
-  ctx.strokeStyle = shadowColor;
-  ctx.fillStyle = remainingSeconds <= LOW_TIME_SECONDS ? feedbackStyles.incorrect.color : textColor;
+  ctx.strokeStyle = '#102b31';
+  ctx.fillStyle = remainingSeconds <= LOW_TIME_SECONDS ? feedbackStyles.incorrect.color : '#fff5cc';
   drawOutlinedText(ctx, text, 0);
   ctx.restore();
   return target;

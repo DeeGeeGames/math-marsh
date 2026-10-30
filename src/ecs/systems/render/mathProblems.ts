@@ -103,9 +103,9 @@ const drawLilyPadShape = (
     centerY,
     radius,
   );
-  gradient.addColorStop(0, '#9bd45e');
-  gradient.addColorStop(0.62, '#4b9f3b');
-  gradient.addColorStop(1, '#276b35');
+  gradient.addColorStop(0, '#b3ed3c');
+  gradient.addColorStop(0.62, '#82ce2b');
+  gradient.addColorStop(1, '#59a927');
 
   ctx.fillStyle = gradient;
   ctx.beginPath();
@@ -114,9 +114,14 @@ const drawLilyPadShape = (
   ctx.closePath();
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(17, 72, 36, 0.72)';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#102b31';
+  ctx.lineWidth = 4;
   ctx.stroke();
+
+  ctx.fillStyle = '#c1ee64';
+  ctx.beginPath();
+  ctx.ellipse(centerX - radius * 0.28, centerY - radius * 0.58, radius * 0.25, radius * 0.09, -0.3, 0, Math.PI * 2);
+  ctx.fill();
 };
 
 const drawLilyPadVeins = (
@@ -127,7 +132,7 @@ const drawLilyPadVeins = (
 ): void => {
   const veinAngles = [-1.9, -1.25, -0.68, 0.68, 1.28] as const;
 
-  ctx.strokeStyle = 'rgba(224, 248, 156, 0.28)';
+  ctx.strokeStyle = 'rgba(224, 248, 156, 0.34)';
   ctx.lineWidth = 2;
   veinAngles.forEach(angle => {
     ctx.beginPath();

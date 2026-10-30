@@ -1,6 +1,6 @@
 .skit-layout { width: min(90vw, 1100px); text-align: center; }
-.skit-kicker { color: #c8f4ad; font-size: clamp(13px, 1.4vw, 20px); letter-spacing: .12em; text-transform: uppercase; }
-#skit-title { font-size: clamp(28px, 4vw, 54px); line-height: 1.2; font-weight: 800; color: #fff7d3; text-shadow: 0 3px 0 #123d4866; }
+.skit-kicker { color: var(--ink); background: var(--cream); display: table; margin: 0 auto 8px; padding: 4px 12px; border-radius: 12px; font-size: clamp(13px, 1.4vw, 20px); letter-spacing: .12em; text-transform: uppercase; }
+#skit-title { font-size: clamp(28px, 4vw, 54px); line-height: 1.2; font-weight: 400; }
 .skit-stage {
 	position: relative;
 	container-type: size;
@@ -9,9 +9,9 @@
 	min-height: 150px;
 	margin: 18px auto;
 	overflow: hidden;
-	border: 3px solid #9abc79;
+	border: 4px solid var(--ink);
 	border-radius: 28px;
-	background: radial-gradient(ellipse at 78% 8%, #fff0ad 0%, transparent 40%), linear-gradient(#bdd994 0%, #88b77a 35%, #448e81 36%, #205c68 100%);
+	background: radial-gradient(ellipse at 78% 8%, #fff0ad 0%, transparent 40%), linear-gradient(#7ddfff 0%, #75c72b 35%, #119daf 36%, #086e88 100%);
 	box-shadow: 0 14px 40px #071f364d, inset 0 -12px 32px #12314266;
 }
 .skit-stage::before { content: ''; position: absolute; top: 11%; left: 8%; width: 10%; height: 5%; border-radius: 50%; background: #fff8cf88; box-shadow: 25cqw 2cqh 0 #fff8cf55, 65cqw -1cqh 0 #fff8cf66; }
@@ -24,11 +24,11 @@
 .skit-frog { position: absolute; left: 23%; top: 73%; width: min(25%, 27vh); aspect-ratio: 1; background-repeat: no-repeat; transform-origin: center; }
 .skit-fly { position: absolute; width: min(12%, 14vh); aspect-ratio: 1; background-size: 800% 100%; background-repeat: no-repeat; transform: translate(-50%, -100%); }
 .skit-tongue { position: absolute; left: 27%; top: 61%; height: 3%; background: #f58c9e; border: 2px solid #b65872; border-radius: 999px; }
-.skit-caption { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 112px; margin: 0 auto 14px; padding: 10px 18px; border: 1px solid #bfebbb55; border-radius: 20px; background: #103e4bdb; font-size: clamp(21px, 2.5vw, 32px); line-height: 1.25; font-weight: 700; color: #fff7d3; }
-.skit-speaker { font-size: .55em; line-height: 1.2; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c6edff; }
-.skit-speaker[data-speaker="lizard"] { color: #ffcf82; }
-.skit-speaker[data-speaker="frog"] { color: #c7f48e; }
-.skit-speaker[data-speaker="spider"] { color: #e0c9ff; }
+.skit-caption { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 112px; margin: 0 auto 14px; padding: 10px 18px; border: 3px solid var(--ink); border-radius: 20px; background: var(--cream); font-size: clamp(21px, 2.5vw, 32px); line-height: 1.25; font-weight: 700; color: var(--ink); }
+.skit-speaker { font-size: .55em; line-height: 1.2; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #086e88; }
+.skit-speaker[data-speaker="lizard"] { color: #824600; }
+.skit-speaker[data-speaker="frog"] { color: #277b24; }
+.skit-speaker[data-speaker="spider"] { color: #674480; }
 .skit-extra { display: none; position: absolute; inset: 0; }
 #skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-extra { display: block; }
 #skit-screen[data-scene]:not([data-scene="snack-break"]) .skit-stage > :is(.skit-perch, .skit-tongue, .skit-pad, .skit-frog, .skit-fly) { display: none; }

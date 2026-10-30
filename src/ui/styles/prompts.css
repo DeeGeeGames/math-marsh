@@ -65,18 +65,12 @@
   gap: 10px 18px;
   max-width: min(92vw, 860px);
   padding: 10px 14px;
-  border: 2px solid rgba(255, 247, 198, 0.34);
+  border: 3px solid var(--ink);
   border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(18, 52, 59, 0.86), rgba(5, 31, 36, 0.76)),
-    var(--panel-gradient-strong);
-  box-shadow:
-    0 12px 24px rgba(5, 31, 36, 0.32),
-    inset 0 1px 0 rgba(255, 247, 198, 0.16);
-  color: rgba(255, 247, 198, 0.92);
-  text-shadow: 0 2px 3px rgba(5, 31, 36, 0.68);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: var(--ink);
+  box-shadow: 0 4px 0 #071c23;
+  color: var(--cream);
+  text-shadow: none;
 }
 
 .hud-bottom #hints-display {
