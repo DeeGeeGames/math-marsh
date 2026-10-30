@@ -1,0 +1,217 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+:root{color-scheme:dark;font-family:var(--font-sans,Arial,sans-serif);color:var(--foreground,#e8ece7)}*{box-sizing:border-box}body{margin:0}section{margin:0 0 28px}h2{font-size:18px;margin:0 0 8px}p.note{font-size:14px;line-height:1.5;color:var(--muted-foreground,#abb7b5);margin:10px 0 0}.stage{container-type:inline-size;position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:var(--radius,12px);background:#184c49;color:#fff1cc;font-family:'Trebuchet MS',sans-serif;isolation:isolate}.scenery{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-3}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#071f27eb,#0b2b3570 48%,#10312700 75%),linear-gradient(0deg,#052a2dd9,transparent 40%);z-index:-2}.sub .shade{background:linear-gradient(90deg,#082b30ef,#0a3037df 72%,#10373495)}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible{outline:.4cqw solid white;outline-offset:.35cqw}.top{position:absolute;top:5%;left:5%;right:5%;display:flex;justify-content:space-between;align-items:center;font-size:1.55cqw;font-weight:bold}.profile{background:#133c40d9;border:.12cqw solid #bad2a26b;padding:.7cqw 1.2cqw;border-radius:4cqw}.profile span{color:#f5ce6b;margin-right:.7cqw}.edition{font-size:1.1cqw;letter-spacing:.25cqw;color:#d9dfbb}.logo{position:absolute;left:4%;top:9%;width:33%;height:29%;object-fit:contain}.menu{position:absolute;left:7%;top:39%;width:32%;display:grid;gap:1cqw}.wood{border:.15cqw solid #b8894e;background:linear-gradient(100deg,#65472e,#86603c);border-radius:.7cqw;box-shadow:0 .55cqw #352a20,0 1cqw 2cqw #0004;padding:1.15cqw 2cqw;text-align:left;font-size:2.6cqw;font-weight:900;display:flex;align-items:center;justify-content:space-between}.wood.active{background:linear-gradient(100deg,#fff0af,#eaba5e);border-color:#fff4c6;color:#2c3931;box-shadow:0 .55cqw #805e30,0 0 0 .28cqw #eac66b55;transform:translateX(.8cqw)}.wood small{font-size:1.7cqw}.minor{display:flex;gap:1cqw;margin-top:.9cqw}.minor button{background:#143c3deb;border:.12cqw solid #c7d5b16b;border-radius:.5cqw;font-size:1.35cqw;padding:.8cqw 1cqw;white-space:nowrap}.context{position:absolute;left:48%;top:68%;padding:1.3cqw 2cqw;background:#103e40dc;border-left:.35cqw solid #eaca7e;border-radius:.5cqw;font-size:1.65cqw;max-width:40%;box-shadow:0 1cqw 3cqw #08232255}.context strong{display:block;font-size:2.2cqw;margin-bottom:.5cqw}.frog{position:absolute;right:13%;top:42%;width:17%;aspect-ratio:1;background-image:url(assets/sprites/frog/frog-hop-toward.png);background-size:800% 100%;background-position:100% center;filter:drop-shadow(0 1.5cqw .5cqw #082a3355)}.footer{position:absolute;left:5%;right:5%;bottom:4%;border-top:.1cqw solid #c3d8b740;padding-top:1.5cqw;display:flex;align-items:center;justify-content:space-between;font-size:1.4cqw;font-weight:bold}.prompts{display:flex;gap:2cqw}.key{display:inline-grid;place-items:center;width:2.2cqw;height:2.2cqw;border-radius:50%;background:#ecf0d7;color:#183a39;font-size:1.35cqw;margin-right:.5cqw;box-shadow:0 .2cqw #63816f}.quiet{color:#c4d4c0;font-size:1.2cqw}.heading{position:absolute;left:7%;top:15%;right:7%}.eyebrow{font-size:1.3cqw;letter-spacing:.22cqw;font-weight:bold;color:#e9c678;margin-bottom:.8cqw}h1{font-size:4.1cqw;line-height:1.1;letter-spacing:-.13cqw;margin:0 0 1cqw;color:#fff4d0}.heading p{font-size:1.7cqw;margin:0;color:#dae5ce}.steps{position:absolute;right:0;top:1cqw;font-size:1.35cqw;color:#cfdbb9}.steps b{background:#e9c678;color:#263e37;padding:.5cqw 1cqw;border-radius:2cqw}.cards{position:absolute;top:39%;left:7%;right:7%;display:grid;grid-template-columns:repeat(4,1fr);gap:1.6cqw}.card{text-align:left;background:linear-gradient(150deg,#2e605d,#173d44);border:.16cqw solid #7c9f8a;border-radius:1.1cqw;padding:1.5cqw;box-shadow:0 .65cqw #0b272c;position:relative}.card.selected{border-color:#f9df89;box-shadow:0 .65cqw #8d703d,0 0 0 .3cqw #f7dc8b33;background:linear-gradient(145deg,#52725a,#23484b)}.symbol{width:6.5cqw;height:6.5cqw;display:grid;place-items:center;font-size:5cqw;color:#fff4cc;border-radius:50%;background:#9bc57433;margin:0 auto 1.4cqw}.card:nth-child(2) .symbol{background:#7ed9d333}.card:nth-child(3) .symbol{background:#f3bd6133}.card:nth-child(4) .symbol{background:#c7a4e533}.card strong{display:block;font-size:2.2cqw;margin-bottom:.6cqw}.card small{font-size:1.2cqw;color:#d3dfc9}.check{position:absolute;top:1cqw;right:1cqw;border:.15cqw solid #a9bba7;border-radius:.35cqw;width:1.8cqw;height:1.8cqw;font-size:1.3cqw;text-align:center;line-height:1.5cqw}.selected .check{background:#f0d586;color:#193c33;border-color:#f0d586}.actions{position:absolute;left:7%;right:7%;top:76%;display:flex;justify-content:space-between;align-items:center}.textbutton{background:transparent;border:0;border-bottom:.1cqw solid #b7c6ac;font-size:1.5cqw;padding:.4cqw 0}.next{background:#efd086;border:0;border-radius:.6cqw;color:#223c36;font-size:1.8cqw;font-weight:bold;padding:.9cqw 2.1cqw;box-shadow:0 .4cqw #8f703e}.settings{position:absolute;left:7%;top:35%;width:64%;display:grid;gap:1.1cqw}.setting{border:0;border-radius:.7cqw;background:#244b4de8;padding:1.4cqw 1.8cqw;display:flex;justify-content:space-between;align-items:center;font-size:2.1cqw;font-weight:bold;box-shadow:0 .4cqw #092f34}.setting.active{background:#f2da95;color:#243e36}.setting span{font-size:1.7cqw}.setting small{display:block;font-size:1.25cqw;font-weight:normal;color:#d6dfca;margin-top:.7cqw}.hint{position:absolute;left:75%;right:6%;top:37%;font-size:1.55cqw;line-height:1.6;color:#d6e2ca}.hint strong{color:#f2d087;font-size:1.6cqw;display:block;margin-bottom:1cqw}.mock-tag{font-weight:normal;font-size:12px;color:var(--muted-foreground,#aaa)}@media(prefers-reduced-motion:no-preference){button{transition:filter .15s,transform .15s}button:hover{filter:brightness(1.12)}}
+
+/* Cartoon direction: use the game's own outline, color and shape language. */
+.stage{--ink:#153e43;--cream:#fff5cc;--yellow:#ffe36c;--green:#8dd137;--teal:#147b88;color:var(--ink);font-family:'Trebuchet MS',sans-serif;font-weight:bold}
+.shade{background:linear-gradient(0deg,#147b8822,transparent 40%)}.sub .shade{background:#7ce4da44}
+.top{top:4%;left:5%;right:5%;font-size:1.7cqw}.edition{font-size:1.3cqw;color:var(--ink);letter-spacing:.1cqw;background:var(--cream);padding:.5cqw 1cqw;border:.25cqw solid var(--ink);border-radius:2cqw}.stage:not(.sub) .edition{visibility:hidden}.profile{color:var(--cream);background:var(--ink);border:.25cqw solid var(--cream);padding:.7cqw 1.2cqw;box-shadow:0 .4cqw #12373c}
+.logo{left:48%;top:10%;width:38%;height:32%;filter:drop-shadow(0 .7cqw 0 #174a4e33)}
+.menu{left:10%;top:25%;width:34%;gap:1.8cqw}.wood{background:#8cd445;border:.4cqw solid var(--ink);border-radius:1.6cqw;color:var(--ink);padding:1.6cqw 2cqw;font-size:3.3cqw;box-shadow:0 .65cqw var(--ink),inset 0 .4cqw #d5f58f;transform:rotate(-2deg)}.wood:nth-child(2){transform:rotate(1deg)}.wood.active{background:var(--yellow);border-color:var(--ink);color:var(--ink);box-shadow:0 .65cqw var(--ink),0 0 0 .45cqw #fff9df,inset 0 .4cqw #fff6ba;transform:rotate(-2deg) scale(1.03)}.wood small{font-size:2.4cqw}.minor{display:grid;grid-template-columns:1fr 1fr;gap:1cqw;margin-top:.7cqw}.minor button{font-size:1.9cqw;background:var(--cream);color:var(--ink);border:.3cqw solid var(--ink);border-radius:1.2cqw;padding:1.15cqw .5cqw;box-shadow:0 .4cqw var(--ink)}.minor button:last-child{grid-column:1/-1}.minor button.active{background:var(--yellow);outline:.4cqw solid white;outline-offset:.15cqw}
+.context{left:52%;top:43%;max-width:34%;background:var(--cream);border:.3cqw solid var(--ink);border-radius:2cqw;box-shadow:0 .5cqw var(--ink);text-align:center;padding:.9cqw 1.5cqw;font-size:1.7cqw;transform:rotate(2deg)}.context strong{font-size:2.3cqw}.context:after{content:'';position:absolute;bottom:-1cqw;left:45%;width:1.5cqw;height:1.5cqw;background:var(--cream);border-right:.3cqw solid var(--ink);border-bottom:.3cqw solid var(--ink);transform:rotate(45deg)}
+.frog{top:61%;right:12%;width:14%}.fly{position:absolute;top:60%;right:30%;width:13%;aspect-ratio:1;background-size:800% 100%;background-position:100% center;filter:drop-shadow(0 .6cqw 0 #16524b44);background-image:url(assets/sprites/fly/fly-move-toward.png)}
+.footer{bottom:3%;left:5%;right:5%;border:0;padding:1cqw 1.5cqw;background:var(--ink);color:var(--cream);border-radius:3cqw;font-size:1.55cqw;box-shadow:0 .4cqw #0a3438}.quiet{color:var(--cream);font-size:1.4cqw}.key{font-style:normal;background:var(--cream);color:var(--ink);width:2.5cqw;height:2.5cqw;font-size:1.5cqw;box-shadow:none}
+.heading{top:15%}.eyebrow{display:none}h1{font-size:4.5cqw;color:var(--ink);letter-spacing:-.15cqw;text-shadow:0 .15cqw #fff8dc}.heading p{color:var(--ink);font-size:1.9cqw;background:#fff5cced;border-radius:2cqw;padding:.5cqw 1.2cqw;display:inline-block}.steps{color:var(--ink);background:var(--cream);border:.25cqw solid var(--ink);border-radius:2cqw;padding:.6cqw;font-size:1.5cqw}.steps b{background:var(--yellow)}
+.cards{top:37%;gap:1.9cqw}.card{color:var(--ink);background:#c2ee7d;border:.35cqw solid var(--ink);border-radius:2cqw;padding:1.5cqw;box-shadow:0 .7cqw var(--ink),inset 0 .4cqw #edffca;transform:rotate(-1deg)}.card:nth-child(2){background:#9ae8ef;transform:rotate(1deg)}.card:nth-child(3){background:#ffd37a;transform:rotate(-1deg)}.card:nth-child(4){background:#dbbff8;transform:rotate(1deg)}.card.selected{border-color:var(--ink);background:#c2ee7d;box-shadow:0 .7cqw var(--ink),0 0 0 .45cqw #fff8cd,inset 0 .4cqw #edffca}.symbol,.card:nth-child(n) .symbol{background:var(--cream);border:.3cqw solid var(--ink);box-shadow:0 .35cqw var(--ink);color:var(--ink);width:7cqw;height:7cqw;font-size:5.5cqw;margin-bottom:1.2cqw}.card strong{font-size:2.5cqw}.card small{font-size:1.35cqw;color:var(--ink)}.check{top:.9cqw;right:.9cqw;width:2.1cqw;height:2.1cqw;border:.2cqw solid var(--ink);border-radius:50%;font-size:1.5cqw;line-height:1.7cqw;background:var(--cream)}.selected .check{background:var(--yellow);border-color:var(--ink);color:var(--ink)}.actions{top:75%}.textbutton{font-size:1.7cqw;background:var(--cream);border:.25cqw solid var(--ink);border-radius:1.2cqw;padding:.9cqw 1.5cqw;box-shadow:0 .35cqw var(--ink)}.next{font-size:2cqw;background:var(--yellow);border:.3cqw solid var(--ink);border-radius:1.2cqw;box-shadow:0 .4cqw var(--ink)}
+.settings{top:34%;gap:1.8cqw;width:63%}.setting{background:var(--cream);border:.3cqw solid var(--ink);border-radius:1.4cqw;padding:1.5cqw 1.7cqw;color:var(--ink);font-size:2.5cqw;box-shadow:0 .5cqw var(--ink)}.setting.active{background:var(--yellow);color:var(--ink);outline:.35cqw solid #fff9e4;outline-offset:.15cqw}.setting span{font-size:2cqw;white-space:nowrap;background:#fff9df;border:.2cqw solid var(--ink);border-radius:2cqw;padding:.4cqw 1cqw}.setting small{font-size:1.4cqw;color:var(--ink)}.hint{left:74%;right:6%;top:36%;font-size:1.6cqw;color:var(--ink);background:var(--cream);border:.3cqw solid var(--ink);border-radius:1.5cqw;padding:1.3cqw;line-height:1.45;box-shadow:0 .4cqw var(--ink)}.hint strong{font-size:1.8cqw;color:var(--ink)}button:focus-visible{outline:.45cqw solid white;outline-offset:.45cqw}
+
+.stage .shade,.stage.sub .shade{background:none}
+.stage:not(.sub) .logo{left:53%;top:5%;width:32%;height:24%}
+.stage .menu{z-index:8}.stage .footer{z-index:10}.title-demo{position:absolute;inset:0;pointer-events:none}
+.demo-equation{position:absolute;left:55%;top:30%;width:29%;border:.3cqw solid #10252b;border-radius:1.6cqw;background:#fff5cc;box-shadow:0 .45cqw #10252b;text-align:center;padding:.6cqw;color:#153e43;z-index:3}
+.demo-equation small{display:block;font-size:1.2cqw;letter-spacing:.1cqw;margin-bottom:.2cqw}.demo-equation strong{display:block;font-size:3cqw;line-height:1.1}.demo-equation.solved{background:#ffdf5d}
+.demo-pad{position:absolute;top:64%;width:10%;height:11%;border:.3cqw solid #10252b;border-radius:50%;background:#94da18;box-shadow:0 .55cqw #235e17,0 .9cqw 0 .2cqw #08b5cf;display:grid;place-items:center;font-size:2.8cqw;font-weight:900;color:#10252b;z-index:2}
+.demo-pad:after{content:'';position:absolute;left:18%;top:12%;width:20%;height:13%;border-radius:50%;background:#d7f366}.demo-pad span{position:relative;z-index:1}.pad-0{left:52%}.pad-1{left:65%;top:56%}.pad-2{left:78%}.demo-pad.solved{background:#ffdf5d}
+.demo-actor{position:absolute;aspect-ratio:1;background-size:800% 100%;background-repeat:no-repeat;background-position:100% center;z-index:4;filter:drop-shadow(0 .45cqw .1cqw #123b3944)}
+.demo-fly{width:10%;left:52%;top:49%}.demo-frog{width:13%;left:80%;top:70%}.demo-lizard{width:12%;left:43%;top:72%}
+.demo-spider{left:45%;width:8%;top:-22%;visibility:hidden}.demo-silk{position:absolute;left:49%;top:0;width:.12cqw;background:#fff5cc;visibility:hidden;z-index:3}
+.cast-bank{position:absolute;left:42%;right:-6%;bottom:-7%;height:31%;border-radius:60% 50% 0 0;background:#77c922;border:.3cqw solid #10252b;box-shadow:inset 0 .6cqw #c0eb38;transform:rotate(-2deg);z-index:1}
+.study-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0;font-size:14px;color:var(--foreground,#e8ece7)}.study-controls button{background:var(--secondary,#254c53);color:var(--secondary-foreground,#fff);border:1px solid var(--border,#577576);border-radius:var(--radius,8px);padding:8px 12px;font-size:14px}.study-controls input{flex:1;min-width:120px;accent-color:var(--primary,#dfb955)}.study-controls output{font-variant-numeric:tabular-nums;min-width:42px}.study-controls button:focus-visible{outline:2px solid var(--ring,#fff);outline-offset:2px}
+.demo-fly[data-sheet="front"]{background-image:url(assets/sprites/fly/fly-move-toward.png)}
+.demo-fly[data-sheet="side"]{background-image:url(assets/sprites/fly/fly-move-side.png)}
+.demo-fly[data-sheet="turn"]{background-image:url(assets/sprites/fly/fly-turn-toward-side.png)}
+.demo-fly[data-sheet="eat"]{background-image:url(assets/sprites/fly/fly-eat-toward.png)}
+.demo-frog[data-sheet="front"]{background-image:url(assets/sprites/frog/frog-hop-toward.png)}
+.demo-frog[data-sheet="side"]{background-image:url(assets/sprites/frog/frog-hop-side.png)}
+.demo-frog[data-sheet="turn"]{background-image:url(assets/sprites/frog/frog-turn-front-side.png)}
+.demo-frog[data-sheet="eat"]{background-image:url(assets/sprites/frog/frog-hop-toward.png)}
+.demo-lizard[data-sheet="front"]{background-image:url(assets/sprites/lizard/lizard-walk-toward.png)}
+.demo-lizard[data-sheet="side"]{background-image:url(assets/sprites/lizard/lizard-walk-side.png)}
+.demo-lizard[data-sheet="turn"]{background-image:url(assets/sprites/lizard/lizard-turn-toward-side.png)}
+.demo-lizard[data-sheet="eat"]{background-image:url(assets/sprites/lizard/lizard-walk-toward.png)}
+.demo-spider{background-image:url(assets/sprites/spider/spider-walk-toward.png)}
+@font-face{font-family:MarshDisplay;src:url(assets/fonts/LilitaOne-Regular.ttf) format('truetype');font-weight:400;font-display:block}.stage.sub .heading h1{font-family:MarshDisplay,sans-serif;font-weight:400;font-size:4.2cqw;color:#ffdb57;-webkit-text-stroke:.45cqw #102b31;paint-order:stroke fill;text-shadow:0 .4cqw #102b31;letter-spacing:.02cqw;display:table;position:relative;background:#fff5cc;border:.3cqw solid #102b31;border-radius:1.3cqw 2cqw 1.2cqw 1.7cqw;box-shadow:0 .4cqw #102b31;padding:1cqw 1.6cqw;margin-top:-.5cqw;margin-bottom:1cqw;transform:rotate(-2deg);text-transform:uppercase}.stage.sub .heading p{font-size:1.6cqw}.stage.sub .steps{font-size:1.2cqw;top:1cqw;right:-1cqw}.stage.sub .heading{top:13%}.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}.concept{color:var(--foreground,#e8ece7)}.concept h2{font-size:17px;margin-bottom:8px}.logo-choice{display:block;width:100%;border:2px solid var(--border,#597374);border-radius:var(--radius,12px);padding:12px;background:#168ba0;cursor:pointer;aspect-ratio:4/3}.logo-choice img{display:block;width:100%;height:100%;object-fit:contain}.logo-choice[aria-pressed=true]{border-color:var(--primary,#ffe478);box-shadow:0 0 0 2px var(--primary,#ffe478)}.concept p{font-size:14px;line-height:1.5;color:var(--muted-foreground,#adbab7);margin:10px 0}.original-choice{font:inherit;font-size:14px;min-height:44px;background:var(--secondary,#284951);color:var(--secondary-foreground,#fff);border:1px solid var(--border,#5a7775);border-radius:var(--radius,10px);padding:10px 15px;margin:0 0 22px;cursor:pointer}.original-choice img{display:none}.concept-grid button:focus-visible,.original-choice:focus-visible{outline:3px solid var(--ring,#fff);outline-offset:3px}@media(max-width:480px){.concept-grid{gap:12px}.concept h2{font-size:15px}.logo-choice{padding:5px}.concept p{font-size:13px}}
+:root{--foreground:#e8ece7;--muted-foreground:#afbbb6;--border:#527576;--primary:#ffe078;--primary-foreground:#173c3c;--secondary:#20464d;--secondary-foreground:#fff5cc;--ring:#fff5cc;--radius:12px;--font-sans:Arial,sans-serif}body{background:#102b31;color:var(--foreground);padding:20px;max-width:1000px;margin:auto}</style></head><body><div class="concept-grid"><div class="concept"><h2>A · Evolved wordmark</h2><button class="logo-choice" aria-label="Preview evolved wordmark" aria-pressed="true" data-logo><img src="assets/logos/evolved-wordmark.png" alt="Math Marsh evolved wordmark"></button><p>Recommended. Keeps the familiar letter shapes, with simpler shading and a clean cream outline.</p></div><div class="concept"><h2>B · Pond sign</h2><button class="logo-choice" aria-label="Preview pond sign" aria-pressed="false" data-logo><img src="assets/logos/pond-sign.png" alt="Math Marsh uppercase pond sign logo"></button><p>Closer to the menu headings: a cream sign, chunky capitals, and fewer decorative details.</p></div></div><button class="original-choice" data-logo aria-pressed="false"><img src="assets/logos/current-logo.png" alt="Current Math Marsh logo">Compare with current logo</button><section><h2>01 · Try each logo on the title screen <span class="mock-tag">— title screen concept</span></h2><div class="stage"><img class="scenery" src="assets/backgrounds/pond-bold.png" alt="Bright cartoon pond with rounded plants and thick outlines"><div class="shade"></div><div class="top"><span class="edition">MATH MARSH</span><div class="profile"><span>●</span> Player &nbsp; · &nbsp; Players</div></div><img class="logo" src="assets/logos/evolved-wordmark.png" alt="Math Marsh"><div class="menu"><button class="wood active" data-title="Arcade">Arcade <small>▶</small></button><button class="wood" data-title="Practice">Practice <small>›</small></button><div class="minor"><button data-title="Scenes">Scenes</button><button data-title="How to Play">How to Play</button><button data-title="Settings">Settings</button></div></div><div class="title-demo" aria-label="Animated demonstration: the fly finds and eats the correct answer"><div class="demo-equation"><small id="demo-caption">Find the answer</small><strong id="demo-problem">6 + 2 = ?</strong></div><div class="demo-pad pad-0"><span>6</span></div><div class="demo-pad pad-1"><span>2</span></div><div class="demo-pad pad-2"><span>8</span></div><div class="cast-bank"></div><div class="demo-actor demo-fly" data-sheet="front"></div><div class="demo-actor demo-frog" data-sheet="front"></div><div class="demo-actor demo-lizard" data-sheet="front"></div><div class="demo-silk"></div><div class="demo-actor demo-spider"></div></div><div class="footer"><div class="prompts"><span><i class="key">A</i>Select</span></div><span class="quiet"></span></div></div><div class="study-controls"><button id="demo-play" type="button">Pause animation</button><button id="demo-restart" type="button">Restart</button><input id="demo-time" aria-label="Animation time" type="range" min="0" max="81" step="0.01" value="0"><output id="demo-time-label">0.0s</output></div><p class="note">Select A, B, or the current logo above to compare in the same animated title layout. These are raster concept studies, not finished production logo assets.</p></section><script>
+const descriptions={Arcade:['Hop into Arcade','Solve equations. Dodge the wildlife.<br>See how far you can go.'],Practice:['A little practice','Choose a topic and build confidence<br>one answer at a time.'],Scenes:['Stories from the marsh','Revisit the little stories<br>you have unlocked.'],'How to Play':['Learn the ropes','Move, eat numbers, and stay safe<br>out on the pond.'],Settings:['Settings with the same personality','Adjust sound and controls<br>before heading out.']};
+document.querySelectorAll('[data-title]').forEach(function(b){b.onclick=function(){document.querySelectorAll('[data-title]').forEach(function(x){x.classList.remove('active')});b.classList.add('active')}});
+document.querySelectorAll('.card').forEach(function(b){b.onclick=function(){b.classList.toggle('selected');const on=b.classList.contains('selected');b.setAttribute('aria-pressed',String(on));b.querySelector('.check').textContent=on?'✓':'';const n=document.querySelectorAll('.card.selected').length;document.getElementById('selection').textContent=n+' operation'+(n===1?'':'s')+' selected'}});
+document.querySelectorAll('.setting').forEach(function(b){b.onclick=function(){document.querySelectorAll('.setting').forEach(function(x){x.classList.remove('active')});b.classList.add('active');const v=b.querySelector('span');if(b.hasAttribute('data-toggle')){const on=v.textContent.includes('On');v.textContent=on?'‹   Off   ›':'‹   On   ›'}else{const states=['Auto','Always On','Tap lily pads'];const current=states.findIndex(function(s){return v.textContent.includes(s)});v.textContent='‹   '+states[(current+1)%3]+'   ›'}document.querySelector('.hint strong').textContent=b.firstChild.textContent;document.getElementById('help').textContent=b.hasAttribute('data-touch')?'Auto hides the gamepad when you tap a lily pad. You can bring it back with the gamepad button.':b.textContent.includes('Background')?'Keep the music playing as you explore the marsh.':'Hear movement, answers, and the creatures of the marsh.'}});
+</script><script>
+(function(){
+// src/ui/titleChoreography.ts
+var step = function(phase, duration, from, to = from, direction = "right", reverse = false) {
+  return { phase, duration, from, to, direction, reverse };
+};
+var smooth = function(t) {
+  return t * t * (3 - 2 * t);
+};
+var durationOf = function(steps) {
+  return steps.reduce(function(sum, item) {
+    return sum + item.duration;
+  }, 0);
+};
+var locate = function(steps, time) {
+  const duration = durationOf(steps);
+  let remaining = (time % duration + duration) % duration;
+  for (const item of steps) {
+    if (remaining < item.duration)
+      return { step: item, progress: remaining / item.duration };
+    remaining -= item.duration;
+  }
+  throw new Error("Title sequence has no active step");
+};
+var poseFor = function(item, progress, animal) {
+  let travel = smooth(progress);
+  if (animal === "frog" && item.phase === "move") {
+    const hops = progress * 4;
+    travel = (Math.floor(hops) + 1 - (1 - hops % 1) ** 2) / 4;
+  }
+  const moving = item.phase === "move";
+  const x = moving ? item.from.x + (item.to.x - item.from.x) * travel : item.from.x;
+  const y = moving ? item.from.y + (item.to.y - item.from.y) * travel : item.from.y;
+  const elapsed = progress * item.duration;
+  if (item.phase === "turn") {
+    const frame = Math.min(7, Math.floor(progress * 8));
+    return { x, y, sheet: "turn", flip: item.direction === "left", frame: item.reverse ? 7 - frame : frame };
+  }
+  if (moving)
+    return {
+      x,
+      y,
+      sheet: "side",
+      flip: item.direction === "left",
+      frame: Math.floor(progress * (animal === "frog" ? 32 : animal === "fly" ? 32 : 24)) % 8
+    };
+  if (item.phase === "eat")
+    return { x, y, sheet: "eat", flip: false, frame: Math.min(7, Math.floor(progress * 8)) };
+  return { x, y, sheet: "front", flip: false, frame: animal === "fly" ? Math.floor(elapsed * 16) % 8 : 7 };
+};
+var patrol = function(from, to, wait, travel, rest) {
+  const direction = to.x < from.x ? "left" : "right";
+  const back = direction === "left" ? "right" : "left";
+  return [
+    step("idle", wait, from),
+    step("turn", 0.44, from, from, direction),
+    step("move", travel, from, to, direction),
+    step("turn", 0.44, to, to, direction, true),
+    step("idle", rest, to),
+    step("turn", 0.44, to, to, back),
+    step("move", travel, to, from, back),
+    step("turn", 0.44, from, from, back, true),
+    step("idle", 4.8, from)
+  ];
+};
+var frogSteps = patrol({ x: 80, y: 70 }, { x: 69, y: 70 }, 2.8, 2.4, 4);
+var lizardSteps = patrol({ x: 43, y: 72 }, { x: 53, y: 72 }, 5.4, 3, 3.6);
+var titlePatrolPose = function(animal, time) {
+  const active = locate(animal === "frog" ? frogSteps : lizardSteps, time);
+  return poseFor(active.step, active.progress, animal);
+};
+var PADS = [{ x: 0, y: 0 }, { x: 0.5, y: -1 }, { x: 1, y: 0 }];
+var padAt = function(index) {
+  const pad = PADS[index];
+  if (!pad)
+    throw new Error("Invalid title pad");
+  return pad;
+};
+var TITLE_PROBLEMS = [
+  { expression: "6 + 2", answer: 8, distractors: [6, 2] },
+  { expression: "9 − 5", answer: 4, distractors: [3, 7] },
+  { expression: "3 × 2", answer: 6, distractors: [5, 9] },
+  { expression: "12 ÷ 3", answer: 4, distractors: [3, 6] },
+  { expression: "5 + 5", answer: 10, distractors: [8, 11] },
+  { expression: "10 − 3", answer: 7, distractors: [6, 9] }
+];
+var buildDemo = function() {
+  const steps = [];
+  let current = 0;
+  for (const problem of TITLE_PROBLEMS) {
+    const target = (current + 2) % 3;
+    const wrong = (current + 1) % 3;
+    const values = PADS.map(function(_, index) {
+      if (index === target)
+        return problem.answer;
+      const value = problem.distractors[index < target ? index : index - 1];
+      if (value === undefined)
+        throw new Error("Missing title distractor");
+      return value;
+    });
+    const add = function(item) {
+      steps.push({ ...item, expression: problem.expression, answer: problem.answer, values, target, pad: current });
+    };
+    add(step("idle", 1.8, padAt(current)));
+    for (const destination of [wrong, target]) {
+      const from = padAt(current), to = padAt(destination);
+      const direction = to.x < from.x ? "left" : "right";
+      add(step("turn", 0.44, from, from, direction));
+      add(step("move", 2.2, from, to, direction));
+      current = destination;
+      add(step("turn", 0.44, to, to, direction, true));
+      add(step("idle", destination === target ? 0.6 : 1.5, to));
+    }
+    add(step("eat", 1.1, padAt(current)));
+    add(step("solved", 2.4, padAt(current)));
+  }
+  return steps;
+};
+var demoSteps = buildDemo();
+var TITLE_DEMO_DURATION = durationOf(demoSteps);
+var titleDemoState = function(time) {
+  const { step: item, progress } = locate(demoSteps, time);
+  return {
+    pose: poseFor(item, progress, "fly"),
+    expression: item.expression,
+    answer: item.answer,
+    values: item.values,
+    target: item.target,
+    pad: item.pad,
+    phase: item.phase,
+    consumed: item.phase === "solved" || item.phase === "eat" && progress >= 0.72,
+    bite: item.phase === "solved" ? 1 : item.phase === "eat" ? Math.max(0, Math.min(1, (progress - 0.18) / 0.54)) : 0
+  };
+};
+var titleSpiderPose = function(time) {
+  const phase = (time % 25 + 25) % 25;
+  if (phase < 4.5 || phase >= 10.9)
+    return { y: -22, visible: false, frame: 7 };
+  if (phase < 6.1) {
+    const p2 = (phase - 4.5) / 1.6;
+    return { y: -22 + 31 * (1 - (1 - p2) ** 3), visible: true, frame: Math.floor(p2 * 16) % 8 };
+  }
+  if (phase < 9.1)
+    return { y: 9, visible: true, frame: 7 };
+  const p = (phase - 9.1) / 1.8;
+  return { y: 9 - 31 * p * p, visible: true, frame: 7 - Math.floor(p * 16) % 8 };
+};
+
+
+const stage=document.querySelector('.stage');
+const q=function(s){const n=stage.querySelector(s);if(!n)throw Error('Missing demo node '+s);return n};
+const actors={fly:q('.demo-fly'),frog:q('.demo-frog'),lizard:q('.demo-lizard')};
+const pads=Array.from(stage.querySelectorAll('.demo-pad'));
+const equation=q('.demo-equation'),caption=q('#demo-caption'),problem=q('#demo-problem'),spider=q('.demo-spider'),silk=q('.demo-silk');
+const range=document.getElementById('demo-time'),label=document.getElementById('demo-time-label'),play=document.getElementById('demo-play');
+range.max=String(TITLE_DEMO_DURATION);
+const pose=function(name,p){const el=actors[name];el.dataset.sheet=p.sheet;el.style.backgroundPosition=(p.frame/7*100)+'% center';el.style.transform=p.flip?'scaleX(-1)':'none';el.style.left=(name==='fly'?52+p.x*26:p.x)+'%';el.style.top=(name==='fly'?49+p.y*8:p.y-2)+'%'};
+const present=function(t){const d=titleDemoState(t);pose('fly',d.pose);pose('frog',titlePatrolPose('frog',t));pose('lizard',titlePatrolPose('lizard',t));problem.textContent=d.expression+' = '+(d.consumed?d.answer+' ✓':'?');caption.textContent=d.consumed?'Correct!':'Find the answer';equation.classList.toggle('solved',d.consumed);pads.forEach(function(p,i){const n=p.querySelector('span');n.textContent=String(d.values[i]);const amount=i===d.target?d.bite:0;n.style.opacity=String(1-amount);n.style.transform='translateY('+(-30*amount)+'px) scale('+(1-.7*amount)+')';p.classList.toggle('solved',i===d.target&&d.consumed)});const s=titleSpiderPose(t);spider.style.top=s.y+'%';spider.style.visibility=s.visible?'visible':'hidden';spider.style.backgroundPosition=(s.frame/7*100)+'% center';silk.style.height=Math.max(0,s.y+7)+'%';silk.style.visibility=s.visible?'visible':'hidden';range.value=String(t);label.textContent=t.toFixed(1)+'s';stage.dataset.demoPhase=d.phase;stage.dataset.demoTime=String(t)};
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');let running=!reduced.matches,visible=true,time=0,last,handle;
+const syncLabel=function(){play.textContent=running?'Pause animation':'Play animation';play.setAttribute('aria-pressed',String(running))};
+const tick=function(now){if(last!==undefined&&running&&visible&&!document.hidden)time=(time+Math.min((now-last)/1000,.1))%TITLE_DEMO_DURATION;last=now;present(time);handle=requestAnimationFrame(tick)};
+play.onclick=function(){running=!running;last=undefined;syncLabel()};
+document.getElementById('demo-restart').onclick=function(){time=0;last=undefined;present(time)};
+range.oninput=function(){time=Number(range.value);running=false;last=undefined;syncLabel();present(time)};
+const observer=new IntersectionObserver(function(entries){visible=entries.some(function(e){return e.isIntersecting});last=undefined});observer.observe(stage);
+const motionChange=function(){if(reduced.matches){running=false;syncLabel()}};reduced.addEventListener('change',motionChange);
+window.addEventListener('pagehide',function(){cancelAnimationFrame(handle);observer.disconnect();reduced.removeEventListener('change',motionChange)},{once:true});
+syncLabel();present(0);handle=requestAnimationFrame(tick);
+})();
+</script><script>document.querySelectorAll('[data-logo]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('[data-logo]').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});document.querySelector('.stage .logo').src=b.querySelector('img').src})});</script></body></html>
