@@ -6,6 +6,7 @@ import type { GameAction } from './types';
 import { controllerActionMap, controllerOnlyActionMap, gameActions, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { addControllerSelectionSystemToEngine } from './systems/ControllerSelectionSystem';
 import { splashAdvancePressed } from './splashInput';
+import type { RendererInputDiagnostic } from '../platform/desktop';
 
 const pad = function (id = 'identical controller', buttons: readonly number[] = [], axes: readonly number[] = [0, 0]): GamepadLike {
   return {
@@ -44,6 +45,45 @@ const fixture = async function () {
 };
 
 describe('active controller ownership', () => {
+  test('diagnostics observe a delayed claim and neutral handoff through the real input plugin', async () => {
+    const f = await fixture();
+    const reports: RendererInputDiagnostic[] = [];
+    const oldWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    const oldDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: { mathMarshDesktop: { input: {
+      reportDiagnostics: function (diagnostic: RendererInputDiagnostic): void { reports.push(diagnostic); },
+    } } } });
+    Object.defineProperty(globalThis, 'document', { configurable: true, value: {
+      hasFocus: function (): boolean { return true; }, hidden: false,
+    } });
+    try {
+      f.pads[0] = pad('Deck');
+      f.world.update(30);
+      expect(reports.at(-1)).toMatchObject({ ownerId: null, waitingForNeutral: false,
+        pageFocused: true });
+      expect(reports.at(-1)?.controllers[0]).toMatchObject({ slot: 0, connected: true, id: 'Deck', pressed: [] });
+      f.pads[0] = pad('Deck', [0]);
+      f.world.update(0);
+      expect(reports.at(-1)).toMatchObject({ ownerId: 'Deck', ownerSlot: 0, waitingForNeutral: true,
+        blockFrame: true });
+      expect(reports.at(-1)?.controllers[0]?.pressed).toEqual([0]);
+      expect(f.actions().justActivated('eat')).toBe(false);
+      f.pads[0] = pad('Deck');
+      f.world.update(0);
+      expect(reports.at(-1)?.waitingForNeutral).toBe(false);
+      f.pads[0] = pad('Deck', [0]);
+      f.world.update(0);
+      expect(reports.at(-1)?.activeActions).toContain('eat');
+      expect(f.actions().justActivated('eat')).toBe(true);
+    } finally {
+      if (oldWindow) Object.defineProperty(globalThis, 'window', oldWindow);
+      else Reflect.deleteProperty(globalThis, 'window');
+      if (oldDocument) Object.defineProperty(globalThis, 'document', oldDocument);
+      else Reflect.deleteProperty(globalThis, 'document');
+      await f.world.dispose();
+    }
+  });
+
   test('idle connections and sticks cannot claim; A claims slot 3 without activating or skipping', async () => {
     const f = await fixture();
     try {
