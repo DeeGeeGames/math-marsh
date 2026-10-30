@@ -2,6 +2,7 @@ import type { GameSystemRegistrar } from '../Engine';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import type { InputPromptState } from '../../ui/inputPrompts';
 import { advanceInputPromptPresentation, detectInputPromptPlatform } from '../../ui/inputPrompts';
+import { loadControllerPromptPreference } from '../../ui/controllerPromptPreference';
 import { desktopInputProvider } from '../../platform/steamInput';
 import { updateInputPromptPlatform } from '../../ui/UIManager';
 
@@ -62,6 +63,7 @@ export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void
       const presentation = advanceInputPromptPresentation(inputPrompt, {
         keyboard: keyboardActivity || inputState.pointer.justPressed(0),
         controller: controllerActivity,
+        preference: loadControllerPromptPreference(),
         ownerId: owner?.id ?? null,
         platform: nativeBindings ? 'generic' : detectInputPromptPlatform(ownerPad?.id ?? ''),
         ...(nativeBindings ? { nativeBindings } : {}),

@@ -281,6 +281,18 @@
   padding-right: max(env(safe-area-inset-right, 0px), 0px);
 }
 
+/* Keep the first Settings controls reachable when its content needs to scroll. */
+#settings-screen {
+  justify-content: safe center;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 104px);
+  scroll-padding-top: 16px;
+  scroll-padding-bottom: 104px;
+}
+
+#settings-screen > div {
+  flex-shrink: 0;
+}
+
 .starting-level-panel {
   display: flex;
   align-items: center;
