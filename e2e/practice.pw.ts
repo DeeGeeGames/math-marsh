@@ -228,9 +228,10 @@ for (const viewport of [
 			if (!focused || !footer || !panel) throw new Error('Practice navigation bounds are missing');
 			expect(footer.y).toBeCloseTo(promptBounds.y);
 			expect(footer.y + footer.height).toBeLessThanOrEqual(viewport.height - 12);
-			expect(focused.y).toBeGreaterThanOrEqual(panel.y + 12);
-			expect(focused.y + focused.height).toBeLessThanOrEqual(panel.y + panel.height - 12);
-			expect(footer.y - focused.y - focused.height).toBeGreaterThanOrEqual(28);
+			// Scrolling rounds fractional CSS positions to device pixels.
+			expect(focused.y).toBeGreaterThanOrEqual(panel.y + 12 - 1);
+			expect(focused.y + focused.height).toBeLessThanOrEqual(panel.y + panel.height - 12 + 1);
+			expect(footer.y - focused.y - focused.height).toBeGreaterThanOrEqual(28 - 1);
 		}
 		await page.screenshot({ path: testInfo.outputPath('addition-bottom-row.png') });
 		for (let row = rows - 2; row >= 0; row--) {

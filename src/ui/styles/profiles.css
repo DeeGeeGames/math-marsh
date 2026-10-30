@@ -12,11 +12,11 @@
   width: min(290px, calc(100vw - 104px));
   min-height: 64px;
   padding: 8px 14px 8px 9px;
-  border: 2px solid rgba(255, 247, 198, 0.68);
+  border: 3px solid var(--ink);
   border-radius: 18px;
-  color: var(--cream);
-  background: linear-gradient(135deg, rgba(7, 53, 64, 0.96), rgba(19, 101, 101, 0.94));
-  box-shadow: 0 8px 20px rgba(5, 31, 36, 0.34), inset 0 1px 0 rgba(255, 247, 198, 0.22);
+  color: var(--ink);
+  background: var(--cream);
+  box-shadow: 0 4px 0 var(--ink);
   text-align: left;
   cursor: pointer;
   touch-action: manipulation;
@@ -28,13 +28,11 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  border: 2px solid rgba(255, 247, 198, 0.85);
+  border: 3px solid var(--ink);
   border-radius: 50%;
-  color: #fff7c6;
-  background:
-    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.45), transparent 34%),
-    linear-gradient(145deg, #66b65b, #257441 76%);
-  box-shadow: inset 0 -4px 0 rgba(17, 72, 36, 0.22), 0 3px 8px rgba(5, 31, 36, 0.26);
+  color: var(--ink);
+  background: #94da18;
+  box-shadow: inset 0 -4px 0 #438b2b, 0 3px 0 var(--ink);
   font-size: 1rem;
   font-weight: 900;
   line-height: 1;
@@ -58,7 +56,7 @@
 }
 
 .player-profile-badge-copy span {
-  color: rgba(255, 247, 198, 0.8);
+  color: #3d5b49;
   font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -100,12 +98,10 @@
   max-width: 100vw;
   height: 100%;
   padding: clamp(18px, 2.5vw, 36px);
-  border-left: 3px solid var(--reed-border);
+  border-left: 4px solid var(--ink);
   border-radius: 24px 0 0 24px;
-  color: var(--cream);
-  background:
-    radial-gradient(ellipse at 88% 8%, rgba(155, 212, 94, 0.14), transparent 32%),
-    linear-gradient(155deg, rgba(15, 79, 98, 0.99), rgba(8, 55, 66, 0.99));
+  color: var(--ink);
+  background: var(--cream);
   box-shadow: -18px 0 46px rgba(5, 31, 36, 0.32), inset 1px 0 0 rgba(255, 247, 198, 0.18);
 }
 
@@ -120,7 +116,7 @@
 
 .player-dialog-kicker {
   margin: 0 0 5px;
-  color: #a8d9b2;
+  color: #426331;
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -130,9 +126,10 @@
 .player-roster-heading h1,
 .player-dialog-heading h1 {
   margin: 0;
-  color: #fff7c6;
+  color: var(--ink);
   font-size: clamp(1.8rem, 3vw, 2.5rem);
-  font-weight: 900;
+  font-family: var(--font-display, ui-rounded, sans-serif);
+  font-weight: 400;
   line-height: 1.08;
   text-wrap: balance;
 }
@@ -140,7 +137,7 @@
 .player-roster-heading p:last-child,
 .player-dialog-heading p:last-child {
   margin: 8px 0 0;
-  color: rgba(255, 247, 198, 0.86);
+  color: #3d5b49;
   font-size: clamp(1rem, 1.3vw, 1.15rem);
 }
 
@@ -150,10 +147,10 @@
   place-items: center;
   width: 52px;
   height: 52px;
-  border: 2px solid rgba(255, 247, 198, 0.5);
+  border: 3px solid var(--ink);
   border-radius: 14px;
-  color: var(--cream);
-  background: rgba(5, 41, 49, 0.68);
+  color: var(--ink);
+  background: #d8edb0;
   font-size: 2rem;
   line-height: 1;
   cursor: pointer;
@@ -183,18 +180,19 @@
   width: 100%;
   min-height: 92px;
   padding: 10px 14px;
-  border: 2px solid rgba(255, 247, 198, 0.24);
+  border: 3px solid var(--ink);
   border-radius: 18px;
-  color: var(--cream);
-  background: linear-gradient(115deg, rgba(30, 105, 104, 0.94), rgba(17, 77, 86, 0.94));
+  color: var(--ink);
+  background: #fffdf0;
+  box-shadow: 0 4px 0 var(--ink);
   text-align: left;
   cursor: pointer;
   touch-action: manipulation;
 }
 
 .player-roster-row[aria-current="true"] {
-  border-color: rgba(255, 247, 198, 0.8);
-  background: linear-gradient(115deg, rgba(54, 126, 92, 0.98), rgba(20, 86, 82, 0.98));
+  border-color: #3d5b49;
+  background: #d6f4af;
 }
 
 .player-roster-details {
@@ -207,14 +205,14 @@
 
 .player-roster-name {
   overflow-wrap: anywhere;
-  color: #fff7c6;
+  color: var(--ink);
   font-size: clamp(1.08rem, 1.6vw, 1.35rem);
   font-weight: 850;
   line-height: 1.15;
 }
 
 .player-active-label {
-  color: #d4edb5;
+  color: #315d27;
   font-size: 0.86rem;
   font-weight: 750;
   line-height: 1.1;
@@ -233,7 +231,7 @@
   grid-template-columns: 22px minmax(30px, 1fr) 24px;
   align-items: center;
   gap: 7px;
-  color: rgba(255, 247, 198, 0.94);
+  color: var(--ink);
 }
 
 .player-progress-symbol,
@@ -250,14 +248,14 @@
   overflow: hidden;
   border: 1px solid rgba(255, 247, 198, 0.32);
   border-radius: 999px;
-  background: rgba(4, 39, 48, 0.82);
+  background: #a7b38c;
 }
 
 .player-progress-fill {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #a6d970, #fff0a1);
+  background: #438b2b;
 }
 
 .player-roster-actions {
@@ -278,7 +276,7 @@
 .player-limit-note {
   grid-column: 1 / -1;
   margin: 0;
-  color: #fff0a1;
+  color: #315d27;
   font-size: 0.98rem;
   font-weight: 700;
 }
@@ -299,12 +297,10 @@
   max-height: min(90dvh, 880px);
   padding: clamp(22px, 4vw, 44px);
   overflow-y: auto;
-  border: 2px solid var(--reed-border);
+  border: 3px solid var(--ink);
   border-radius: 24px;
-  color: var(--cream);
-  background:
-    radial-gradient(ellipse at 90% 8%, rgba(155, 212, 94, 0.14), transparent 34%),
-    linear-gradient(150deg, rgba(15, 79, 98, 0.99), rgba(8, 55, 66, 0.99));
+  color: var(--ink);
+  background: var(--cream);
   box-shadow: 0 22px 48px rgba(5, 31, 36, 0.42), inset 0 1px 0 rgba(255, 247, 198, 0.18);
 }
 
@@ -322,7 +318,7 @@
 }
 
 .player-name-card label {
-  color: #fff7c6;
+  color: var(--ink);
   font-size: 1.1rem;
   font-weight: 800;
 }
@@ -331,7 +327,7 @@
   width: 100%;
   min-height: 58px;
   padding: 10px 14px;
-  border: 2px solid rgba(255, 247, 198, 0.68);
+  border: 3px solid var(--ink);
   border-radius: 14px;
   color: #102f35;
   background: #fff7c6;
@@ -347,7 +343,7 @@
 .player-form-error {
   min-height: 1.4em;
   margin: 0;
-  color: #ffe19a;
+  color: #8d241f;
   font-size: 1rem;
   font-weight: 750;
 }
@@ -361,7 +357,7 @@
 
 .player-local-note {
   margin: 20px 0 0;
-  color: rgba(255, 247, 198, 0.76);
+  color: #3d5b49;
   font-size: 0.95rem;
 }
 
@@ -389,14 +385,14 @@
   gap: 12px;
   min-height: 72px;
   padding: 9px 12px;
-  border: 1px solid rgba(255, 247, 198, 0.24);
+  border: 2px solid var(--ink);
   border-radius: 16px;
-  background: rgba(30, 105, 104, 0.65);
+  background: #fffdf0;
 }
 
 .player-management-row strong {
   overflow-wrap: anywhere;
-  color: #fff7c6;
+  color: var(--ink);
   font-size: 1.08rem;
 }
 
@@ -409,7 +405,7 @@
 
 .player-delete-warning {
   margin: 0 0 12px;
-  color: #ffe19a;
+  color: #8d241f;
   font-size: 1.05rem;
   font-weight: 800;
 }

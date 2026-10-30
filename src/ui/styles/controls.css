@@ -1,112 +1,64 @@
-/* Button gradients for primary actions */
-[data-input-platform]:not([data-input-platform="keyboard"]) .fullscreen-floating {
-  display: none;
-}
+[data-input-platform]:not([data-input-platform="keyboard"]) .fullscreen-floating { display: none; }
+[data-mobile-pwa="true"] .fullscreen-control { display: none; }
 
-[data-mobile-pwa="true"] .fullscreen-control {
-  display: none;
+:is(.btn-success, .btn-primary, .btn-warning, .btn-danger, .btn-secondary) {
+  min-height: 48px;
+  border: 3px solid var(--ink);
+  border-radius: 16px 21px 16px 21px;
+  color: var(--ink);
+  font-weight: 800;
+  line-height: 1.2;
+  box-shadow: var(--pond-shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: filter .12s, translate .12s;
 }
+.btn-success { background: var(--warning-gradient); }
+.btn-primary { background: var(--primary-button-gradient); }
+.btn-warning { background: var(--warning-gradient); }
+.btn-danger { background: var(--danger-gradient); }
+.btn-secondary { background: var(--secondary-gradient); }
 
-.btn-success {
-  background:
-    radial-gradient(ellipse at 18% 18%, rgba(255, 247, 198, 0.25), transparent 32%),
-    var(--success-gradient);
-  border-radius: 22px 28px 22px 28px;
+:is(button, [data-focusable]):disabled {
+  opacity: .65;
+  cursor: default;
+  filter: saturate(.4);
+  box-shadow: none;
 }
+:is(button, [data-focusable]):not(:disabled):active { translate: 0 2px; }
 
-.btn-primary,
-.btn-warning,
-.btn-danger,
-.btn-secondary {
-  border-radius: 18px 24px 18px 24px;
-}
-
-.btn-primary {
-  background:
-    var(--button-glint),
-    var(--primary-button-gradient);
-}
-
-.btn-warning {
-  background:
-    radial-gradient(ellipse at 18% 22%, rgba(255, 247, 198, 0.3), transparent 34%),
-    var(--warning-gradient);
-}
-
-.btn-danger {
-  background: var(--danger-gradient);
-}
-
-.btn-secondary {
-  background:
-    radial-gradient(ellipse at 18% 22%, rgba(255, 247, 198, 0.18), transparent 34%),
-    var(--secondary-gradient);
-}
-
-/* Keyboard / controller focus indicator. Gamepad-driven focus can move
- * programmatically while the browser is in pointer mode, so navigation sets
- * this attribute explicitly. Pointer input clears it to avoid click outlines. */
+/* Selection stays on its card; keyboard/controller focus is an outer ring. */
 button:focus-visible,
-[type="checkbox"]:focus-visible,
-[type="radio"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
 [data-focusable]:focus-visible,
 :where([data-focus-navigation="true"]) :is(button, input:not([type="hidden"]), select, textarea, [data-focusable], [contenteditable="true"]):focus {
-  outline: 3px solid var(--reed);
+  outline: 4px solid var(--cream);
   outline-offset: 4px;
-  box-shadow: 0 0 0 6px rgba(244, 210, 122, 0.28);
-}
-
-.touch-mode-btn[aria-pressed="true"] {
-  border-color: var(--reed);
-  box-shadow:
-    0 0 0 3px rgba(244, 210, 122, 0.38),
-    var(--pond-shadow);
-  filter: brightness(1.12);
+  box-shadow: 0 0 0 8px var(--ink), 0 7px 0 8px var(--ink);
 }
 
 .utility-btn,
 .hud-chip,
 .difficulty-choice,
 .touch-mode-btn {
-  color: var(--cream);
-  border: 1px solid var(--soft-cream-border);
+  color: var(--ink);
+  border: 3px solid var(--ink);
   box-shadow: var(--pond-shadow);
 }
-
-.utility-btn {
-  background:
-    radial-gradient(ellipse at 24% 20%, rgba(255, 247, 198, 0.16), transparent 36%),
-    rgba(28, 83, 97, 0.92);
+.utility-btn,
+.hud-chip { background: var(--cream); }
+.utility-btn { min-width: 44px; min-height: 44px; }
+.utility-btn:hover { background: var(--reed); }
+.theme-checkbox { accent-color: var(--leaf-deep); }
+.touch-mode-btn { min-height: 48px; background: var(--cream); }
+.touch-mode-btn[aria-pressed="true"] {
+  background: var(--reed);
+  box-shadow: inset 0 0 0 2px var(--cream), var(--pond-shadow);
 }
+.touch-mode-btn:hover { filter: brightness(1.05); }
 
-.utility-btn:hover {
-  background: rgba(18, 62, 72, 0.96);
-}
-
-.hud-chip {
-  background: rgba(15, 79, 98, 0.92);
-}
-
-.theme-checkbox {
-  accent-color: var(--pond-mid);
-}
-
-.touch-mode-btn {
-  background: var(--primary-button-gradient);
-}
-
-.touch-mode-btn:hover {
-  filter: brightness(1.08);
-}
-
-/* Touch-friendly button enhancements for mobile */
 @media (max-width: 768px) {
-  .btn-mobile {
-    min-height: 44px; /* iOS touch target minimum */
-    padding: 12px 20px;
-  }
-
-  .mode-card {
-    min-height: 60px; /* Larger touch targets on mobile */
-  }
+  .btn-mobile { min-height: 48px; padding: 12px 20px; }
 }

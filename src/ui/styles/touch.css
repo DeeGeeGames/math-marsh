@@ -8,11 +8,15 @@
 body[data-touch-controls="off"] #gameplay-ui:not(.tutorial-mode) #show-gamepad-btn { display: inline-flex; }
 body[data-touch-controls="on"] .touch-controls { display: grid; }
 body[data-touch-controls="on"] #touch-action { display: flex; align-items: center; justify-content: center; }
-body[data-touch-controls="on"] .input-prompts-slot { display: none; }
+body[data-touch-controls="on"] #gameplay-ui .input-prompts-slot { display: none; }
 
 #gameplay-ui {
-  --touch-edge-gap: 14px;
-  --touch-control-gap: 6px;
+  --touch-edge-gap: 10px;
+  --touch-control-gap: 4px;
+  --touch-safe-top: env(safe-area-inset-top, 0px);
+  --touch-safe-right: env(safe-area-inset-right, 0px);
+  --touch-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --touch-safe-left: env(safe-area-inset-left, 0px);
   --touch-dpad-cluster-size: 180px;
   --touch-dpad-button-size: 56px;
   --touch-action-size: 180px;
@@ -35,17 +39,13 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
 #touch-dpad button,
 #touch-action button {
   appearance: none;
-  border: 2px solid var(--reed-border);
-  background:
-    radial-gradient(ellipse at 24% 18%, rgba(255, 247, 198, 0.18), transparent 36%),
-    rgba(15, 79, 98, 0.8);
-  color: var(--cream);
+  border: 3px solid var(--ink);
+  background: var(--cream-panel);
+  color: var(--ink);
   font-size: calc(var(--touch-dpad-button-size) * 0.4);
   font-weight: bold;
   border-radius: 14px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 6px 14px rgba(5, 31, 36, 0.38);
+  box-shadow: 0 4px 0 var(--ink);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -54,7 +54,11 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
 }
 #touch-dpad button { width: var(--touch-dpad-button-size); height: var(--touch-dpad-button-size); }
 #touch-dpad button:active,
-#touch-action button:active { filter: brightness(1.14); }
+#touch-action button:active {
+  background: var(--reed);
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--ink);
+}
 #touch-up    { grid-area: 1 / 2; }
 #touch-left  { grid-area: 2 / 1; }
 #touch-right { grid-area: 2 / 3; }
@@ -79,25 +83,25 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
   pointer-events: auto;
   touch-action: none;
 }
-#touch-eat {
+#touch-action #touch-eat {
   width: var(--touch-eat-size);
   height: var(--touch-eat-size);
   border-radius: 54% 46% 58% 42%;
-  background: var(--success-gradient);
+  background: var(--reed);
   font-size: calc(var(--touch-eat-size) * 0.18);
   letter-spacing: 0.05em;
 }
-#touch-eat:active { filter: brightness(1.15); }
+#touch-eat:active { filter: brightness(1.08); }
 
 /* Portrait: center both controls in the space beneath the board. */
 @media (orientation: portrait) {
   #touch-dpad {
-    left: max(env(safe-area-inset-left, 0px), var(--touch-edge-gap));
+    left: max(var(--touch-safe-left), var(--touch-edge-gap));
     top: var(--touch-portrait-top);
   }
   #touch-action {
-    right: max(env(safe-area-inset-right, 0px), var(--touch-edge-gap));
-    top: var(--touch-portrait-top);
+    right: max(var(--touch-safe-right), var(--touch-edge-gap));
+    top: var(--touch-action-top);
   }
   body[data-touch-controls="on"] #bottom-hud { display: none; }
 }
@@ -105,17 +109,24 @@ body[data-touch-controls="on"] .input-prompts-slot { display: none; }
 /* Landscape: flank the canvas. */
 @media (orientation: landscape) {
   #touch-dpad {
-    left: max(env(safe-area-inset-left, 0px), var(--touch-edge-gap));
-    top: 50%;
-    transform: translateY(-50%);
+    left: max(var(--touch-safe-left), var(--touch-edge-gap));
+    top: var(--touch-dpad-top);
   }
   #touch-action {
-    right: max(env(safe-area-inset-right, 0px), var(--touch-edge-gap));
-    top: 50%;
-    transform: translateY(-50%);
+    right: max(var(--touch-safe-right), var(--touch-edge-gap));
+    top: var(--touch-action-top);
   }
   /* Bottom hint strip is unnecessary chrome on short screens. */
   body[data-touch-controls="on"] #bottom-hud { display: none; }
+}
+
+/* Three 44px D-pad targets, two 4px gaps and two 10px edge gaps need
+ * 160px beside the canvas even on the shortest supported phone. */
+@media (orientation: landscape) and (max-height: 600px) {
+  body[data-touch-controls="on"] #gameplay-ui:not(.tutorial-mode) #canvas-container {
+    margin-left: calc(clamp(160px, 24vw, 220px) + max(0px, var(--touch-safe-left) - var(--touch-edge-gap)));
+    margin-right: calc(clamp(160px, 24vw, 220px) + max(0px, var(--touch-safe-right) - var(--touch-edge-gap)));
+  }
 }
 
 /* When touch controls are on, the bottom hint strip is hidden — reclaim its
@@ -128,6 +139,6 @@ body[data-touch-controls="on"] #canvas-container { margin-bottom: 8px; }
  * Tutorials have their own reserved panel and hide the touch controls. */
 @media (orientation: portrait) {
   body[data-touch-controls="on"] #gameplay-ui:not(.tutorial-mode) #canvas-container {
-    margin-bottom: calc(50vw + max(0px, env(safe-area-inset-bottom, 0px) - var(--touch-edge-gap)));
+    margin-bottom: calc(50vw + max(0px, var(--touch-safe-bottom) - var(--touch-edge-gap)));
   }
 }

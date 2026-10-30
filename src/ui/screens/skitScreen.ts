@@ -10,7 +10,7 @@ export const createSkitScreenSpec = function(skip: () => void): ScreenSpec {
 		className: `${OVERLAY_BASE} app-background`,
 		html: `
 			<section class="skit-layout" aria-labelledby="skit-title">
-				<header><p class="skit-kicker">A little marsh mischief</p><h1 id="skit-title">Snack Break</h1></header>
+				<header><p class="skit-kicker">A little marsh mischief</p><h1 class="pond-title" id="skit-title">Snack Break</h1></header>
 				<div class="skit-stage" role="img" aria-label="A frog tries to catch a fly, but catches a lily pad instead. The fly escapes.">
 					<div class="skit-reeds"></div><div class="skit-ripple"></div>
 					<div class="skit-extra" aria-hidden="true">

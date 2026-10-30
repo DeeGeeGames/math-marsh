@@ -3,7 +3,7 @@ import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { GAME_CONFIG } from '../../config';
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
-import mathMarshLogo from '../../assets/brand/math-marsh.png';
+import mathMarshLogo from '../../assets/ui/title-wordmark.webp';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { MATH_FINAL_STEP, mathStepLabel } from '../../ecs/mathSteps';
 import { $ } from '../dom';
@@ -97,6 +97,7 @@ const refreshMathProgress = function(root: HTMLElement, actions: ScreenSpecActio
     const track = progress[operation];
     const cue = mathProgressCue(track, MATH_FINAL_STEP);
     $(root, `[data-progress-label="${operation}"]`).textContent = cue.caption;
+    $(root, `#${operation}-progress-description`).textContent = cue.valueText;
     const progressBar = $(root, `[data-progress-bar="${operation}"]`);
     progressBar.setAttribute('aria-valuenow', String(cue.highestUnlockedStep));
     progressBar.setAttribute('aria-valuetext', cue.valueText);
@@ -288,10 +289,11 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
 
   const operationCards = MATH_OPERATIONS.map(function(operation): string {
     return `
-      <button type="button" data-operation="${operation}" data-focusable aria-pressed="false" class="mode-card">
+      <button type="button" data-operation="${operation}" data-focusable aria-label="${OPERATION_CARD_LABELS[operation]}" aria-describedby="${operation}-progress-description" aria-pressed="false" class="mode-card">
         <span class="mode-symbol" aria-hidden="true">${OPERATION_SYMBOLS[operation]}</span>
         <span class="mode-name">${OPERATION_CARD_LABELS[operation]}</span>
         <span class="mode-progress-copy" data-progress-label="${operation}">1 step unlocked</span>
+        <span class="sr-only" id="${operation}-progress-description">1 of ${MATH_FINAL_STEP} steps unlocked</span>
         <span class="mode-progress-meter" role="progressbar" aria-label="${operationLabels[operation]} progress" aria-valuemin="0" aria-valuemax="${MATH_FINAL_STEP}" aria-valuenow="1" aria-valuetext="1 of ${MATH_FINAL_STEP} steps unlocked" data-progress-bar="${operation}">
           <span class="mode-progress-fill" data-progress-fill="${operation}"></span>
         </span>
@@ -341,6 +343,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
 
   return {
     id: 'mode-select-screen',
+    initialFocusSelector: '.mode-card',
     className: `${OVERLAY_BASE} app-background`,
     html: `
       <div class="mode-select-shell">
@@ -350,7 +353,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
               <button type="button" class="btn-secondary setup-back" data-setup-back>‹ Back</button>
               <p class="setup-step-indicator" aria-label="Step 1 of 2">1 of 2 <span aria-hidden="true">● ○</span></p>
             </div>
-            <h1 class="pond-title text-gold drop-shadow-lg">Arcade: pick your math</h1>
+            <h1 class="pond-title text-gold drop-shadow-lg">Pick your math</h1>
             <p>Pick one or more.</p>
           </header>
           <div class="mode-options" role="group" aria-label="Math operations">
@@ -369,7 +372,7 @@ export function createModeSelectScreenSpec(actions: ScreenSpecActions): ScreenSp
               <p class="setup-step-indicator" aria-label="Step 2 of 2">2 of 2 <span aria-hidden="true">● ●</span></p>
             </div>
             <h1 class="pond-title text-gold drop-shadow-lg">Choose your pond</h1>
-            <p>Bigger ponds. More enemies.</p>
+            <p>Bigger ponds. More animals.</p>
           </header>
           <div class="pond-choices" role="group" aria-label="Pond difficulty">
             ${difficultyChoices}
