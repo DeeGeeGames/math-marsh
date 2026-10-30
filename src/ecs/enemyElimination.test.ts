@@ -24,6 +24,7 @@ import { addEnemySpawnSystemToEngine } from './systems/EnemySpawnSystem';
 import { startDeathAnimation } from './systems/AnimationSystem';
 import { startEnemyGridMovement, startEnemyGridTurn } from './systems/EnemySpriteSystem';
 import { registerFrogTongueInit } from './systems/FrogTongueSystem';
+import { addFrogSpriteAnimationSystemToEngine, startFrogGridTurn } from './systems/FrogSpriteSystem';
 import { registerGameplayClockLifecycle } from './gameplayClockLifecycle';
 import { lizardEliminated, frogEliminated, spiderEliminated } from './assets';
 
@@ -70,6 +71,7 @@ const createScenario = async function(
 	if (includeAI) addAISystemToEngine(gameplaySystems);
 	addEnemySpawnSystemToEngine(gameplaySystems);
 	addEnemyEliminationFeedbackSystem(gameplaySystems);
+	addFrogSpriteAnimationSystemToEngine(gameplaySystems);
 	registerFrogTongueInit(world);
 	registerGameplayClockLifecycle(world);
 	await world.initialize();
@@ -350,6 +352,21 @@ describe('stranded enemy elimination', () => {
 				await world.dispose();
 			}
 		}
+	});
+
+	test('finishes a frog turn before eliminating it on consumed adjacent pads', async () => {
+		const { world, enemyId, neighborProblemIds } = await createScenario('frog');
+		try {
+			startFrogGridTurn(world, enemyId, { x: 1, y: 1 }, { x: 2, y: 1 });
+			world.update(0);
+			consumeNeighborPads(world, neighborProblemIds);
+			world.update(0);
+			expect(world.hasComponent(enemyId, 'spriteAnimation')).toBe(true);
+			expect(world.hasComponent(enemyId, 'enemyElimination')).toBe(false);
+			for (let frame = 0; frame < 4; frame++) world.update(0.25);
+			expect(world.hasComponent(enemyId, 'spriteAnimation')).toBe(false);
+			expect(world.hasComponent(enemyId, 'enemyElimination')).toBe(true);
+		} finally { await world.dispose(); }
 	});
 
 	test('does not eliminate a frog while its tongue attack is active', async () => {
