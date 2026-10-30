@@ -6,7 +6,16 @@ const ACTIONS = ['up', 'down', 'left', 'right', 'eat', 'back', 'skip', 'pause'];
 const SET_NAMES = { menu: 'Menu', gameplay: 'Gameplay' };
 const MAX_GLYPH_BYTES = 256 * 1024;
 const NATIVE_ROUTE_GRACE_MS = 250;
+const HANDLE_RETRY_MS = 100;
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+// Koffi returns small uint64 values as numbers despite the SDK's bigint types.
+// Normalize at the FFI boundary, including zero, without losing precision.
+const normalizeHandle = function (value) {
+	if (typeof value === 'bigint' && value >= 0n && value <= 0xffffffffffffffffn) return value;
+	if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return BigInt(value);
+	throw new Error('Steam Input returned an invalid uint64 handle');
+};
 
 // Loaded only by the desktop main process. A direct standalone launch never
 // loads the native dependency, attempts Steam initialization, or restarts Steam.
@@ -43,13 +52,28 @@ const createSteamInput = function (options = {}) {
 		if (!steam.input.setInputActionManifestFilePath(resolve(manifestPath))) throw new Error('Steam Input manifest rejected');
 		inputInitialized = steam.input.init(true);
 		if (!inputInitialized) throw new Error('Steam Input initialization failed');
-		const sets = Object.fromEntries(Object.entries(SET_NAMES).map(function ([context, name]) {
-			const handle = steam.input.getActionSetHandle(name);
+		const pendingSets = new Set();
+		const retryAt = new Map();
+		const readSet = function (context, name) {
+			const handle = normalizeHandle(steam.input.getActionSetHandle(name));
 			const actions = Object.fromEntries(ACTIONS.map(function (action) {
-				return [action, steam.input.getDigitalActionHandle(`${context}_${action}`)];
+				return [action, normalizeHandle(steam.input.getDigitalActionHandle(`${context}_${action}`))];
 			}));
-			if (handle === 0n || Object.values(actions).includes(0n)) throw new Error(`Steam Input ${name} actions unavailable`);
-			return [context, { handle, actions }];
+			const missing = [
+				...(handle === 0n ? [name] : []),
+				...ACTIONS.filter(action => actions[action] === 0n).map(action => `${context}_${action}`),
+			];
+			if (missing.length > 0) {
+				pendingSets.add(context);
+				retryAt.set(context, now() + HANDLE_RETRY_MS);
+				reportDiagnostic({ context, handlesReady: false, missing, controllers: [] });
+				return null;
+			}
+			retryAt.delete(context);
+			return { handle, actions };
+		};
+		const sets = Object.fromEntries(Object.entries(SET_NAMES).map(function ([context, name]) {
+			return [context, readSet(context, name)];
 		}));
 		const readGlyph = function (origin) {
 			try {
@@ -70,10 +94,22 @@ const createSteamInput = function (options = {}) {
 		return {
 			sample: function (context) {
 				if (disposed) return null;
-				const set = sets[context];
-				if (!set) return [];
+				const name = SET_NAMES[context];
+				if (typeof name !== 'string') return [];
+				let set = sets[context];
 				try {
 					if (ownsSession) steam.runCallbacks();
+					if (!set) {
+						// Manifest/action availability can lag Init on Deck. Keep pumping
+						// Steam, leave conventional input available, and cache only valid sets.
+						steam.input.runFrame();
+						if (now() >= (retryAt.get(context) ?? 0)) {
+							set = readSet(context, name);
+							sets[context] = set;
+						}
+						if (!set) return [];
+					}
+					const recoveredSet = pendingSets.delete(context);
 					// Steam computes action data in runFrame. Activate before that update,
 					// including devices already known to Steam but new to this provider.
 					const beforeHandles = steam.input.getConnectedControllers();
@@ -90,10 +126,10 @@ const createSteamInput = function (options = {}) {
 						const steamHandle = String(handle);
 						const previous = connections.get(steamHandle);
 						const id = previous?.id ?? `steam:${steamHandle}:${++generation}`;
-						const connection = { id, context, suppressed: previous?.suppressed === true || (previous !== undefined && previous.context !== context) };
+						const connection = { id, context, suppressed: recoveredSet || previous?.suppressed === true || (previous !== undefined && previous.context !== context) };
 						current.set(steamHandle, connection);
 						if (!beforeFrame.has(steamHandle)) steam.input.activateActionSet(handle, set.handle);
-						const currentSet = beforeFrame.has(steamHandle) ? steam.input.getCurrentActionSet(handle) : null;
+						const currentSet = beforeFrame.has(steamHandle) ? normalizeHandle(steam.input.getCurrentActionSet(handle)) : null;
 						let settled = currentSet === set.handle;
 						let hasActiveAction = false;
 						let hasOrigins = false;
@@ -142,7 +178,7 @@ const createSteamInput = function (options = {}) {
 						return connection.nativeRoute ? [{ id, kind: 'steam', steamHandle, actions, prompts }] : [];
 					});
 					connections = current;
-					if (diagnostics) reportDiagnostic({ context, controllers: diagnostics });
+					if (diagnostics) reportDiagnostic({ context, handlesReady: true, controllers: diagnostics });
 					return snapshots;
 				} catch (error) {
 					reportError(error);

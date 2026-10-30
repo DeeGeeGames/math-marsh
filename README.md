@@ -70,13 +70,13 @@ The bundled manifest is `resources/steam-input/game_actions.vdf`. Keep the exist
 For a Steam Deck startup capture, set the game's Steam **Launch Options** to:
 
 ```sh
-MATH_MARSH_INPUT_DIAGNOSTICS=1 %command% > /home/deck/math-marsh-input.log 2>&1
+MATH_MARSH_INPUT_DIAGNOSTICS=1 %command% >> /home/deck/math-marsh-input.log 2>&1
 ```
 
-Launch through Steam, leave the controls untouched for 30 seconds, then tap and release A, wait a second, and tap A again. Try the D-pad and quit using touch if the controller remains unresponsive. Save that log before another launch overwrites it. For a comparison run, use the same build and settings and try the button presses during startup that previously made input work; save it separately. Remove the launch option when finished. On desktop Linux, replace the output path with a writable file in your home directory.
+Launch through Steam, leave the controls untouched for 30 seconds, then tap and release A, wait a second, and tap A again. Try the D-pad and quit using touch if the controller remains unresponsive. The `>>` appends each launch to the same file; each session starts with its own `session` diagnostic and elapsed time resets. For a comparison run, use the same build and settings and try the button presses during startup that previously made input work. Send the combined log and identify which runs failed. Remove the launch option when finished. On desktop Linux, replace the output path with a writable file in your home directory.
 
 Lines prefixed `[controller-input]` record the source commit, app role, Steam session initialization, native per-action readiness and raw button state, SDL duplicate routing, window focus, neutral-state suppression, and the renderer's polled controllers and ownership state. Changes are logged immediately, with a one-second heartbeat for unchanged stages and a 4 MiB diagnostic-output limit per process. Diagnostics are disabled unless the environment variable is exactly `1`, use no extra device polling, and preserve the existing input behavior. Renderer reports are bounded and whitelisted; text entry, profiles, account IDs, and glyph data are excluded. Application stdout/stderr outside these diagnostic lines is not subject to the diagnostic-output limit.
 
-Use a private test branch for these builds. Keep the public/default Steam branches and the published controller defaults unchanged until the Deck result is understood. A standalone launch exercises browser gamepads instead of the native Steam path and cannot establish Steam Input readiness.
+Use a private test branch for these builds. The demo upload workflow defaults to `upload-only`; its only automatic deployment target is `demo-private`, selected with `target_branch`. Keep the public/default Steam branches and the published controller defaults unchanged until the Deck result is understood. A standalone launch exercises browser gamepads instead of the native Steam path and cannot establish Steam Input readiness.
 
 Steam Cloud saves use an account-scoped portable file with Steam Auto-Cloud. See [setup, migration, and acceptance checks](docs/steam-cloud.md); Steamworks configuration and a two-device Steam test are required before public enablement.

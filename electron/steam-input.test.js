@@ -4,7 +4,9 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const { createSteamInput } = createRequire(import.meta.url)('./steam-input.cjs');
+const nodeRequire = createRequire(import.meta.url);
+const { createSteamInput } = nodeRequire('./steam-input.cjs');
+const { SteamInputManager } = nodeRequire('steamworks-ffi-node/dist/internal/SteamInputManager');
 const fixture = function () {
 	let controllers = [45n];
 	let pressed = true;
@@ -24,7 +26,10 @@ const fixture = function () {
 			init: function () { return true; },
 			shutdown: function () { calls.push('input shutdown'); },
 			getActionSetHandle: function (name) { return name === 'Menu' ? 1n : 2n; },
-			getDigitalActionHandle: function (name) { const handle = BigInt(handles.size + 10); handles.set(name, handle); return handle; },
+			getDigitalActionHandle: function (name) {
+				if (handles.has(name)) return handles.get(name);
+				const handle = BigInt(handles.size + 10); handles.set(name, handle); return handle;
+			},
 			runFrame: function () {},
 			getConnectedControllers: function () { return controllers; },
 			activateActionSet: function (_, handle) { currentSet = handle; calls.push(handle); },
@@ -47,6 +52,98 @@ const fixture = function () {
 };
 
 describe('desktop native Steam Input', function () {
+	for (const zero of [0, 0n]) {
+		test(`recovers from ${typeof zero} zero handles through the installed SDK after a long idle`, function () {
+			const f = fixture();
+			let clock = 0;
+			let ready = false;
+			let lookups = 0;
+			let frames = 0;
+			const originalSet = f.steam.input.getActionSetHandle;
+			const originalAction = f.steam.input.getDigitalActionHandle;
+			const originalCurrent = f.steam.input.getCurrentActionSet;
+			const manager = new SteamInputManager({
+				SteamAPI_SteamInput: function () { return 1n; },
+				SteamAPI_ISteamInput_GetActionSetHandle: function (_, name) { lookups++; return ready ? Number(originalSet(name)) : zero; },
+				SteamAPI_ISteamInput_GetDigitalActionHandle: function (_, name) { lookups++; return ready ? Number(originalAction(name)) : zero; },
+				SteamAPI_ISteamInput_GetCurrentActionSet: function () { return Number(originalCurrent()); },
+			});
+			f.steam.input.getActionSetHandle = manager.getActionSetHandle.bind(manager);
+			f.steam.input.getDigitalActionHandle = manager.getDigitalActionHandle.bind(manager);
+			f.steam.input.getCurrentActionSet = manager.getCurrentActionSet.bind(manager);
+			f.steam.input.runFrame = function () { frames++; };
+			const provider = createSteamInput({ ...f.options, now: function () { return clock; } });
+			try {
+				expect(provider).not.toBeNull();
+				const initialLookups = lookups;
+				expect(provider.sample('menu')).toEqual([]);
+				clock = 99;
+				expect(provider.sample('menu')).toEqual([]);
+				expect(lookups).toBe(initialLookups);
+				clock = 100;
+				expect(provider.sample('menu')).toEqual([]);
+				expect(lookups).toBe(initialLookups + 9);
+				expect(frames).toBe(3);
+				expect(f.calls).toEqual([]); // Never activate an unresolved zero set.
+				clock = 30_000;
+				ready = true;
+				f.setPressed(false);
+				expect(provider.sample('menu')[0].actions.eat).toBe(false);
+				f.setPressed(true);
+				expect(provider.sample('menu')[0].actions.eat).toBe(true);
+				const resolvedLookups = lookups;
+				clock = 60_000;
+				provider.sample('menu');
+				expect(lookups).toBe(resolvedLookups); // Valid handles stay cached.
+				expect(f.calls.every(handle => handle === 1n)).toBe(true);
+			} finally { provider.dispose(); }
+		});
+	}
+
+	test('waits for missing digital handles and suppresses held input across late readiness and set changes', function () {
+		const f = fixture();
+		let clock = 0;
+		let menuReady = false;
+		let gameplayReady = false;
+		const original = f.steam.input.getDigitalActionHandle;
+		const reports = [];
+		f.steam.input.getDigitalActionHandle = function (name) {
+			if ((name === 'menu_eat' && !menuReady) || (name === 'gameplay_pause' && !gameplayReady)) return 0;
+			return original(name);
+		};
+		const provider = createSteamInput({ ...f.options, now: function () { return clock; },
+			onDiagnostic: function (_, report) { reports.push(report); } });
+		try {
+			expect(provider.sample('menu')).toEqual([]);
+			expect(reports.find(report => report.context === 'menu')).toMatchObject({ handlesReady: false, missing: ['menu_eat'] });
+			clock = 1000;
+			menuReady = true;
+			expect(provider.sample('menu')[0].actions.eat).toBe(false); // Held through warm-up.
+			expect(provider.sample('menu')[0].actions.eat).toBe(false);
+			f.setPressed(false);
+			provider.sample('menu');
+			f.setPressed(true);
+			expect(provider.sample('menu')[0].actions.eat).toBe(true);
+			expect(provider.sample('gameplay')).toEqual([]);
+			gameplayReady = true;
+			clock = 2000;
+			expect(provider.sample('gameplay')[0].actions.eat).toBe(false);
+			f.setPressed(false);
+			provider.sample('gameplay');
+			f.setPressed(true);
+			expect(provider.sample('gameplay')[0].actions.eat).toBe(true);
+		} finally { provider.dispose(); }
+	});
+
+	test('rejects malformed, negative, fractional, unsafe, and overflowing handles without coercion', function () {
+		for (const invalid of [undefined, null, '1', -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, -1n, 0x10000000000000000n]) {
+			const f = fixture();
+			f.steam.input.getActionSetHandle = function () { return invalid; };
+			expect(createSteamInput(f.options)).toBeNull();
+			expect(f.calls).toEqual(['input shutdown', 'shutdown']);
+		}
+	});
+
 	test('diagnostics explain blocked readiness without changing routing or delayed button behavior', function () {
 		const plain = fixture();
 		const traced = fixture();
@@ -103,7 +200,7 @@ describe('desktop native Steam Input', function () {
 
 	test('partial initialization failure cleans up without blocking startup', function () {
 		const f = fixture();
-		f.steam.input.getDigitalActionHandle = function () { return 0n; };
+		f.steam.input.getDigitalActionHandle = function () { throw new Error('Handle lookup failed'); };
 		expect(createSteamInput(f.options)).toBeNull();
 		expect(f.calls).toEqual(['input shutdown', 'shutdown']);
 	});

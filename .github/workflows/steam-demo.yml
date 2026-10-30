@@ -11,6 +11,14 @@ on:
         description: Owner-approved build label shown in Steamworks.
         required: true
         type: string
+      target_branch:
+        description: Upload only, or deploy to the owner-approved private demo branch.
+        required: true
+        default: upload-only
+        type: choice
+        options:
+          - upload-only
+          - demo-private
 
 permissions:
   contents: read
@@ -41,7 +49,7 @@ jobs:
     with:
       app_id: '5493870'
       build_description: ${{ inputs.build_description }}
-      # Upload only. Assign to a password-protected test branch in Steamworks.
+      # Explicit allowlist: all other values retain upload-only behavior.
       # Public branch promotion requires a separate owner release decision.
-      release_branch: ''
+      release_branch: ${{ inputs.target_branch == 'demo-private' && 'demo-private' || '' }}
     secrets: inherit
