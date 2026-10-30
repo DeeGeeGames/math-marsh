@@ -131,6 +131,7 @@ test('mouse and touch opened Settings keep rendered focus visible during control
       { name: 'tv-1280x720', width: 1280, height: 720 },
       { name: 'deck-1280x800', width: 1280, height: 800 },
       { name: 'mobile-390x844', width: 390, height: 844 },
+      { name: 'short-landscape-568x320', width: 568, height: 320 },
     ] as const;
     await layouts.reduce(async (previous, layout) => {
       await previous;
@@ -149,6 +150,9 @@ test('mouse and touch opened Settings keep rendered focus visible during control
       expect(bounds.y + bounds.height + 16).toBeLessThanOrEqual(layout.height);
       await page.screenshot({ path: testInfo.outputPath(`settings-focus-${layout.name}.png`) });
     }, Promise.resolve());
+
+    // Continue the portrait navigation journey after the landscape resize probe.
+    await page.setViewportSize({ width: 390, height: 844 });
 
     // Left-stick navigation uses the same visible focus path.
     await setGamepadAxis(page, 1, 1);
