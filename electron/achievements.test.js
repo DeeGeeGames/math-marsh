@@ -1,5 +1,8 @@
 import { expect, test } from 'bun:test';
 import { createAchievementQueue } from './achievements.cjs';
+import { SteamAchievementManager } from 'steamworks-ffi-node/dist/internal/SteamAchievementManager.js';
+import { SteamStatsManager } from 'steamworks-ffi-node/dist/internal/SteamStatsManager.js';
+import * as koffi from 'koffi';
 
 const fixture = function() {
   const calls = [];
@@ -70,6 +73,89 @@ test('manager exceptions and absent definitions remain retryable; concurrent flu
   await queue.flush();
   expect(f.calls).toEqual([]);
   await Promise.all([queue.flush(), queue.flush()]);
+  expect(f.calls).toEqual(['A']);
+  queue.dispose();
+});
+
+// Exercise the installed managers, including their immediate StoreStats result
+// and callback-driven reads, rather than modeling that result as server receipt.
+const sdkFixture = function(definitions = ['A', 'B']) {
+  const unlocked = new Set();
+  const calls = [];
+  const failed = new Set();
+  const library = {
+    SteamAPI_SteamUserStats: () => 1,
+    SteamAPI_ISteamUserStats_RequestUserStats: () => 1n,
+    SteamAPI_ISteamUserStats_GetNumAchievements: () => definitions.length,
+    SteamAPI_ISteamUserStats_GetAchievementName: (_stats, index) => definitions[index],
+    SteamAPI_ISteamUserStats_GetAchievementDisplayAttribute: () => '',
+    SteamAPI_ISteamUserStats_GetAchievementAndUnlockTime: (_stats, name, value, time) => {
+      koffi.encode(value, 'bool', unlocked.has(name));
+      koffi.encode(time, 'uint32', 0);
+      return true;
+    },
+    SteamAPI_ISteamUserStats_SetAchievement: (_stats, name) => {
+      calls.push(name);
+      if (failed.has(name)) return false;
+      unlocked.add(name);
+      return true;
+    },
+    SteamAPI_ISteamUserStats_StoreStats: () => true,
+  };
+  const core = { isInitialized: () => true, getUserStatsInterface: () => 1, runCallbacks: () => {} };
+  return {
+    unlocked, calls, failed,
+    session: { role: 'paid', appId: '4927380', steam: {
+      getStatus: () => ({ steamId: '76561198000000000' }),
+      achievements: new SteamAchievementManager(library, core),
+      stats: new SteamStatsManager(library, core),
+    } },
+  };
+};
+
+test('installed SDK managers allow later names through missing and failing definitions', async function() {
+  for (const definitions of [['B'], ['A', 'B']]) {
+    const f = sdkFixture(definitions);
+    f.failed.add('A');
+    const queue = createAchievementQueue(f.session, ['A', 'B']);
+    try {
+      queue.submit(['A', 'B']);
+      await queue.flush();
+      await queue.flush();
+      expect(f.calls.filter(name => name === 'B')).toEqual(['B']);
+      expect(f.unlocked.has('B')).toBe(true);
+    } finally { queue.dispose(); }
+  }
+});
+
+test('installed SDK immediate store acceptance retains reconciliation after a later rejection', async function() {
+  const f = sdkFixture(['A']);
+  const queue = createAchievementQueue(f.session, ['A']);
+  try {
+    queue.submit(['A']);
+    await queue.flush();
+    await queue.flush();
+    expect(f.calls).toEqual(['A']);
+    // Steam can replace local data after asynchronously rejecting StoreStats.
+    f.unlocked.delete('A');
+    await queue.flush();
+    expect(f.calls).toEqual(['A', 'A']);
+    queue.submit(['A']);
+    await queue.flush();
+    expect(f.calls).toEqual(['A', 'A']);
+  } finally { queue.dispose(); }
+});
+
+test('a thrown stats request remains retryable without rejecting the timer flush', async function() {
+  const f = fixture();
+  const queue = createAchievementQueue(f.session, ['A']);
+  const request = f.session.steam.stats.requestUserStats;
+  f.session.steam.stats.requestUserStats = async () => { throw new Error('Disconnected'); };
+  queue.submit(['A']);
+  await queue.flush();
+  expect(f.calls).toEqual([]);
+  f.session.steam.stats.requestUserStats = request;
+  await queue.flush();
   expect(f.calls).toEqual(['A']);
   queue.dispose();
 });
