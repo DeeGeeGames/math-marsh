@@ -3,7 +3,6 @@ import { bindGameplayHud } from '../gameplayHud';
 import type { ScreenSpec } from '../screenTypes';
 import { bindTouchControls } from '../touchInput';
 import { bindBoardPointer } from '../boardPointer';
-import { pondSkyMarkup } from '../pondSky';
 import {
   BTN_CHROME,
   BTN_SIZE,
@@ -18,7 +17,6 @@ export function createPlayingScreenSpec(actions: ScreenSpecActions): ScreenSpec 
     focusSelector: '#gameplay-onboarding button:not(:disabled)',
     className: 'absolute inset-0 flex flex-col pointer-events-none z-10',
     html: `
-      ${pondSkyMarkup()}
       <header id="top-hud" class="gameplay-header">
         <div class="gameplay-status" role="group" aria-label="Game status">
           <span id="time-display" role="timer" class="sr-only">Time left: 1:30</span>

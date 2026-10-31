@@ -4,7 +4,7 @@
 - `icons/`: favicons, touch/PWA icons, and the desktop app icon.
 - `button-prompts/`: keyboard and controller glyphs used by the UI.
 - `brand/`: splash logos and their provenance/license information.
-- `ui/cartoon-pond.webp`: optimized derivative of the approved issue #133 reference backdrop, pinned at `4ca9a7406244284b9ffe1c068e3266d8d447dc95:docs/design/cartoon-console-ui/assets/backgrounds/pond-bold.png`. Menus use the daytime artwork; gameplay combines it with the existing phase-aware sky and corresponding dusk/night tints outside the canvas.
+- `ui/cartoon-pond.webp`: optimized derivative of the approved issue #133 reference backdrop, pinned at `4ca9a7406244284b9ffe1c068e3266d8d447dc95:docs/design/cartoon-console-ui/assets/backgrounds/pond-bold.png`. Menus use the daytime artwork; gameplay uses the intact illustration with corresponding dusk/night tints outside the canvas. Its foreground plants and distant scenery are part of one image, so additional scenery must not be drawn over it.
 - `ui/title-wordmark.webp`: lossless optimized copy of logo A (`assets/logos/evolved-wordmark.png`) from that reference pack, used for the implementation preview. The owner selected A for the preview; actual presentation review remains pending. The existing canonical brand, icon, PWA and Steam artwork are preserved.
 - `fonts/`: locally bundled Lilita One display lettering from the same reference pack, with its SIL Open Font License. The build includes `LilitaOne-OFL.txt`; equations and body copy retain the simple UI font.
 
