@@ -72,6 +72,10 @@ function getDesktopPlatform(): DesktopPlatform | undefined {
 	return window.mathMarshDesktop;
 }
 
+export const isDesktopPlatform = function(): boolean {
+	return typeof window !== 'undefined' && getDesktopPlatform() !== undefined;
+};
+
 export function getDesktopFullscreenController(): DesktopFullscreenController | undefined {
 	const controller = getDesktopPlatform()?.fullscreen;
 	if (!controller?.isSupported()) return undefined;

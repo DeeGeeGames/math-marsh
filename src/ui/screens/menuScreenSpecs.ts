@@ -4,6 +4,7 @@ import { GAME_CONFIG } from '../../config';
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { ref } from 'lit-html/directives/ref.js';
 import mathMarshLogo from '../../assets/ui/title-wordmark.webp';
+import { isDesktopPlatform } from '../../platform/desktop';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { MATH_FINAL_STEP, mathStepLabel } from '../../ecs/mathSteps';
 import { $ } from '../dom';
@@ -126,12 +127,13 @@ const refreshMathProgress = function(root: HTMLElement, actions: ScreenSpecActio
 };
 
 export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
+  const isWeb = !isDesktopPlatform();
   return {
     id: 'main-menu',
     className: `${OVERLAY_BASE} title-screen`,
     html: html`
       <div class="player-profile-badge-slot" data-player-profile-badge></div>
-      <div class="menu-shell">
+      <div class=${isWeb ? 'menu-shell menu-shell--web' : 'menu-shell'}>
         <h1 class="menu-title">
           <img class="menu-logo" src=${mathMarshLogo} alt="Math Marsh" width="1448" height="1086">
         </h1>
@@ -162,6 +164,14 @@ export function createMenuScreenSpec(actions: ScreenSpecActions): ScreenSpec {
         </div>
         ${titleDemoTemplate()}
         ${titleCastTemplate()}
+        ${isWeb ? html`
+          <a class="title-steam-sign" data-focusable
+            href="https://store.steampowered.com/app/4927380/Math_Marsh/"
+            target="_blank" rel="noopener noreferrer">
+            <span>Wishlist on Steam</span><span aria-hidden="true">↗</span>
+            <span class="sr-only"> (opens in a new tab)</span>
+          </a>
+        ` : nothing}
       </div>
       <div class="title-bank" aria-hidden="true"></div>
       ${titlePreloadsTemplate()}
