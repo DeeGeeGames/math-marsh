@@ -74,3 +74,55 @@ test('reduced motion freezes title presentation and compact layouts hide the dem
 	await page.getByRole('button', { name: 'Practice', exact: true }).click();
 	await expect(page.locator('[data-practice-operation="add"]')).toBeVisible();
 });
+
+test('web Steam sign fits responsive layouts and opens the store separately', async ({ page }) => {
+	await openTitle(page);
+	const sign = page.getByRole('link', { name: 'Wishlist on Steam' });
+	await expect(sign).toHaveAttribute('href', 'https://store.steampowered.com/app/4927380/Math_Marsh/');
+	await expect(sign).toHaveAttribute('rel', 'noopener noreferrer');
+	for (const [width, height] of [[1920, 1080], [1280, 720], [390, 844], [390, 780], [360, 740], [320, 568], [844, 390], [568, 320]]) {
+		if (width === undefined || height === undefined) throw new Error('Invalid viewport');
+		await page.setViewportSize({ width, height });
+		const bounds = await sign.boundingBox();
+		if (!bounds) throw new Error('Steam sign is hidden');
+		expect(bounds.height).toBeGreaterThanOrEqual(44);
+		expect(bounds.x).toBeGreaterThanOrEqual(0);
+		expect(bounds.y).toBeGreaterThanOrEqual(0);
+		expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+		expect(bounds.y + bounds.height + 16).toBeLessThanOrEqual(height);
+		await page.screenshot({ path: `/tmp/math-marsh-steam-sign/${width}x${height}.png` });
+		expect(await page.locator('#main-menu').evaluate(function(root) { return { width: root.clientWidth, scrollWidth: root.scrollWidth, height: root.clientHeight, scrollHeight: root.scrollHeight }; }), `${width}x${height}`).toEqual({ width, scrollWidth: width, height, scrollHeight: height });
+		for (const control of await page.locator('.menu-actions button, .menu-logo, .title-equation').all()) {
+			if (!await control.isVisible()) continue;
+			const other = await control.boundingBox();
+			if (!other) throw new Error('Title control has no bounds');
+			expect(bounds.x >= other.x + other.width || bounds.x + bounds.width <= other.x || bounds.y >= other.y + other.height || bounds.y + bounds.height <= other.y).toBe(true);
+		}
+	}
+	await page.setViewportSize({ width: 1280, height: 720 });
+	for (let step = 0; step < 12 && !await sign.evaluate(function(element) { return element === document.activeElement; }); step++) {
+		await page.keyboard.press('ArrowDown', { delay: 200 });
+	}
+	await expect(sign).toBeFocused();
+	await expect(sign).toHaveCSS('outline-style', 'solid');
+	await page.context().route('https://store.steampowered.com/**', function(route) { return route.fulfill({ body: 'Steam navigation verified' }); });
+	const popupPromise = page.waitForEvent('popup');
+	await page.keyboard.press('Enter', { delay: 200 });
+	const popup = await popupPromise;
+	await popup.waitForLoadState();
+	expect(popup.url()).toBe('https://store.steampowered.com/app/4927380/Math_Marsh/');
+	await popup.close();
+	await expect(page.locator('#main-menu')).toBeVisible();
+	await page.getByRole('button', { name: 'Practice', exact: true }).click();
+	await expect(sign).toBeHidden();
+});
+
+for (const role of ['minimal', 'demo', 'paid'] as const) {
+	test(`desktop ${role} bridge omits the web Steam sign`, async ({ page }) => {
+		await page.addInitScript(function(role) {
+			Object.defineProperty(window, 'mathMarshDesktop', { value: role === 'minimal' ? {} : { steamRole: role } });
+		}, role);
+		await openTitle(page);
+		await expect(page.locator('.title-steam-sign')).toHaveCount(0);
+	});
+}

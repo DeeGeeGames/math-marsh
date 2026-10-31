@@ -442,3 +442,31 @@ test('masked controller uses accessible saved prompt choice across screens and c
   await expect(selectGlyph).toHaveAttribute('alt', 'B button');
   await expect(page.locator('#settings-screen [data-prompt-action="back"] img')).toHaveAttribute('alt', 'A button');
 });
+
+test('controller can reach and activate the web title Steam sign', async ({ page }) => {
+  await configureControllerPage(page);
+  await page.goto('/');
+  await page.getByText('A game by').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
+  await setGamepadButton(page, 0, true);
+  await setGamepadButton(page, 0, false);
+  const sign = page.getByRole('link', { name: 'Wishlist on Steam' });
+  for (let step = 0; step < 8 && !await sign.evaluate(function(element) { return element === document.activeElement; }); step++) {
+    await setGamepadButton(page, 13, true);
+    await setGamepadButton(page, 13, false);
+  }
+  await expect(sign).toBeFocused();
+  await expect(sign).toHaveCSS('outline-style', 'solid');
+  await page.context().route('https://store.steampowered.com/**', function(route) { return route.fulfill({ body: 'Steam navigation verified' }); });
+  const popupPromise = page.waitForEvent('popup');
+  await setGamepadButton(page, 0, true);
+  await setGamepadButton(page, 0, false);
+  const popup = await popupPromise;
+  await popup.waitForLoadState();
+  expect(popup.url()).toBe('https://store.steampowered.com/app/4927380/Math_Marsh/');
+  await popup.close();
+  await expect(page.locator('#main-menu')).toBeVisible();
+});
