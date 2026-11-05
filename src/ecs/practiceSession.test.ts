@@ -103,6 +103,54 @@ describe('focused Practice sessions', () => {
     expect(submittedPracticeFact(session, wrong, [4])).toBeUndefined();
   });
 
+  test('Practice decoys reach the topic bounds without exceeding them across prompt roles and related operations', () => {
+    const cases = [
+      { topicId: 'multiply-table-1', operation: 'multiply', level: 1, min: 1, max: 12 },
+      { topicId: 'multiply-table-2', operation: 'multiply', level: 1, min: 1, max: 24 },
+      { topicId: 'multiply-table-12', operation: 'multiply', level: 1, min: 1, max: 144 },
+      { topicId: 'multiply-table-2', operation: 'multiply', level: 2, min: 1, max: 12 },
+      { topicId: 'multiply-table-2', operation: 'multiply', level: 3, min: 1, max: 24 },
+      { topicId: 'multiply-table-2', operation: 'divide', level: 1, min: 1, max: 12 },
+      { topicId: 'divide-table-2', operation: 'divide', level: 1, min: 1, max: 12 },
+      { topicId: 'divide-table-12', operation: 'divide', level: 1, min: 1, max: 12 },
+      { topicId: 'divide-table-2', operation: 'divide', level: 2, min: 1, max: 24 },
+      { topicId: 'divide-table-2', operation: 'divide', level: 3, min: 1, max: 12 },
+      { topicId: 'divide-table-2', operation: 'multiply', level: 1, min: 1, max: 24 },
+      { topicId: 'add-make-5', operation: 'add', level: 1, min: 0, max: 5 },
+      { topicId: 'subtract-make-5', operation: 'subtract', level: 1, min: 0, max: 5 },
+    ] as const;
+    const random = spyOn(Math, 'random');
+    try {
+      for (const scenario of cases) {
+        for (const related of [false, true]) {
+          const session = createPracticeSession('learner', { topicId: scenario.topicId, related, pond: 'expert' });
+          if (!session) throw new Error('Missing bounded session');
+          const solved = session.deck.findIndex(fact => fact.operation === scenario.operation);
+          if (solved < 0) continue;
+          const focused = { ...session, solved };
+          const mode = practiceEquationMode(focused, scenario.level);
+          const candidate = practiceEquationCandidate(focused);
+          for (const [sample, boundary] of [[0, scenario.min], [0.999999, scenario.max]] as const) {
+            random.mockReturnValue(sample);
+            const board = equationProblemValuesForCandidate(mode, candidate, 40);
+            expect(board.every(value => Number.isInteger(value) && value >= scenario.min && value <= scenario.max)).toBe(true);
+            expect(board.filter(value => value === boundary).length).toBeGreaterThanOrEqual(38);
+          }
+        }
+      }
+    } finally { random.mockRestore(); }
+  });
+
+  test('the 2s table retains nonmultiples as decoys', () => {
+    const session = sessionFor('multiply-table-2');
+    const random = spyOn(Math, 'random').mockReturnValue(4 / 24);
+    try {
+      const board = equationProblemValuesForCandidate(practiceEquationMode(session, 1), practiceEquationCandidate(session), 9);
+      expect(board).toContain(5);
+      expect(board.filter(value => value === 5)).toHaveLength(8);
+    } finally { random.mockRestore(); }
+  });
+
   test('wrong attempts retain the current equation and correct retries advance once toward a 12-solve budget', () => {
     const original = sessionFor();
     const fact = currentPracticeFact(original);

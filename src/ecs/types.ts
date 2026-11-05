@@ -232,6 +232,8 @@ export interface BaseEquationModeState {
   clearedThisLevel: number;
   level: number;
   operandRanges: EquationOperandRanges;
+  /** Practice bounds for the values selected by this prompt. */
+  decoyRange?: EquationValueRange;
 }
 
 export interface EquationModeState extends BaseEquationModeState {
