@@ -119,3 +119,17 @@ export const practiceTopicEvidence = function(progress: PracticeProgress, topic:
 export const practiceTopicStatus = function(progress: PracticeProgress, topic: PracticeTopic, related = false): PracticeTopicStatus {
   return practiceTopicEvidence(progress, topic, related).status;
 };
+
+/** Follow the collection's base-fact rings, retaining the player's session options. */
+export const practiceContinueSelection = function(
+  progress: PracticeProgress,
+  selection: PracticeSelection | null = progress.lastSelection,
+): PracticeSelection | undefined {
+  if (!selection) return undefined;
+  const previous = practiceTopic(selection.topicId);
+  if (!previous) return undefined;
+  const next = PRACTICE_TOPICS.find(function(topic): boolean {
+    return topic.operation === previous.operation && practiceTopicStatus(progress, topic) !== 'Practiced';
+  });
+  return next ? { ...selection, topicId: next.id } : undefined;
+};

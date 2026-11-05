@@ -1,4 +1,5 @@
 import { expect, test, type Page } from 'playwright/test';
+import type {} from './fixtures/practice';
 
 const press = async function(page: Page, key: string): Promise<void> {
 	await page.keyboard.press(key, { delay: 200 });
@@ -55,6 +56,84 @@ const openTimesTopic = async function(page: Page): Promise<void> {
 	await page.locator('[data-practice-topic="multiply-table-2"]').click();
 };
 
+for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]) {
+	test(`completed Make 3 leads to Make 4 from results and home at ${viewport.width}`, async ({ page }, testInfo) => {
+		await page.setViewportSize(viewport);
+		await seedProfiles(page);
+		await page.goto('/practice');
+		await openPractice(page);
+		await page.locator('[data-practice-operation="add"]').click();
+		await page.locator('[data-practice-topic="add-make-3"]').click();
+		const related = viewport.width === 1920;
+		if (related) {
+			await page.locator('[data-practice-related]').click();
+			await page.locator('[data-practice-change-pond]').click();
+			await page.locator('[data-practice-pond="medium"]').click();
+			await page.locator('[data-practice-pond-done]').click();
+		}
+		await page.locator('[data-practice-start]').click();
+		await expect(page.locator('#game-canvas')).toBeVisible();
+		await page.evaluate(() => window.practiceFixture.completeSession());
+		await expect(page.getByRole('heading', { name: 'Practice complete', exact: true })).toBeVisible();
+		await expect(page.locator('[data-practice-next]')).toHaveText('Continue: Make 4');
+		await expect(page.locator('[data-practice-next]')).toBeFocused();
+		await page.screenshot({ path: testInfo.outputPath('make-3-complete.png'), fullPage: true });
+		await page.locator('[data-practice-again]').click();
+		await expect(page.locator('#game-canvas')).toBeVisible();
+		expect(await page.evaluate(() => window.practiceFixture.selection()?.topicId)).toBe('add-make-3');
+		await page.evaluate(() => window.practiceFixture.completeSession());
+		await expect(page.locator('[data-practice-next]')).toBeFocused();
+		await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
+		await expect(page.locator('[data-practice-continue]')).toContainText('Continue: Make 4');
+		await page.screenshot({ path: testInfo.outputPath('continue-make-4.png'), fullPage: true });
+		await page.reload();
+		await openPractice(page);
+		await expect(page.locator('[data-practice-continue]')).toContainText('Continue: Make 4');
+		await page.locator('[data-practice-continue]').click();
+		await expect(page.locator('#practice-screen h1')).toHaveText('Make 4');
+		await page.locator('[data-practice-back]').click();
+		await page.locator('[data-practice-topic="add-make-3"]').click();
+		if (related) await page.locator('[data-practice-related]').click();
+		await page.locator('[data-practice-start]').click();
+		await expect(page.locator('#game-canvas')).toBeVisible();
+		await page.evaluate(() => window.practiceFixture.completeSession());
+		await expect(page.locator('[data-practice-next]')).toBeFocused();
+		await press(page, 'Enter');
+		await expect(page.locator('#game-canvas')).toBeVisible();
+		expect(await page.evaluate(() => window.practiceFixture.selection())).toEqual({ topicId: 'add-make-4', related, pond: related ? 'medium' : 'easy' });
+		await page.locator('#pause-btn').click();
+		await page.getByRole('button', { name: 'Quit to Menu', exact: true }).click();
+		await expect(page.locator('[data-practice-again]')).toBeFocused();
+		await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
+		await expect(page.locator('[data-practice-continue]')).toContainText('Continue: Make 4');
+		await page.locator('[data-practice-operation="add"]').click();
+		await expect(page.locator('[data-practice-topic="add-make-3"]')).toHaveAttribute('data-complete', 'true');
+		await expect(page.locator('[data-practice-topic="add-make-4"]')).toHaveAttribute('data-complete', 'false');
+	});
+}
+
+test('finishing twelve equations keeps a larger topic incomplete until its ring is filled', async ({ page }) => {
+	await seedProfiles(page);
+	await page.goto('/practice');
+	await openPractice(page);
+	await page.locator('[data-practice-operation="multiply"]').click();
+	await page.locator('[data-practice-topic="multiply-table-1"]').click();
+	await page.locator('[data-practice-change-pond]').click();
+	await page.locator('[data-practice-pond="medium"]').click();
+	await page.locator('[data-practice-pond-done]').click();
+	await page.locator('[data-practice-start]').click();
+	await expect(page.locator('#game-canvas')).toBeVisible();
+	await page.evaluate(() => window.practiceFixture.completeSession());
+	await expect(page.getByRole('heading', { name: 'Practice complete', exact: true })).toBeVisible();
+	await expect(page.locator('[data-practice-next]')).toHaveCount(0);
+	await expect(page.locator('[data-practice-again]')).toBeFocused();
+	await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
+	await expect(page.locator('[data-practice-continue]')).toContainText('Continue: 1 times table');
+	await page.locator('[data-practice-continue]').click();
+	await expect(page.locator('.practice-pond-summary')).toContainText('Medium');
+	await expect(page.locator('.practice-preview-evidence')).toContainText('12/23 solved at least once');
+});
+
 test('new Practice journey preserves options and pond across Back, with keyboard focus', async ({ page }) => {
 	await seedProfiles(page);
 	await page.goto('/');
@@ -94,13 +173,13 @@ test('new Practice journey preserves options and pond across Back, with keyboard
 	await expect(page.locator('#practice-results-screen')).toContainText('No submitted attempts yet.');
 	await expect(page.locator('[data-practice-again]')).toBeFocused();
 	await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
-	await expect(page.locator('[data-practice-continue]')).toContainText('2 times table');
+	await expect(page.locator('[data-practice-continue]')).toContainText('1 times table');
 	await expect(page.locator('[data-practice-continue]')).toContainText('Related facts on');
 	await expect(page.locator('[data-practice-continue]')).toContainText('Expert');
 	await page.reload();
 	await skipSplash(page);
 	await openPractice(page);
-	await expect(page.locator('[data-practice-continue]')).toContainText('2 times table');
+	await expect(page.locator('[data-practice-continue]')).toContainText('1 times table');
 });
 
 test('returning progress is truthful, Continue is fresh, and profiles keep independent Practice data', async ({ page }) => {
@@ -121,8 +200,12 @@ test('returning progress is truthful, Continue is fresh, and profiles keep indep
 	await press(page, 'ArrowUp');
 	await expect(page.locator('[data-practice-continue]')).toBeFocused();
 	await page.locator('[data-practice-continue]').click();
+	await expect(page.locator('#practice-screen h1')).toHaveText('1 times table');
 	await expect(page.locator('[data-practice-related]')).toHaveAttribute('aria-pressed', 'true');
 	await expect(page.locator('.practice-pond-summary')).toContainText('Medium');
+	await expect(page.locator('.practice-preview-evidence .practice-status')).toHaveText('New');
+	await press(page, 'Escape');
+	await page.locator('[data-practice-topic="multiply-table-2"]').click();
 	await expect(page.locator('.practice-preview-evidence')).toContainText('Practicing');
 	await expect(page.locator('.practice-preview-evidence')).toContainText('1 facts practiced');
 	await expect(page.locator('#practice-screen')).toContainText('33%');
@@ -182,7 +265,7 @@ test('Practice stays playable and shows session-only persistence when saving fai
 	await page.getByRole('button', { name: 'Quit to Menu', exact: true }).click();
 	await expect(page.locator('#practice-results-screen .practice-save-status')).toContainText('session only');
 	await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
-	await expect(page.locator('[data-practice-continue]')).toContainText('2 times table');
+	await expect(page.locator('[data-practice-continue]')).toContainText('1 times table');
 });
 
 for (const viewport of [

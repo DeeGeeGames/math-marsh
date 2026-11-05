@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { practiceFacts, practiceTopic } from '../math/practiceTopics';
+import { PRACTICE_TOPICS, practiceFacts, practiceTopic } from '../math/practiceTopics';
 import {
-  emptyPracticeProgress, parsePracticeProgress, practiceTopicEvidence, practiceTopicStatus,
+  emptyPracticeProgress, parsePracticeProgress, practiceContinueSelection, practiceTopicEvidence, practiceTopicStatus,
   recordPracticeEvidence, rememberPracticeSelection, serializePracticeProgress,
 } from './practiceProgress';
 
@@ -45,6 +45,49 @@ describe('Practice evidence', function() {
     const progress = rememberPracticeSelection(emptyPracticeProgress(), selection);
     expect(parsePracticeProgress(serializePracticeProgress(progress))).toEqual(progress);
     expect(progress.lastSelection).toEqual(selection);
+  });
+
+  test('Continue skips solved rings after reload and retains pond and related-fact options', function() {
+    const first = practiceTopic('add-make-3');
+    if (!first) throw new Error('Missing Make 3');
+    const previous = { topicId: first.id, related: true, pond: 'expert' } as const;
+    const progress = first.facts.reduce(function(current, fact) {
+      return recordPracticeEvidence(current, { factId: fact.id, correct: true });
+    }, rememberPracticeSelection(emptyPracticeProgress(), previous));
+    const reloaded = parsePracticeProgress(serializePracticeProgress(progress));
+    expect(practiceContinueSelection(reloaded)).toEqual({ ...previous, topicId: 'add-make-4' });
+    expect(reloaded.lastSelection).toEqual(previous);
+    expect(practiceTopicStatus(reloaded, first, true)).toBe('Practicing');
+  });
+
+  test('Continue selects the lowest incomplete topic in the last operation, including earlier gaps', function() {
+    for (const operation of ['add', 'subtract', 'multiply', 'divide'] as const) {
+      const topics = PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === operation; });
+      const first = topics[0];
+      const second = topics[1];
+      const later = topics[2];
+      if (!first || !second || !later) throw new Error('Missing Practice topics');
+      const previous = { topicId: later.id, related: false, pond: 'medium' } as const;
+      const empty = rememberPracticeSelection(emptyPracticeProgress(), previous);
+      const tried = first.facts.reduce(function(current, fact) {
+        return recordPracticeEvidence(current, { factId: fact.id, correct: false });
+      }, empty);
+      expect(practiceContinueSelection(tried)).toEqual({ ...previous, topicId: first.id });
+      const complete = [...first.facts, ...later.facts].reduce(function(current, fact) {
+        return recordPracticeEvidence(current, { factId: fact.id, correct: true });
+      }, tried);
+      expect(practiceContinueSelection(complete)).toEqual({ ...previous, topicId: second.id });
+    }
+  });
+
+  test('Continue ends at the operation boundary and stays absent without a valid last selection', function() {
+    expect(practiceContinueSelection(emptyPracticeProgress())).toBeUndefined();
+    expect(practiceContinueSelection({ ...emptyPracticeProgress(), lastSelection: { ...selection, topicId: 'retired' } })).toBeUndefined();
+    const complete = PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === 'add'; })
+      .flatMap(function(topic) { return topic.facts; }).reduce(function(current, fact) {
+        return recordPracticeEvidence(current, { factId: fact.id, correct: true });
+      }, rememberPracticeSelection(emptyPracticeProgress(), selection));
+    expect(practiceContinueSelection(complete)).toBeUndefined();
   });
 
   test('existing Make topic Continue selections retain their stable identities and options', function() {

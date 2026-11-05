@@ -2,7 +2,7 @@ import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { GAME_CONFIG } from '../../config';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
 import { PRACTICE_SESSION_LENGTH, practiceFactExample, summarizePracticeSession } from '../../ecs/practiceSession';
-import { practiceTopicEvidence, type PracticeTopicEvidence } from '../../ecs/practiceProgress';
+import { practiceContinueSelection, practiceTopicEvidence, type PracticeTopicEvidence } from '../../ecs/practiceProgress';
 import { PRACTICE_TOPICS, practiceTopic, practiceFacts, practiceFactLabel, type PracticeTopic } from '../../math/practiceTopics';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { difficultyLabels, isMathDifficulty, operationLabels } from '../labels';
@@ -67,7 +67,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 
 	const home = function(): TemplateResult {
 		const progress = actions.getPracticeProgress();
-		const previous = progress.lastSelection;
+		const previous = practiceContinueSelection(progress);
 		const previousTopic = previous ? practiceTopic(previous.topicId) : undefined;
 		return html`<h1 class="pond-title text-gold">Practice</h1>
 			${previous && previousTopic ? html`<button type="button" class="btn-success practice-continue" data-practice-continue>
@@ -175,7 +175,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 				const nextTopic = practiceTopic(button.dataset.practiceTopic);
 				if (nextTopic) { update(root, { type: 'topic', topic: nextTopic }, '[data-practice-start]'); return; }
 				if (button.hasAttribute('data-practice-continue')) {
-					const selection = actions.getPracticeProgress().lastSelection;
+					const selection = practiceContinueSelection(actions.getPracticeProgress());
 					if (selection) update(root, { type: 'continue', selection }, '[data-practice-start]');
 					return;
 				}
@@ -201,7 +201,7 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 		id: 'practice-results-screen', className: `${OVERLAY_BASE} app-background`,
 		html: `<div class="practice-results-layout"><section class="game-over-shell practice-results" data-practice-results></section>${inputPromptsSlot()}</div>`,
 		prompts: [{ action: 'select', label: 'Select' }, { action: 'back', label: 'Main menu' }], promptPlacement: 'panel',
-		initialFocusSelector: '[data-practice-again]',
+		initialFocusSelector: '[data-practice-next], [data-practice-again]',
 		onShow: function(root): void {
 			const content = root.querySelector<HTMLElement>('[data-practice-results]');
 			if (!content) return;
@@ -210,6 +210,10 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 			const summary = session ? summarizePracticeSession(session) : undefined;
 			const attempts = summary?.attempts ?? 0;
 			const revisit = summary?.revisit ?? [];
+			const continuation = session?.outcome === 'completed'
+				? practiceContinueSelection(actions.getPracticeProgress(), session.selection) : undefined;
+			const next = continuation?.topicId !== session?.selection.topicId ? continuation : undefined;
+			const nextTopic = next ? practiceTopic(next.topicId) : undefined;
 			render(html`<h1 class="game-over-title">${session?.outcome === 'completed' ? 'Practice complete' : 'Partial practice'}</h1>
 				<p class="practice-results-topic">${topic?.label ?? 'Practice'}</p>
 				<p class="run-result">${summary?.solved ?? 0}/${PRACTICE_SESSION_LENGTH} equations solved</p>
@@ -219,7 +223,10 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 					${revisit.length ? html`<ul class="practice-revisit">${revisit.map(function(fact): TemplateResult { return html`<li>${practiceFactLabel(fact)}</li>`; })}</ul>` : html`<p>${attempts ? 'No wrong attempts in this session.' : 'Submit answers to build a revisit list.'}</p>`}
 				</section>
 				${persistenceNotice(actions)}
-				<div class="game-over-actions"><button type="button" class="btn-success" data-practice-again ?disabled=${!session} @click=${actions.repeatPractice}>Practice again</button>
+				<div class="game-over-actions">
+				${next && nextTopic ? html`<button type="button" class="btn-success practice-next" data-practice-next
+					@click=${function(): void { actions.startPractice(next); }}>Continue: ${nextTopic.label}</button>` : nothing}
+				<button type="button" class=${next ? 'btn-primary' : 'btn-success'} data-practice-again ?disabled=${!session} @click=${actions.repeatPractice}>Practice again</button>
 				<button type="button" class="btn-primary" @click=${actions.openPractice}>Choose another topic</button>
 				<button type="button" class="btn-secondary" @click=${actions.goToMenu}>Main menu</button></div>`, content);
 		},
