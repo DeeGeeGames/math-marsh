@@ -12,6 +12,7 @@ import {
   chooseEquationCandidate,
   createEquationModeState,
   createRandomEquationCandidate,
+  equationDecoyValue,
   equationProblemValuesForCandidate,
   evaluateEquationSelection,
   type EquationCandidate,
@@ -61,6 +62,18 @@ export function addProblemManagementSystemToEngine(
       );
 
       if (player && !player.components.player.gameOverPending) {
+        const state = resources.equationMode;
+        const range = state.decoyRange;
+        if (practiceSession && range && state.feedback?.kind !== 'correct') {
+          // Related facts can change operation on the same board. Preserve
+          // cleared pads and in-range choices when the new prompt narrows it.
+          activeProblems.forEach(problem => {
+            const value = problem.components.mathProblem.value;
+            if (value < range.min || value > range.max) {
+              problem.components.mathProblem.value = equationDecoyValue(state);
+            }
+          });
+        }
         const shouldSpawnProblems = activeProblems.length === 0
           && !player.components.timers.problemSpawn?.active;
         const populatedEquationMode = shouldSpawnProblems

@@ -382,36 +382,33 @@ export const chooseEquationCandidate = (
   return validCandidates[randomIndex(validCandidates.length)];
 };
 
+export const equationDecoyValue = function(state: EquationModeState): number {
+  if (state.promptKind === 'selectRightOperand' && state.operation === 'divide') {
+    const range = state.decoyRange ?? state.operandRanges.right;
+    return randomFrom(valuesInRange(range).filter(value => value !== 0));
+  }
+  if (state.decoyRange) return randomValue(state.decoyRange);
+  if (state.promptKind === 'selectLeftOperand') return randomValue(state.operandRanges.left);
+  if (state.promptKind === 'selectRightOperand') return randomValue(state.operandRanges.right);
+  if (state.promptKind === 'selectOperandAndResult') {
+    return randomValue(randomFrom([state.operandRanges.right, equationResultRange(state.operation, state.operandRanges)]));
+  }
+  return randomValue(state.promptKind === 'selectResult'
+    ? equationResultRange(state.operation, state.operandRanges)
+    : state.operandRanges.left);
+};
+
 export const equationProblemValuesForCandidate = (
   state: EquationModeState,
   candidate: EquationCandidate,
   totalProblems: number,
 ): number[] => {
-  if (state.promptKind === 'selectLeftOperand' || state.promptKind === 'selectRightOperand') {
-    const missingLeft = state.promptKind === 'selectLeftOperand';
-    const answer = candidate.operandValues[missingLeft ? 0 : 1];
-    const range = missingLeft ? state.operandRanges.left : state.operandRanges.right;
-    const decoyValues = valuesInRange(range).filter(value => state.operation !== 'divide' || missingLeft || value !== 0);
-    const decoys = Array.from({ length: Math.max(0, totalProblems - 1) }, () => randomFrom(decoyValues));
-    return shuffled([answer, ...decoys]);
-  }
-  if (state.promptKind === 'selectOperandAndResult') {
-    const answerValues = [candidate.operandValues[1], candidate.target];
-    const ranges = [state.operandRanges.right, equationResultRange(state.operation, state.operandRanges)];
-    const decoys = Array.from(
-      { length: Math.max(0, totalProblems - answerValues.length) },
-      () => randomValue(randomFrom(ranges)),
-    );
-    return shuffled([...answerValues, ...decoys]);
-  }
-  const answerValues = state.promptKind === 'selectResult'
-    ? [candidate.target]
-    : candidate.operandValues;
-  const decoyRange = state.promptKind === 'selectResult'
-    ? equationResultRange(state.operation, state.operandRanges)
-    : state.operandRanges.left;
+  const answerValues = state.promptKind === 'selectLeftOperand' ? [candidate.operandValues[0]]
+    : state.promptKind === 'selectRightOperand' ? [candidate.operandValues[1]]
+    : state.promptKind === 'selectOperandAndResult' ? [candidate.operandValues[1], candidate.target]
+    : state.promptKind === 'selectResult' ? [candidate.target] : candidate.operandValues;
   const decoysNeeded = Math.max(0, totalProblems - answerValues.length);
-  const decoys = Array.from({ length: decoysNeeded }, () => randomValue(decoyRange));
+  const decoys = Array.from({ length: decoysNeeded }, () => equationDecoyValue(state));
   return shuffled([...answerValues, ...decoys]);
 };
 

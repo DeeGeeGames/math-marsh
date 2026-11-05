@@ -88,6 +88,41 @@ const activeSession = function(world: GameEngine): PracticeSession {
 };
 
 describe('Practice gameplay boundaries', () => {
+  test('a related division prompt narrows reused pads after feedback without changing cleared or in-range pads', async () => {
+    const world = await createWorld(1, true);
+    const random = spyOn(Math, 'random').mockReturnValue(0.999999);
+    try {
+      const session = createPracticeSession('owner', { topicId: 'multiply-table-2', related: true, pond: 'expert' });
+      if (!session) throw new Error('Missing related session');
+      const fact = session.deck.find(fact => fact.operation === 'divide' && fact.left === 24 && fact.right === 2);
+      if (!fact) throw new Error('Missing related division');
+      const focused = { ...session, deck: [fact, ...session.deck.filter(candidate => candidate.id !== fact.id)] };
+      const nextMode = practiceEquationMode(focused, 1);
+      world.setResource('practiceSession', focused);
+      world.setResource('equationMode', {
+        ...practiceEquationMode({ ...session, solved: session.deck.findIndex(fact => fact.operation === 'multiply') }, 1),
+        feedback: { kind: 'correct', startedAt: 0, nextMode },
+      });
+      [24, 24, 5, 100].forEach((value, index) => world.spawn(mathProblemComponents(index * 100, 0, value, 1)));
+      const [stale, cleared, unchanged, occupied] = problemsIn(world);
+      if (!stale || !cleared || !unchanged || !occupied) throw new Error('Missing reused pads');
+      world.mutateComponent(cleared.id, 'mathProblem', problem => { problem.consumed = true; });
+      world.spawn(enemyComponents(occupied.components.position.x, occupied.components.position.y, 'lizard', 'guard'));
+      world.update(0);
+      expect(stale.components.mathProblem.value).toBe(24);
+      expect(occupied.components.mathProblem.value).toBe(100);
+
+      world.getResource('gameplayClock').elapsed = EQUATION_FEEDBACK_DURATION_MS.correct / 1000;
+      world.update(0);
+      expect(problemsIn(world).filter(problem => !problem.components.mathProblem.consumed)
+        .every(problem => problem.components.mathProblem.value >= 1 && problem.components.mathProblem.value <= 12)).toBe(true);
+      expect(cleared.components.mathProblem.value).toBe(24);
+      expect(unchanged.components.mathProblem.value).toBe(5);
+      expect(world.getResource('equationMode')).toMatchObject({ operation: 'divide', target: 12, promptValues: [24, 2] });
+      expect(activeSession(world)).toBe(focused);
+    } finally { random.mockRestore(); await world.dispose(); }
+  });
+
   test('Make board transitions skip unused two-pad tutorials while Arcade keeps them', async () => {
     const world = await createWorld();
     const transition = spyOn(world, 'setScreen').mockImplementation(async () => {});
