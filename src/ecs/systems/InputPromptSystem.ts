@@ -5,6 +5,7 @@ import { advanceInputPromptPresentation, detectInputPromptPlatform } from '../..
 import { loadControllerPromptPreference } from '../../ui/controllerPromptPreference';
 import { desktopInputProvider } from '../../platform/steamInput';
 import { updateInputPromptPlatform } from '../../ui/UIManager';
+import { unlockAudio } from '../../audio/audio';
 
 const KEYBOARD_ACTION_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', ' ', 'Enter', 'Escape', 'Tab'] as const;
 const GAMEPAD_BUTTONS = [0, 1, 9, 12, 13, 14, 15] as const;
@@ -59,6 +60,7 @@ export function addInputPromptSystemToEngine(systems: GameSystemRegistrar): void
       const nativeBindings = nativeController?.kind === 'steam' ? nativeController.prompts : undefined;
       const controllerActivity = Boolean(owner && ownerPad?.connected
         && hasGamepadActivity(owner.slot, ownerPad, inputPrompt));
+      if (controllerActivity) unlockAudio();
       rememberGamepadAxes(inputState.gamepads, inputPrompt);
       const presentation = advanceInputPromptPresentation(inputPrompt, {
         keyboard: keyboardActivity || inputState.pointer.justPressed(0),

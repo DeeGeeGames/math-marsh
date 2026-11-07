@@ -240,10 +240,12 @@ const createUIIntegration = function(engine: GameEngine) {
   };
   touchQuery.addEventListener('change', onTouchChange);
   cleanups.push(() => touchQuery.removeEventListener('change', onTouchChange));
-  (['pointerdown', 'keydown'] as const).forEach(function(eventName) {
-    document.addEventListener(eventName, unlockAudio, { once: true });
+  (['pointerdown', 'pointerup', 'click', 'keydown'] as const).forEach(function(eventName) {
+    document.addEventListener(eventName, unlockAudio);
     cleanups.push(() => document.removeEventListener(eventName, unlockAudio));
   });
+  unlockAudio();
+  cleanups.push(() => setAudioScene('silent'));
   cleanups.push(initializeTouchControlsLayout());
   cleanups.push(engine.onResourceChange('gameplayOnboardingSession', updateGameplayOnboardingUI));
 

@@ -51,7 +51,6 @@ type NoteSequenceOptions = {
 
 type AudioState = {
   context?: AudioContext;
-  unlocked: boolean;
   settings: AudioSettings;
   scene: AudioScene;
   music?: MusicLoop;
@@ -98,7 +97,6 @@ const musicSequenceValue = <T>(sequence: readonly T[], step: number): T => {
 };
 
 const audioState: AudioState = {
-  unlocked: false,
   settings: loadSettings(),
   scene: 'silent',
   lastMoveSoundAt: 0,
@@ -130,16 +128,13 @@ function saveSettings(settings: AudioSettings): void {
 }
 
 function getContext(): AudioContext {
-  if (audioState.context) return audioState.context;
+  if (audioState.context && audioState.context.state !== 'closed') return audioState.context;
   const context = new AudioContext();
   audioState.context = context;
+  context.addEventListener('statechange', function(): void {
+    if (audioState.context === context) startMusic(audioState.scene);
+  });
   return context;
-}
-
-function resumeAudioContext(): void {
-  const context = getContext();
-  if (context.state === 'running') return;
-  void context.resume();
 }
 
 function frequency(semitonesFromC4: number): number {
@@ -234,10 +229,12 @@ function stopMusic(): void {
   const music = audioState.music;
   if (!music) return;
 
-  const context = getContext();
+  const context = music.master.context;
   window.clearTimeout(music.timeout);
-  music.master.gain.cancelScheduledValues(context.currentTime);
-  music.master.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
+  if (context.state !== 'closed') {
+    music.master.gain.cancelScheduledValues(context.currentTime);
+    music.master.gain.setTargetAtTime(0.0001, context.currentTime, 0.08);
+  }
   window.setTimeout(() => music.master.disconnect(), 250);
   delete audioState.music;
 }
@@ -366,16 +363,15 @@ const scheduleLowTimeWarning = function(master: GainNode): void {
 
 function startMusic(scene: AudioScene): void {
   const config = musicSceneConfig(scene);
-  if (!audioState.settings.backgroundMusic || !audioState.unlocked || !config) {
+  const context = audioState.context;
+  if (!audioState.settings.backgroundMusic || context?.state !== 'running' || !config) {
     stopMusic();
     return;
   }
 
-  if (audioState.music?.scene === scene) return;
+  if (audioState.music?.scene === scene && audioState.music.master.context === context) return;
   stopMusic();
-  resumeAudioContext();
 
-  const context = getContext();
   const master = createGain(context, config.volume);
   const step = { value: 0 };
   config.schedule(master, step.value);
@@ -391,6 +387,10 @@ function startMusic(scene: AudioScene): void {
   const scheduleNextBeat = function(delayMs?: number): void {
     const intervalMs = delayMs ?? (scene === 'game' ? gameMusicIntervalMs() : config.intervalMs);
     music.timeout = window.setTimeout(function(): void {
+      if (context.state !== 'running') {
+        stopMusic();
+        return;
+      }
       if (music.warningPending) {
         music.warningPending = false;
         scheduleLowTimeWarning(master);
@@ -488,11 +488,8 @@ export function getAudioSettings(): AudioSettings {
 export function setAudioSettings(settings: AudioSettings): void {
   audioState.settings = settings;
   saveSettings(settings);
-  if (!settings.backgroundMusic) {
-    stopMusic();
-    return;
-  }
   startMusic(audioState.scene);
+  unlockAudio();
 }
 
 export function setAudioScene(scene: AudioScene): void {
@@ -512,9 +509,22 @@ export const setGameMusicTime = function(remainingSeconds: number): void {
 };
 
 export function unlockAudio(): void {
-  audioState.unlocked = true;
-  resumeAudioContext();
-  startMusic(audioState.scene);
+  if (!audioState.settings.backgroundMusic && !audioState.settings.soundEffects) return;
+  try {
+    const context = getContext();
+    if (context.state === 'running') {
+      startMusic(audioState.scene);
+      return;
+    }
+    // A blocked resume can remain pending. Later interactions must still retry.
+    void context.resume().then(function(): void {
+      if (audioState.context === context) startMusic(audioState.scene);
+    }).catch(function(): void {
+      // Leave audio available for another attempt on user interaction.
+    });
+  } catch {
+    // Context creation can fail too; retry on the next interaction.
+  }
 }
 
 export function playSound(effect: SoundEffect): void {
@@ -530,9 +540,9 @@ export function playSound(effect: SoundEffect): void {
     audioState.lastMoveSoundAt = now;
   }
 
-  audioState.unlocked = true;
-  const context = getContext();
-  resumeAudioContext();
+  unlockAudio();
+  const context = audioState.context;
+  if (context?.state !== 'running') return;
   playEffectBody(effect, context);
 }
 
@@ -549,7 +559,6 @@ export const createAudioPreview = function(): {
     setAudioScene('silent');
     const context = audioState.context;
     delete audioState.context;
-    audioState.unlocked = false;
     if (context) void context.close();
   };
   return {
