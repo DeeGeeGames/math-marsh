@@ -66,6 +66,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 contextBridge.exposeInMainWorld('mathMarshDesktop', {
 	unlockAchievements: names => ipcRenderer.invoke('desktop:achievements', names),
 	steamRole: ipcRenderer.sendSync('desktop:steam-role'),
+	...(ipcRenderer.sendSync('desktop:text-input-supported') === true ? {
+		textInput: {
+			show: bounds => ipcRenderer.invoke('desktop:show-text-input', bounds),
+			dismiss: () => ipcRenderer.invoke('desktop:dismiss-text-input'),
+		},
+	} : {}),
 	openFullGame: () => ipcRenderer.invoke('desktop:open-full-game'),
 	...(profileStorage ? { profileStorage } : {}),
 	input: {

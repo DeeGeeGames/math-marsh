@@ -491,3 +491,61 @@ test('profile edits and active deletion survive reload without losing another le
   await expect(page.locator('[data-player-row]')).toHaveCount(1);
   await expect(page.locator('[data-active-player-row]').getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '1');
 });
+
+
+test('Deck name forms request the keyboard after focus and stay usable when it fails', async ({ page }, testInfo) => {
+  const errors: string[] = [];
+  page.on('pageerror', function(error): void { errors.push(error.message); });
+  await page.addInitScript(function(): void {
+    localStorage.clear();
+    let requests = 0;
+    window.mathMarshDesktop = {
+      textInput: {
+        show: async function(bounds): Promise<boolean> {
+          requests++;
+          document.documentElement.dataset.keyboardRequests = String(requests);
+          document.documentElement.dataset.keyboardFocused = document.activeElement?.getAttribute('name') ?? '';
+          document.documentElement.dataset.keyboardBounds = JSON.stringify(bounds);
+          // A later Steam failure must not prevent editing, cancelling, or retrying.
+          if (requests === 2) throw new Error('Steam keyboard unavailable');
+          return true;
+        },
+        dismiss: async function(): Promise<boolean> {
+          document.documentElement.dataset.keyboardDismissed = 'true';
+          return true;
+        },
+      },
+    };
+  });
+  await page.goto('/');
+  await skipSplash(page);
+  const input = page.getByRole('dialog').getByLabel('Player name');
+  await expect(input).toBeFocused();
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-requests', '1');
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-focused', 'playerName');
+  const bounds = await input.boundingBox();
+  expect(bounds?.width).toBeGreaterThan(0);
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-bounds', /"width":[1-9]/);
+  await page.screenshot({ path: testInfo.outputPath('deck-name-focus.png') });
+  await input.pressSequentially('Mira');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-dismissed', 'true');
+
+  await openRoster(page);
+  await page.getByRole('button', { name: /Add player/ }).click();
+  await expect(input).toBeFocused();
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-requests', '2');
+  await input.fill('Jordan');
+  await input.press('Enter');
+  await expect(page.locator('#player-profile-badge')).toContainText('Jordan');
+
+  await openRoster(page);
+  await page.getByRole('button', { name: 'Manage players' }).click();
+  await page.locator('.player-management-row').filter({ hasText: 'Jordan' }).getByRole('button', { name: 'Rename' }).click();
+  await expect(input).toBeFocused();
+  await expect(page.locator('html')).toHaveAttribute('data-keyboard-requests', '3');
+  await pressActionKey(page, 'Escape');
+  await expect(page.getByRole('dialog', { name: 'Manage players' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
