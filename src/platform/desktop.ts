@@ -52,6 +52,15 @@ export type RendererInputDiagnostic = {
 
 export type SteamAppRole = 'demo' | 'paid' | null;
 
+export type DesktopTextInputController = {
+	show: (bounds: Readonly<{ x: number; y: number; width: number; height: number }>) => Promise<boolean>;
+	dismiss: () => Promise<boolean>;
+};
+
+export const getDesktopTextInputController = function(): DesktopTextInputController | undefined {
+	return typeof window === 'undefined' ? undefined : getDesktopPlatform()?.textInput;
+};
+
 export type DesktopPlatform = {
 	unlockAchievements?: (names: readonly string[]) => Promise<void>;
 	steamRole?: SteamAppRole;
@@ -59,6 +68,7 @@ export type DesktopPlatform = {
 	profileStorage?: ProfileStorage;
 	input?: DesktopInputController;
 	fullscreen?: DesktopFullscreenController;
+	textInput?: DesktopTextInputController;
 	quit?: () => Promise<void>;
 };
 

@@ -153,6 +153,28 @@ app.whenReady().then(() => {
 		const diagnostic = normalizeRendererInputDiagnostic(value);
 		if (diagnostic) inputDiagnostics.record('renderer', diagnostic);
 	});
+	const supportsTextInput = function () {
+		try { return steamSession?.steam.utils.isSteamRunningOnSteamDeck() === true; }
+		catch { return false; }
+	};
+	ipcMain.on('desktop:text-input-supported', (event) => {
+		event.returnValue = Boolean(BrowserWindow.fromWebContents(event.sender)) && supportsTextInput();
+	});
+	ipcMain.handle('desktop:show-text-input', (event, bounds) => {
+		const window = BrowserWindow.fromWebContents(event.sender);
+		if (!window?.isFocused() || !supportsTextInput()) return false;
+		if (!bounds || ![bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isSafeInteger)
+			|| bounds.x < 0 || bounds.y < 0 || bounds.width <= 0 || bounds.height <= 0) return false;
+		try {
+			// EFloatingGamepadTextInputMode.SingleLine. The focused DOM input receives OS keystrokes.
+			return steamSession.steam.utils.showFloatingGamepadTextInput(0, bounds.x, bounds.y, bounds.width, bounds.height);
+		} catch { return false; }
+	});
+	ipcMain.handle('desktop:dismiss-text-input', (event) => {
+		if (!BrowserWindow.fromWebContents(event.sender) || !supportsTextInput()) return false;
+		try { return steamSession.steam.utils.dismissFloatingGamepadTextInput(); }
+		catch { return false; }
+	});
 	ipcMain.handle('desktop:fullscreen-active', (event) => {
 		const window = BrowserWindow.fromWebContents(event.sender);
 		return window?.isFullScreen() ?? false;

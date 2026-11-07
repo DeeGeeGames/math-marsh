@@ -1,6 +1,7 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { type PlayerProfile, type PlayerProfilesError } from '../../profiles/types';
 import { MAX_PLAYER_PROFILES, operationProgressForProfile, PLAYER_NAME_MAX_LENGTH } from '../../profiles/rules';
+import { getDesktopTextInputController } from '../../platform/desktop';
 import { MATH_FINAL_STEP } from '../../ecs/mathSteps';
 import type { EquationOperation } from '../../ecs/types';
 import { mathProgressCue } from '../modeSelectSetup';
@@ -96,7 +97,10 @@ function profileNameForm(
           <button type="button" data-profile-name-confirm id=${submitId} class="btn-success ${BTN_CHROME} ${BTN_SIZE.mdResponsive}">${options.button}</button>
           ${options.form === 'setup' ? nothing : html`
             <button type="button" class="btn-secondary ${BTN_CHROME} ${BTN_SIZE.mdResponsive}"
-              @click=${(): void => actions.closePlayerScreen(options.cancelFocusSelector?.() ?? '#player-add-button')}>
+              @click=${(): void => {
+                dismissNameKeyboard();
+                actions.closePlayerScreen(options.cancelFocusSelector?.() ?? '#player-add-button');
+              }}>
               Cancel
             </button>
           `}
@@ -126,6 +130,32 @@ function writeError(root: HTMLElement, error: PlayerProfilesError | undefined): 
   message.textContent = error ? copy[error] : '';
 }
 
+const dismissNameKeyboard = function(): void {
+  void getDesktopTextInputController()?.dismiss().catch(() => {});
+};
+
+const showNameKeyboard = function(input: HTMLInputElement): void {
+  const keyboard = getDesktopTextInputController();
+  if (!keyboard || !input.isConnected || input.getClientRects().length === 0 || input.closest('[inert]')) return;
+  input.focus();
+  const bounds = input.getBoundingClientRect();
+  const scale = window.devicePixelRatio;
+  void keyboard.show({
+    x: Math.max(0, Math.round(bounds.x * scale)),
+    y: Math.max(0, Math.round(bounds.y * scale)),
+    width: Math.max(1, Math.round(bounds.width * scale)),
+    height: Math.max(1, Math.round(bounds.height * scale)),
+  }).catch(() => {});
+};
+
+// onShow runs before the runtime reveals the view and applies its initial focus.
+const prepareNameKeyboard = function(input: HTMLInputElement): void {
+  if (!getDesktopTextInputController()) return;
+  queueMicrotask(function(): void {
+    showNameKeyboard(input);
+  });
+};
+
 function wireProfileNameForm(
   root: HTMLElement,
   complete: (name: string) => PlayerProfilesError | undefined,
@@ -137,8 +167,11 @@ function wireProfileNameForm(
   // Profile changes are local actions. Native submission is blocked in embeds
   // whose sandbox omits allow-forms, before a submit handler can run.
   const completeName = function(): void {
-    writeError(root, complete(input.value));
+    const error = complete(input.value);
+    writeError(root, error);
+    if (!error) dismissNameKeyboard();
   };
+  input.addEventListener('click', () => showNameKeyboard(input));
   confirm.addEventListener('click', completeName);
   form.addEventListener('keydown', (event): void => {
     if (event.target !== input || event.key !== 'Enter' || event.isComposing) return;
@@ -249,7 +282,10 @@ export function createPlayerSetupScreenSpec(actions: ScreenSpecActions): ScreenS
     initialFocusSelector: '#player-setup-name-submit',
     onShow: (root): void => {
       const input = root.querySelector<HTMLInputElement>('[data-profile-name-input]');
-      if (input) input.value = actions.getNextPlayerName();
+      if (input) {
+        input.value = actions.getNextPlayerName();
+        prepareNameKeyboard(input);
+      }
     },
     wire: root => wireProfileNameForm(root, actions.createPlayer),
     prompts: [{ action: 'select', label: 'Continue' }],
@@ -286,11 +322,17 @@ export function createPlayerAddScreenSpec(actions: ScreenSpecActions): ScreenSpe
     initialFocusSelector: '#player-add-name-submit',
     onShow: (root): void => {
       const input = root.querySelector<HTMLInputElement>('[data-profile-name-input]');
-      if (input) input.value = actions.getNextPlayerName();
+      if (input) {
+        input.value = actions.getNextPlayerName();
+        prepareNameKeyboard(input);
+      }
       writeError(root, undefined);
     },
     wire: root => wireProfileNameForm(root, actions.createPlayer),
-    onCancel: () => actions.closePlayerScreen('#player-add-button'),
+    onCancel: (): void => {
+      dismissNameKeyboard();
+      actions.closePlayerScreen('#player-add-button');
+    },
     prompts: [
       { action: 'select', label: 'Create player' },
       { action: 'back', label: 'Cancel' },
@@ -333,7 +375,10 @@ export function createPlayerRenameScreenSpec(actions: ScreenSpecActions): Screen
     onShow: (root): void => {
       const profile = actions.getPlayerActionProfile();
       const input = root.querySelector<HTMLInputElement>('[data-profile-name-input]');
-      if (input) input.value = profile?.name ?? '';
+      if (input) {
+        input.value = profile?.name ?? '';
+        prepareNameKeyboard(input);
+      }
       writeError(root, undefined);
     },
     wire: root => wireProfileNameForm(root, name => {
@@ -343,6 +388,7 @@ export function createPlayerRenameScreenSpec(actions: ScreenSpecActions): Screen
     onCancel: (): void => {
       const profile = actions.getPlayerActionProfile();
       if (!profile) return;
+      dismissNameKeyboard();
       actions.closePlayerScreen(`[data-rename-profile="${CSS.escape(profile.id)}"]`);
     },
     prompts: [

@@ -24,7 +24,7 @@ const loadCommonJs = function (file, dependencies, globals = {}) {
 	return module.exports;
 };
 
-const createBridge = async function (environment = {}) {
+const createBridge = async function (environment = {}, steamUtils) {
 	const appListeners = new Map();
 	const ipcListeners = new Map();
 	const ipcHandlers = new Map();
@@ -81,7 +81,9 @@ const createBridge = async function (environment = {}) {
 
 	const sdk = {
 		setSdkPath: function () {},
-		init: function () { sdkInitCalls++; return false; },
+		init: function () { sdkInitCalls++; return Boolean(steamUtils); },
+		utils: steamUtils,
+		getStatus: function () { return { steamId: 'test-steam-id' }; },
 		shutdown: function () {},
 	};
 	const steamSession = loadCommonJs(join(electronDirectory, 'steam-session.cjs'), {
@@ -165,6 +167,7 @@ const createBridge = async function (environment = {}) {
 
 	return {
 		api: windowObject.mathMarshDesktop,
+		invokeUnknown: function (channel, ...args) { return ipcHandlers.get(channel)({ sender: {} }, ...args); },
 		diagnosticLines,
 		setRendererClock: function (clock) { rendererClock = clock; },
 		sendUnknownDiagnostic: function (diagnostic) { ipcListeners.get('desktop:input-diagnostics')?.({ sender: {} }, diagnostic); },
@@ -180,6 +183,45 @@ const createBridge = async function (environment = {}) {
 };
 
 describe('Electron demo bridge integration', function () {
+	test('Deck keyboard bridge forwards valid fields and safely rejects unavailable or invalid requests', async function () {
+		const requests = [];
+		let available = true;
+		let failure = false;
+		let dismissals = 0;
+		const utils = {
+			isSteamRunningOnSteamDeck: function () { return available; },
+			showFloatingGamepadTextInput: function (...args) {
+				if (failure) throw new Error('Keyboard unavailable');
+				requests.push(args);
+				return true;
+			},
+			dismissFloatingGamepadTextInput: function () { dismissals++; return true; },
+		};
+		const bridge = await createBridge({ SteamAppId: '5493870' }, utils);
+		const bounds = { x: 100, y: 200, width: 300, height: 40 };
+		try {
+			expect(await bridge.api.textInput.show(bounds)).toBe(true);
+			expect(requests).toEqual([[0, 100, 200, 300, 40]]);
+			for (const invalid of [null, { ...bounds, x: NaN }, { ...bounds, width: 0 }, { ...bounds, y: -1 }]) {
+				expect(await bridge.api.textInput.show(invalid)).toBe(false);
+			}
+			expect(await bridge.invokeUnknown('desktop:show-text-input', bounds)).toBe(false);
+			expect(requests).toHaveLength(1);
+			expect(await bridge.api.textInput.dismiss()).toBe(true);
+			expect(dismissals).toBe(1);
+			failure = true;
+			expect(await bridge.api.textInput.show(bounds)).toBe(false);
+			available = false;
+			expect(await bridge.api.textInput.show(bounds)).toBe(false);
+		} finally { bridge.cleanup(); }
+		const desktop = await createBridge({ SteamAppId: '5493870' }, utils);
+		const unavailable = await createBridge({ SteamAppId: '5493870' });
+		try {
+			expect(desktop.api.textInput).toBeUndefined();
+			expect(unavailable.api.textInput).toBeUndefined();
+		} finally { desktop.cleanup(); unavailable.cleanup(); }
+	});
+
 	test('diagnostic bridge is opt-in, filters senders and payloads, and deduplicates renderer frames', async function () {
 		const disabled = await createBridge({ SteamAppId: '5493870' });
 		try {
