@@ -8,13 +8,18 @@ export interface PracticeFact {
   readonly result: number;
 }
 
-export interface PracticeTopic {
-  readonly kind: 'table' | 'make';
+interface PracticeTopicBase {
   readonly id: string;
   readonly label: string;
   readonly operation: EquationOperation;
   readonly facts: readonly PracticeFact[];
 }
+
+export type PracticeRange = Readonly<{ min: number; max: number }>;
+export type PracticeTopic = PracticeTopicBase & (
+  | Readonly<{ kind: 'table' | 'make' }>
+  | Readonly<{ kind: 'range'; answerRange: PracticeRange; operandRange: PracticeRange }>
+);
 
 export const practiceFactId = function (
   operation: EquationOperation,
@@ -66,6 +71,26 @@ const additionGoals = range(3, 20).map(target => ({
   facts: range(0, target).map(left => createFact('add', left, target - left)),
 }));
 
+const rangeTopic = function (
+  operation: 'add' | 'subtract',
+  operandRange: PracticeRange,
+  answerRange: PracticeRange,
+): PracticeTopic {
+  return {
+    id: `${operation}-range-${answerRange.min}-${answerRange.max}`,
+    label: `${operation === 'add' ? 'Sums' : 'Answers'} ${answerRange.min}–${answerRange.max}`,
+    kind: 'range',
+    operation,
+    answerRange,
+    operandRange,
+    facts: range(operandRange.min, operandRange.max).flatMap(function(left) {
+      return range(operandRange.min, operandRange.max)
+        .map(function(right) { return createFact(operation, left, right); })
+        .filter(function(fact) { return fact.result >= answerRange.min && fact.result <= answerRange.max; });
+    }),
+  };
+};
+
 /** The facts on each topic are the authoritative base membership and denominator. */
 export const PRACTICE_TOPICS: readonly PracticeTopic[] = [
   ...range(1, 12).map(table => ({
@@ -99,6 +124,14 @@ export const PRACTICE_TOPICS: readonly PracticeTopic[] = [
     operation: 'subtract' as const,
     facts: uniqueFacts(goal.facts.flatMap(inverseFacts)),
   })),
+  ...[5, 10, 20, 100].map(function(max) {
+    return rangeTopic('add', { min: 1, max: max - 1 }, { min: 2, max });
+  }),
+  rangeTopic('subtract', { min: 1, max: 5 }, { min: 1, max: 4 }),
+  rangeTopic('subtract', { min: 1, max: 10 }, { min: 1, max: 9 }),
+  ...[20, 100].map(function(max) {
+    return rangeTopic('subtract', { min: 0, max }, { min: 0, max });
+  }),
 ];
 
 export const practiceTopic = function (id: unknown): PracticeTopic | undefined {

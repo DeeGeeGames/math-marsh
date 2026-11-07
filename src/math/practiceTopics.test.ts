@@ -24,8 +24,8 @@ const range = function (start: number, end: number): number[] {
 
 describe('Practice topic catalog', () => {
   test('has stable topic identities and safely rejects unknown persisted input', () => {
-    expect(PRACTICE_TOPICS).toHaveLength(60);
-    expect(new Set(PRACTICE_TOPICS.map(topic => topic.id)).size).toBe(60);
+    expect(PRACTICE_TOPICS).toHaveLength(68);
+    expect(new Set(PRACTICE_TOPICS.map(topic => topic.id)).size).toBe(68);
     for (const invalid of [undefined, null, {}, [], 1, 'retired', 'multiply-table-0', 'divide-table-13']) {
       expect(practiceTopic(invalid)).toBeUndefined();
     }
@@ -56,9 +56,9 @@ describe('Practice topic catalog', () => {
     });
   });
 
-  test('addition and subtraction collections contain only Make 3 through Make 20', () => {
+  test('addition and subtraction retain Make 3 through Make 20 in their existing order', () => {
     for (const operation of ['add', 'subtract']) {
-      expect(PRACTICE_TOPICS.filter(topic => topic.operation === operation).map(topic => topic.id))
+      expect(PRACTICE_TOPICS.filter(topic => topic.operation === operation && topic.kind === 'make').map(topic => topic.id))
         .toEqual(range(3, 20).map(target => `${operation}-make-${target}`));
       for (const suffix of ['doubles', 'near-doubles', 'mixed-to-20', 'make-0', 'make-1', 'make-2', 'make-21']) {
         expect(practiceTopic(`${operation}-${suffix}`)).toBeUndefined();
@@ -70,6 +70,37 @@ describe('Practice topic catalog', () => {
         expect(factIds(`${operation}-make-${target}`)).toContain(`${operation}:${operation === 'add' ? 0 : target}:${target}`);
         expect(factIds(`${operation}-make-${target}`)).toContain(`${operation}:${target}:0`);
       }
+    }
+  });
+
+  test('range topics cover each requested answer using only permitted operands', () => {
+    const cases = [
+      { id: 'add-range-2-5', minOperand: 1, maxOperand: 4, minAnswer: 2, maxAnswer: 5, count: 10 },
+      { id: 'add-range-2-10', minOperand: 1, maxOperand: 9, minAnswer: 2, maxAnswer: 10, count: 45 },
+      { id: 'add-range-2-20', minOperand: 1, maxOperand: 19, minAnswer: 2, maxAnswer: 20, count: 190 },
+      { id: 'add-range-2-100', minOperand: 1, maxOperand: 99, minAnswer: 2, maxAnswer: 100, count: 4950 },
+      { id: 'subtract-range-1-4', minOperand: 1, maxOperand: 5, minAnswer: 1, maxAnswer: 4, count: 10 },
+      { id: 'subtract-range-1-9', minOperand: 1, maxOperand: 10, minAnswer: 1, maxAnswer: 9, count: 45 },
+      { id: 'subtract-range-0-20', minOperand: 0, maxOperand: 20, minAnswer: 0, maxAnswer: 20, count: 231 },
+      { id: 'subtract-range-0-100', minOperand: 0, maxOperand: 100, minAnswer: 0, maxAnswer: 100, count: 5151 },
+    ];
+    for (const scenario of cases) {
+      const facts = topicFacts(scenario.id);
+      expect(facts).toHaveLength(scenario.count);
+      expect(new Set(facts.map(fact => fact.result))).toEqual(new Set(range(scenario.minAnswer, scenario.maxAnswer)));
+      expect(facts.every(fact => fact.left >= scenario.minOperand && fact.left <= scenario.maxOperand
+        && fact.right >= scenario.minOperand && fact.right <= scenario.maxOperand)).toBe(true);
+    }
+    expect(factIds('add-range-2-5')).toContain('add:1:1');
+    expect(factIds('add-range-2-5')).toContain('add:1:4');
+    expect(factIds('add-range-2-5')).toContain('add:4:1');
+    expect(factIds('subtract-range-1-4')).toContain('subtract:5:1');
+    expect(factIds('subtract-range-1-9')).toContain('subtract:10:1');
+    for (const max of [20, 100]) {
+      const ids = factIds(`subtract-range-0-${max}`);
+      expect(ids).toContain('subtract:0:0');
+      expect(ids).toContain(`subtract:${max}:${max}`);
+      expect(ids).toContain(`subtract:${max}:0`);
     }
   });
 

@@ -169,6 +169,11 @@
 	line-height: 1;
 }
 
+.practice-topic-ring .practice-topic-number[data-range="true"] {
+	font-size: clamp(1.25rem, 2.5vw, 2rem);
+	letter-spacing: -.05em;
+}
+
 .practice-topic-check {
 	position: absolute;
 	right: 0;

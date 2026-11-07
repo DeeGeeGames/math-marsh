@@ -47,6 +47,19 @@ describe('Practice evidence', function() {
     expect(progress.lastSelection).toEqual(selection);
   });
 
+  test('range selections and new boundary facts survive reload alongside existing Make progress', function() {
+    for (const topicId of ['add-range-2-100', 'subtract-range-0-100']) {
+      const selected = { topicId, related: true, pond: 'expert' } as const;
+      const facts = ['add:1:99', 'subtract:100:0', 'subtract:100:100', 'subtract:0:0', 'add:2:3'];
+      const progress = facts.reduce(function(current, factId) {
+        return recordPracticeEvidence(current, { factId, correct: true });
+      }, rememberPracticeSelection(emptyPracticeProgress(), selected));
+      expect(Object.keys(progress.facts)).toEqual(facts);
+      expect(parsePracticeProgress(serializePracticeProgress(progress))).toEqual(progress);
+      expect(practiceTopicEvidence(progress, topic).solved).toBe(1);
+    }
+  });
+
   test('Continue skips solved rings after reload and retains pond and related-fact options', function() {
     const first = practiceTopic('add-make-3');
     if (!first) throw new Error('Missing Make 3');
@@ -153,7 +166,7 @@ describe('Practice evidence', function() {
       'subtract:2:2': { attempts: -1, correct: 0 },
       'add:-1:1': { attempts: 1, correct: 1 },
       'subtract:0:1': { attempts: 1, correct: 1 },
-      'add:0:21': { attempts: 1, correct: 1 },
+      'add:0:101': { attempts: 1, correct: 1 },
     } });
     expect(parsed.facts).toEqual({});
   });
