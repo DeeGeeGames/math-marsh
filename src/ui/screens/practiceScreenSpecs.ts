@@ -18,13 +18,15 @@ const RELATED_OPERATIONS: Readonly<Record<EquationOperation, string>> = { add: '
 const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence): TemplateResult | typeof nothing {
 	const fact = topic.facts[0];
 	if (!fact) return nothing;
-	const number = topic.operation === 'add' ? fact.result : topic.operation === 'divide' ? fact.right : fact.left;
-	const caption = topic.kind === 'make' ? 'Make' : topic.operation === 'multiply' ? 'Times table' : 'Divide by';
+	const number = topic.kind === 'range' ? `${topic.answerRange.min}–${topic.answerRange.max}`
+		: topic.operation === 'add' ? fact.result : topic.operation === 'divide' ? fact.right : fact.left;
+	const caption = topic.kind === 'range' ? topic.operation === 'add' ? 'Sums' : 'Answers'
+		: topic.kind === 'make' ? 'Make' : topic.operation === 'multiply' ? 'Times table' : 'Divide by';
 	const complete = summary.status === 'Practiced';
 	const status = complete ? 'All solved' : summary.status === 'New' ? 'New' : 'In progress';
 	const filled = summary.total > 0 ? summary.solved / summary.total * 100 : 0;
 	return html`<button type="button" class="practice-topic" data-practice-topic=${topic.id} data-complete=${String(complete)}
-		aria-label=${`${topic.label}. ${status}. ${summary.attempted} facts practiced. ${summary.solved} of ${summary.total} facts solved at least once.`}>
+		aria-label=${`${topic.label}. ${topic.kind === 'range' ? `Numbers ${topic.operandRange.min}–${topic.operandRange.max}. ` : ''}${status}. ${summary.attempted} facts practiced. ${summary.solved} of ${summary.total} facts solved at least once.`}>
 		<span class="practice-topic-caption" aria-hidden="true">${caption}</span>
 		<span class="practice-topic-ring" aria-hidden="true">
 			<svg viewBox="0 0 110 110" focusable="false">
@@ -32,7 +34,7 @@ const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence)
 				<circle class="practice-topic-fill" cx="55" cy="55" r="48" pathLength="100"
 					stroke-dasharray=${`${filled} 100`} visibility=${filled > 0 ? 'visible' : 'hidden'}></circle>
 			</svg>
-			<strong class="practice-topic-number">${number}</strong>
+			<strong class="practice-topic-number" data-range=${String(topic.kind === 'range')}>${number}</strong>
 			${complete ? html`<span class="practice-topic-check">✓</span>` : nothing}
 		</span>
 		<span class="practice-topic-status" aria-hidden="true">${status}</span>
@@ -105,6 +107,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 		const summary = practiceTopicEvidence(actions.getPracticeProgress(), topic, related);
 		return html`<h1 class="pond-title text-gold">${topic.label}</h1>
 			<div class="practice-preview-evidence">${evidence(summary)}</div>
+			${topic.kind === 'range' ? html`<p class="practice-note" data-practice-range-bounds>${operationLabels[topic.operation]} numbers ${topic.operandRange.min}–${topic.operandRange.max} · Solve the answer</p>` : nothing}
 			<div class="practice-examples" aria-label="Example equations">${sample.map(function(fact, index): TemplateResult { return html`<span>${practiceFactExample(topic, fact, index)}</span>`; })}</div>
 			<button type="button" class="btn-secondary practice-option" data-practice-related aria-pressed=${String(related)}>
 				<strong>Related facts: ${related ? 'On' : 'Off'}</strong><span>Include related ${RELATED_OPERATIONS[topic.operation]} problems</span>

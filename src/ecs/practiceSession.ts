@@ -39,6 +39,7 @@ export const currentPracticeFact = function(session: PracticeSession): PracticeF
 };
 
 const promptForPracticeFact = function(topic: PracticeTopic | undefined, fact: PracticeFact, solved: number, mode: EquationModeState): EquationModeState {
+  if (topic?.kind === 'range') return { ...mode, promptKind: 'selectResult', operandsRequired: 1 };
   if (topic?.kind !== 'make') return mode;
   // Addition's fixed sum and subtraction's fixed minuend must stay visible.
   const promptKind = fact.operation === 'add'
@@ -55,7 +56,8 @@ export const practiceFactExample = function(topic: PracticeTopic, fact: Practice
 
 export const practiceEquationMode = function(session: PracticeSession, level: number, clearedThisLevel = 0): EquationModeState {
   const fact = currentPracticeFact(session);
-  const mode = promptForPracticeFact(practiceTopic(session.selection.topicId), fact, session.solved,
+  const topic = practiceTopic(session.selection.topicId);
+  const mode = promptForPracticeFact(topic, fact, session.solved,
     createEquationModeState(level, session.selection.pond, [fact.operation], clearedThisLevel));
   const facts = session.deck.filter(candidate => candidate.operation === fact.operation);
   const values = facts.flatMap(function(candidate): number[] {
@@ -68,7 +70,7 @@ export const practiceEquationMode = function(session: PracticeSession, level: nu
   return {
     ...mode,
     // Keep all integers in the topic's bounds, including nonmultiples.
-    decoyRange: { min: Math.min(1, ...values), max: Math.max(...values) },
+    decoyRange: { min: Math.min(topic?.kind === 'range' ? Infinity : 1, ...values), max: Math.max(...values) },
     operandRanges: {
       left: { min: Math.min(...facts.map(candidate => candidate.left)), max: Math.max(...facts.map(candidate => candidate.left)) },
       right: { min: Math.min(...facts.map(candidate => candidate.right)), max: Math.max(...facts.map(candidate => candidate.right)) },

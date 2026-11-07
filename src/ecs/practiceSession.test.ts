@@ -42,20 +42,33 @@ describe('focused Practice sessions', () => {
     expect(replay?.deck).not.toBe(original.deck);
   });
 
-  test('all topic options and ponds preserve exact catalog membership across prompt cycles and high levels', () => {
+  test('all topic options and ponds preserve exact deck membership and prompt cycles at high levels', () => {
     for (const topic of PRACTICE_TOPICS) {
       for (const related of [false, true]) {
         for (const pond of ['easy', 'medium', 'expert'] as const) {
           const session = createPracticeSession('learner', { topicId: topic.id, related, pond });
           if (!session) throw new Error('Missing catalog session');
           expect(new Set(session.deck.map(fact => fact.id))).toEqual(new Set(practiceFacts(topic, related).map(fact => fact.id)));
-          for (const [index, fact] of session.deck.entries()) {
+          // Large range decks retain exhaustive membership checks above; sample
+          // their session prompts, including both operations when related is on.
+          const indices = topic.kind === 'range'
+            ? [...new Set([
+              ...Array.from({ length: Math.min(PRACTICE_SESSION_LENGTH, session.deck.length) }, (_, index) => index),
+              session.deck.length - 1,
+              session.deck.findIndex(fact => fact.operation !== topic.operation),
+              session.deck.findIndex(fact => fact.operation === topic.operation && fact.result === topic.answerRange.min),
+              session.deck.findIndex(fact => fact.operation === topic.operation && fact.result === topic.answerRange.max),
+            ])].filter(index => index >= 0)
+            : session.deck.map((_, index) => index);
+          for (const index of indices) {
+            const fact = session.deck[index];
+            if (!fact) throw new Error('Missing sampled fact');
             const focused = { ...session, solved: index };
             for (const level of [1, 2, 3, 11, 12, 99]) {
               const mode = practiceEquationMode(focused, level, 4);
               const candidate = practiceEquationCandidate(focused);
               const prepared = { ...mode, target: candidate.target, promptValues: candidate.operandValues };
-              const expectedKind = topic.operation === 'add' || topic.operation === 'subtract'
+              const expectedKind = topic.kind === 'range' ? 'selectResult' : topic.kind === 'make'
                 ? fact.operation === 'add'
                   ? index % 2 === 0 ? 'selectLeftOperand' : 'selectRightOperand'
                   : index % 2 === 0 ? 'selectRightOperand' : 'selectResult'
@@ -118,6 +131,16 @@ describe('focused Practice sessions', () => {
       { topicId: 'divide-table-2', operation: 'multiply', level: 1, min: 1, max: 24 },
       { topicId: 'add-make-5', operation: 'add', level: 1, min: 0, max: 5 },
       { topicId: 'subtract-make-5', operation: 'subtract', level: 1, min: 0, max: 5 },
+      { topicId: 'add-range-2-5', operation: 'add', level: 99, min: 2, max: 5 },
+      { topicId: 'add-range-2-10', operation: 'add', level: 99, min: 2, max: 10 },
+      { topicId: 'add-range-2-20', operation: 'add', level: 99, min: 2, max: 20 },
+      { topicId: 'add-range-2-100', operation: 'add', level: 99, min: 2, max: 100 },
+      { topicId: 'add-range-2-5', operation: 'subtract', level: 99, min: 1, max: 4 },
+      { topicId: 'subtract-range-1-4', operation: 'subtract', level: 99, min: 1, max: 4 },
+      { topicId: 'subtract-range-1-9', operation: 'subtract', level: 99, min: 1, max: 9 },
+      { topicId: 'subtract-range-0-20', operation: 'subtract', level: 99, min: 0, max: 20 },
+      { topicId: 'subtract-range-0-100', operation: 'subtract', level: 99, min: 0, max: 100 },
+      { topicId: 'subtract-range-1-4', operation: 'add', level: 99, min: 2, max: 5 },
     ] as const;
     const random = spyOn(Math, 'random');
     try {

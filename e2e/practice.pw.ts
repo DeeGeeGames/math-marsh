@@ -112,6 +112,74 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844
 	});
 }
 
+test('range topics show their bounds, start sessions, and retain fact progress after reload', async ({ page }, testInfo) => {
+	test.setTimeout(90_000);
+	await seedProfiles(page);
+	await page.goto('/practice');
+	await openPractice(page);
+	const scenarios = [
+		{ operation: 'add', name: 'Addition', ranges: [
+			{ id: 'add-range-2-5', label: 'Sums 2–5', numbers: '1–4' },
+			{ id: 'add-range-2-10', label: 'Sums 2–10', numbers: '1–9' },
+			{ id: 'add-range-2-20', label: 'Sums 2–20', numbers: '1–19' },
+			{ id: 'add-range-2-100', label: 'Sums 2–100', numbers: '1–99' },
+		] },
+		{ operation: 'subtract', name: 'Subtraction', ranges: [
+			{ id: 'subtract-range-1-4', label: 'Answers 1–4', numbers: '1–5' },
+			{ id: 'subtract-range-1-9', label: 'Answers 1–9', numbers: '1–10' },
+			{ id: 'subtract-range-0-20', label: 'Answers 0–20', numbers: '0–20' },
+			{ id: 'subtract-range-0-100', label: 'Answers 0–100', numbers: '0–100' },
+		] },
+	];
+	for (const scenario of scenarios) {
+		await page.locator(`[data-practice-operation="${scenario.operation}"]`).click();
+		for (const range of scenario.ranges) {
+			const tile = page.locator(`[data-practice-topic="${range.id}"]`);
+			await expect(tile).toHaveAccessibleName(new RegExp(`Numbers ${range.numbers}`));
+			await tile.focus();
+			await press(page, 'Enter');
+			await expect(page.locator('#practice-screen h1')).toHaveText(range.label);
+			await expect(page.locator('[data-practice-range-bounds]')).toHaveText(`${scenario.name} numbers ${range.numbers} · Solve the answer`);
+			const examples = await page.locator('.practice-examples > span').allTextContents();
+			expect(examples).toHaveLength(3);
+			expect(examples.every(example => example.endsWith('= _'))).toBe(true);
+			if (range.id === 'add-range-2-5') {
+				await page.locator('[data-practice-related]').click();
+				await expect(page.locator('[data-practice-range-bounds]')).toContainText('Addition numbers 1–4');
+				await expect(page.locator('.practice-examples > span').last()).toContainText(' - ');
+				await page.locator('[data-practice-related]').click();
+			}
+			await page.screenshot({ path: testInfo.outputPath(`${range.id}-preview.png`) });
+			await page.locator('[data-practice-start]').click();
+			await expect(page.locator('#game-canvas')).toBeVisible();
+			expect(await page.evaluate(() => window.practiceFixture.selection()?.topicId)).toBe(range.id);
+			await expect.poll(() => page.locator('#game-canvas').evaluate(function(canvas) {
+				if (!(canvas instanceof HTMLCanvasElement)) throw new Error('Missing game canvas');
+				const context = canvas.getContext('2d');
+				if (!context) throw new Error('Missing canvas context');
+				return context.getImageData(0, 0, canvas.width, canvas.height).data
+					.some((value, index) => index % 4 === 3 && value > 0);
+			})).toBe(true);
+			await page.screenshot({ path: testInfo.outputPath(`${range.id}-gameplay.png`) });
+			await page.evaluate(() => window.practiceFixture.completeSession());
+			await expect(page.getByRole('heading', { name: 'Practice complete', exact: true })).toBeVisible();
+			await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
+			await page.locator(`[data-practice-operation="${scenario.operation}"]`).click();
+			await expect(tile).toHaveAccessibleName(/In progress|All solved/);
+		}
+		await page.locator('[data-practice-back]').click();
+	}
+	await page.reload();
+	await openPractice(page);
+	for (const scenario of scenarios) {
+		await page.locator(`[data-practice-operation="${scenario.operation}"]`).click();
+		for (const range of scenario.ranges) {
+			await expect(page.locator(`[data-practice-topic="${range.id}"]`)).toHaveAccessibleName(/In progress|All solved/);
+		}
+		await page.locator('[data-practice-back]').click();
+	}
+});
+
 test('finishing twelve equations keeps a larger topic incomplete until its ring is filled', async ({ page }) => {
 	await seedProfiles(page);
 	await page.goto('/practice');
@@ -232,7 +300,7 @@ test('retired topic Continue falls back honestly while preserving overlapping fa
 	await expect(page.locator('[data-practice-continue]')).toHaveCount(0);
 	await expect(page.locator('.practice-empty')).toHaveText('Choose a topic below.');
 	await page.locator('[data-practice-operation="add"]').click();
-	await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
+	await expect(page.locator('[data-practice-topic]')).toHaveCount(22);
 	const fresh = page.locator('[data-practice-topic="add-make-3"]');
 	const tried = page.locator('[data-practice-topic="add-make-4"]');
 	const partial = page.locator('[data-practice-topic="add-make-5"]');
@@ -296,15 +364,16 @@ for (const viewport of [
 		await openPractice(page);
 		await capture('home');
 		await page.locator('[data-practice-operation="add"]').click();
-		await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
+		const additionTopics = page.locator('[data-practice-topic]');
+		await expect(additionTopics).toHaveCount(22);
 		const prompt = page.locator('#practice-screen [data-input-prompts]');
 		const promptBounds = await prompt.boundingBox();
 		if (!promptBounds) throw new Error('Practice input prompts are missing');
 		const columns = await page.locator('.practice-topic-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
-		const rows = Math.ceil(18 / columns);
+		const rows = Math.ceil(await additionTopics.count() / columns);
 		for (let row = 1; row < rows; row++) {
 			await press(page, 'ArrowDown');
-			await expect(page.locator(`[data-practice-topic="add-make-${3 + row * columns}"]`)).toBeFocused();
+			await expect(additionTopics.nth(row * columns)).toBeFocused();
 			const focused = await page.locator('[data-practice-topic]:focus').boundingBox();
 			const footer = await prompt.boundingBox();
 			const panel = await page.locator('.practice-content').boundingBox();
@@ -319,12 +388,12 @@ for (const viewport of [
 		await page.screenshot({ path: testInfo.outputPath('addition-bottom-row.png') });
 		for (let row = rows - 2; row >= 0; row--) {
 			await press(page, 'ArrowUp');
-			await expect(page.locator(`[data-practice-topic="add-make-${3 + row * columns}"]`)).toBeFocused();
+			await expect(additionTopics.nth(row * columns)).toBeFocused();
 		}
 		await capture('addition-collection');
 		await page.locator('[data-practice-back]').click();
 		await page.locator('[data-practice-operation="subtract"]').click();
-		await expect(page.locator('[data-practice-topic]')).toHaveCount(18);
+		await expect(page.locator('[data-practice-topic]')).toHaveCount(22);
 		await capture('subtraction-collection');
 		await page.locator('[data-practice-back]').click();
 		await page.locator('[data-practice-operation="multiply"]').click();
