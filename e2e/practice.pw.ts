@@ -133,6 +133,11 @@ test('range topics show their bounds, start sessions, and retain fact progress a
 	];
 	for (const scenario of scenarios) {
 		await page.locator(`[data-practice-operation="${scenario.operation}"]`).click();
+		const topics = page.locator('[data-practice-topic]');
+		expect(await topics.evaluateAll(elements => elements.slice(0, 4).map(element => element.getAttribute('data-practice-topic'))))
+			.toEqual(scenario.ranges.map(range => range.id));
+		await expect(topics.first()).toBeFocused();
+		await page.screenshot({ path: testInfo.outputPath(`${scenario.operation}-range-topics-first.png`) });
 		for (const range of scenario.ranges) {
 			const tile = page.locator(`[data-practice-topic="${range.id}"]`);
 			await expect(tile).toHaveAccessibleName(new RegExp(`Numbers ${range.numbers}`));
