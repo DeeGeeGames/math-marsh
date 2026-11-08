@@ -90,10 +90,15 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 
 	const collection = function(): TemplateResult {
 		const progress = actions.getPracticeProgress();
+		const topics = PRACTICE_TOPICS
+			.filter(function(topic): boolean { return topic.operation === state.operation; })
+			.sort(function(left, right): number {
+				return Number(right.kind === 'range') - Number(left.kind === 'range');
+			});
 		return html`<h1 class="pond-title text-gold">${operationLabels[state.operation]}</h1>
 			<p class="practice-topic-hint">Fill each ring by solving different facts.</p>
 			<div class="practice-topic-grid" role="group" aria-label=${`${operationLabels[state.operation]} topics`}>
-				${PRACTICE_TOPICS.filter(function(topic): boolean { return topic.operation === state.operation; }).map(function(topic) {
+				${topics.map(function(topic) {
 					return topicTile(topic, practiceTopicEvidence(progress, topic));
 				})}
 			</div>`;
