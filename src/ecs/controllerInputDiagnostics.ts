@@ -1,6 +1,6 @@
 import type { InputState } from 'ecspresso/plugins/input/input';
 import { getDesktopInputController } from '../platform/desktop';
-import type { ControllerSelection } from './controllerSelection';
+import { gameActions, type ControllerSelection } from './controllerSelection';
 import type { GameAction } from './types';
 
 const ACTIONS: readonly GameAction[] = ['up', 'down', 'left', 'right', 'eat', 'back', 'skip', 'pause'];
@@ -23,7 +23,7 @@ export const reportControllerInputDiagnostic = function (
 				pressed: BUTTONS.filter(button => pad.isDown(button)),
 				axes: [0, 1, 2, 3].map(axis => pad.axis(axis)),
 			})),
-			activeActions: ACTIONS.filter(action => input.actions.isActive(action)),
+			activeActions: ACTIONS.filter(action => gameActions(input, selection).isActive(action)),
 		});
 	} catch { /* Diagnostics cannot interrupt controller ownership. */ }
 };

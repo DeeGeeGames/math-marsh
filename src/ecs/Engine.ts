@@ -7,7 +7,7 @@ import { createInputPlugin } from 'ecspresso/plugins/input/input';
 import { createTimerPlugin } from 'ecspresso/plugins/scripting/timers';
 import { createTweenPlugin } from 'ecspresso/plugins/scripting/tween';
 import { createCoroutinePlugin } from 'ecspresso/plugins/scripting/coroutine';
-import { controllerActionMap, controllerOnlyActionMap, initialControllerSelection, keyboardActionMap } from './controllerSelection';
+import { controllerInputPlayers, initialControllerSelection, keyboardActionMap } from './controllerSelection';
 import { configureGameScreens } from './screenConfiguration';
 import { createProfilePersistence } from '../profiles/persistence';
 import { submitSavedAchievements } from '../platform/achievements';
@@ -46,11 +46,8 @@ const isEditableTarget = function(target: EventTarget | null): boolean {
 
 const inputPlugin = createInputPlugin<GameAction>({
   gamepad: { poll: desktopInputProvider.poll },
-  actions: controllerActionMap(initialControllerSelection()),
-  players: {
-    keyboard: keyboardActionMap(),
-    controller: controllerOnlyActionMap(initialControllerSelection()),
-  },
+  actions: keyboardActionMap(),
+  players: controllerInputPlayers(),
   shouldPreventDefault: event => 'key' in event
     && PREVENT_DEFAULT_KEYS.has(event.key)
     && !isEditableTarget(event.target),

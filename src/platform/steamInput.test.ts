@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import ECSpresso from 'ecspresso';
 import { createInputPlugin, type GamepadLike, type ActionState } from 'ecspresso/plugins/input/input';
-import { advanceControllerSelection, controllerActionMap, controllerOnlyActionMap, gameActions, initialControllerSelection, keyboardActionMap } from '../ecs/controllerSelection';
+import { advanceControllerSelection, controllerInputPlayers, gameActions, initialControllerSelection, keyboardActionMap } from '../ecs/controllerSelection';
 import type { GameAction } from '../ecs/types';
 import type { DesktopController, DesktopInputSnapshot, DesktopInputController } from './desktop';
 import { createDesktopInputProvider } from './steamInput';
@@ -67,15 +67,15 @@ describe('desktop input provider', () => {
 		expect(contexts).toEqual(['menu', 'gameplay', 'gameplay']);
 	});
 
-	test('routes native edges through framework ownership, neutral handoff, independent skip/pause, and provider replacement', async () => {
+	test('routes native edges immediately across controllers, preserves skip/pause, and guards provider replacement', async () => {
 		let snapshot: DesktopInputSnapshot = { available: true, controllers: [native('a:1', ['eat', 'skip'])] };
 		let browserPad: GamepadLike = pad('browser');
 		const provider = createDesktopInputProvider((): DesktopInputController => ({ snapshot: (): DesktopInputSnapshot => snapshot, setContext(): void {} }), () => [browserPad]);
 		const world = ECSpresso.create()
 			.withPlugin(createInputPlugin<GameAction>({
 				gamepad: { poll: provider.poll }, target: new EventTarget(),
-				actions: controllerActionMap(initialControllerSelection()),
-				players: { keyboard: keyboardActionMap(), controller: controllerOnlyActionMap(initialControllerSelection()) },
+				actions: keyboardActionMap(),
+				players: controllerInputPlayers(),
 			}))
 			.withResource('selection', initialControllerSelection())
 			.build();
@@ -84,10 +84,6 @@ describe('desktop input provider', () => {
 			.setProcess(({ ecs, resources }) => {
 				const advanced = advanceControllerSelection(resources.selection, resources.inputState.gamepads);
 				ecs.setResource('selection', advanced.selection);
-				if (advanced.rebind) {
-					resources.inputState.setActionMap(controllerActionMap(advanced.selection));
-					resources.inputState.player('controller')?.setActionMap(controllerOnlyActionMap(advanced.selection));
-				}
 			});
 		const advance = function (): ActionState<GameAction> {
 			world.update(1 / 60);
@@ -95,7 +91,7 @@ describe('desktop input provider', () => {
 		};
 		try {
 			await world.initialize();
-			expect(advance().justActivated('eat')).toBe(false);
+			expect(advance().justActivated('eat')).toBe(true);
 			expect(world.getResource('selection').owner?.id).toBe('steam:a:1');
 			expect(advance().justActivated('skip')).toBe(false);
 			snapshot = { available: true, controllers: [native('a:1')] };
@@ -109,6 +105,13 @@ describe('desktop input provider', () => {
 			actions = advance();
 			expect(actions.justActivated('pause')).toBe(true);
 			expect(actions.isActive('skip')).toBe(false);
+			snapshot = { available: true, controllers: [native('a:1'), native('b:1', ['down'])] };
+			expect(advance().justActivated('down')).toBe(true);
+			expect(world.getResource('selection').owner?.slot).toBe(1);
+			snapshot = { available: true, controllers: [native('a:1', ['right']), native('b:1', ['down'])] };
+			expect(advance().justActivated('right')).toBe(true);
+			expect(world.getResource('selection').owner?.slot).toBe(0);
+			expect(advance().isActive('down')).toBe(false);
 			snapshot = { available: true, controllers: [native('a:2', ['eat'])] };
 			expect(advance().justActivated('eat')).toBe(false);
 			expect(world.getResource('selection').owner?.id).toBe('steam:a:2');

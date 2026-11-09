@@ -13,10 +13,12 @@ export interface ControllerSelection {
   owner: { slot: number; id: string | null } | null;
   waitingForNeutral: boolean;
   blockFrame: boolean;
+  usedThisFrame: boolean;
+  activity: readonly { id: string | null; axes: readonly number[] }[];
 }
 
 export const initialControllerSelection = function (): ControllerSelection {
-  return { owner: null, waitingForNeutral: false, blockFrame: false };
+  return { owner: null, waitingForNeutral: false, blockFrame: false, usedThisFrame: false, activity: [] };
 };
 
 export const keyboardActionMap = function (): ActionMap<GameAction> {
@@ -73,54 +75,101 @@ export const controllerOnlyActionMap = function (
   };
 };
 
-const STANDARD_BUTTONS = Array.from({ length: 17 }, (_, index) => index);
+const STANDARD_CONTROLLER_BUTTONS = Array.from({ length: 17 }, (_, index) => index);
+const STICK_AXES = [0, 1, 2, 3] as const;
 
-/** Ownership is slot + observed ID, never ID alone. Unobservable replacements
- * in the same slot with the same ID cannot be detected by ECSpresso 0.22. */
+const controllerPlayerId = function (slot: number, native: boolean, controllerOnly: boolean): string {
+  return `controller:${slot}:${native ? 'steam' : 'standard'}:${controllerOnly ? 'only' : 'shared'}`;
+};
+
+/** Evaluate each slot before ownership selection, so the first input from a new
+ * controller works in the same frame without deferred action-map rebinding. */
+export const controllerInputPlayers = function (): Record<string, ActionMap<GameAction>> {
+  const players: Record<string, ActionMap<GameAction>> = {
+    keyboard: keyboardActionMap(),
+    'controller:none': controllerOnlyActionMap(initialControllerSelection()),
+  };
+  for (const slot of [0, 1, 2, 3]) {
+    for (const native of [false, true]) {
+      const selection = { ...initialControllerSelection(), owner: { slot, id: native ? 'steam:' : '' } };
+      players[controllerPlayerId(slot, native, false)] = controllerActionMap(selection);
+      players[controllerPlayerId(slot, native, true)] = controllerOnlyActionMap(selection);
+    }
+  }
+  return players;
+};
+
+/** Ownership is slot + observed ID, never model ID alone. Held inputs do not
+ * count as new use; sticks must cross the action threshold or change direction. */
 export const advanceControllerSelection = function (
   previous: Readonly<ControllerSelection>,
   gamepads: readonly GamepadState[],
-): { selection: ControllerSelection; disconnected: boolean; rebind: boolean } {
+): { selection: ControllerSelection; disconnected: boolean } {
   const previousPad = previous.owner ? gamepads[previous.owner.slot] : undefined;
   const disconnected = previous.owner !== null
     && (previousPad?.connected !== true || previousPad.id !== previous.owner.id);
   const retainedOwner = disconnected ? null : previous.owner;
-  const claimSlot = retainedOwner === null
-    ? gamepads.findIndex(pad => pad.connected && (pad.justPressed(0) || pad.justPressed(9)))
-    : -1;
-  const claimant = gamepads[claimSlot];
-  const owner = claimSlot >= 0 && claimant
-    ? { slot: claimSlot, id: claimant.id }
-    : retainedOwner;
-  const acquired = claimSlot >= 0;
+  const activity = gamepads.map((pad, slot) => {
+    const last = previous.activity[slot];
+    return {
+      id: pad.id,
+      axes: STICK_AXES.map(axis => {
+        if (!pad.connected) return 0;
+        const value = pad.axis(axis);
+        if (Math.abs(value) > 0.5) return Math.sign(value);
+        // Hysteresis prevents threshold jitter from repeatedly taking control.
+        return Math.abs(value) > 0.35 && last?.id === pad.id ? last.axes[axis] ?? 0 : 0;
+      }),
+    };
+  });
+  const used = gamepads.flatMap((pad, slot) => {
+    if (!pad.connected) return [];
+    const last = previous.activity[slot];
+    const axes = activity[slot]?.axes ?? [];
+    const moved = axes.some((direction, axis) => direction !== 0
+      && (last?.id !== pad.id || direction !== last.axes[axis]));
+    return STANDARD_CONTROLLER_BUTTONS.some(button => pad.justPressed(button)) || moved ? [slot] : [];
+  });
+  // There is no ordering within one poll. Keep the owner on ties, otherwise use
+  // the lowest slot. A later poll from any other controller takes precedence.
+  const slot = retainedOwner && used.includes(retainedOwner.slot) ? retainedOwner.slot : used[0];
+  const claimant = slot !== undefined ? gamepads[slot] : undefined;
+  const owner = slot !== undefined && claimant ? { slot, id: claimant.id } : retainedOwner;
   const ownerPad = owner ? gamepads[owner.slot] : undefined;
   const neutral = ownerPad !== undefined
-    && !STANDARD_BUTTONS.some(button => ownerPad.isDown(button))
-    && [0, 1].every(axis => Math.abs(ownerPad.axis(axis)) <= 0.5);
-  const waitingForNeutral = owner !== null
-    && (acquired || (previous.waitingForNeutral && !neutral));
-  const selection = {
-    owner,
-    waitingForNeutral,
-    blockFrame: disconnected || acquired || previous.waitingForNeutral,
-  };
+    && !STANDARD_CONTROLLER_BUTTONS.some(button => ownerPad.isDown(button))
+    && STICK_AXES.every(axis => Math.abs(ownerPad.axis(axis)) <= 0.35);
+  // Only a disconnect requires release and deliberate continuation. Ordinary
+  // controller switches keep the first action and never pause the game.
+  const waitingForNeutral = (disconnected || previous.waitingForNeutral) && !neutral;
   return {
-    selection,
+    selection: {
+      owner, activity, waitingForNeutral, usedThisFrame: slot !== undefined,
+      blockFrame: disconnected || waitingForNeutral || previous.waitingForNeutral,
+    },
     disconnected,
-    rebind: disconnected || acquired || waitingForNeutral !== previous.waitingForNeutral,
   };
 };
 
-/** The action map changes on the next poll. Use ECSpresso's isolated keyboard
- * action state during handoff so stale pad edges cannot reach consumers. */
+const selectedActions = function (
+  input: InputState<GameAction>,
+  selection: Readonly<ControllerSelection>,
+  controllerOnly: boolean,
+): ActionState<GameAction> {
+  const owner = selection.owner;
+  const id = owner && !selection.blockFrame
+    ? controllerPlayerId(owner.slot, isSteamControllerId(owner.id), controllerOnly)
+    : controllerOnly ? 'controller:none' : 'keyboard';
+  const player = input.player(id);
+  if (!player) throw new Error(`Input action map is missing: ${id}`);
+  return player.actions;
+};
+
 export const gameActions = function (
   input: InputState<GameAction>,
   selection: Readonly<ControllerSelection>,
 ): ActionState<GameAction> {
-  if (!selection.blockFrame) return input.actions;
-  const keyboard = input.player('keyboard');
-  if (!keyboard) throw new Error('Keyboard input action map is missing');
-  return keyboard.actions;
+  return selectedActions(input, selection, false);
 };
 
 export const uiActions = function (
@@ -129,17 +178,16 @@ export const uiActions = function (
   editingText: boolean,
 ): ActionState<GameAction> {
   if (!editingText) return gameActions(input, selection);
-  const controller = input.player('controller');
-  if (!controller) throw new Error('Controller input action map is missing');
+  const controller = selectedActions(input, selection, true);
   const keyboard = input.player('keyboard');
   if (!keyboard) throw new Error('Keyboard input action map is missing');
   const keyboardBackAction = (action: GameAction): boolean => action === 'back' || action === 'pause';
   return {
-    isActive: action => (!selection.blockFrame && controller.actions.isActive(action))
+    isActive: action => (!selection.blockFrame && controller.isActive(action))
       || (keyboardBackAction(action) && keyboard.actions.isActive(action)),
-    justActivated: action => (!selection.blockFrame && controller.actions.justActivated(action))
+    justActivated: action => (!selection.blockFrame && controller.justActivated(action))
       || (keyboardBackAction(action) && keyboard.actions.justActivated(action)),
-    justDeactivated: action => (!selection.blockFrame && controller.actions.justDeactivated(action))
+    justDeactivated: action => (!selection.blockFrame && controller.justDeactivated(action))
       || (keyboardBackAction(action) && keyboard.actions.justDeactivated(action)),
   };
 };

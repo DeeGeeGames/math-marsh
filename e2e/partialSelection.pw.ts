@@ -164,8 +164,7 @@ test('a polled gamepad selects through the same feedback path', async ({ page })
 		await page.evaluate(() => window.postMessage('partial-selection-pad-up', '*'));
 		await page.waitForTimeout(100);
 	};
-	// The initial press claims the controller; release clears the neutral gate.
-	await press();
+	// The first controller press performs the selection immediately.
 	await press();
 	await expect(page.locator('#status')).toContainText('8 - _ = 5 · Partial selection');
 	const numbers = await nextFrameNumbers(page);
