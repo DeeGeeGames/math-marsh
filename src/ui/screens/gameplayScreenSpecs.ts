@@ -209,7 +209,7 @@ export function createControllerRecoveryScreenSpec(actions: ScreenSpecActions): 
     html: `
       <div class="overlay-panel text-center w-[min(92vw,36rem)] px-6 py-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="controller-recovery-title">
         <h2 id="controller-recovery-title" class="text-3xl sm:text-4xl font-bold mb-6">CONTROLLER DISCONNECTED</h2>
-        <p class="text-lg sm:text-xl mb-6">Your game is paused. Press the select or pause button on a controller to connect.</p>
+        <p class="text-lg sm:text-xl mb-6">Your game is paused. Use any controller button or move a stick to reconnect.</p>
         <p class="text-lg sm:text-xl mb-6">Release the controls, then select Continue. Keyboard and touch also work.</p>
         <button id="controller-continue-btn" class="btn-success ${BTN_CHROME} ${BTN_SIZE.lg} w-full">Continue</button>
         ${inputPromptsSlot()}

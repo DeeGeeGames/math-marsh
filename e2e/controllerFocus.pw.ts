@@ -4,10 +4,10 @@ const pressActionKey = async function(page: Page, key: string): Promise<void> {
   await page.keyboard.press(key, { delay: 200 });
 };
 
-const setGamepadButton = async function(page: Page, button: number, pressed: boolean): Promise<void> {
-  await page.evaluate(({ button, pressed }) => {
-    window.postMessage({ type: 'math-marsh-focus-gamepad', button, pressed }, '*');
-  }, { button, pressed });
+const setGamepadButton = async function(page: Page, button: number, pressed: boolean, slot = 0): Promise<void> {
+  await page.evaluate(({ button, pressed, slot }) => {
+    window.postMessage({ type: 'math-marsh-focus-gamepad', button, pressed, slot }, '*');
+  }, { button, pressed, slot });
   await page.waitForTimeout(200);
 };
 
@@ -53,16 +53,19 @@ const configureControllerPage = async function(page: Page): Promise<void> {
       axes,
       buttons,
     };
-    Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [gamepad, null, null, null] });
+    const external = { ...gamepad, id: 'Wireless Controller (PLAYSTATION)', index: 1, connected: false,
+      buttons: buttons.map(button => ({ ...button })), axes: [...axes] };
+    Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [gamepad, external, null, null] });
     window.addEventListener('message', (event: MessageEvent<unknown>) => {
       const data = event.data;
       if (typeof data !== 'object' || data === null || !('type' in data) || data.type !== 'math-marsh-focus-gamepad') return;
-      if ('id' in data && typeof data.id === 'string') gamepad.id = data.id;
-      if ('connected' in data && typeof data.connected === 'boolean') gamepad.connected = data.connected;
+      const selected = 'slot' in data && data.slot === 1 ? external : gamepad;
+      if ('id' in data && typeof data.id === 'string') selected.id = data.id;
+      if ('connected' in data && typeof data.connected === 'boolean') selected.connected = data.connected;
       if ('button' in data && 'pressed' in data && typeof data.button === 'number'
         && Number.isInteger(data.button) && data.button >= 0 && data.button < buttons.length
         && typeof data.pressed === 'boolean') {
-        const button = buttons[data.button];
+        const button = selected.buttons[data.button];
         if (button) {
           button.pressed = data.pressed;
           button.value = data.pressed ? 1 : 0;
@@ -71,7 +74,7 @@ const configureControllerPage = async function(page: Page): Promise<void> {
       if ('axis' in data && 'value' in data && typeof data.axis === 'number'
         && Number.isInteger(data.axis) && data.axis >= 0 && data.axis < axes.length
         && typeof data.value === 'number') {
-        axes[data.axis] = data.value;
+        selected.axes[data.axis] = data.value;
       }
     });
   });
@@ -112,9 +115,7 @@ test('mouse and touch opened Settings keep rendered focus visible during control
       outlineStyle: 'none',
     });
 
-    // Claim the simulated controller, then navigate with the D-pad.
-    await setGamepadButton(page, 0, true);
-    await setGamepadButton(page, 0, false);
+    // The first D-pad input works without an activation press.
     await setGamepadButton(page, 13, true);
     await setGamepadButton(page, 13, false);
     await expect(backgroundMusic).toBeFocused();
@@ -264,9 +265,7 @@ test('tutorial controls support controller focus, later lessons, and keyboard na
   const step = page.locator('#gameplay-onboarding-kicker');
   await expect(next).toBeFocused();
   await expect(back).toBeDisabled();
-  // Claim is consumed until the controller is released.
-  await pressButton(0);
-  await expect(step).toHaveText('Step 1 of 5');
+  // The first controller press advances the tutorial immediately.
   await pressButton(0);
   await expect(step).toHaveText('Step 2 of 5');
   await pressButton(14);
@@ -335,13 +334,14 @@ test('Practice keeps controller prompts and focus clearance while navigating the
     await setGamepadButton(page, button, true);
     await setGamepadButton(page, button, false);
   };
-  // The first press claims the controller without selecting the focused topic.
-  await pressButton(0);
-  await expect(page.locator('[data-practice-topic="add-make-3"]')).toBeFocused();
+  // Range topics lead the collection. The first D-pad input navigates immediately.
+  await expect(page.locator('[data-practice-topic="add-range-2-5"]')).toBeFocused();
+  await pressButton(13);
+  await expect(page.locator('[data-practice-topic="add-make-5"]')).toBeFocused();
   await pressButton(13);
   await pressButton(13);
-  await expect(page.locator('[data-practice-topic="add-make-15"]')).toBeFocused();
-  for (let column = 1; column < 6; column++) await pressButton(15);
+  await expect(page.locator('[data-practice-topic="add-make-17"]')).toBeFocused();
+  for (let column = 1; column < 4; column++) await pressButton(15);
   const lastTopic = page.locator('[data-practice-topic="add-make-20"]');
   await expect(lastTopic).toBeFocused();
   const footer = await page.locator('#practice-screen [data-input-prompts]').boundingBox();
@@ -437,7 +437,7 @@ test('masked controller uses accessible saved prompt choice across screens and c
   await preference.click(); // Steam Deck
   await preference.click(); // Auto
   await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', id: 'Nintendo Switch Pro Controller' }, '*'));
-  await press(0);
+  await press(2);
   await expect(preference).toHaveText('Button prompts: Auto');
   await expect(selectGlyph).toHaveAttribute('alt', 'B button');
   await expect(page.locator('#settings-screen [data-prompt-action="back"] img')).toHaveAttribute('alt', 'A button');
@@ -451,8 +451,6 @@ test('controller can reach and activate the web title Steam sign', async ({ page
   await page.getByText('Built with').waitFor();
   await pressActionKey(page, 'Space');
   await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
-  await setGamepadButton(page, 0, true);
-  await setGamepadButton(page, 0, false);
   const sign = page.getByRole('link', { name: 'Wishlist on Steam' });
   for (let step = 0; step < 8 && !await sign.evaluate(function(element) { return element === document.activeElement; }); step++) {
     await setGamepadButton(page, 13, true);
@@ -469,4 +467,52 @@ test('controller can reach and activate the web title Steam sign', async ({ page
   expect(popup.url()).toBe('https://store.steampowered.com/app/4927380/Math_Marsh/');
   await popup.close();
   await expect(page.locator('#main-menu')).toBeVisible();
+});
+
+
+test('latest controller works on its first input in menus, tutorial, and gameplay', async ({ page }, testInfo) => {
+  await configureControllerPage(page);
+  await page.goto('/');
+  await page.getByText('A game by').waitFor();
+  await pressActionKey(page, 'Space');
+  await page.getByText('Built with').waitFor();
+  await pressActionKey(page, 'Space');
+  await expect(page.getByRole('button', { name: 'Arcade', exact: true })).toBeFocused();
+  await setGamepadAxis(page, 2, 1); // Xbox right stick selects without a bound action.
+  await page.evaluate(() => window.postMessage({ type: 'math-marsh-focus-gamepad', slot: 1, connected: true }, '*'));
+  await setGamepadButton(page, 13, true, 1);
+  await expect(page.getByRole('button', { name: 'Practice', exact: true })).toBeFocused();
+  await expect(page.locator('#main-menu [data-prompt-action="select"] img')).toHaveAttribute('alt', 'Cross button');
+  await setGamepadButton(page, 13, false, 1);
+  await page.waitForTimeout(250); // The Xbox held stick must not take control back.
+  await expect(page.locator('#main-menu [data-prompt-action="select"] img')).toHaveAttribute('alt', 'Cross button');
+  await page.getByRole('button', { name: 'How to Play', exact: true }).click();
+  await page.getByRole('button', { name: 'Play Tutorial', exact: true }).click();
+  await setGamepadButton(page, 0, true, 1);
+  await setGamepadButton(page, 0, false, 1);
+  await expect(page.locator('#gameplay-onboarding-kicker')).toHaveText('Step 2 of 5');
+  await setGamepadButton(page, 0, true);
+  await setGamepadButton(page, 0, false);
+  await expect(page.locator('#gameplay-onboarding-kicker')).toHaveText('Step 3 of 5');
+  // A direct reversal after keyboard use must also restore controller prompts.
+  await pressActionKey(page, 'ArrowDown');
+  await setGamepadAxis(page, 2, -1);
+  await expect(page.locator('#gameplay-ui [data-prompt-action="select"] img')).toHaveAttribute('alt', 'A button');
+  await setGamepadButton(page, 9, true, 1);
+  await setGamepadButton(page, 9, false, 1);
+  await expect(page.getByRole('button', { name: 'Play Tutorial', exact: true })).toBeVisible();
+  await pressActionKey(page, 'Escape');
+  await page.getByRole('button', { name: 'Practice', exact: true }).click();
+  await page.locator('[data-practice-operation="add"]').click();
+  await page.locator('[data-practice-topic="add-make-3"]').click();
+  await page.locator('[data-practice-start]').click();
+  await setGamepadButton(page, 13, true);
+  await setGamepadButton(page, 13, false);
+  await expect(page.locator('#resume-btn')).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'CONTROLLER DISCONNECTED' })).toBeHidden();
+  await setGamepadButton(page, 9, true, 1);
+  await setGamepadButton(page, 9, false, 1);
+  await expect(page.locator('#resume-btn')).toBeFocused();
+  await expect(page.locator('#pause-screen [data-prompt-action="select"] img')).toHaveAttribute('alt', 'Cross button');
+  await page.screenshot({ path: testInfo.outputPath('second-controller-pauses-on-first-press.png') });
 });

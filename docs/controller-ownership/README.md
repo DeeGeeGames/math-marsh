@@ -1,82 +1,85 @@
-# Controller ownership — issue #13
+# Controller selection
 
-The owner approved this policy on 2026-10-04: A or Start claims an unowned
-controller; connected nonowners cannot take over; an observed owner disconnect
-freezes the run; acquisition controls must be released before deliberate
-continuation. Existing keyboard, pointer, and touch controls remain usable.
-No existing public input bindings or stored settings were removed.
+Math Marsh follows the most recently used controller in menus, profiles, Practice,
+tutorials, and gameplay. Steam controller order does not determine the active
+controller, and there is no activation button.
 
-## Implementation
+- Any newly pressed standard Gamepad button (0–16), including a trigger, selects
+  its controller. Native Steam Input uses the actions exposed by the active layout;
+  unbound physical buttons are not exposed by that route.
+- Either stick selects its controller on crossing the 0.5 action threshold or
+  reversing direction. Values are ECSpresso's deadzone-adjusted values. A 0.35
+  release threshold prevents jitter near the action threshold from switching back.
+- Connection alone, held buttons, and a stationary deflected stick do not repeatedly
+  select a controller. If multiple controllers are used within one poll, retain
+  the current owner when it participated; otherwise choose the lowest slot.
+- The first input performs its ordinary action immediately. An unbound button or
+  right stick can select a controller without causing a gameplay action. Normal
+  switching does not pause or require returning to neutral.
+- Keyboard, pointer, and touch remain usable. Text entry still suppresses keyboard
+  navigation/activation bindings. Prompts and audio unlocking use the same
+  controller activity signal as selection.
 
-- `controllerSelection` records the controller slot and observed ID, plus neutral
-  acquisition and transition-frame suppression. Simultaneous claims choose the
-  lowest slot. Connection and stick activity alone cannot claim ownership.
-- ECSpresso input action maps route buttons and axes to the owner. An isolated
-  keyboard action map preserves keyboard edges during deferred rebinding.
-- A recovery screen preserves the ECS screen stack. Clock and gameplay groups
-  freeze immediately on disconnect, before asynchronous screen entry. Continuing
-  restores the prior tutorial, playing, pause, settings, or celebration screen.
-- Settings UI/focus restore on resume. Level completion preserves its remaining
-  celebration duration. Only owner activity selects controller glyphs; keyboard
-  and pointer activity can switch prompts during acquisition.
-- Production uses ECSpresso input, resources, system groups, and screen lifecycle
-  APIs. No new framework escape hatch was needed.
+## Framework routing and disconnect recovery
 
-## Validation
+The existing ECSpresso input plugin evaluates per-slot action maps for conventional
+and native Steam layouts before the selection system runs. Consumers read the
+selected framework player state in the same frame, avoiding deferred rebinding
+and stale action edges. Native Steam Skip and Pause remain separate actions.
+No custom polling, synthetic input, or new framework escape hatch was added.
 
-`bun run check` passes: lint, 159 tests, TypeScript, and web build.
-`bun run desktop:check` passes: TypeScript and desktop production build.
-Independent review found no remaining material defects. `git diff --check` passes.
+Selection tracks slot plus observed device ID. An observed active-controller
+disconnect or replacement still freezes gameplay and clocks immediately and opens
+the recovery screen. Use any controller button or stick, release all controls,
+then choose Continue. Acquisition cannot resume the run accidentally. Keyboard and
+touch can also continue. Screen-stack recovery preserves tutorial, pause, settings,
+and celebration state.
 
-The T3 collaborative browser journey at 1280×800 passed:
+## Validation and reproduction
 
-1. Idle/drifting controller ignored; slot 1 A claim consumed with held controls.
-2. Other-controller buttons, sticks, and PlayStation ID cannot steal control or
-   change the owner's Xbox glyphs.
-3. Controller-only mode selection → tutorial → gameplay → pause/settings →
-   results → retry → quit-to-menu → desktop quit mock.
-4. Real recovery screen exit/resume for tutorial, playing, paused, settings, and
-   level completion. Clocks and run time remain frozen; acquisition cannot resume
-   or advance the tutorial; a held axis must return to neutral.
-5. A dedicated celebration-state fixture remains paused beyond its normal
-   1.6-second duration and restores the remaining celebration on continuation.
-6. Results use normal gameplay-time and death-delay systems after the fixture
-   expires the run. Retry resets totals.
+Verified for this change: `bun run check` (548 tests, lint, TypeScript, web build),
+`bun run desktop:check`, and 10 focused Playwright controller/selection journeys.
+Independent review findings were repaired and the affected behavior rechecked.
 
-`browser-evidence.json` captures this journey. `startup-evidence.json` separately
-records slot 1 claim on the studio splash, engine splash, and menu.
-`compatibility-evidence.json` records synthetic keyboard/pointer/touch DOM journeys
-and keyboard/touch continuation without a replacement controller. Keyboard
-activation/back and glyph persistence were also checked during a held claim.
+`src/ecs/controllerOwnership.test.ts` exercises the real input plugin and selection
+system, including first-input routing, second-slot takeover, identical model IDs,
+held-input isolation, axis direction changes, all standard buttons, keyboard/text
+entry, diagnostics, and disconnect/reconnect suppression.
+`src/platform/steamInput.test.ts` covers native action routing and provider identity.
 
-The recovery panel was measured at 1280×800: 576×484, inside the viewport;
-36px heading, 20px body text, and a 524×60 Continue button. This is DOM geometry
-and behavior evidence. T3 snapshot/save calls failed and resize timed out, so no
-rendered screenshot or additional viewport acceptance is claimed.
+`e2e/controllerFocus.pw.ts` uses simulated controllers in Chromium. Its switching
+journey covers second-controller D-pad navigation, updated glyphs, first-press
+tutorial progression, keyboard-to-controller prompt restoration on stick reversal,
+and first-press pause from the second controller during gameplay. Existing journeys
+cover focus, Practice, and disconnect recovery. Run:
 
-## Reproduce the browser journey
+```sh
+bun run check
+bunx playwright test e2e/controllerFocus.pw.ts e2e/partialSelection.pw.ts
+```
 
-Run `bun --port 3001 scripts/controller-selection-browser-fixture.html`, then open
-`http://localhost:3001/?fresh`. The `fresh` flag resets only onboarding records on
-this test origin. For preview clients without animation frames, add `timerFrames`.
-The production entrypoint retains native requestAnimationFrame.
+The supplementary fixture can be started with
+`bun --port 3001 scripts/controller-selection-browser-fixture.html` at
+`http://localhost:3001/?fresh`, then run
+`window.__controllerFixture.runJourney()`. `fresh` clears onboarding records only
+on that test origin; `timerFrames` supplies a fixture-only animation clock.
 
-Start `window.__controllerFixture.runJourney().then(result => {
-window.__controllerJourneyResult = result; })`, then inspect
-`window.__controllerJourneyResult`. The journey returns assertions and observations.
-Use `?timerFrames&fresh&startupClaim` to seed a held slot 1 claim before boot.
+The JSON files in this directory record the older, explicit A/Start ownership
+policy. They remain historical evidence and do not validate the current switching
+policy. Current browser results are recorded by Playwright.
 
-## Remaining device validation and API limits
+## Hardware validation still required
 
-- Gamepad polling and desktop quit are simulated. Physical controllers, Steam
-  Input, packaged app controller behavior, Deck handheld/docked switching, and TV
-  distance/overscan have not been tested. Desktop build success is not device proof.
-- ECSpresso 0.22.0 exposes four controller slots. Equal device IDs remain distinct
-  by slot. A same-slot/same-ID replacement or reorder wholly between polls is
-  unobservable; it cannot be reliably identified through this API. Observed slot
-  disappearance or ID change triggers recovery and requires a deliberate claim.
-- Screenshot and alternate viewport verification remain unavailable in this T3
-  preview. Hardware validation should include the recovery panel's readability.
+Simulated input does not prove physical Steam Deck handheld/docked switching,
+Steam Input layouts, packaged builds, or TV-distance readability. Validate the
+exact Steam build with the built-in Deck controller still connected and an external
+controller in the second position, both before launch and hot-plugged during play.
+Test both directions of switching, remapped layouts, and disconnect recovery.
+
+ECSpresso 0.22 exposes four slots and no button-count or connection-token API.
+Selection observes standard buttons and four stick axes. Same-slot/same-ID
+replacement or reorder wholly between polls is unobservable. Steam/browser/SDL
+routing must expose a controller before application selection can use it.
 
 ## Prompt families and focus (#69 / #70)
 

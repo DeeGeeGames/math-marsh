@@ -1,5 +1,5 @@
 import type { GameEngine, GameSystemRegistrar } from '../Engine';
-import { advanceControllerSelection, controllerActionMap, controllerOnlyActionMap } from '../controllerSelection';
+import { advanceControllerSelection } from '../controllerSelection';
 import { SYSTEM_PRIORITIES } from '../systemConfigs';
 import { pauseGameplayClocks } from '../gameplayClockLifecycle';
 import { reportControllerInputDiagnostic } from '../controllerInputDiagnostics';
@@ -12,14 +12,8 @@ export function addControllerSelectionSystemToEngine(systems: GameSystemRegistra
     .setPriority(SYSTEM_PRIORITIES.CONTROLLER_SELECTION)
     .withResources(['inputState', 'controllerSelection'])
     .setProcess(({ ecs, resources: { inputState, controllerSelection } }) => {
-      const { selection, disconnected, rebind } = advanceControllerSelection(controllerSelection, inputState.gamepads);
+      const { selection, disconnected } = advanceControllerSelection(controllerSelection, inputState.gamepads);
       ecs.setResource('controllerSelection', selection);
-      if (rebind) {
-        inputState.setActionMap(controllerActionMap(selection));
-        const controller = inputState.player('controller');
-        if (!controller) throw new Error('Controller input action map is missing');
-        controller.setActionMap(controllerOnlyActionMap(selection));
-      }
       reportControllerInputDiagnostic(inputState, selection, ecs.getCurrentScreen());
       if (!disconnected || ecs.isScreenActive('controllerRecovery')) return;
       if (!RUN_SCREENS.some(screen => ecs.isScreenActive(screen))) return;

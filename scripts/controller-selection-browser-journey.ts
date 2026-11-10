@@ -51,22 +51,21 @@ export const runControllerJourney = async function (fixture: Fixture) {
       await wait(100);
     }
     if (fixture.observe().screen === 'playerSetup') {
-      await pulse(1, 0); // Claim, then confirm the default local player name.
-      await pulse(1, 0);
+      await pulse(1, 0); // Confirm the default local player name immediately.
       fixture.disconnect(1);
       await wait(100);
     }
     screen('menu');
     record('fresh menu');
-    await setPad(1, [], [1, 0]);
-    assert(fixture.observe().selection.owner === null, 'Stick claimed an unowned controller');
-    await setPad(1, [0, 15], [1, 0]);
+    await setPad(1, [], [0.2, 0]);
+    assert(fixture.observe().selection.owner === null, 'Stick drift selected a controller');
+    await setPad(1, [2]);
     screen('menu');
-    record('slot 1 claim consumed with held buttons and axis');
+    record('slot 1 selected by an unbound face button');
     await setPad(1);
-    await setPad(2, [0, 9, 15], [1, 0], 'PlayStation fixture nonowner');
-    assert(fixture.observe().selection.owner?.slot === 1, 'Nonowner stole ownership');
-    assert(fixture.observe().platform === 'xbox', 'Nonowner changed glyphs');
+    await setPad(2, [2], [0, 0], 'PlayStation fixture controller');
+    assert(fixture.observe().selection.owner?.slot === 2, 'Latest controller did not take ownership');
+    assert(fixture.observe().platform === 'playstation', 'Latest controller did not update glyphs');
     screen('menu');
     await setPad(2);
     await pulse(1, 0);

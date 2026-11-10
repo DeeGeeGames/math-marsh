@@ -3,7 +3,7 @@ import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createInputPlugin, type GamepadLike } from 'ecspresso/plugins/input/input';
 import type { GameEngine } from './Engine';
 import type { GameAction } from './types';
-import { controllerActionMap, controllerOnlyActionMap, gameActions, initialControllerSelection, keyboardActionMap } from './controllerSelection';
+import { controllerInputPlayers, gameActions, initialControllerSelection, keyboardActionMap, uiActions } from './controllerSelection';
 import { addControllerSelectionSystemToEngine } from './systems/ControllerSelectionSystem';
 import { splashAdvancePressed } from './splashInput';
 import type { RendererInputDiagnostic } from '../platform/desktop';
@@ -20,11 +20,8 @@ const fixture = async function () {
   const target = new EventTarget();
   const world = ECSpresso.create<ConfigOf<GameEngine>>().build();
   world.installPlugin(createInputPlugin<GameAction>({
-    actions: controllerActionMap(initialControllerSelection()),
-    players: {
-      keyboard: keyboardActionMap(),
-      controller: controllerOnlyActionMap(initialControllerSelection()),
-    },
+    actions: keyboardActionMap(),
+    players: controllerInputPlayers(),
     target, gamepad: { poll: () => pads },
   }));
   world.addResource('controllerSelection', initialControllerSelection());
@@ -45,7 +42,7 @@ const fixture = async function () {
 };
 
 describe('active controller ownership', () => {
-  test('diagnostics observe a delayed claim and neutral handoff through the real input plugin', async () => {
+  test('diagnostics observe immediate input from the controller in use', async () => {
     const f = await fixture();
     const reports: RendererInputDiagnostic[] = [];
     const oldWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
@@ -64,10 +61,10 @@ describe('active controller ownership', () => {
       expect(reports.at(-1)?.controllers[0]).toMatchObject({ slot: 0, connected: true, id: 'Deck', pressed: [] });
       f.pads[0] = pad('Deck', [0]);
       f.world.update(0);
-      expect(reports.at(-1)).toMatchObject({ ownerId: 'Deck', ownerSlot: 0, waitingForNeutral: true,
-        blockFrame: true });
+      expect(reports.at(-1)).toMatchObject({ ownerId: 'Deck', ownerSlot: 0, waitingForNeutral: false,
+        blockFrame: false });
       expect(reports.at(-1)?.controllers[0]?.pressed).toEqual([0]);
-      expect(f.actions().justActivated('eat')).toBe(false);
+      expect(f.actions().justActivated('eat')).toBe(true);
       f.pads[0] = pad('Deck');
       f.world.update(0);
       expect(reports.at(-1)?.waitingForNeutral).toBe(false);
@@ -84,57 +81,106 @@ describe('active controller ownership', () => {
     }
   });
 
-  test('idle connections and sticks cannot claim; A claims slot 3 without activating or skipping', async () => {
+  test('stick drift is ignored; a slot 3 stick movement works immediately without an activation button', async () => {
     const f = await fixture();
     try {
-      f.pads[3] = pad('Xbox', [], [1, 0]);
+      f.pads[3] = pad('Xbox', [], [0.2, 0]);
       f.world.update(0);
       expect(f.world.getResource('controllerSelection').owner).toBeNull();
-      expect(f.actions().isActive('right')).toBe(false);
-      f.pads[3] = pad('Xbox', [0, 15], [1, 0]);
-      f.world.update(0);
-      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(3);
-      expect(f.actions().justActivated('eat')).toBe(false);
-      expect(splashAdvancePressed(f.world.getResource('inputState'), f.world.getResource('controllerSelection'))).toBe(false);
-      f.world.update(0);
-      expect(f.actions().isActive('eat')).toBe(false);
       f.pads[3] = pad('Xbox', [], [1, 0]);
       f.world.update(0);
-      expect(f.world.getResource('controllerSelection').waitingForNeutral).toBe(true);
-      expect(f.actions().isActive('right')).toBe(false);
-      f.pads[3] = pad('Xbox');
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(3);
+      expect(f.actions().justActivated('right')).toBe(true);
       f.world.update(0);
-      f.pads[3] = pad('Xbox', [0], [1, 0]);
-      f.world.update(0);
-      expect(f.actions().justActivated('eat')).toBe(true);
       expect(f.actions().isActive('right')).toBe(true);
-      expect(splashAdvancePressed(f.world.getResource('inputState'), f.world.getResource('controllerSelection'))).toBe(true);
+      expect(f.actions().justActivated('right')).toBe(false);
     } finally { await f.world.dispose(); }
   });
 
-  test('simultaneous claims choose the first slot and identical-ID non-owners cannot steal or act', async () => {
+  test('latest controller button takes over immediately and an old held stick cannot steal back', async () => {
     const f = await fixture();
     try {
-      f.pads[1] = pad(undefined, [9]);
+      f.pads[0] = pad('Deck', [], [1, 0]);
+      f.world.update(0);
+      f.pads[1] = pad('Xbox', [13]);
+      f.world.update(0);
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(1);
+      expect(f.actions().justActivated('down')).toBe(true);
+      expect(f.actions().isActive('right')).toBe(false);
+      f.world.update(0);
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(1);
+      f.pads[0] = pad('Deck', [], [-1, 0]);
+      f.world.update(0);
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(0);
+      expect(f.actions().justActivated('left')).toBe(true);
+    } finally { await f.world.dispose(); }
+  });
+
+  test('all standard buttons can select a controller, even buttons without a gameplay binding', async () => {
+    const f = await fixture();
+    try {
+      for (let button = 0; button < 17; button += 1) {
+        f.pads[1] = pad('first');
+        f.pads[2] = pad('second');
+        f.world.update(0);
+        const slot = button % 2 === 0 ? 1 : 2;
+        f.pads[slot] = pad(slot === 1 ? 'first' : 'second', [button]);
+        f.world.update(0);
+        expect(f.world.getResource('controllerSelection').owner?.slot).toBe(slot);
+      }
+    } finally { await f.world.dispose(); }
+  });
+
+  test('simultaneous inputs keep the current owner, otherwise choose the lowest slot, including identical IDs', async () => {
+    const f = await fixture();
+    try {
+      f.pads[1] = pad(undefined, [13]);
       f.pads[2] = pad(undefined, [0]);
       f.world.update(0);
       expect(f.world.getResource('controllerSelection').owner?.slot).toBe(1);
+      expect(f.actions().justActivated('down')).toBe(true);
+      expect(f.actions().isActive('eat')).toBe(false);
+      expect(splashAdvancePressed(f.world.getResource('inputState'), f.world.getResource('controllerSelection'))).toBe(true);
       f.pads[1] = pad();
       f.pads[2] = pad();
       f.world.update(0);
-      f.pads[2] = pad(undefined, [0, 9, 15], [1, 0]);
+      f.pads[2] = pad(undefined, [0]);
       f.world.update(0);
-      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(1);
-      expect(f.actions().isActive('eat')).toBe(false);
-      expect(f.actions().isActive('pause')).toBe(false);
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(2);
+      expect(f.actions().justActivated('eat')).toBe(true);
+      f.pads[1] = pad(undefined, [15]);
+      f.pads[2] = pad(undefined, [13]);
+      f.world.update(0);
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(2);
+      expect(f.actions().justActivated('down')).toBe(true);
       expect(f.actions().isActive('right')).toBe(false);
     } finally { await f.world.dispose(); }
   });
 
-  test('keyboard edges remain usable while acquisition controls are held', async () => {
+  test('stick threshold jitter and an unused right stick hold cannot repeatedly take control', async () => {
     const f = await fixture();
     try {
-      f.pads[1] = pad(undefined, [0]);
+      f.pads[0] = pad('Deck', [], [0, 0, 1, 0]);
+      f.world.update(0);
+      f.pads[1] = pad('Xbox', [13]);
+      f.world.update(0);
+      for (const value of [0.8, 0.55, 0.65]) {
+        f.pads[0] = pad('Deck', [], [0, 0, value, 0]);
+        f.world.update(0);
+        expect(f.world.getResource('controllerSelection').owner?.slot).toBe(1);
+      }
+      f.pads[0] = pad('Deck');
+      f.world.update(0);
+      f.pads[0] = pad('Deck', [], [0, 0, 1, 0]);
+      f.world.update(0);
+      expect(f.world.getResource('controllerSelection').owner?.slot).toBe(0);
+    } finally { await f.world.dispose(); }
+  });
+
+  test('keyboard edges remain usable while controller controls are held', async () => {
+    const f = await fixture();
+    try {
+      f.pads[1] = pad(undefined, [2]);
       f.key('keydown', 'Enter');
       f.world.update(0);
       expect(f.actions().justActivated('eat')).toBe(true);
@@ -144,6 +190,23 @@ describe('active controller ownership', () => {
       f.key('keydown', 'Escape');
       f.world.update(0);
       expect(f.actions().justActivated('pause')).toBe(true);
+    } finally { await f.world.dispose(); }
+  });
+
+  test('text editing ignores keyboard action bindings before a controller is used, while Escape still works', async () => {
+    const f = await fixture();
+    try {
+      f.key('keydown', 'Enter');
+      f.key('keydown', 'ArrowDown');
+      f.key('keydown', 'Escape');
+      f.world.update(0);
+      const actions = uiActions(f.world.getResource('inputState'), f.world.getResource('controllerSelection'), true);
+      expect(actions.justActivated('eat')).toBe(false);
+      expect(actions.isActive('down')).toBe(false);
+      expect(actions.justActivated('back')).toBe(true);
+      f.pads[1] = pad('Xbox', [13]);
+      f.world.update(0);
+      expect(uiActions(f.world.getResource('inputState'), f.world.getResource('controllerSelection'), true).justActivated('down')).toBe(true);
     } finally { await f.world.dispose(); }
   });
 
@@ -180,7 +243,7 @@ describe('active controller ownership', () => {
     } finally { await f.world.dispose(); }
   });
 
-  test('same-slot different-ID replacement consumes stale actions evaluated before rebinding', async () => {
+  test('same-slot different-ID replacement suppresses its first actions during disconnect recovery', async () => {
     const f = await fixture();
     try {
       f.pads[0] = pad('original', [0]);
@@ -189,7 +252,7 @@ describe('active controller ownership', () => {
       f.world.update(0);
       f.pads[0] = pad('replacement', [0, 15]);
       f.world.update(0);
-      expect(f.world.getResource('inputState').actions.justActivated('eat')).toBe(true);
+      expect(f.world.getResource('inputState').player('controller:0:standard:shared')?.actions.justActivated('eat')).toBe(true);
       expect(f.actions().justActivated('eat')).toBe(false);
       expect(f.actions().isActive('right')).toBe(false);
       expect(f.world.getResource('controllerSelection').owner?.id).toBe('replacement');
