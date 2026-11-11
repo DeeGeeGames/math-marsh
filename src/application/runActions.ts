@@ -1,3 +1,4 @@
+import { isPracticeTopicAvailable } from '../ecs/demoPractice';
 import { createDemoArcadeRun } from '../ecs/demoArcade';
 import { createPracticeSession, type PracticeSelection } from '../ecs/practiceSession';
 import { rememberPracticeSelection } from '../ecs/practiceProgress';
@@ -59,7 +60,8 @@ export const createRunActions = function(
   const startPractice = function(selection: PracticeSelection): void {
     const profiles = engine.getResource('playerProfiles');
     const profile = activePlayerProfile(profiles);
-    if (!profile || (selection.pond !== 'easy' && selection.pond !== 'medium' && selection.pond !== 'expert')
+    if (!profile || !isPracticeTopicAvailable(engine.getResource('steamAppRole'), selection.topicId)
+      || (selection.pond !== 'easy' && selection.pond !== 'medium' && selection.pond !== 'expert')
       || typeof selection.related !== 'boolean') return;
     const session = createPracticeSession(profile.id, selection);
     if (!session) return;

@@ -1,3 +1,4 @@
+import { isPracticeTopicAvailable } from '../ecs/demoPractice';
 import { isDemoArcadeComplete } from '../ecs/demoArcade';
 import { openDesktopFullGame } from '../platform/desktop';
 import type { InputPromptPlatform, NativePromptBindings } from './inputPrompts';
@@ -161,6 +162,7 @@ const createUIIntegration = function(engine: GameEngine) {
     openModeSelect,
     openPractice,
     startPractice,
+    isPracticeTopicAvailable: function(topicId) { return isPracticeTopicAvailable(engine.getResource('steamAppRole'), topicId); },
     getPracticeSession: function() { return engine.getResource('practiceSession'); },
     getPracticeProgress: function() {
       return activePlayerProfile(engine.getResource('playerProfiles'))?.practiceProgress ?? emptyPracticeProgress();

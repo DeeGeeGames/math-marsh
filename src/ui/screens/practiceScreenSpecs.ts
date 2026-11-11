@@ -15,7 +15,7 @@ const SYMBOLS: Record<EquationOperation, string> = { multiply: '×', divide: '÷
 const PONDS: readonly MathDifficulty[] = ['easy', 'medium', 'expert'];
 const RELATED_OPERATIONS: Readonly<Record<EquationOperation, string>> = { add: 'subtraction', subtract: 'addition', multiply: 'division', divide: 'multiplication' };
 
-const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence): TemplateResult | typeof nothing {
+const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence, available: boolean): TemplateResult | typeof nothing {
 	const fact = topic.facts[0];
 	if (!fact) return nothing;
 	const number = topic.kind === 'range' ? `${topic.answerRange.min}–${topic.answerRange.max}`
@@ -23,7 +23,7 @@ const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence)
 	const caption = topic.kind === 'range' ? topic.operation === 'add' ? 'Sums' : 'Answers'
 		: topic.kind === 'make' ? 'Make' : topic.operation === 'multiply' ? 'Times table' : 'Divide by';
 	const complete = summary.status === 'Practiced';
-	const status = complete ? 'All solved' : summary.status === 'New' ? 'New' : 'In progress';
+	const status = !available ? 'Full version' : complete ? 'All solved' : summary.status === 'New' ? 'New' : 'In progress';
 	const filled = summary.total > 0 ? summary.solved / summary.total * 100 : 0;
 	return html`<button type="button" class="practice-topic" data-practice-topic=${topic.id} data-complete=${String(complete)}
 		aria-label=${`${topic.label}. ${topic.kind === 'range' ? `Numbers ${topic.operandRange.min}–${topic.operandRange.max}. ` : ''}${status}. ${summary.attempted} facts practiced. ${summary.solved} of ${summary.total} facts solved at least once.`}>
@@ -69,7 +69,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 
 	const home = function(): TemplateResult {
 		const progress = actions.getPracticeProgress();
-		const previous = practiceContinueSelection(progress);
+		const previous = practiceContinueSelection(progress, progress.lastSelection, actions.isPracticeTopicAvailable);
 		const previousTopic = previous ? practiceTopic(previous.topicId) : undefined;
 		return html`<h1 class="pond-title text-gold">Practice</h1>
 			${previous && previousTopic ? html`<button type="button" class="btn-success practice-continue" data-practice-continue>
@@ -99,13 +99,14 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 			<p class="practice-topic-hint">Fill each ring by solving different facts.</p>
 			<div class="practice-topic-grid" role="group" aria-label=${`${operationLabels[state.operation]} topics`}>
 				${topics.map(function(topic) {
-					return topicTile(topic, practiceTopicEvidence(progress, topic));
+					return topicTile(topic, practiceTopicEvidence(progress, topic), actions.isPracticeTopicAvailable(topic.id));
 				})}
 			</div>`;
 	};
 
 	const preview = function(topic: PracticeTopic): TemplateResult {
 		const { related, pond } = state;
+		const available = actions.isPracticeTopicAvailable(topic.id);
 		const facts = practiceFacts(topic, related);
 		const inverse = facts.find(function(fact): boolean { return fact.operation !== topic.operation; });
 		const sample = inverse ? [...facts.slice(0, 2), inverse] : facts.slice(0, 3);
@@ -119,7 +120,10 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 			</button>
 			<div class="practice-pond-summary"><button type="button" class="btn-secondary" data-practice-change-pond><span>Pond: <strong>${difficultyLabels[pond]}</strong></span><span>Change pond</span></button></div>
 			${summary.attempts > 0 ? html`<p class="practice-note">Topic accuracy: ${summary.accuracy === null ? 'No attempts' : `${Math.round(summary.accuracy * 100)}%`} · ${summary.revisit.length} facts to revisit</p>` : ''}
-			<button type="button" class="btn-success practice-start" data-practice-start>Start practice · ${PRACTICE_SESSION_LENGTH} equations</button>`;
+			${available ? html`<button type="button" class="btn-success practice-start" data-practice-start>Start practice · ${PRACTICE_SESSION_LENGTH} equations</button>`
+				: html`<p class="practice-note">This topic requires the full version of Math Marsh.</p>
+					<button type="button" class="btn-success practice-start" data-practice-store>Get the full game on Steam</button>
+					<p class="practice-note" data-practice-store-status></p>`}`;
 	};
 
 	const pondChooser = function(): TemplateResult {
@@ -181,9 +185,9 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 				const nextOperation = OPERATIONS.find(function(item): boolean { return item === button.dataset.practiceOperation; });
 				if (nextOperation) { update(root, { type: 'operation', operation: nextOperation }, '[data-practice-topic]'); return; }
 				const nextTopic = practiceTopic(button.dataset.practiceTopic);
-				if (nextTopic) { update(root, { type: 'topic', topic: nextTopic }, '[data-practice-start]'); return; }
+				if (nextTopic) { update(root, { type: 'topic', topic: nextTopic }, '[data-practice-start], [data-practice-store]'); return; }
 				if (button.hasAttribute('data-practice-continue')) {
-					const selection = practiceContinueSelection(actions.getPracticeProgress());
+					const selection = practiceContinueSelection(actions.getPracticeProgress(), undefined, actions.isPracticeTopicAvailable);
 					if (selection) update(root, { type: 'continue', selection }, '[data-practice-start]');
 					return;
 				}
@@ -192,6 +196,13 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 				const nextPond = button.dataset.practicePond;
 				if (isMathDifficulty(nextPond)) { update(root, { type: 'pond', pond: nextPond }, `[data-practice-pond="${nextPond}"]`); return; }
 				if (button.hasAttribute('data-practice-pond-done')) { update(root, { type: 'closePond' }, '[data-practice-change-pond]'); return; }
+				if (button.hasAttribute('data-practice-store')) {
+					void actions.openFullGame().catch(function(): void {
+						const status = root.querySelector('[data-practice-store-status]');
+						if (status) status.textContent = 'Could not open Steam. Find Math Marsh in the Steam store.';
+					});
+					return;
+				}
 				const selection = practiceSetupSelection(state);
 				if (button.hasAttribute('data-practice-start') && selection && !starting) {
 					starting = true; button.disabled = true;
@@ -219,7 +230,7 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 			const attempts = summary?.attempts ?? 0;
 			const revisit = summary?.revisit ?? [];
 			const continuation = session?.outcome === 'completed'
-				? practiceContinueSelection(actions.getPracticeProgress(), session.selection) : undefined;
+				? practiceContinueSelection(actions.getPracticeProgress(), session.selection, actions.isPracticeTopicAvailable) : undefined;
 			const next = continuation?.topicId !== session?.selection.topicId ? continuation : undefined;
 			const nextTopic = next ? practiceTopic(next.topicId) : undefined;
 			render(html`<h1 class="game-over-title">${session?.outcome === 'completed' ? 'Practice complete' : 'Partial practice'}</h1>

@@ -23,6 +23,7 @@ export type ScreenSpecActions = {
   openModeSelect: () => void;
   openPractice: () => void;
   startPractice: (selection: PracticeSelection) => void;
+  isPracticeTopicAvailable: (topicId: string) => boolean;
   getPracticeSession: () => PracticeSession | null;
   getPracticeProgress: () => PracticeProgress;
   getPracticePersistence: () => ProfilePersistenceStatus;

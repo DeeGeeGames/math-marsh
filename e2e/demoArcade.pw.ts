@@ -49,7 +49,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844
     await expect(page.getByRole('button', { name: 'Practice', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Practice', exact: true }).click();
     await page.locator('[data-practice-operation="multiply"]').click();
-    await page.locator('[data-practice-topic="multiply-table-12"]').click();
+    await page.locator('[data-practice-topic="multiply-table-6"]').click();
     await page.locator('[data-practice-start]').click();
     await expect(page.locator('#game-canvas')).toBeVisible();
     expect(await page.evaluate(() => window.demoArcadeFixture.state().run)).toBeNull();
