@@ -1,3 +1,5 @@
+import { practiceContinueSelection, emptyPracticeProgress } from './practiceProgress';
+import { isPracticeTopicAvailable } from './demoPractice';
 import * as audio from '../audio/audio';
 import { expect, spyOn, test } from 'bun:test';
 import ECSpresso, { type ConfigOf } from 'ecspresso';
@@ -103,7 +105,7 @@ test('paid and non-Steam runs continue beyond five ponds and have no demo run st
   }
 });
 
-test('cancelled tutorial offers and early losses leave unlimited replay; Practice remains unrestricted', async () => {
+test('cancelled tutorial offers and early losses leave unlimited replay; available Practice clears Arcade state', async () => {
   const { world, runs } = await fixture('demo');
   const sound = spyOn(audio, 'playSound').mockImplementation(() => {});
   try {
@@ -128,12 +130,12 @@ test('cancelled tutorial offers and early losses leave unlimited replay; Practic
       await Bun.sleep(0);
       expect(world.getCurrentScreen()).toBe('playing');
     }
-    runs.startPractice({ topicId: 'multiply-table-12', pond: 'expert', related: true });
+    runs.startPractice({ topicId: 'multiply-table-6', pond: 'expert', related: true });
     await Bun.sleep(0);
-    expect(world.getResource('practiceSession')?.selection.topicId).toBe('multiply-table-12');
+    expect(world.getResource('practiceSession')?.selection.topicId).toBe('multiply-table-6');
     expect(world.getResource('demoArcadeRun')).toBeNull();
     expect(activePlayerProfile(world.getResource('playerProfiles'))?.practiceProgress.lastSelection?.topicId)
-      .toBe('multiply-table-12');
+      .toBe('multiply-table-6');
   } finally { sound.mockRestore(); await world.dispose(); }
 });
 
@@ -188,11 +190,44 @@ test('pause, tutorials, and Practice ponds do not consume an Arcade round budget
     await world.setScreen('tutorial', { kind: 'basics', isReplay: true, returnTo: { kind: 'newGame' } });
     world.update(0);
     expect(world.getResource('demoArcadeRun')?.completedLevels).toEqual([]);
-    runs.startPractice({ topicId: 'multiply-table-12', related: false, pond: 'easy' });
+    runs.startPractice({ topicId: 'multiply-table-6', related: false, pond: 'easy' });
     await Bun.sleep(0);
     for (const level of [1, 2, 3, 4, 5, 6]) await clear(level);
     expect(world.getCurrentScreen()).toBe('playing');
     expect(world.getResource('demoArcadeRun')).toBeNull();
-    expect(world.getResource('practiceSession')?.selection.topicId).toBe('multiply-table-12');
+    expect(world.getResource('practiceSession')?.selection.topicId).toBe('multiply-table-6');
   } finally { await world.dispose(); }
+});
+
+
+test('Practice demo gate rejects locked starts without changing the run or saved selection', async () => {
+  const allowed = ['add-range-2-5', 'add-range-2-10', 'add-range-2-20',
+    'subtract-range-1-4', 'subtract-range-1-9', 'subtract-range-0-20',
+    'add-make-3', 'add-make-10', 'subtract-make-3', 'subtract-make-10',
+    'multiply-table-1', 'multiply-table-6', 'divide-table-1', 'divide-table-6'];
+  const locked = ['add-range-2-100', 'subtract-range-0-100', 'add-make-11',
+    'subtract-make-11', 'multiply-table-7', 'divide-table-7'];
+  for (const role of ['demo', 'paid', null] as const) {
+    const { world, runs } = await fixture(role);
+    try {
+      for (const topicId of allowed) {
+        runs.startPractice({ topicId, related: true, pond: 'expert' });
+        expect(world.getResource('practiceSession')?.selection.topicId).toBe(topicId);
+      }
+      const previous = world.getResource('practiceSession');
+      const profiles = world.getResource('playerProfiles');
+      for (const topicId of locked) {
+        runs.startPractice({ topicId, related: false, pond: 'easy' });
+        if (role === 'demo') {
+          expect(world.getResource('practiceSession')).toBe(previous);
+          expect(world.getResource('playerProfiles')).toBe(profiles);
+        } else expect(world.getResource('practiceSession')?.selection.topicId).toBe(topicId);
+      }
+    } finally { await world.dispose(); }
+  }
+  const progress = emptyPracticeProgress();
+  const next = practiceContinueSelection(progress,
+    { topicId: 'multiply-table-12', related: true, pond: 'expert' },
+    function(id) { return isPracticeTopicAvailable('demo', id); });
+  expect(next).toEqual({ topicId: 'multiply-table-1', related: true, pond: 'expert' });
 });

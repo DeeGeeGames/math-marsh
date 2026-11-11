@@ -124,12 +124,13 @@ export const practiceTopicStatus = function(progress: PracticeProgress, topic: P
 export const practiceContinueSelection = function(
   progress: PracticeProgress,
   selection: PracticeSelection | null = progress.lastSelection,
+  isAvailable: (topicId: string) => boolean = () => true,
 ): PracticeSelection | undefined {
   if (!selection) return undefined;
   const previous = practiceTopic(selection.topicId);
   if (!previous) return undefined;
   const next = PRACTICE_TOPICS.find(function(topic): boolean {
-    return topic.operation === previous.operation && practiceTopicStatus(progress, topic) !== 'Practiced';
+    return isAvailable(topic.id) && topic.operation === previous.operation && practiceTopicStatus(progress, topic) !== 'Practiced';
   });
   return next ? { ...selection, topicId: next.id } : undefined;
 };
