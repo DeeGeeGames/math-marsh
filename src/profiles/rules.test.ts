@@ -23,6 +23,7 @@ const createLegacyLearnerData = function(): PlayerLearnerData {
 		practiceProgress: {
 			facts: {},
 			lastSelection: null,
+			completedTopics: [],
 			canPersist: true,
 		},
 	};

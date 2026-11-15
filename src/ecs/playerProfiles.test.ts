@@ -318,7 +318,7 @@ describe('Practice data in local player profiles', function() {
     expect(reloaded?.mathProgress).toEqual(legacy.mathProgress);
     expect(reloaded?.onboarding).toEqual(legacy.onboarding);
     expect(reloaded?.skitProgress).toEqual(legacy.skitProgress);
-    expect(values.get(PLAYER_PROFILES_KEY)).toContain('"practiceProgress":{"version":1');
+    expect(values.get(PLAYER_PROFILES_KEY)).toContain('"practiceProgress":{"version":2');
   });
 
   test('keeps evidence isolated per profile and usable when storage fails', function() {

@@ -157,3 +157,14 @@ const symbols: Readonly<Record<EquationOperation, string>> = {
 export const practiceFactLabel = function (fact: PracticeFact): string {
   return `${fact.left} ${symbols[fact.operation]} ${fact.right} = ${fact.result}`;
 };
+
+/** Commutative forms share one repetition target; inverse operations stay separate. */
+export const practiceTargetId = function(fact: PracticeFact): string {
+  return fact.operation === 'add' || fact.operation === 'multiply'
+    ? practiceFactId(fact.operation, Math.min(fact.left, fact.right), Math.max(fact.left, fact.right))
+    : fact.id;
+};
+
+export const practiceTargetCount = function(facts: readonly PracticeFact[]): number {
+  return new Set(facts.map(practiceTargetId)).size;
+};

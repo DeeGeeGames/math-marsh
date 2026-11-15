@@ -1,5 +1,5 @@
 import { practiceTopic } from '../../math/practiceTopics';
-import { PRACTICE_SESSION_LENGTH } from '../practiceSession';
+import { practiceSessionProgress } from '../practiceSession';
 import type { GameSystemRegistrar } from '../Engine';
 import { gameplayLevelLabel, updateGameplayUI } from '../../ui/UIManager';
 import { operationLabels } from '../../ui/labels';
@@ -49,8 +49,9 @@ export function addUISystemToEngine(systems: GameSystemRegistrar): void {
         mathRoundSummary,
         gameplayClock,
       } = resources;
-      const practiceLabel = practiceSession && !gameplayOnboardingSession.active
-        ? `Practice · ${practiceTopic(practiceSession.selection.topicId)?.label ?? 'Topic'} - ${practiceSession.solved}/${PRACTICE_SESSION_LENGTH} solved · ${mathDifficulty}`
+      const progress = practiceSession ? practiceSessionProgress(practiceSession) : undefined;
+      const practiceLabel = practiceSession && progress && !gameplayOnboardingSession.active
+        ? `Practice · ${practiceTopic(practiceSession.selection.topicId)?.label ?? 'Topic'} - ${progress.completed}/${progress.total} targets complete · ${mathDifficulty}`
         : undefined;
       const level = practiceLabel ?? tutorialHudLabel(gameplayOnboardingSession)
         ?? (mathSession

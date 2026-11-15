@@ -1,8 +1,18 @@
 import type { EquationModeState, MathDifficulty } from './types';
 import { createEquationModeState, equationSelectionText, evaluateEquationSelection, type EquationCandidate } from '../math/equations';
-import { practiceFacts, practiceFactLabel, practiceTopic, type PracticeFact, type PracticeTopic } from '../math/practiceTopics';
+import { practiceFacts, practiceTargetId, practiceFactLabel, practiceTopic, type PracticeFact, type PracticeTopic } from '../math/practiceTopics';
 
-export const PRACTICE_SESSION_LENGTH = 12;
+export const PRACTICE_CORRECT_TARGET = 2;
+export type PracticeTarget = Readonly<{
+  id: string;
+  indices: readonly number[];
+  correct: number;
+  incorrect: number;
+}>;
+
+export const practiceTargetRemaining = function(target: PracticeTarget): number {
+  return Math.max(0, PRACTICE_CORRECT_TARGET + target.incorrect - target.correct);
+};
 export type PracticeSelection = Readonly<{ topicId: string; related: boolean; pond: MathDifficulty }>;
 export type PracticeAttempt = Readonly<{ factId: string; correct: boolean }>;
 export type PracticeSession = Readonly<{
@@ -10,6 +20,8 @@ export type PracticeSession = Readonly<{
   selection: PracticeSelection;
   deck: readonly PracticeFact[];
   solved: number;
+  currentIndex: number;
+  targets: readonly PracticeTarget[];
   attempts: readonly PracticeAttempt[];
   outcome: 'active' | 'completed' | 'partial';
 }>;
@@ -19,7 +31,7 @@ export const createPracticeSession = function(ownerId: string, selection: Practi
     || typeof selection.related !== 'boolean') return undefined;
   const topic = practiceTopic(selection.topicId);
   if (!topic) return undefined;
-  // Shuffle a complete coverage deck; repeat only after every fact has appeared.
+  // Shuffle equation forms; target groups inherit their first appearance order.
   const deck = [...practiceFacts(topic, selection.related)];
   for (let index = deck.length - 1; index > 0; index--) {
     const otherIndex = Math.floor(Math.random() * (index + 1));
@@ -29,11 +41,19 @@ export const createPracticeSession = function(ownerId: string, selection: Practi
     deck[index] = other;
     deck[otherIndex] = current;
   }
-  return deck.length === 0 ? undefined : { ownerId, selection, deck, solved: 0, attempts: [], outcome: 'active' };
+  const groups = new Map<string, number[]>();
+  deck.forEach(function(fact, index): void {
+    const id = practiceTargetId(fact);
+    const indices = groups.get(id) ?? [];
+    indices.push(index);
+    groups.set(id, indices);
+  });
+  const targets = Array.from(groups, ([id, indices]) => ({ id, indices, correct: 0, incorrect: 0 }));
+  return deck.length === 0 ? undefined : { ownerId, selection, deck, targets, currentIndex: 0, solved: 0, attempts: [], outcome: 'active' };
 };
 
 export const currentPracticeFact = function(session: PracticeSession): PracticeFact {
-  const fact = session.deck[session.solved % session.deck.length];
+  const fact = session.deck[session.currentIndex];
   if (!fact) throw new Error('Practice session has no valid fact');
   return fact;
 };
@@ -96,19 +116,52 @@ export const submittedPracticeFact = function(session: PracticeSession, mode: Eq
     && fact.left === left && fact.right === right && fact.result === result);
 };
 
+export const practiceSessionProgress = function(session: PracticeSession): Readonly<{ completed: number; total: number }> {
+  return { completed: session.targets.filter(target => practiceTargetRemaining(target) === 0).length, total: session.targets.length };
+};
+
+export const isPracticeSessionComplete = function(session: PracticeSession): boolean {
+  return session.targets.length > 0 && session.targets.every(target => practiceTargetRemaining(target) === 0);
+};
+
 export const recordPracticeAttempt = function(session: PracticeSession, factId: string, correct: boolean): PracticeSession {
-  if (session.outcome !== 'active' || session.solved >= PRACTICE_SESSION_LENGTH
-    || !session.deck.some(fact => fact.id === factId)) return session;
-  return { ...session, solved: session.solved + Number(correct), attempts: [...session.attempts, { factId, correct }] };
+  if (session.outcome !== 'active' || isPracticeSessionComplete(session)) return session;
+  const fact = session.deck.find(fact => fact.id === factId);
+  if (!fact) return session;
+  const previousId = practiceTargetId(fact);
+  const targets = session.targets.map(function(target): PracticeTarget {
+    return target.id === previousId
+      ? { ...target, correct: target.correct + Number(correct), incorrect: target.incorrect + Number(!correct) }
+      : target;
+  });
+  const next = { ...session, targets, solved: session.solved + Number(correct), attempts: [...session.attempts, { factId, correct }] };
+  if (isPracticeSessionComplete(next)) return next;
+  // A valid alternative answer can differ from the displayed target. Cool down both.
+  const displayedId = practiceTargetId(currentPracticeFact(session));
+  const eligible = targets.filter(target => target.id !== previousId && target.id !== displayedId);
+  // The initial shuffled pass guarantees early coverage, even after mistakes.
+  const unseen = eligible.find(target => target.correct + target.incorrect === 0);
+  const weight = function(target: PracticeTarget): number { return 1 + 2 * practiceTargetRemaining(target); };
+  let ticket = Math.random() * eligible.reduce((sum, target) => sum + weight(target), 0);
+  const chosen = unseen ?? eligible.find(function(target): boolean {
+    ticket -= weight(target);
+    return ticket < 0;
+  });
+  if (!chosen) throw new Error('Practice needs at least two distinct targets');
+  const currentIndex = chosen.indices[Math.floor(Math.random() * chosen.indices.length)];
+  if (currentIndex === undefined) throw new Error('Practice target has no equation');
+  return { ...next, currentIndex };
 };
 
 export const finishPracticeSession = function(session: PracticeSession): PracticeSession {
   if (session.outcome !== 'active') return session;
-  return { ...session, outcome: session.solved >= PRACTICE_SESSION_LENGTH ? 'completed' : 'partial' };
+  return { ...session, outcome: isPracticeSessionComplete(session) ? 'completed' : 'partial' };
 };
 
 export type PracticeSessionSummary = Readonly<{
   solved: number;
+  completed: number;
+  total: number;
   attempts: number;
   correct: number;
   accuracy: number | null;
@@ -124,6 +177,7 @@ export const summarizePracticeSession = function(session: PracticeSession): Prac
   const facts = topic ? practiceFacts(topic, session.selection.related) : [];
   return {
     solved: session.solved,
+    ...practiceSessionProgress(session),
     attempts: session.attempts.length,
     correct,
     accuracy: session.attempts.length > 0 ? correct / session.attempts.length : null,

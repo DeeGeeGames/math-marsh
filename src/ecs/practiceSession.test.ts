@@ -1,10 +1,10 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { equationProblemValuesForCandidate, equationPromptKindForLevel } from '../math/equations';
-import { PRACTICE_TOPICS, practiceFacts, practiceTopic } from '../math/practiceTopics';
+import { PRACTICE_TOPICS, practiceFacts, practiceTargetId, practiceTopic } from '../math/practiceTopics';
 import {
   createPracticeSession, currentPracticeFact, finishPracticeSession,
   summarizePracticeSession, practiceEquationCandidate, practiceEquationMode, practiceFactExample, recordPracticeAttempt,
-  submittedPracticeFact, PRACTICE_SESSION_LENGTH, type PracticeSession,
+  submittedPracticeFact, isPracticeSessionComplete, practiceSessionProgress, type PracticeSession,
 } from './practiceSession';
 
 const sessionFor = function(topicId = 'add-make-5'): PracticeSession {
@@ -53,7 +53,7 @@ describe('focused Practice sessions', () => {
           // their session prompts, including both operations when related is on.
           const indices = topic.kind === 'range'
             ? [...new Set([
-              ...Array.from({ length: Math.min(PRACTICE_SESSION_LENGTH, session.deck.length) }, (_, index) => index),
+              ...Array.from({ length: Math.min(12, session.deck.length) }, (_, index) => index),
               session.deck.length - 1,
               session.deck.findIndex(fact => fact.operation !== topic.operation),
               session.deck.findIndex(fact => fact.operation === topic.operation && fact.result === topic.answerRange.min),
@@ -63,7 +63,7 @@ describe('focused Practice sessions', () => {
           for (const index of indices) {
             const fact = session.deck[index];
             if (!fact) throw new Error('Missing sampled fact');
-            const focused = { ...session, solved: index };
+            const focused = { ...session, solved: index, currentIndex: index };
             for (const level of [1, 2, 3, 11, 12, 99]) {
               const mode = practiceEquationMode(focused, level, 4);
               const candidate = practiceEquationCandidate(focused);
@@ -150,7 +150,7 @@ describe('focused Practice sessions', () => {
           if (!session) throw new Error('Missing bounded session');
           const solved = session.deck.findIndex(fact => fact.operation === scenario.operation);
           if (solved < 0) continue;
-          const focused = { ...session, solved };
+          const focused = { ...session, solved, currentIndex: solved };
           const mode = practiceEquationMode(focused, scenario.level);
           const candidate = practiceEquationCandidate(focused);
           for (const [sample, boundary] of [[0, scenario.min], [0.999999, scenario.max]] as const) {
@@ -174,41 +174,123 @@ describe('focused Practice sessions', () => {
     } finally { random.mockRestore(); }
   });
 
-  test('wrong attempts retain the current equation and correct retries advance once toward a 12-solve budget', () => {
-    const original = sessionFor();
+  test('mistakes increase the requirement and move away from the target before retrying', () => {
+    const original = sessionFor('multiply-table-7');
     const fact = currentPracticeFact(original);
     const retry = recordPracticeAttempt(original, fact.id, false);
     expect(retry.solved).toBe(0);
-    expect(currentPracticeFact(retry)).toBe(fact);
+    expect(practiceTargetId(currentPracticeFact(retry))).not.toBe(practiceTargetId(fact));
     expect(retry.attempts).toEqual([{ factId: fact.id, correct: false }]);
     expect(original.attempts).toEqual([]);
     let session = retry;
-    for (let solved = 0; solved < PRACTICE_SESSION_LENGTH; solved++) {
-      session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
-      expect(session.solved).toBe(solved + 1);
-    }
-    expect(session.attempts).toHaveLength(13);
-    expect(recordPracticeAttempt(session, fact.id, true)).toBe(session);
-    const complete = finishPracticeSession(session);
-    expect(complete.outcome).toBe('completed');
-    expect(finishPracticeSession(complete)).toBe(complete);
-    expect(recordPracticeAttempt(complete, fact.id, false)).toBe(complete);
+    for (let correct = 0; correct < 2; correct++) session = recordPracticeAttempt(session, fact.id, true);
+    expect(practiceSessionProgress(session).completed).toBe(0);
+    session = recordPracticeAttempt(session, fact.id, true);
+    expect(practiceSessionProgress(session)).toEqual({ completed: 1, total: 12 });
+    expect(finishPracticeSession(session).outcome).toBe('partial');
     const partial = finishPracticeSession(retry);
-    expect(partial).toMatchObject({ outcome: 'partial', solved: 0, attempts: retry.attempts });
-    expect(finishPracticeSession(partial)).toBe(partial);
     expect(recordPracticeAttempt(partial, fact.id, true)).toBe(partial);
   });
 
-  test('short topics repeat only after a full coverage deck', () => {
-    let session = sessionFor();
-    const first = currentPracticeFact(session);
+  test('all targets appear before repeats even after errors; shuffled forms share a cooldown', () => {
+    let session = sessionFor('multiply-table-7');
     const seen = new Set<string>();
-    for (let index = 0; index < session.deck.length; index++) {
-      seen.add(currentPracticeFact(session).id);
-      session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
+    for (let index = 0; index < session.targets.length; index++) {
+      const fact = currentPracticeFact(session);
+      const id = practiceTargetId(fact);
+      expect(seen.has(id)).toBe(false);
+      seen.add(id);
+      session = recordPracticeAttempt(session, fact.id, index % 2 === 0);
+      expect(practiceTargetId(currentPracticeFact(session))).not.toBe(id);
     }
-    expect(seen.size).toBe(session.deck.length);
-    expect(currentPracticeFact(session)).toBe(first);
+    expect(seen.size).toBe(12);
+  });
+
+  test('every operation requires two correct answers per target and completes only when all meet the target', () => {
+    for (const topicId of ['multiply-table-7', 'divide-table-7', 'add-make-5', 'subtract-make-5', 'add-range-2-5', 'subtract-range-1-4']) {
+      let session = sessionFor(topicId);
+      for (const target of session.targets) {
+        const index = target.indices[0];
+        const fact = index === undefined ? undefined : session.deck[index];
+        if (!fact) throw new Error('Missing target equation');
+        session = recordPracticeAttempt(session, fact.id, true);
+      }
+      expect(isPracticeSessionComplete(session)).toBe(false);
+      expect(practiceSessionProgress(session).completed).toBe(0);
+      for (const target of session.targets) {
+        const index = target.indices[0];
+        const fact = index === undefined ? undefined : session.deck[index];
+        if (!fact) throw new Error('Missing target equation');
+        session = recordPracticeAttempt(session, fact.id, true);
+      }
+      expect(isPracticeSessionComplete(session)).toBe(true);
+      expect(finishPracticeSession(session).outcome).toBe('completed');
+      expect(recordPracticeAttempt(session, currentPracticeFact(session).id, false)).toBe(session);
+      const complete = finishPracticeSession(session);
+      expect(finishPracticeSession(complete)).toBe(complete);
+    }
+  });
+
+  test('weighted selection favours unfinished targets while retaining review questions and excluding the last target', () => {
+    const initial = sessionFor('multiply-table-7');
+    const last = currentPracticeFact(initial);
+    const weak = initial.targets.find(target => target.id !== practiceTargetId(last));
+    if (!weak) throw new Error('Missing unfinished target');
+    const session = { ...initial, targets: initial.targets.map(target => ({
+      ...target, correct: 2, incorrect: target.id === weak.id ? 5 : 0,
+    })) };
+    const random = spyOn(Math, 'random');
+    let weakSelections = 0;
+    let reviewSelections = 0;
+    try {
+      for (let sample = 0; sample < 100; sample++) {
+        random.mockReturnValue((sample + 0.5) / 100);
+        const next = recordPracticeAttempt(session, last.id, true);
+        const nextId = practiceTargetId(currentPracticeFact(next));
+        expect(nextId).not.toBe(practiceTargetId(last));
+        if (nextId === weak.id) weakSelections++; else reviewSelections++;
+      }
+      expect(weakSelections).toBeGreaterThan(50);
+      expect(reviewSelections).toBeGreaterThan(0);
+    } finally { random.mockRestore(); }
+  });
+
+  test('a valid related alternative excludes both its target and the displayed target from the next question', () => {
+    const initial = createPracticeSession('learner', { topicId: 'multiply-table-7', related: true, pond: 'expert' });
+    if (!initial) throw new Error('Missing related session');
+    const currentIndex = initial.deck.findIndex(fact => fact.id === 'divide:21:7');
+    const alternative = initial.deck.find(fact => fact.id === 'divide:21:3');
+    if (currentIndex < 0 || !alternative) throw new Error('Missing division alternatives');
+    const session = { ...initial, currentIndex, targets: initial.targets.map(target => ({ ...target, correct: 1 })) };
+    const random = spyOn(Math, 'random');
+    try {
+      for (let sample = 0; sample < 100; sample++) {
+        random.mockReturnValue((sample + 0.5) / 100);
+        const next = recordPracticeAttempt(session, alternative.id, true);
+        const id = practiceTargetId(currentPracticeFact(next));
+        expect(id).not.toBe('divide:21:7');
+        expect(id).not.toBe('divide:21:3');
+      }
+    } finally { random.mockRestore(); }
+  });
+
+  test('a completed target can reopen after another mistake and filler questions prevent consecutive repeats at the end', () => {
+    const initial = sessionFor('multiply-table-7');
+    const last = currentPracticeFact(initial);
+    const unfinished = initial.targets.find(target => target.id !== practiceTargetId(last));
+    if (!unfinished) throw new Error('Missing unfinished target');
+    const prepared = { ...initial, targets: initial.targets.map(target => ({
+      ...target, correct: target.id === unfinished.id ? 1 : 2,
+    })) };
+    const reopened = recordPracticeAttempt(prepared, last.id, false);
+    expect(practiceSessionProgress(reopened)).toEqual({ completed: 10, total: 12 });
+    let session: PracticeSession = prepared;
+    for (let attempt = 0; attempt < 1000 && !isPracticeSessionComplete(session); attempt++) {
+      const current = currentPracticeFact(session);
+      session = recordPracticeAttempt(session, current.id, true);
+      if (!isPracticeSessionComplete(session)) expect(practiceTargetId(currentPracticeFact(session))).not.toBe(practiceTargetId(current));
+    }
+    expect(isPracticeSessionComplete(session)).toBe(true);
   });
 });
 
@@ -219,16 +301,16 @@ test('session summaries retain wrong retries once per fact and keep completed an
   session = recordPracticeAttempt(session, first.id, false);
   session = recordPracticeAttempt(session, first.id, true);
   expect(summarizePracticeSession(finishPracticeSession(session))).toEqual({
-    solved: 1, attempts: 3, correct: 1, accuracy: 1 / 3, revisit: [first],
+    solved: 1, completed: 0, total: session.targets.length, attempts: 3, correct: 1, accuracy: 1 / 3, revisit: [first],
   });
-  while (session.solved < PRACTICE_SESSION_LENGTH) {
+  while (!isPracticeSessionComplete(session)) {
     session = recordPracticeAttempt(session, currentPracticeFact(session).id, true);
   }
   expect(summarizePracticeSession(finishPracticeSession(session))).toEqual({
-    solved: 12, attempts: 14, correct: 12, accuracy: 12 / 14, revisit: [first],
+    solved: session.solved, completed: session.targets.length, total: session.targets.length, attempts: session.solved + 2, correct: session.solved, accuracy: session.solved / (session.solved + 2), revisit: [first],
   });
   expect(summarizePracticeSession(finishPracticeSession(sessionFor()))).toEqual({
-    solved: 0, attempts: 0, correct: 0, accuracy: null, revisit: [],
+    solved: 0, completed: 0, total: 3, attempts: 0, correct: 0, accuracy: null, revisit: [],
   });
 });
 

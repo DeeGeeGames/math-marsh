@@ -79,7 +79,7 @@ describe('player profile codec', () => {
 		expect(learnerData.mathProgress.subtract).toEqual({ currentStep: 1, highestUnlockedStep: 1 });
 		expect(learnerData.skitProgress).toEqual(['snack-break']);
 		expect(learnerData.onboarding).toEqual({ basics: 'completed', operands: 'skipped', operandAndResult: 'pending' });
-		expect(learnerData.practiceProgress).toEqual({ facts: {}, lastSelection: null, canPersist: true });
+		expect(learnerData.practiceProgress).toEqual({ facts: {}, lastSelection: null, completedTopics: [], canPersist: true });
 	});
 
 	test('rejects a missing or unsupported outer store version', () => {

@@ -1,4 +1,4 @@
-import { currentPracticeFact, practiceEquationMode, submittedPracticeFact, PRACTICE_SESSION_LENGTH } from './practiceSession';
+import { currentPracticeFact, practiceEquationMode, submittedPracticeFact, isPracticeSessionComplete } from './practiceSession';
 import { submitPracticeAttempt } from './practiceLifecycle';
 import { gameplayTimeMs } from './gameplayClock';
 import type { GameEngine } from './Engine';
@@ -90,9 +90,9 @@ export function handleEquationProblemSelection(
 ): void {
   const { equationMode, gameMode, mathDifficulty } = resources;
   const practice = ecs.tryGetResource('practiceSession');
-  if (practice && (practice.outcome !== 'active' || practice.solved >= PRACTICE_SESSION_LENGTH)) return;
+  if (practice && (practice.outcome !== 'active' || isPracticeSessionComplete(practice))) return;
   if (equationMode.target === null) return;
-  if (equationMode.feedback?.kind === 'correct') return;
+  if (equationMode.feedback?.kind === 'correct' || (practice && equationMode.feedback?.nextMode)) return;
 
   const selectableProblemIds = new Set(mathProblems.map(candidate => candidate.id));
   const currentSelectedProblemIds = equationMode.selectedProblemIds
@@ -203,10 +203,13 @@ function handleIncorrectEquationSelection(
   );
   startDamageReaction(ecs, player, ANIMATION_CONFIG.SHAKE.WRONG_ANSWER);
 
+  const practice = ecs.tryGetResource('practiceSession');
   ecs.setResource('equationMode', {
     ...equationMode,
     selectedProblemIds: [],
-    feedback: createEquationFeedback(startedAt, 'incorrect'),
+    feedback: createEquationFeedback(startedAt, 'incorrect', practice
+      ? { nextMode: practiceEquationMode(practice, equationMode.level, equationMode.clearedThisLevel) }
+      : {}),
   });
 }
 
