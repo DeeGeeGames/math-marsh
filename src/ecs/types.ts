@@ -218,6 +218,7 @@ export interface EquationFeedback {
   kind: EquationFeedbackKind;
   startedAt: number;
   displayText?: string;
+  durationMs?: number;
   nextMode?: BaseEquationModeState;
 }
 
