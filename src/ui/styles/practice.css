@@ -47,6 +47,11 @@
 	display: none;
 }
 
+.practice-content:has(> .practice-operation-grid) {
+	/* Preserve both Continue lines when the panel runs out of vertical space. */
+	grid-auto-rows: max-content;
+}
+
 .practice-content:has(.practice-topic-grid) {
 	grid-template-columns: minmax(0, 1fr) auto;
 }
