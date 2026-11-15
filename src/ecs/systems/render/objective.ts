@@ -159,7 +159,7 @@ const activeFeedback = (
   if (!feedback) return undefined;
 
   const elapsed = currentTime - feedback.startedAt;
-  const feedbackDurationMs = EQUATION_FEEDBACK_DURATION_MS[feedback.kind];
+  const feedbackDurationMs = feedback.durationMs ?? EQUATION_FEEDBACK_DURATION_MS[feedback.kind];
   if (elapsed >= feedbackDurationMs) return undefined;
 
   return {

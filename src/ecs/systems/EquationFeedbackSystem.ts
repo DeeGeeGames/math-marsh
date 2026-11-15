@@ -10,7 +10,7 @@ const nextEquationModeForFeedback = (
   feedback: EquationFeedback,
   currentTime: number,
 ): BaseEquationModeState | undefined => {
-  if (currentTime - feedback.startedAt < EQUATION_FEEDBACK_DURATION_MS[feedback.kind]) return undefined;
+  if (currentTime - feedback.startedAt < (feedback.durationMs ?? EQUATION_FEEDBACK_DURATION_MS[feedback.kind])) return undefined;
 
   return feedback.nextMode;
 };

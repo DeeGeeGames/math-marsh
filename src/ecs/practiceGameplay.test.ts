@@ -18,7 +18,7 @@ import type { MathProblemEntityWithRenderable } from './queries';
 import { configureGameScreens } from './screenConfiguration';
 import { addEquationFeedbackSystemToEngine } from './systems/EquationFeedbackSystem';
 import { addProblemManagementSystemToEngine } from './systems/ProblemManagementSystem';
-import { EQUATION_FEEDBACK_DURATION_MS } from './systemConfigs';
+import { EQUATION_FEEDBACK_DURATION_MS, PRACTICE_CORRECTION_DURATION_MS } from './systemConfigs';
 import { initialSavedMathProgress } from './mathProgressStore';
 
 let restoreSound: (() => void) | undefined;
@@ -148,12 +148,15 @@ describe('Practice gameplay boundaries', () => {
       select(world, wrong);
       expect(activeSession(world)).toMatchObject({ solved: 0, attempts: [{ factId: 'add:2:3', correct: false }] });
       expect(world.getResource('equationMode').selectedProblemIds).toEqual([]);
+      expect(world.getResource('equationMode').feedback).toMatchObject({
+        displayText: '2 + 3 = 5', durationMs: PRACTICE_CORRECTION_DURATION_MS,
+      });
       select(world, left);
       expect(activeSession(world).attempts).toHaveLength(1);
-      world.getResource('gameplayClock').elapsed = (EQUATION_FEEDBACK_DURATION_MS.incorrect - 1) / 1000;
+      world.getResource('gameplayClock').elapsed = (PRACTICE_CORRECTION_DURATION_MS - 1) / 1000;
       world.update(0);
       expect(world.getResource('equationMode').feedback?.kind).toBe('incorrect');
-      world.getResource('gameplayClock').elapsed = EQUATION_FEEDBACK_DURATION_MS.incorrect / 1000;
+      world.getResource('gameplayClock').elapsed = PRACTICE_CORRECTION_DURATION_MS / 1000;
       world.update(0);
       expect(world.getResource('equationMode').feedback).toBeUndefined();
       expect(practiceTargetId(currentPracticeFact(activeSession(world)))).not.toBe('add:2:3');

@@ -1,3 +1,5 @@
+import { practiceFactLabel } from '../math/practiceTopics';
+import { PRACTICE_CORRECTION_DURATION_MS } from './systemConfigs';
 import { currentPracticeFact, practiceEquationMode, submittedPracticeFact, isPracticeSessionComplete } from './practiceSession';
 import { submitPracticeAttempt } from './practiceLifecycle';
 import { gameplayTimeMs } from './gameplayClock';
@@ -36,6 +38,7 @@ const createEquationFeedback = (
   kind: EquationFeedbackKind,
   options: {
     displayText?: string;
+    durationMs?: number;
     nextMode?: BaseEquationModeState;
   } = {},
 ): EquationModeState['feedback'] => ({
@@ -130,7 +133,8 @@ export function handleEquationProblemSelection(
 
   if (!isCorrect) {
     playSound('incorrect');
-    handleIncorrectEquationSelection(ecs, player, problem, pendingMode, mathDifficulty, resources.mathSession ?? null);
+    handleIncorrectEquationSelection(ecs, player, problem, pendingMode, mathDifficulty, resources.mathSession ?? null,
+      practice ? practiceFactLabel(currentPracticeFact(practice)) : undefined);
     return;
   }
 
@@ -191,6 +195,7 @@ function handleIncorrectEquationSelection(
   equationMode: EquationModeState,
   mathDifficulty: Resources['mathDifficulty'],
   mathSession: MathSession | null,
+  correctionText: string | undefined,
 ): void {
   const updatedMathSession = addMathAnswer(mathSession, equationMode, false, mathDifficulty, ecs.tryGetResource('mathRoundCompletedThisBoard') === true);
   if (updatedMathSession) ecs.setResource('mathSession', updatedMathSession);
@@ -207,8 +212,12 @@ function handleIncorrectEquationSelection(
   ecs.setResource('equationMode', {
     ...equationMode,
     selectedProblemIds: [],
-    feedback: createEquationFeedback(startedAt, 'incorrect', practice
-      ? { nextMode: practiceEquationMode(practice, equationMode.level, equationMode.clearedThisLevel) }
+    feedback: createEquationFeedback(startedAt, 'incorrect', practice && correctionText
+      ? {
+        nextMode: practiceEquationMode(practice, equationMode.level, equationMode.clearedThisLevel),
+        displayText: correctionText,
+        durationMs: PRACTICE_CORRECTION_DURATION_MS,
+      }
       : {}),
   });
 }
