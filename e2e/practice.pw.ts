@@ -166,11 +166,13 @@ test('range topics show their bounds, start sessions, and retain fact progress a
 					.some((value, index) => index % 4 === 3 && value > 0);
 			})).toBe(true);
 			await page.screenshot({ path: testInfo.outputPath(`${range.id}-gameplay.png`) });
-			await page.evaluate(() => window.practiceFixture.completeSession());
-			await expect(page.getByRole('heading', { name: 'Practice complete', exact: true })).toBeVisible();
+			await page.evaluate(() => window.practiceFixture.answerCorrectly(1));
+			await page.locator('#pause-btn').click();
+			await page.getByRole('button', { name: 'Quit to Menu', exact: true }).click();
+			await expect(page.getByRole('heading', { name: 'Partial practice', exact: true })).toBeVisible();
 			await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
 			await page.locator(`[data-practice-operation="${scenario.operation}"]`).click();
-			await expect(tile).toHaveAccessibleName(/In progress|All solved/);
+			await expect(tile).toHaveAccessibleName(/In progress|Completed/);
 		}
 		await page.locator('[data-practice-back]').click();
 	}
@@ -179,13 +181,13 @@ test('range topics show their bounds, start sessions, and retain fact progress a
 	for (const scenario of scenarios) {
 		await page.locator(`[data-practice-operation="${scenario.operation}"]`).click();
 		for (const range of scenario.ranges) {
-			await expect(page.locator(`[data-practice-topic="${range.id}"]`)).toHaveAccessibleName(/In progress|All solved/);
+			await expect(page.locator(`[data-practice-topic="${range.id}"]`)).toHaveAccessibleName(/In progress|Completed/);
 		}
 		await page.locator('[data-practice-back]').click();
 	}
 });
 
-test('finishing twelve equations keeps a larger topic incomplete until its ring is filled', async ({ page }) => {
+test('a times table requires repeated coverage before completing and advances Continue after reload', async ({ page }) => {
 	await seedProfiles(page);
 	await page.goto('/practice');
 	await openPractice(page);
@@ -196,15 +198,24 @@ test('finishing twelve equations keeps a larger topic incomplete until its ring 
 	await page.locator('[data-practice-pond-done]').click();
 	await page.locator('[data-practice-start]').click();
 	await expect(page.locator('#game-canvas')).toBeVisible();
+	await page.evaluate(() => window.practiceFixture.answerCorrectly(12));
+	await expect(page.locator('#game-canvas')).toBeVisible();
+	await expect(page.locator('#practice-results-screen')).toBeHidden();
+	expect(await page.evaluate(() => window.practiceFixture.attempts())).toBe(12);
 	await page.evaluate(() => window.practiceFixture.completeSession());
 	await expect(page.getByRole('heading', { name: 'Practice complete', exact: true })).toBeVisible();
-	await expect(page.locator('[data-practice-next]')).toHaveCount(0);
-	await expect(page.locator('[data-practice-again]')).toBeFocused();
+	await expect(page.locator('[data-practice-next]')).toHaveText('Continue: 2 times table');
+	await expect(page.locator('.run-result')).toHaveText('12/12 targets complete');
+	await expect(page.locator('[data-practice-next]')).toBeFocused();
 	await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
-	await expect(page.locator('[data-practice-continue]')).toContainText('Continue: 1 times table');
+	await expect(page.locator('[data-practice-continue]')).toContainText('Continue: 2 times table');
 	await page.locator('[data-practice-continue]').click();
 	await expect(page.locator('.practice-pond-summary')).toContainText('Medium');
-	await expect(page.locator('.practice-preview-evidence')).toContainText('12/23 solved at least once');
+	await page.reload();
+	await openPractice(page);
+	await expect(page.locator('[data-practice-continue]')).toContainText('Continue: 2 times table');
+	await page.locator('[data-practice-operation="multiply"]').click();
+	await expect(page.locator('[data-practice-topic="multiply-table-1"]')).toHaveAttribute('data-complete', 'true');
 });
 
 test('new Practice journey preserves options and pond across Back, with keyboard focus', async ({ page }) => {
@@ -242,7 +253,7 @@ test('new Practice journey preserves options and pond across Back, with keyboard
 	await page.locator('#pause-btn').click();
 	await page.getByRole('button', { name: 'Quit to Menu', exact: true }).click();
 	await expect(page.getByRole('heading', { name: 'Partial practice', exact: true })).toBeVisible();
-	await expect(page.locator('#practice-results-screen')).toContainText('0/12 equations solved');
+	await expect(page.locator('#practice-results-screen')).toContainText('0/35 targets complete');
 	await expect(page.locator('#practice-results-screen')).toContainText('No submitted attempts yet.');
 	await expect(page.locator('[data-practice-again]')).toBeFocused();
 	await page.getByRole('button', { name: 'Choose another topic', exact: true }).click();
@@ -286,7 +297,7 @@ test('returning progress is truthful, Continue is fresh, and profiles keep indep
 	await expect(page.locator('#game-canvas')).toBeVisible();
 	await page.locator('#pause-btn').click();
 	await page.getByRole('button', { name: 'Quit to Menu', exact: true }).click();
-	await expect(page.locator('#practice-results-screen')).toContainText('0/12 equations solved');
+	await expect(page.locator('#practice-results-screen')).toContainText('0/12 targets complete');
 	await page.getByRole('button', { name: 'Main menu', exact: true }).click();
 	await page.locator('#player-profile-badge').click();
 	await page.locator('[data-player-row]').filter({ hasText: 'Jordan' }).click();
@@ -316,9 +327,10 @@ test('retired topic Continue falls back honestly while preserving overlapping fa
 	await expect(tried.locator('.practice-topic-fill')).toHaveAttribute('visibility', 'hidden');
 	await expect(partial).toHaveAccessibleName('Make 5. In progress. 1 facts practiced. 1 of 6 facts solved at least once.');
 	expect(await partial.locator('.practice-topic-fill').evaluate(element => Number(element.getAttribute('stroke-dasharray')?.split(' ')[0]))).toBeCloseTo(100 / 6);
-	await expect(complete).toHaveAccessibleName('Make 6. All solved. 7 facts practiced. 7 of 7 facts solved at least once.');
+	await expect(complete).toHaveAccessibleName('Make 6. In progress. 7 facts practiced. 7 of 7 facts solved at least once.');
 	await expect(complete.locator('.practice-topic-fill')).toHaveAttribute('stroke-dasharray', '100 100');
-	await expect(complete.locator('.practice-topic-check')).toBeVisible();
+	await expect(complete.locator('.practice-topic-check')).toHaveCount(0);
+	await expect(complete).toHaveAttribute('data-complete', 'false');
 	await expect(partial.locator('.practice-topic-check')).toHaveCount(0);
 	await partial.click();
 	await expect(page.locator('.practice-preview-evidence')).toContainText('1 facts practiced · 1/6 solved at least once');

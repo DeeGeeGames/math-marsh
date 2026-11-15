@@ -226,7 +226,7 @@ function equationStateFromBoard(
       ? equationModeForMathSession(mathSession, gameMode, currentLevel, 0, mathDifficulty)
       : createEquationModeState(currentLevel, mathDifficulty, gameMode);
 
-  if (state.feedback?.kind === 'correct') return currentState;
+  if (state.feedback?.kind === 'correct' || (practiceSession && state.feedback?.nextMode)) return currentState;
   if (state.target !== null && hasSelectableSolution(state, mathProblems, practiceSession ?? null)) return currentState;
 
   const existingCandidate = practiceSession ? undefined : chooseEquationCandidate(

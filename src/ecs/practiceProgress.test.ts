@@ -2,13 +2,27 @@ import { describe, expect, test } from 'bun:test';
 import { PRACTICE_TOPICS, practiceFacts, practiceTopic } from '../math/practiceTopics';
 import {
   emptyPracticeProgress, parsePracticeProgress, practiceContinueSelection, practiceTopicEvidence, practiceTopicStatus,
-  recordPracticeEvidence, rememberPracticeSelection, serializePracticeProgress,
+  recordPracticeEvidence, recordPracticeCompletion, rememberPracticeSelection, serializePracticeProgress, type PracticeProgress,
 } from './practiceProgress';
+import { createPracticeSession, recordPracticeAttempt } from './practiceSession';
 
 const topic = practiceTopic('add-make-5');
 if (!topic) throw new Error('Missing Make 5 topic');
 
 const selection = { topicId: topic.id, related: false, pond: 'easy' } as const;
+
+const awardCompletedRun = function(progress: PracticeProgress, topicId: string, related = false): PracticeProgress {
+  let session = createPracticeSession('learner', { topicId, related, pond: 'easy' });
+  if (!session) throw new Error('Missing session');
+  for (const target of session.targets) {
+    const index = target.indices[0];
+    const fact = index === undefined ? undefined : session.deck[index];
+    if (!fact) throw new Error('Missing equation');
+    session = recordPracticeAttempt({ ...session, currentIndex: index ?? 0 }, fact.id, true);
+    session = recordPracticeAttempt({ ...session, currentIndex: index ?? 0 }, fact.id, true);
+  }
+  return recordPracticeCompletion(progress, session);
+};
 
 describe('Practice evidence', function() {
   test('distinguishes attempts, solved coverage, accuracy, and revisit facts', function() {
@@ -24,7 +38,8 @@ describe('Practice evidence', function() {
     });
     const complete = topic.facts.reduce((progress, fact) =>
       recordPracticeEvidence(progress, { factId: fact.id, correct: true }), retried);
-    expect(practiceTopicStatus(complete, topic)).toBe('Practiced');
+    expect(practiceTopicStatus(complete, topic)).toBe('Practicing');
+    expect(practiceTopicStatus(awardCompletedRun(complete, topic.id), topic)).toBe('Practiced');
     expect(practiceTopicStatus(complete, topic, true)).toBe('Practicing');
     expect(practiceTopicEvidence(empty, topic).accuracy).toBeNull();
     expect(empty.facts).toEqual({});
@@ -67,7 +82,7 @@ describe('Practice evidence', function() {
     const progress = first.facts.reduce(function(current, fact) {
       return recordPracticeEvidence(current, { factId: fact.id, correct: true });
     }, rememberPracticeSelection(emptyPracticeProgress(), previous));
-    const reloaded = parsePracticeProgress(serializePracticeProgress(progress));
+    const reloaded = parsePracticeProgress(serializePracticeProgress(awardCompletedRun(progress, first.id)));
     expect(practiceContinueSelection(reloaded)).toEqual({ ...previous, topicId: 'add-make-4' });
     expect(reloaded.lastSelection).toEqual(previous);
     expect(practiceTopicStatus(reloaded, first, true)).toBe('Practicing');
@@ -89,7 +104,7 @@ describe('Practice evidence', function() {
       const complete = [...first.facts, ...later.facts].reduce(function(current, fact) {
         return recordPracticeEvidence(current, { factId: fact.id, correct: true });
       }, tried);
-      expect(practiceContinueSelection(complete)).toEqual({ ...previous, topicId: second.id });
+      expect(practiceContinueSelection(awardCompletedRun(awardCompletedRun(complete, first.id), later.id))).toEqual({ ...previous, topicId: second.id });
     }
   });
 
@@ -100,7 +115,8 @@ describe('Practice evidence', function() {
       .flatMap(function(topic) { return topic.facts; }).reduce(function(current, fact) {
         return recordPracticeEvidence(current, { factId: fact.id, correct: true });
       }, rememberPracticeSelection(emptyPracticeProgress(), selection));
-    expect(practiceContinueSelection(complete)).toBeUndefined();
+    const awarded = { ...complete, completedTopics: PRACTICE_TOPICS.filter(topic => topic.operation === 'add').map(topic => topic.id) };
+    expect(practiceContinueSelection(awarded)).toBeUndefined();
   });
 
   test('existing Make topic Continue selections retain their stable identities and options', function() {
@@ -172,7 +188,7 @@ describe('Practice evidence', function() {
   });
 
   test('preserves future data while keeping fresh evidence and Continue usable in memory', function() {
-    const future = { version: 2, facts: { opaque: ['future-format'] }, mystery: true };
+    const future = { version: 3, facts: { opaque: ['future-format'] }, mystery: true };
     const loaded = parsePracticeProgress(future);
     const session = rememberPracticeSelection(recordPracticeEvidence(loaded, { factId: 'add:2:3', correct: false }), selection);
     expect(session.canPersist).toBe(false);
@@ -181,4 +197,24 @@ describe('Practice evidence', function() {
     expect(serializePracticeProgress(session)).toEqual(future);
     expect(parsePracticeProgress(serializePracticeProgress(session)).facts).toEqual({});
   });
+});
+
+test('version 1 keeps history but clears old completion, while new completed runs survive reload', function() {
+  const history = Object.fromEntries(topic.facts.map(fact => [fact.id, { attempts: 4, correct: 4 }]));
+  const migrated = parsePracticeProgress({ version: 1, facts: history, lastSelection: selection, completedTopics: [topic.id] });
+  expect(migrated.facts).toEqual(history);
+  expect(migrated.completedTopics).toEqual([]);
+  expect(practiceTopicStatus(migrated, topic)).toBe('Practicing');
+  const initial = createPracticeSession('learner', selection);
+  if (!initial) throw new Error('Missing session');
+  expect(recordPracticeCompletion(migrated, initial)).toBe(migrated);
+  const base = awardCompletedRun(migrated, topic.id);
+  expect(practiceTopicStatus(base, topic)).toBe('Practiced');
+  expect(practiceTopicStatus(base, topic, true)).toBe('Practicing');
+  const related = awardCompletedRun(base, topic.id, true);
+  const reloaded = parsePracticeProgress(serializePracticeProgress(related));
+  expect(reloaded.facts).toEqual(history);
+  expect(practiceTopicStatus(reloaded, topic, true)).toBe('Practiced');
+  expect(reloaded.completedTopics).toEqual([topic.id, `${topic.id}:related`]);
+  expect(parsePracticeProgress({ version: 2, facts: history, completedTopics: [null, 3, 'retired', topic.id, topic.id] }).completedTopics).toEqual([topic.id]);
 });

@@ -1,6 +1,6 @@
 import type { GameEngine } from './Engine';
 import { activePlayerProfile } from '../profiles/rules';
-import { recordPracticeEvidence } from './practiceProgress';
+import { recordPracticeCompletion, recordPracticeEvidence } from './practiceProgress';
 import { finishPracticeSession, recordPracticeAttempt, type PracticeAttempt } from './practiceSession';
 
 export const submitPracticeAttempt = function(ecs: GameEngine, attempt: PracticeAttempt): void {
@@ -13,7 +13,7 @@ export const submitPracticeAttempt = function(ecs: GameEngine, attempt: Practice
   ecs.setResource('practiceSession', next);
   ecs.setResource('playerProfiles', ecs.getResource('profilePersistence').updateActive(profiles, active => ({
     ...active,
-    practiceProgress: recordPracticeEvidence(active.practiceProgress, attempt),
+    practiceProgress: recordPracticeCompletion(recordPracticeEvidence(active.practiceProgress, attempt), next),
   })));
 };
 

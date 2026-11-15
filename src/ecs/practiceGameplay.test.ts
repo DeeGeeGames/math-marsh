@@ -5,6 +5,7 @@ import ECSpresso, { type ConfigOf } from 'ecspresso';
 import { createTimer } from 'ecspresso/plugins/scripting/timers';
 import * as audio from '../audio/audio';
 import type { GameEngine } from './Engine';
+import { practiceTargetId } from '../math/practiceTopics';
 import { BOARD_SIZES } from './boardGeometry';
 import { enemyComponents, mathProblemComponents, playerComponents } from './entities';
 import { handleEquationProblemSelection } from './equationSelection';
@@ -51,7 +52,7 @@ const createWorld = async function(level = 1, manageBoard = false): Promise<Game
   if (!initial) throw new Error('Missing Practice session');
   const fact = initial.deck.find(candidate => candidate.left === 2 && candidate.right === 3);
   if (!fact) throw new Error('Missing test fact');
-  const session: PracticeSession = { ...initial, deck: [fact, ...initial.deck.filter(candidate => candidate.id !== fact.id)] };
+  const session: PracticeSession = { ...initial, currentIndex: initial.deck.indexOf(fact) };
   world.setResource('practiceSession', session);
   world.setResource('profilePersistence', createProfilePersistence(() => undefined));
   world.setResource('playerProfiles', profiles());
@@ -96,11 +97,11 @@ describe('Practice gameplay boundaries', () => {
       if (!session) throw new Error('Missing related session');
       const fact = session.deck.find(fact => fact.operation === 'divide' && fact.left === 24 && fact.right === 2);
       if (!fact) throw new Error('Missing related division');
-      const focused = { ...session, deck: [fact, ...session.deck.filter(candidate => candidate.id !== fact.id)] };
+      const focused = { ...session, currentIndex: session.deck.indexOf(fact) };
       const nextMode = practiceEquationMode(focused, 1);
       world.setResource('practiceSession', focused);
       world.setResource('equationMode', {
-        ...practiceEquationMode({ ...session, solved: session.deck.findIndex(fact => fact.operation === 'multiply') }, 1),
+        ...practiceEquationMode({ ...session, currentIndex: session.deck.findIndex(fact => fact.operation === 'multiply') }, 1),
         feedback: { kind: 'correct', startedAt: 0, nextMode },
       });
       [24, 24, 5, 100].forEach((value, index) => world.spawn(mathProblemComponents(index * 100, 0, value, 1)));
@@ -137,31 +138,35 @@ describe('Practice gameplay boundaries', () => {
     } finally { transition.mockRestore(); await world.dispose(); }
   });
 
-  test('a missing-operand wrong retry credits its actual ordered fact once without changing Arcade', async () => {
+  test('a wrong answer locks submissions through feedback then moves to a different target without changing Arcade progress', async () => {
     const world = await createWorld(2);
     try {
       [2, 4, 3].forEach((value, index) => world.spawn(mathProblemComponents(index * 100, 0, value, 1)));
-      const [left, wrong, right] = problemsIn(world);
-      if (!left || !wrong || !right) throw new Error('Missing pads');
+      const [left, wrong] = problemsIn(world);
+      if (!left || !wrong) throw new Error('Missing pads');
       const beforeProfiles = world.getResource('playerProfiles');
       select(world, wrong);
       expect(activeSession(world)).toMatchObject({ solved: 0, attempts: [{ factId: 'add:2:3', correct: false }] });
       expect(world.getResource('equationMode').selectedProblemIds).toEqual([]);
-      expect(left.components.mathProblem.consumed).toBe(false);
       select(world, left);
-      expect(activeSession(world)).toMatchObject({ solved: 1, attempts: [
-        { factId: 'add:2:3', correct: false }, { factId: 'add:2:3', correct: true },
-      ] });
+      expect(activeSession(world).attempts).toHaveLength(1);
+      world.getResource('gameplayClock').elapsed = (EQUATION_FEEDBACK_DURATION_MS.incorrect - 1) / 1000;
+      world.update(0);
+      expect(world.getResource('equationMode').feedback?.kind).toBe('incorrect');
+      world.getResource('gameplayClock').elapsed = EQUATION_FEEDBACK_DURATION_MS.incorrect / 1000;
+      world.update(0);
+      expect(world.getResource('equationMode').feedback).toBeUndefined();
+      expect(practiceTargetId(currentPracticeFact(activeSession(world)))).not.toBe('add:2:3');
+      expect(world.getResource('equationMode').promptValues).toEqual([
+        currentPracticeFact(activeSession(world)).left, currentPracticeFact(activeSession(world)).right,
+      ]);
       expect(activePlayerProfile(world.getResource('playerProfiles'))?.practiceProgress.facts['add:2:3'])
-        .toEqual({ attempts: 2, correct: 1 });
+        .toEqual({ attempts: 1, correct: 0 });
       expect(world.getResource('playerProfiles').profiles.find(profile => profile.id === 'other'))
         .toBe(beforeProfiles.profiles.find(profile => profile.id === 'other'));
       expect(activePlayerProfile(world.getResource('playerProfiles'))?.mathProgress).toEqual(initialSavedMathProgress());
       expect(world.getResource('mathSession')).toBeNull();
-      select(world, right);
-      expect(activeSession(world).attempts).toHaveLength(2);
-      expect(world.getResource('equationsSolved')).toBe(1);
-      expect(world.getResource('equationMode').feedback?.kind).toBe('correct');
+      expect(world.getResource('equationsSolved')).toBe(0);
     } finally { await world.dispose(); }
   });
 
@@ -181,12 +186,15 @@ describe('Practice gameplay boundaries', () => {
     const world = await createWorld();
     const transition = spyOn(world, 'setScreen').mockImplementation(async () => {});
     try {
-      world.setResource('practiceSession', { ...activeSession(world), solved: 11 });
+      const initial = activeSession(world);
+      world.setResource('practiceSession', { ...initial, solved: initial.targets.length * 2 - 1, targets: initial.targets.map(target => ({
+        ...target, correct: target.id === 'add:2:3' ? 1 : 2,
+      })) });
       const answer = world.spawn(mathProblemComponents(0, 0, 2, 1));
       const problem = problemsIn(world).find(candidate => candidate.id === answer.id);
       if (!problem) throw new Error('Missing answer');
       select(world, problem);
-      expect(activeSession(world).solved).toBe(12);
+      expect(activeSession(world).solved).toBe(initial.targets.length * 2);
       expect(activeSession(world).outcome).toBe('active');
       world.getResource('gameplayClock').elapsed = (EQUATION_FEEDBACK_DURATION_MS.correct - 1) / 1000;
       world.update(0);
@@ -201,6 +209,7 @@ describe('Practice gameplay boundaries', () => {
       expect(transition).toHaveBeenCalledTimes(1);
       const owner = activePlayerProfile(world.getResource('playerProfiles'));
       expect(owner?.practiceProgress.facts['add:2:3']).toEqual({ attempts: 1, correct: 1 });
+      expect(owner?.practiceProgress.completedTopics).toContain('add-make-5');
     } finally { transition.mockRestore(); await world.dispose(); }
   });
 

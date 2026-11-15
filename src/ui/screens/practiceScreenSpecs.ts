@@ -1,9 +1,9 @@
 import { html, nothing, render, type TemplateResult } from 'lit-html';
 import { GAME_CONFIG } from '../../config';
 import { BOARD_SIZES } from '../../ecs/boardGeometry';
-import { PRACTICE_SESSION_LENGTH, practiceFactExample, summarizePracticeSession } from '../../ecs/practiceSession';
+import { practiceFactExample, summarizePracticeSession } from '../../ecs/practiceSession';
 import { practiceContinueSelection, practiceTopicEvidence, type PracticeTopicEvidence } from '../../ecs/practiceProgress';
-import { PRACTICE_TOPICS, practiceTopic, practiceFacts, practiceFactLabel, type PracticeTopic } from '../../math/practiceTopics';
+import { PRACTICE_TOPICS, practiceTopic, practiceFacts, practiceTargetCount, practiceFactLabel, type PracticeTopic } from '../../math/practiceTopics';
 import type { EquationOperation, MathDifficulty } from '../../ecs/types';
 import { difficultyLabels, isMathDifficulty, operationLabels } from '../labels';
 import { createPracticeSetupState, practiceSetupSelection, updatePracticeSetup, type PracticeSetupAction } from '../practiceSetup';
@@ -23,7 +23,7 @@ const topicTile = function(topic: PracticeTopic, summary: PracticeTopicEvidence,
 	const caption = topic.kind === 'range' ? topic.operation === 'add' ? 'Sums' : 'Answers'
 		: topic.kind === 'make' ? 'Make' : topic.operation === 'multiply' ? 'Times table' : 'Divide by';
 	const complete = summary.status === 'Practiced';
-	const status = !available ? 'Full version' : complete ? 'All solved' : summary.status === 'New' ? 'New' : 'In progress';
+	const status = !available ? 'Full version' : complete ? 'Completed' : summary.status === 'New' ? 'New' : 'In progress';
 	const filled = summary.total > 0 ? summary.solved / summary.total * 100 : 0;
 	return html`<button type="button" class="practice-topic" data-practice-topic=${topic.id} data-complete=${String(complete)}
 		aria-label=${`${topic.label}. ${topic.kind === 'range' ? `Numbers ${topic.operandRange.min}–${topic.operandRange.max}. ` : ''}${status}. ${summary.attempted} facts practiced. ${summary.solved} of ${summary.total} facts solved at least once.`}>
@@ -96,7 +96,7 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 				return Number(right.kind === 'range') - Number(left.kind === 'range');
 			});
 		return html`<h1 class="pond-title text-gold">${operationLabels[state.operation]}</h1>
-			<p class="practice-topic-hint">Fill each ring by solving different facts.</p>
+			<p class="practice-topic-hint">Complete a run to earn a check. Rings show answer history.</p>
 			<div class="practice-topic-grid" role="group" aria-label=${`${operationLabels[state.operation]} topics`}>
 				${topics.map(function(topic) {
 					return topicTile(topic, practiceTopicEvidence(progress, topic), actions.isPracticeTopicAvailable(topic.id));
@@ -120,7 +120,8 @@ export const createPracticeScreenSpec = function(actions: ScreenSpecActions): Sc
 			</button>
 			<div class="practice-pond-summary"><button type="button" class="btn-secondary" data-practice-change-pond><span>Pond: <strong>${difficultyLabels[pond]}</strong></span><span>Change pond</span></button></div>
 			${summary.attempts > 0 ? html`<p class="practice-note">Topic accuracy: ${summary.accuracy === null ? 'No attempts' : `${Math.round(summary.accuracy * 100)}%`} · ${summary.revisit.length} facts to revisit</p>` : ''}
-			${available ? html`<button type="button" class="btn-success practice-start" data-practice-start>Start practice · ${PRACTICE_SESSION_LENGTH} equations</button>`
+			<p class="practice-note">${practiceTargetCount(facts)} targets · Get each right twice in one run. Each mistake needs one extra correct answer.</p>
+			${available ? html`<button type="button" class="btn-success practice-start" data-practice-start>Start practice</button>`
 				: html`<p class="practice-note">This topic requires the full version of Math Marsh.</p>
 					<button type="button" class="btn-success practice-start" data-practice-store>Get the full game on Steam</button>
 					<p class="practice-note" data-practice-store-status></p>`}`;
@@ -235,7 +236,7 @@ export const createPracticeResultsScreenSpec = function(actions: ScreenSpecActio
 			const nextTopic = next ? practiceTopic(next.topicId) : undefined;
 			render(html`<h1 class="game-over-title">${session?.outcome === 'completed' ? 'Practice complete' : 'Partial practice'}</h1>
 				<p class="practice-results-topic">${topic?.label ?? 'Practice'}</p>
-				<p class="run-result">${summary?.solved ?? 0}/${PRACTICE_SESSION_LENGTH} equations solved</p>
+				<p class="run-result">${summary?.completed ?? 0}/${summary?.total ?? 0} targets complete</p>
 				<p>${!summary || summary.accuracy === null ? 'No submitted attempts yet.' : `${Math.round(summary.accuracy * 100)}% accuracy · ${summary.correct} correct of ${attempts} attempts`}</p>
 				<section class="practice-revisit-panel" aria-labelledby="practice-revisit-heading">
 					<h2 id="practice-revisit-heading">Facts to revisit</h2>

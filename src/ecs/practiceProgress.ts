@@ -1,12 +1,13 @@
 import { PRACTICE_TOPICS, practiceFacts, practiceTopic, type PracticeFact, type PracticeTopic } from '../math/practiceTopics';
-import type { PracticeAttempt, PracticeSelection } from './practiceSession';
+import { isPracticeSessionComplete, type PracticeSession, type PracticeAttempt, type PracticeSelection } from './practiceSession';
 
-export const PRACTICE_PROGRESS_VERSION = 1;
+export const PRACTICE_PROGRESS_VERSION = 2;
 
 export type PracticeFactEvidence = Readonly<{ attempts: number; correct: number }>;
 export type PracticeProgress = Readonly<{
   facts: Readonly<Record<string, PracticeFactEvidence>>;
   lastSelection: PracticeSelection | null;
+  completedTopics: readonly string[];
   canPersist: boolean;
   preservedValue?: unknown;
 }>;
@@ -32,7 +33,7 @@ const isRecord = function(value: unknown): value is Record<string, unknown> {
 };
 
 export const emptyPracticeProgress = function(): PracticeProgress {
-  return { facts: {}, lastSelection: null, canPersist: true };
+  return { facts: {}, lastSelection: null, completedTopics: [], canPersist: true };
 };
 
 const selectionFromUnknown = function(value: unknown): PracticeSelection | null {
@@ -47,7 +48,7 @@ export const parsePracticeProgress = function(value: unknown): PracticeProgress 
   if (typeof value.version === 'number' && Number.isSafeInteger(value.version) && value.version > PRACTICE_PROGRESS_VERSION) {
     return { ...emptyPracticeProgress(), canPersist: false, preservedValue: value };
   }
-  if (value.version !== PRACTICE_PROGRESS_VERSION) return emptyPracticeProgress();
+  if (value.version !== 1 && value.version !== PRACTICE_PROGRESS_VERSION) return emptyPracticeProgress();
   const entries = isRecord(value.facts) ? Object.entries(value.facts) : [];
   const facts: Record<string, PracticeFactEvidence> = {};
   for (const [id, evidence] of entries) {
@@ -57,13 +58,17 @@ export const parsePracticeProgress = function(value: unknown): PracticeProgress 
       || evidence.correct < 0 || evidence.correct > evidence.attempts) continue;
     facts[id] = { attempts: evidence.attempts, correct: evidence.correct };
   }
-  return { facts, lastSelection: selectionFromUnknown(value.lastSelection), canPersist: true };
+  const completedTopics = value.version === PRACTICE_PROGRESS_VERSION && Array.isArray(value.completedTopics)
+    ? value.completedTopics.filter((id: unknown): id is string => typeof id === 'string'
+      && (practiceTopic(id) !== undefined || (id.endsWith(':related') && practiceTopic(id.slice(0, -8)) !== undefined)))
+    : [];
+  return { facts, completedTopics: [...new Set(completedTopics)], lastSelection: selectionFromUnknown(value.lastSelection), canPersist: true };
 };
 
 /** Keep an unreadable future payload intact while allowing other profile fields to save. */
 export const serializePracticeProgress = function(progress: PracticeProgress): unknown {
   if (!progress.canPersist) return progress.preservedValue;
-  return { version: PRACTICE_PROGRESS_VERSION, facts: progress.facts, lastSelection: progress.lastSelection };
+  return { version: PRACTICE_PROGRESS_VERSION, facts: progress.facts, completedTopics: progress.completedTopics, lastSelection: progress.lastSelection };
 };
 
 export const recordPracticeEvidence = function(progress: PracticeProgress, attempt: PracticeAttempt): PracticeProgress {
@@ -77,6 +82,14 @@ export const recordPracticeEvidence = function(progress: PracticeProgress, attem
       [attempt.factId]: { attempts: previous.attempts + 1, correct: previous.correct + Number(attempt.correct) },
     },
   };
+};
+
+/** Only a completed run awards a badge; lifetime evidence alone never does. */
+export const recordPracticeCompletion = function(progress: PracticeProgress, session: PracticeSession): PracticeProgress {
+  if (!isPracticeSessionComplete(session)) return progress;
+  const id = session.selection.topicId;
+  const completedTopics = [...new Set([...progress.completedTopics, id, ...(session.selection.related ? [`${id}:related`] : [])])];
+  return { ...progress, completedTopics };
 };
 
 export const rememberPracticeSelection = function(progress: PracticeProgress, selection: PracticeSelection): PracticeProgress {
@@ -102,7 +115,7 @@ export const practiceTopicEvidence = function(progress: PracticeProgress, topic:
   const attempted = facts.filter(fact => (progress.facts[fact.id]?.attempts ?? 0) > 0).length;
   const solved = facts.filter(fact => (progress.facts[fact.id]?.correct ?? 0) > 0).length;
   return {
-    status: attempted === 0 ? 'New' : solved === facts.length ? 'Practiced' : 'Practicing',
+    status: progress.completedTopics.includes(`${topic.id}${related ? ':related' : ''}`) ? 'Practiced' : attempted === 0 ? 'New' : 'Practicing',
     attempted,
     solved,
     total: facts.length,

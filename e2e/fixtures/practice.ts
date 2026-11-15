@@ -1,7 +1,7 @@
 import { initializeGame } from '../../src/ecs/bootstrap';
 import { gameEngine as engine } from '../../src/ecs/Engine';
 import { finishPractice, submitPracticeAttempt } from '../../src/ecs/practiceLifecycle';
-import { currentPracticeFact, PRACTICE_SESSION_LENGTH, type PracticeSelection } from '../../src/ecs/practiceSession';
+import { currentPracticeFact, isPracticeSessionComplete, type PracticeSelection } from '../../src/ecs/practiceSession';
 
 await initializeGame();
 await engine.setScreen('menu', {});
@@ -10,13 +10,24 @@ await engine.setScreen('menu', {});
 // Supply correct submissions directly; answer collection is covered separately.
 const fixture = {
 	selection: function(): PracticeSelection | undefined { return engine.getResource('practiceSession')?.selection; },
-	completeSession: function(): void {
-		if (engine.getCurrentScreen() !== 'playing') throw new Error('Not practicing');
-		for (let index = 0; index < PRACTICE_SESSION_LENGTH; index++) {
+	attempts: function(): number { return engine.getResource('practiceSession')?.attempts.length ?? 0; },
+	answerCorrectly: function(count: number): void {
+		for (let index = 0; index < count; index++) {
 			const session = engine.getResource('practiceSession');
 			if (!session || session.outcome !== 'active') throw new Error('No active Practice session');
 			submitPracticeAttempt(engine, { factId: currentPracticeFact(session).id, correct: true });
 		}
+	},
+	completeSession: function(): void {
+		if (engine.getCurrentScreen() !== 'playing') throw new Error('Not practicing');
+		for (let index = 0; index < 100_000; index++) {
+			const session = engine.getResource('practiceSession');
+			if (!session || session.outcome !== 'active') throw new Error('No active Practice session');
+			if (isPracticeSessionComplete(session)) break;
+			submitPracticeAttempt(engine, { factId: currentPracticeFact(session).id, correct: true });
+		}
+		const session = engine.getResource('practiceSession');
+		if (!session || !isPracticeSessionComplete(session)) throw new Error('Practice did not complete');
 		finishPractice(engine);
 	},
 };
